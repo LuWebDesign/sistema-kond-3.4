@@ -194,6 +194,11 @@ export default function PedidosCatalogo() {
     dateTo: ''
   })
   
+  // Paginación
+  const [currentPagePendientes, setCurrentPagePendientes] = useState(1)
+  const [currentPageEntregados, setCurrentPageEntregados] = useState(1)
+  const itemsPerPage = 6
+  
   // Estadísticas
   const [stats, setStats] = useState({
     totalPendientes: 0,
@@ -363,6 +368,27 @@ export default function PedidosCatalogo() {
 
       return matches
     })
+
+  // Resetear paginación cuando cambien filtros
+  useEffect(() => {
+    setCurrentPagePendientes(1)
+  }, [filters])
+
+  useEffect(() => {
+    setCurrentPageEntregados(1)
+  }, [deliveredFilters])
+
+  // Calcular paginación para pendientes
+  const totalPagesPendientes = Math.ceil(filteredPendientes.length / itemsPerPage)
+  const startIndexPendientes = (currentPagePendientes - 1) * itemsPerPage
+  const endIndexPendientes = startIndexPendientes + itemsPerPage
+  const currentPendientes = filteredPendientes.slice(startIndexPendientes, endIndexPendientes)
+
+  // Calcular paginación para entregados
+  const totalPagesEntregados = Math.ceil(filteredEntregados.length / itemsPerPage)
+  const startIndexEntregados = (currentPageEntregados - 1) * itemsPerPage
+  const endIndexEntregados = startIndexEntregados + itemsPerPage
+  const currentEntregados = filteredEntregados.slice(startIndexEntregados, endIndexEntregados)
 
   // Funciones auxiliares
   const formatCurrency = (amount) => {
@@ -954,30 +980,69 @@ export default function PedidosCatalogo() {
             </div>
 
             {/* Lista de pedidos */}
-            {filteredPendientes.length === 0 ? (
+            {currentPendientes.length === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>📦</div>
                 <h3>No hay pedidos pendientes</h3>
                 <p>Los pedidos pendientes aparecerán aquí</p>
               </div>
             ) : (
-              <div className={styles.pedidosGrid}>
-                {filteredPendientes.map(pedido => (
-                  <PedidoCard
-                    key={pedido.id}
-                    pedido={pedido}
-                    onClick={handleCardClick}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    getStatusEmoji={getStatusEmoji}
-                    getStatusLabel={getStatusLabel}
-                    getPaymentLabel={getPaymentLabel}
-                    getProductThumbnail={getProductThumbnail}
-                    formatFechaEntrega={formatFechaEntrega}
-                    formatFechaProduccion={formatFechaProduccion}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={styles.pedidosGrid}>
+                  {currentPendientes.map(pedido => (
+                    <PedidoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      onClick={handleCardClick}
+                      formatCurrency={formatCurrency}
+                      formatDate={formatDate}
+                      getStatusEmoji={getStatusEmoji}
+                      getStatusLabel={getStatusLabel}
+                      getPaymentLabel={getPaymentLabel}
+                      getProductThumbnail={getProductThumbnail}
+                      formatFechaEntrega={formatFechaEntrega}
+                      formatFechaProduccion={formatFechaProduccion}
+                    />
+                  ))}
+                </div>
+
+                {/* Paginación */}
+                {totalPagesPendientes > 1 && (
+                  <div className={styles.pagination}>
+                    <button
+                      onClick={() => setCurrentPagePendientes(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPagePendientes === 1}
+                      className={styles.pageBtn}
+                    >
+                      ← Anterior
+                    </button>
+
+                    <div className={styles.pageNumbers}>
+                      {Array.from({ length: totalPagesPendientes }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPagePendientes(page)}
+                          className={`${styles.pageNumber} ${currentPagePendientes === page ? styles.active : ''}`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPagePendientes(prev => Math.min(prev + 1, totalPagesPendientes))}
+                      disabled={currentPagePendientes === totalPagesPendientes}
+                      className={styles.pageBtn}
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                )}
+
+                <div className={styles.pageInfo}>
+                  Mostrando {startIndexPendientes + 1}-{Math.min(endIndexPendientes, filteredPendientes.length)} de {filteredPendientes.length} pedidos
+                </div>
+              </>
             )}
           </div>
         )}
@@ -1043,56 +1108,57 @@ export default function PedidosCatalogo() {
             </div>
 
             {/* Lista de pedidos */}
-            {filteredEntregados.length === 0 ? (
+            {currentEntregados.length === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>🎉</div>
                 <h3>No hay pedidos entregados</h3>
                 <p>Los pedidos entregados aparecerán aquí</p>
               </div>
             ) : (
-              <div className={styles.pedidosGrid}>
-                {filteredEntregados.map(pedido => {
-                  const thumbnail = getProductThumbnail(pedido)
+              <>
+                <div className={styles.pedidosGrid}>
+                  {currentEntregados.map(pedido => {
+                    const thumbnail = getProductThumbnail(pedido)
 
-                  return (
-                    <div
-                      key={pedido.id}
-                      className={`${styles.pedidoCard} ${styles.entregado}`}
-                      onClick={() => handleCardClick(pedido)}
-                    >
-                      {/* Similar estructura pero con estilo entregado */}
-                      <div className={styles.pedidoLeft}>
-                        <div className={styles.pedidoId}>
-                          <strong>#{pedido.id}</strong>
-                          <span className={styles.fechaCreacion}>
-                            {formatDate(pedido.fechaCreacion)}
-                          </span>
-                        </div>
-                        <div className={styles.pedidoThumb}>
-                          {thumbnail ? (
-                            <img src={thumbnail} alt="Producto" />
-                          ) : (
-                            <span className={styles.placeholder}>
-                              {pedido.productos && pedido.productos.length > 0 ? pedido.productos[0].nombre || '📦' : '📦'}
+                    return (
+                      <div
+                        key={pedido.id}
+                        className={`${styles.pedidoCard} ${styles.entregado}`}
+                        onClick={() => handleCardClick(pedido)}
+                      >
+                        {/* Similar estructura pero con estilo entregado */}
+                        <div className={styles.pedidoLeft}>
+                          <div className={styles.pedidoId}>
+                            <strong>#{pedido.id}</strong>
+                            <span className={styles.fechaCreacion}>
+                              {formatDate(pedido.fechaCreacion)}
                             </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={styles.pedidoMain}>
-                        <div className={styles.pedidoTopline}>
-                          <div className={styles.clienteInfo}>
-                            <div className={styles.clienteNombre}>
-                              👤 {pedido.cliente.nombre} {pedido.cliente.apellido || ''}
-                            </div>
-                            <div className={styles.clienteContactLine}>
-                              📱 {pedido.cliente.telefono}
-                            </div>
+                          </div>
+                          <div className={styles.pedidoThumb}>
+                            {thumbnail ? (
+                              <img src={thumbnail} alt="Producto" />
+                            ) : (
+                              <span className={styles.placeholder}>
+                                {pedido.productos && pedido.productos.length > 0 ? pedido.productos[0].nombre || '📦' : '📦'}
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        <div className={styles.pedidoBadges}>
-                          <span className={`${styles.statusBadge} ${styles.entregado}`}>
+                        <div className={styles.pedidoMain}>
+                          <div className={styles.pedidoTopline}>
+                            <div className={styles.clienteInfo}>
+                              <div className={styles.clienteNombre}>
+                                👤 {pedido.cliente.nombre} {pedido.cliente.apellido || ''}
+                              </div>
+                              <div className={styles.clienteContactLine}>
+                                📱 {pedido.cliente.telefono}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={styles.pedidoBadges}>
+                            <span className={`${styles.statusBadge} ${styles.entregado}`}>
                             🎉 Entregado
                           </span>
                           <span className={`${styles.pagoBadge} ${styles[pedido.estadoPago]}`}>
@@ -1116,6 +1182,44 @@ export default function PedidosCatalogo() {
                   )
                 })}
               </div>
+
+              {/* Paginación */}
+              {totalPagesEntregados > 1 && (
+                <div className={styles.pagination}>
+                  <button
+                    onClick={() => setCurrentPageEntregados(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPageEntregados === 1}
+                    className={styles.pageBtn}
+                  >
+                    ← Anterior
+                  </button>
+
+                  <div className={styles.pageNumbers}>
+                    {Array.from({ length: totalPagesEntregados }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPageEntregados(page)}
+                        className={`${styles.pageNumber} ${currentPageEntregados === page ? styles.active : ''}`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPageEntregados(prev => Math.min(prev + 1, totalPagesEntregados))}
+                    disabled={currentPageEntregados === totalPagesEntregados}
+                    className={styles.pageBtn}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              )}
+
+              <div className={styles.pageInfo}>
+                Mostrando {startIndexEntregados + 1}-{Math.min(endIndexEntregados, filteredEntregados.length)} de {filteredEntregados.length} pedidos
+              </div>
+            </>
             )}
           </div>
         )}
