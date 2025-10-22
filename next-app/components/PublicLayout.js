@@ -9,14 +9,26 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
-    document.body.className = savedTheme
+    // set both data-theme attribute and className to be compatible with different CSS selectors
+    try {
+      document.body.setAttribute('data-theme', savedTheme)
+      document.body.className = savedTheme
+    } catch (e) {
+      // ignore if document.body is not available yet
+    }
   }, [])
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     localStorage.setItem('theme', newTheme)
-    document.body.className = newTheme
+    // keep both attribute and class in sync for CSS compatibility
+    try {
+      document.body.setAttribute('data-theme', newTheme)
+      document.body.className = newTheme
+    } catch (e) {
+      // ignore
+    }
   }
 
   return (
@@ -55,7 +67,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               alignItems: 'center',
               gap: '8px'
             }}>
-              🏪 KOND
+              KOND
             </Link>
             
             <nav style={{
@@ -100,6 +112,17 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             {/* Notificaciones para usuario */}
             <NotificationsButton target="user" />
             
+            {/* Mi cuenta visible en la derecha (útil en móvil) */}
+            <a href="/user-public.html" style={{
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid transparent',
+              background: 'transparent',
+              display: 'inline-block'
+            }}>👤 Mi cuenta</a>
+            
             {/* Botón de tema */}
             <button
               onClick={toggleTheme}
@@ -127,22 +150,24 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         {/* Panel de notificaciones para usuario */}
         <NotificationsPanel target="user" />
 
-        {/* Main Content */}
-        <main style={{
-          minHeight: 'calc(100vh - 80px)',
-          background: 'var(--bg-primary)'
-        }}>
-          {children}
-        </main>
+        {/* Contenedor con ancho fijo en móvil */}
+        <div className="kond-viewport">
+          {/* Main Content */}
+          <main style={{
+            minHeight: 'calc(100vh - 80px)',
+            background: 'var(--bg-primary)'
+          }}>
+            {children}
+          </main>
 
-        {/* Footer público */}
-        <footer style={{
-          background: 'var(--bg-card)',
-          borderTop: '1px solid var(--border-color)',
-          padding: '32px 20px',
-          textAlign: 'center',
-          color: 'var(--text-secondary)'
-        }}>
+          {/* Footer público */}
+          <footer style={{
+            background: 'var(--bg-card)',
+            borderTop: '1px solid var(--border-color)',
+            padding: '32px 20px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)'
+          }}>
           <div style={{
             maxWidth: '1200px',
             margin: '0 auto'
@@ -160,7 +185,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   fontSize: '1.1rem',
                   fontWeight: 600
                 }}>
-                  🏪 KOND
+                  KOND
                 </h3>
                 <p style={{
                   fontSize: '0.9rem',
@@ -237,6 +262,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </div>
           </div>
         </footer>
+      </div>
       </div>
       
       {/* Variables CSS */}

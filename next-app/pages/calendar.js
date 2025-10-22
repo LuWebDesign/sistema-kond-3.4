@@ -179,6 +179,28 @@ export default function Calendar() {
     loadData()
   }, [loadData])
 
+  // Escuchar actualizaciones desde el módulo de administración (pedidos-catalogo)
+  useEffect(() => {
+    const handler = (e) => {
+      try {
+        // recargar datos (catalogo) cuando se actualizan pedidos de catálogo
+        loadData()
+      } catch (err) {
+        console.error('Error manejando evento pedidosCatalogo:updated', err)
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pedidosCatalogo:updated', handler)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('pedidosCatalogo:updated', handler)
+      }
+    }
+  }, [loadData])
+
   useEffect(() => {
     calculateMonthStats()
   }, [calculateMonthStats])
@@ -500,7 +522,10 @@ export default function Calendar() {
               const dateStr = dayInfo.date.toISOString().split('T')[0]
               const pedidosInternosDelDia = getPedidosInternosDelDia(dayInfo.date)
               const pedidosCatalogoDelDia = getPedidosCatalogoDelDia(dayInfo.date)
-              const pedidosCount = (pedidosInternosDelDia?.length || 0) + (pedidosCatalogoDelDia?.length || 0)
+              const internoCount = (pedidosInternosDelDia?.length || 0)
+              const produccionCount = (pedidosCatalogoDelDia?.filter(p => p.tipo === 'produccion').length) || 0
+              const entregaCount = (pedidosCatalogoDelDia?.filter(p => p.tipo === 'entrega').length) || 0
+              const pedidosCount = internoCount + produccionCount + entregaCount
               const isToday = dateStr === todayStr
               const hasPedidos = pedidosCount > 0
 
@@ -534,16 +559,51 @@ export default function Calendar() {
                   </div>
                   
                   {hasPedidos && (
-                    <div style={{
-                      background: '#10b981',
-                      color: 'white',
-                      borderRadius: '12px',
-                      padding: '2px 6px',
-                      fontSize: '0.7rem',
-                      fontWeight: '600',
-                      alignSelf: 'flex-start'
-                    }}>
-                      {pedidosCount} pedido{pedidosCount !== 1 ? 's' : ''}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignSelf: 'flex-start' }}>
+                      {/* Badge para producciones */}
+                      {produccionCount > 0 && (
+                        <div style={{
+                          background: '#f59e0b20',
+                          color: '#f59e0b',
+                          borderRadius: '12px',
+                          padding: '2px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          alignSelf: 'flex-start'
+                        }}>
+                          {produccionCount} {produccionCount === 1 ? 'producción' : 'producciones'}
+                        </div>
+                      )}
+
+                      {/* Badge para entregas */}
+                      {entregaCount > 0 && (
+                        <div style={{
+                          background: '#10b98120',
+                          color: '#10b981',
+                          borderRadius: '12px',
+                          padding: '2px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          alignSelf: 'flex-start'
+                        }}>
+                          {entregaCount} entrega{entregaCount !== 1 ? 's' : ''}
+                        </div>
+                      )}
+
+                      {/* Badge para pedidos internos (si los hay) */}
+                      {internoCount > 0 && (
+                        <div style={{
+                          background: '#3b82f620',
+                          color: '#3b82f6',
+                          borderRadius: '12px',
+                          padding: '2px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          alignSelf: 'flex-start'
+                        }}>
+                          {internoCount} interno{internoCount !== 1 ? 's' : ''}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -698,14 +758,57 @@ function DayModal({ date, pedidosInternos = [], pedidosCatalogo = [], products, 
                 </h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {pedidosCatalogo.map(item => (
-                    <PedidoCard 
-                      key={item.id}
-                      pedido={item}
-                      tipo="catalogo"
-                      products={products}
-                    />
-                  ))}
+                    {pedidosCatalogo.map(item => {
+                      // Calcular tiempo de producción desde el pedido de catálogo
+                      let tiempoMinutos = 0
+                      // Si el pedido trae items con idProducto, usamos products para determinar tiempoUnitario
+                      if (Array.isArray(item.items) && item.items.length) {
+                        item.items.forEach(it => {
+                          const producto = products.find(p => String(p.id) === String(it.idProducto))
+                          const qty = Number(it.quantity) || 1
+                          if (producto) {
+                            tiempoMinutos += timeToMinutes(producto.tiempoUnitario || '00:00:30') * qty
+                          } else if (it.tiempoUnitario) {
+                            tiempoMinutos += timeToMinutes(it.tiempoUnitario) * qty
+                          }
+                        })
+                      }
+
+                      // Si el pedido de catálogo contiene productos (legacy) o producto-level tiempoUnitario
+                      if ((!tiempoMinutos || tiempoMinutos === 0) && Array.isArray(item.productos) && item.productos.length) {
+                        item.productos.forEach(p => {
+                          const prodId = p.productId || p.idProducto || p.id
+                          const producto = products.find(pr => String(pr.id) === String(prodId))
+                          const qty = Number(p.cantidad) || 1
+                          if (producto) {
+                            tiempoMinutos += timeToMinutes(producto.tiempoUnitario || p.tiempoUnitario || '00:00:30') * qty
+                          } else if (p.tiempoUnitario) {
+                            tiempoMinutos += timeToMinutes(p.tiempoUnitario) * qty
+                          }
+                        })
+                      }
+
+                      // Si el pedido tiene una marca explícita de tiempoUnitario en el propio item
+                      if ((!tiempoMinutos || tiempoMinutos === 0) && item.tiempoUnitario) {
+                        // intentamos multiplicar por la cantidad total (items count o 1)
+                        const totalQty = (item.items && item.items.reduce((s, it) => s + (Number(it.quantity) || 1), 0)) || (item.productos && item.productos.reduce((s, p) => s + (Number(p.cantidad) || 1), 0)) || 1
+                        tiempoMinutos = timeToMinutes(item.tiempoUnitario) * totalQty
+                      }
+
+                      const tiempoFormatted = formatTime(tiempoMinutos)
+
+                      return (
+                        <PedidoCard 
+                          key={`${item.id}-${item.tipo}`}
+                          pedido={item}
+                          tipo="catalogo"
+                          role={item.tipo}
+                          products={products}
+                          // Pasamos el tiempo calculado para que PedidoCard lo muestre explícitamente
+                          tiempoProduccion={{ minutos: tiempoMinutos, formatted: tiempoFormatted }}
+                        />
+                      )
+                    })}
                 </div>
               </div>
             )}
@@ -802,12 +905,31 @@ function PedidoCard({ pedido, tipo = 'interno', role, products, onUpdateStatus, 
     }
   }
 
+  // Estilos dinámicos según role para pedidos de catálogo
+  const roleStyles = (() => {
+    if (!role) return {}
+    if (role === 'produccion') {
+      return {
+        borderLeft: '6px solid #f59e0b',
+        background: '#fff7ed'
+      }
+    }
+    if (role === 'entrega') {
+      return {
+        borderLeft: '6px solid #10b981',
+        background: '#ecfdf5'
+      }
+    }
+    return {}
+  })()
+
   return (
     <div style={{
       background: 'var(--bg-secondary)',
       border: '1px solid var(--border-color)',
       borderRadius: '8px',
-      padding: '16px'
+      padding: '16px',
+      ...roleStyles
     }}>
       <div style={{
         display: 'flex',

@@ -265,7 +265,15 @@ export const formatDate = (dateStr) => {
   if (!dateStr) return 'No especificada'
   
   try {
-    const date = new Date(dateStr)
+    // Si la fecha viene en formato YYYY-MM-DD (sin hora) parsearla como fecha local
+    const date = (function(s) {
+      if (!s) return null
+      const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (m) {
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+      }
+      return new Date(s)
+    })(dateStr)
     
     // Verificar si la fecha es válida
     if (isNaN(date.getTime())) {
@@ -283,4 +291,16 @@ export const formatDate = (dateStr) => {
     console.error('Error al formatear fecha:', error)
     return 'Error en fecha'
   }
+}
+
+// Parsear fecha YYYY-MM-DD como fecha local (evita desfase por zona horaria)
+export const parseDateYMD = (s) => {
+  if (!s) return null
+  const str = String(s)
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (m) {
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  }
+  const d = new Date(str)
+  return isNaN(d.getTime()) ? null : d
 }

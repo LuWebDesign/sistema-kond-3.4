@@ -1,0 +1,82 @@
+/* Responsive helpers for catalog modals and My Orders */
+.cartModalDialog {
+  width: 100%;
+  max-width: 900px;
+  height: 86vh;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  overflow: hidden;
+}
+.checkoutModalDialog {
+  width: 100%;
+  max-width: 960px;
+  height: 86vh;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  overflow: hidden;
+}
+.modalLeft {
+  padding: 20px;
+  overflow: auto;
+}
+.modalRight {
+  padding: 20px;
+  border-left: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.myOrdersList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 4px;
+}
+.btnFullMobile {
+  width: 100% !important;
+}
+.cartItemImage {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f6f7f9;
+}
+@media (max-width: 768px) {
+  .cartModalDialog,
+  .checkoutModalDialog {
+    max-width: 100% !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    grid-template-columns: 1fr !important;
+    overflow: visible !important;
+  }
+  .modalLeft, .modalRight {
+    padding: 16px !important;
+  }
+  .modalRight {
+    border-left: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    position: static !important;
+    width: 100% !important;
+    min-height: 120px;
+    box-sizing: border-box;
+  }
+  .modalLeft {
+    /* ensure the left column scrolls and doesn't overlap the right section */
+    overflow: auto !important;
+    padding-bottom: 96px !important; /* leave space for actions */
+  }
+  .modalRight {
+    padding-bottom: 24px !important;
+  }
+  .myOrdersList {
+    gap: 12px;
+    padding: 6px 4px;
+  }
+  .cartItemImage {
+    width: 56px;
+    height: 56px;
+  }
+}

@@ -206,15 +206,15 @@ export default function AvailabilityCalendar({
         }
         
         .calendar-day.available {
-          background: var(--bg-hover);
-          color: var(--text-primary);
-          border: 1px solid transparent;
+          background: var(--accent-available, #059669); /* fallback verde */
+          color: white;
+          border: 1px solid rgba(0,0,0,0.06);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
         
         .calendar-day.available:hover {
-          background: var(--accent-blue);
-          color: white;
-          transform: scale(1.05);
+          transform: translateY(-3px) scale(1.06);
+          box-shadow: 0 8px 22px rgba(59,130,246,0.18);
         }
         
         .calendar-day.past {
@@ -269,8 +269,8 @@ export default function AvailabilityCalendar({
         }
         
         .legend-dot.available {
-          background: var(--bg-hover);
-          border: 1px solid var(--border-color);
+          background: var(--accent-blue);
+          border: 1px solid rgba(59,130,246,0.9);
         }
         
         .legend-dot.full {
@@ -369,12 +369,20 @@ export default function AvailabilityCalendar({
           textAlign: 'center',
           fontSize: '0.9rem'
         }}>
-          ✓ Fecha seleccionada: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-AR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
+          ✓ Fecha seleccionada: {(() => {
+            try {
+              const { parseDateYMD } = require('../utils/catalogUtils')
+              const d = parseDateYMD(selectedDate) || new Date(selectedDate + 'T00:00:00')
+              return d.toLocaleDateString('es-AR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })
+            } catch (e) {
+              return selectedDate
+            }
+          })()}
         </div>
       )}
     </div>

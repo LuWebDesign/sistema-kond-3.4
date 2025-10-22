@@ -5,6 +5,64 @@
   padding: 0;
 }
 
+/* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
+@media (max-width: 600px) {
+  .kond-viewport,
+  .catalog-container,
+  .filters-row,
+  .products-grid,
+  .product-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .filters-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .filters-row .search-input,
+  .filters-row .category-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  header {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .catalog-container {
+    padding: 8px !important;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px;
+  }
+
+  .products-grid > * {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .products-grid .product-card > div:last-child {
+    padding: 12px !important;
+  }
+}
+
 html, body {
   height: 100%;
 }
@@ -100,4 +158,368 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/*
+ * Mantener el ancho visual del sistema en 375px para dispositivos pequeos.
+ * Evita que header y tarjetas se reduzcan demasiado en pantallas extremadamente estrechas.
+ * Comportamiento: para viewports <= 420px la clase .kond-viewport fija width/min-width a 375px.
+ */
+.kond-viewport {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 420px) {
+  .kond-viewport {
+    /* ocupar 100% del viewport en dispositivos pequeños */
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* quitar overflow-x forzado para evitar que la UI se muestre encogida */
+  body {
+    overflow-x: visible;
+  }
+}
+
+/* Filtros del catálogo: centrar y evitar que "Todas las categorías" salga de pantalla */
+.filters-row {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+/* En pantallas pequeñas (<=600px) apilar los controles y centrarlos */
+@media (max-width: 600px) {
+  .filters-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
+
+  }
+
+  .filters-row .category-select {
+    width: calc(100% - 40px);
+    max-width: 320px;
+    text-align: center;
+  }
+}
+
+/* Responsivo móvil <=560px: filtros y tarjetas */
+@media (max-width: 560px) {
+  /* Ajustar contenedor principal del catálogo */
+  .catalog-container {
+    padding: 12px !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Forzar apilado y ancho completo en filtros */
+  .filters-row {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px !important;
+    align-items: stretch;
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .filters-row .search-input,
+  .filters-row .category-select {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box;
+    display: block;
+  }
+
+  /* Ajuste de paddings para evitar que sobresalgan del contenedor */
+  .filters-row .search-input { 
+    padding-left: 12px; 
+    padding-right: 12px; 
+  }
+  .filters-row .category-select { 
+    padding-left: 12px; 
+    padding-right: 12px; 
+  }
+
+  /* Evitar distorsión de tarjetas: una columna */
+  .products-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px;
+  }
+
+  .products-grid > * {
+    /* asegurar un tamaño mínimo y permitir que el contenido fluya correctamente */
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Ajustes en ProductCard para mobile */
+  .products-grid .product-card {
+    display: block;
+  }
+
+  /* Reducir padding interno para que no parezcan comprimidas */
+  .products-grid .product-card > div:last-child {
+    padding: 12px !important;
+  }
+}
+
+/* Reglas específicas para 375px y similar: garantizar 100% del ancho */
+@media (max-width: 400px) {
+  .kond-viewport,
+  .catalog-container,
+  .filters-row,
+  .products-grid,
+  .product-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Forzar el grid de filtros a una columna para evitar overflow */
+  .filters-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Asegurar que ambos controles ocupen 100% */
+  .filters-row .search-input,
+  .filters-row .category-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  /* Asegurar que el header también ocupe el 100% */
+  header {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Padding mínimo para evitar que el contenido toque los bordes */
+  .catalog-container {
+    padding: 8px !important;
+  }
+}
+
+/* Estilos para tarjetas de 'Mis Pedidos' */
+.user-order-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.user-order-card .uoc-right {
+  justify-self: end;
+  align-self: start;
+}
+
+/* Nueva UI: uoc-card (estilo unificado PC / Mobile) */
+.uoc-card {
+  background: #0b0b0b;
+  color: #fff;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #1f2937;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+}
+
+.uoc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.uoc-date-pill {
+  background: #374151;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+.uoc-order-id {
+  font-size: 0.875rem;
+  opacity: 0.85;
+}
+
+.uoc-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.uoc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.uoc-badge-status { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+.uoc-badge-payment { background: rgba(16,185,129,0.06); color: #10b981; border: 1px solid rgba(16,185,129,0.12); }
+
+.uoc-products { background: #0f172a; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.uoc-products-row { display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; opacity:0.85; margin-bottom:6px }
+.uoc-products-title { font-size:0.95rem; font-weight:700; color:#f1f5f9 }
+
+.uoc-delivery { font-size:0.85rem; color:#cbd5e1; margin-bottom:8px }
+
+.uoc-payments { background:#0f172a; border-radius:12px; padding:12px; margin-bottom:8px; font-size:0.85rem }
+.uoc-pay-row { display:flex; justify-content:space-between; align-items:center }
+.uoc-pay-seña { color:#4ade80; font-weight:700 }
+.uoc-pay-rest { color:#fbbf24; font-weight:700 }
+
+.uoc-total { background:#0b1220; border-radius:12px; padding:12px; text-align:right; border:1px solid #374151 }
+.uoc-total-label { font-size:0.75rem; text-transform:uppercase; color:#9ca3af; margin-bottom:4px }
+.uoc-total-amount { font-size:1.25rem; font-weight:800; color:#fff }
+
+/* Mobile tweaks: asegurar que en pantallas pequeñas todo encaje y se vea como el HTML proporcionado */
+@media (max-width: 600px) {
+  .uoc-card { padding: 16px; border-radius: 18px; }
+  .user-order-card { grid-template-columns: 1fr; }
+  .uoc-total { text-align: right }
+}
+
+/* Confirm modal styles */
+.confirm-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1200; }
+.confirm-modal__backdrop { position: absolute; inset: 0; background: rgba(2,6,23,0.6); }
+.confirm-modal__box { position: relative; background: #0b1220; color: #fff; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); display:flex; gap:12px; align-items:center; z-index: 5; max-width: 92%; }
+.confirm-modal__icon { flex: 0 0 48px; }
+.confirm-modal__title { font-weight: 800; font-size: 1rem; }
+.confirm-modal__message { font-size: 0.9rem; color: #cbd5e1; }
+.confirm-modal__content { display:flex; flex-direction:column; gap:4px; }
+.confirm-modal__close { margin-left: 12px; background: transparent; color: #fff; border: 1px solid #374151; padding: 8px 12px; border-radius: 10px; cursor:pointer }
+
+
+/* Ocultar por defecto las secciones pensadas sólo para móvil (evita duplicados en desktop) */
+.user-order-card .uoc-mobile-header,
+.user-order-card .uoc-badges-mobile,
+.user-order-card .uoc-products-preview,
+.user-order-card .uoc-mobile-footer {
+  display: none;
+}
+
+/* Mobile: diseño basado en la imagen HTML de referencia */
+@media (max-width: 600px) {
+  .user-order-card {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 16px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+  width: 100% !important;
+  /* permitir ocupar todo el ancho en pantallas pequeñas (incluye 375px) */
+  max-width: 100% !important;
+    margin: 0 auto !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Ocultar elementos desktop */
+  .user-order-card .uoc-left,
+  .user-order-card .uoc-summary-row,
+  .user-order-card .uoc-right {
+    display: none;
+  }
+
+  /* Mostrar elementos mobile con espaciado correcto */
+  .user-order-card .uoc-mobile-header {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .user-order-card .uoc-badges-mobile {
+    display: flex;
+    margin-bottom: 12px;
+  }
+
+  .user-order-card .uoc-products-preview {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .user-order-card .uoc-mobile-footer {
+    display: block;
+  }
+
+  /* Asegurar que el footer móvil (total) ocupe el ancho completo y esté dentro de la tarjeta */
+  .user-order-card .uoc-mobile-footer > div {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Ocultar el total de la columna derecha en mobile (desktop-only) */
+  .user-order-card .uoc-right {
+    display: none !important;
+  }
+
+  /* Transiciones para expandir detalles */
+  .user-order-card .uoc-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 300ms ease-in-out;
+    padding: 0;
+  }
+
+  .user-order-card.expanded .uoc-details {
+    max-height: 2000px;
+    padding: 12px 0;
+  }
+
+  .user-order-card.expanded .uoc-products-preview {
+    display: none;
+  }
+
+  /* Mejorar la interacción táctil */
+  .user-order-card:hover {
+    transform: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .user-order-card .uoc-products-preview > div {
+    transition: background-color 0.2s ease;
+  }
+
+  .user-order-card .uoc-products-preview > div:hover {
+    background: #334155 !important;
+  }
+
+  /* Ocultar el bloque de detalle de seña en mobile (lo mostramos sólo en el footer móvil) */
+  .user-order-card .uoc-detail-sena {
+    display: none !important;
+  }
+
+  /* Evitar que imágenes o thumbnails provoquen overflow en móviles */
+  .user-order-card img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }

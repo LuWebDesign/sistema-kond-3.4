@@ -17,7 +17,7 @@ const minutesToTime = (minutes) => {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }
 
-export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion }) {
+export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion }) {
   const thumbnail = getProductThumbnail(pedido)
   const seña = pedido.estadoPago === 'seña_pagada'
     ? (pedido.montoRecibido || pedido.total * 0.5)
@@ -133,14 +133,21 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
           📦 {pedido.productos.length} producto{pedido.productos.length > 1 ? 's' : ''}
         </div>
 
-        {/* Información de tiempo de producción */}
-        {tiempoTotalMinutos > 0 && (
+        {/* Información de tiempo de producción (calculada desde el pedido o pasada desde el calendario) */}
+        {tiempoProduccion && (typeof tiempoProduccion === 'object') ? (
           <div className={styles.tiempoProduccion}>
-            <span>⏱️ Tiempo total: {tiempoTotalFormatted}</span>
-            {tiempoTotalMinutos > 0 && (
-              <span>({tiempoTotalMinutos} min)</span>
-            )}
+            <span>⏱️ Tiempo de producción: {tiempoProduccion.formatted}</span>
+            <span> ({tiempoProduccion.minutos} min)</span>
           </div>
+        ) : (
+          tiempoTotalMinutos > 0 && (
+            <div className={styles.tiempoProduccion}>
+              <span>⏱️ Tiempo total: {tiempoTotalFormatted}</span>
+              {tiempoTotalMinutos > 0 && (
+                <span>({tiempoTotalMinutos} min)</span>
+              )}
+            </div>
+          )
         )}
 
         {/* Resumen financiero */}

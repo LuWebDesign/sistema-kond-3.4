@@ -201,7 +201,8 @@ function showCalendarModal(dateStr) {
   // Mostrar fecha en el modal
   const modalDateDisplay = document.getElementById('modalDateDisplay');
   if (modalDateDisplay) {
-    const date = new Date(dateStr + 'T00:00:00');
+  const { parseDateYMD } = require('./utils/catalogUtils')
+  const date = parseDateYMD(dateStr) || new Date(dateStr + 'T00:00:00');
     modalDateDisplay.textContent = date.toLocaleDateString('es-AR', { 
       weekday: 'long', 
       year: 'numeric', 

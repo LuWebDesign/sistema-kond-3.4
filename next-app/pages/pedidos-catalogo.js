@@ -231,6 +231,79 @@ export default function PedidosCatalogo() {
     }
   }
 
+  // Cuando el admin cambia la fecha de producción desde la tarjeta, persistir el cambio
+  const handleChangeFechaProduccion = (e) => {
+    if (!selectedPedido) return
+    const valor = e.target.value || ''
+
+    // Actualizar selectedPedido localmente
+    const updatedPedido = { ...selectedPedido, fechaProduccion: valor }
+
+    // Si hay una fecha y el pedido está confirmado, asignarlo automáticamente al calendario
+    if (valor && updatedPedido.estado === 'confirmado') {
+      updatedPedido.asignadoAlCalendario = true
+      updatedPedido.estado = 'en_produccion'
+      updatedPedido.fechaProduccionCalendario = valor
+    }
+
+    // Actualizar lista global pedidosCatalogo
+    const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
+    if (index !== -1) {
+      const updatedPedidos = [...pedidosCatalogo]
+      updatedPedidos[index] = updatedPedido
+      setPedidosCatalogo(updatedPedidos)
+      persistAndEmit(updatedPedidos, updatedPedido.id, 'fechaProduccionChanged', valor)
+      setSelectedPedido(updatedPedido)
+    } else {
+      // Si por alguna razón no está en el array, solo actualizar el seleccionado
+      setSelectedPedido(updatedPedido)
+    }
+  }
+
+  // Cuando el admin cambia la fecha confirmada de entrega, persistir el cambio
+  const handleChangeFechaConfirmada = (e) => {
+    if (!selectedPedido) return
+    const valor = e.target.value || ''
+
+    const updatedPedido = { ...selectedPedido, fechaConfirmadaEntrega: valor }
+
+    // Si hay una fecha de entrega y el pedido está confirmado, asignarlo al calendario
+    if (valor && updatedPedido.estado === 'confirmado') {
+      updatedPedido.asignadoAlCalendario = true
+      updatedPedido.estado = 'en_produccion'
+      updatedPedido.fechaEntregaCalendario = valor
+    }
+
+    const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
+    if (index !== -1) {
+      const updatedPedidos = [...pedidosCatalogo]
+      updatedPedidos[index] = updatedPedido
+      setPedidosCatalogo(updatedPedidos)
+      persistAndEmit(updatedPedidos, updatedPedido.id, 'fechaEntregaChanged', valor)
+      setSelectedPedido(updatedPedido)
+    } else {
+      setSelectedPedido(updatedPedido)
+    }
+  }
+
+  // Helper para persistir pedidosCatalogo y emitir un evento homogéneo
+  function persistAndEmit(updatedPedidosArray, pedidoId, tipo = 'update', fecha = null) {
+    try {
+      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidosArray))
+    } catch (err) {
+      console.warn('No se pudo persistir pedidosCatalogo en localStorage:', err)
+    }
+
+    try {
+      const detail = { orderId: pedidoId, type: tipo }
+      if (fecha) detail.fecha = fecha
+      detail.timestamp = new Date().toISOString()
+      window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail }))
+    } catch (err) {
+      // noop
+    }
+  }
+
   const calculateStats = () => {
     const now = new Date()
     const thisMonth = now.getMonth()
@@ -444,11 +517,12 @@ export default function PedidosCatalogo() {
 
   const formatFechaEntrega = (pedido) => {
     if (pedido.fechaConfirmadaEntrega) {
-      const fecha = new Date(pedido.fechaConfirmadaEntrega + 'T00:00:00')
-      return fecha.toLocaleDateString('es-AR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
+      const { parseDateYMD } = require('../utils/catalogUtils')
+      const fecha = parseDateYMD(pedido.fechaConfirmadaEntrega) || new Date(pedido.fechaConfirmadaEntrega + 'T00:00:00')
+      return fecha.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       })
     }
     return 'Sin confirmar'
@@ -456,14 +530,45 @@ export default function PedidosCatalogo() {
 
   const updateOrderStatus = (orderId, newStatus) => {
     try {
-      const updatedPedidos = pedidosCatalogo.map(p => 
-        p.id === orderId ? { ...p, estado: newStatus } : p
-      )
+      // Encontrar el pedido original para aplicar reglas de asignación
+      const updatedPedidos = pedidosCatalogo.map(p => {
+        if (p.id !== orderId) return p
+
+        // Base del pedido actualizado
+        const base = { ...p }
+
+        // Si se marca como confirmado
+        if (newStatus === 'confirmado') {
+          base.estado = 'confirmado'
+
+          // Si ya tiene fechas solicitadas, asignarlo al calendario automáticamente
+          const fechaProd = base.fechaProduccion || base.fechaProduccionCalendario || null
+          const fechaEntrega = base.fechaConfirmadaEntrega || base.fechaEntregaCalendario || null
+
+          if (fechaProd || fechaEntrega) {
+            base.asignadoAlCalendario = true
+            base.estado = 'en_produccion'
+            if (fechaProd) base.fechaProduccionCalendario = fechaProd
+            if (fechaEntrega) base.fechaEntregaCalendario = fechaEntrega
+          }
+        }
+
+        // Si se marca como pendiente, limpiar asignaciones para forzar reasignación posterior
+        else if (newStatus === 'pendiente') {
+          base.estado = 'pendiente'
+          base.asignadoAlCalendario = false
+          delete base.fechaProduccionCalendario
+          delete base.fechaEntregaCalendario
+        } else {
+          // Otros estados: simplemente aplicar
+          base.estado = newStatus
+        }
+
+        return base
+      })
+
       setPedidosCatalogo(updatedPedidos)
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
-      try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'update-status', orderId, newStatus } }))
-      } catch (e) {}
+      persistAndEmit(updatedPedidos, orderId, 'update-status')
       return { success: true }
     } catch (error) {
       console.error('Error updating order status:', error)
@@ -477,10 +582,7 @@ export default function PedidosCatalogo() {
         p.id === orderId ? { ...p, estadoPago: newPaymentStatus } : p
       )
       setPedidosCatalogo(updatedPedidos)
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
-      try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'update-payment', orderId, newPaymentStatus } }))
-      } catch (e) {}
+      persistAndEmit(updatedPedidos, orderId, 'update-payment')
       return { success: true }
     } catch (error) {
       console.error('Error updating payment status:', error)
@@ -548,7 +650,8 @@ export default function PedidosCatalogo() {
 
   const formatFechaProduccion = (pedido) => {
     if (pedido.fechaProduccion) {
-      const fecha = new Date(pedido.fechaProduccion + 'T00:00:00')
+  const { parseDateYMD } = require('../utils/catalogUtils')
+  const fecha = parseDateYMD(pedido.fechaProduccion) || new Date(pedido.fechaProduccion + 'T00:00:00')
       return fecha.toLocaleDateString('es-AR', { 
         day: '2-digit', 
         month: '2-digit', 
@@ -598,11 +701,7 @@ export default function PedidosCatalogo() {
       updatedPedidos[index] = selectedPedido
       
       setPedidosCatalogo(updatedPedidos)
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
-      try {
-        localStorage.setItem('pedidosCatalogo_updated', new Date().toISOString())
-      } catch (e) { /* ignore */ }
-      try { window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { pedidoId: selectedPedido.id } })) } catch(e) {}
+      persistAndEmit(updatedPedidos, selectedPedido.id, 'save-changes')
       
       // LÓGICA FINANCIERA: Registrar movimientos según cambios de estado de pago
       if (previoEstadoPago !== nuevoEstadoPago) {
@@ -701,13 +800,17 @@ export default function PedidosCatalogo() {
 
   const buildCalendarCartFromPedido = (pedido) => {
     if (!pedido || !Array.isArray(pedido.productos)) return []
-    return pedido.productos.map(item => ({
-      name: item.nombre,
-      measures: item.medidas || '',
-      price: item.precioUnitario || (Number(item.subtotal || 0) / Math.max(1, Number(item.cantidad || 1))),
-      quantity: Number(item.cantidad || 1),
-      tiempoUnitario: item.tiempoUnitario || '00:00:00'
-    }))
+    return pedido.productos.map(item => {
+      const productData = getProductData(item)
+      return {
+        name: item.nombre,
+        measures: item.medidas || '',
+        price: item.precioUnitario || (Number(item.subtotal || 0) / Math.max(1, Number(item.cantidad || 1))),
+        quantity: Number(item.cantidad || 1),
+        tiempoUnitario: productData.tiempoUnitario || item.tiempoUnitario || '00:00:00',
+        precioPorMinuto: productData.precioPorMinuto || 0
+      }
+    })
   }
 
   const confirmAssign = () => {
@@ -1308,7 +1411,7 @@ export default function PedidosCatalogo() {
                     <input
                       type="date"
                       value={selectedPedido.fechaConfirmadaEntrega || ''}
-                      onChange={(e) => setSelectedPedido({ ...selectedPedido, fechaConfirmadaEntrega: e.target.value })}
+                      onChange={(e) => handleChangeFechaConfirmada(e)}
                       className={styles.inputNew}
                     />
                   </div>
@@ -1317,7 +1420,7 @@ export default function PedidosCatalogo() {
                     <input
                       type="date"
                       value={selectedPedido.fechaProduccion || ''}
-                      onChange={(e) => setSelectedPedido({ ...selectedPedido, fechaProduccion: e.target.value })}
+                      onChange={(e) => handleChangeFechaProduccion(e)}
                       className={styles.inputNew}
                     />
                   </div>
@@ -1469,7 +1572,14 @@ export default function PedidosCatalogo() {
                         <div>Cliente: {selectedPedido.cliente?.nombre} {selectedPedido.cliente?.apellido}</div>
                         <div>Items: {selectedPedido.productos?.length || 0}</div>
                         <div>Total: {formatCurrency(selectedPedido.total || 0)}</div>
-                        <div style={{ marginTop: '8px' }}>Fecha seleccionada: {selectedAssignDate || '—'}</div>
+                        <div style={{ marginTop: '8px' }}>
+                          Fecha seleccionada: {selectedAssignDate || '—'}
+                          {selectedAssignDate && (
+                            <div style={{ marginTop: '6px', color: '#059669', fontWeight: 600 }}>
+                              ✅ Ese día se entrega
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
