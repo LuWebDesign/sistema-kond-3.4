@@ -21,12 +21,8 @@ const nextConfig = {
     ]
   },
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*' // proxy to backend in dev
-      }
-    ]
+    // Sin backend Express: no reescrituras a /api
+    return []
   }
 }
 
