@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Productos Láser - Megafibro</title>
+  <!-- Tipografía -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- CSS del catálogo -->
+  <link rel="stylesheet" href="css/catalog.css">
+  <!-- Estilos de modales (para ver imágenes) -->
+  <link rel="stylesheet" href="css/modals.css">
+  <!-- Estilos de calendario (usado en Checkout - Transferencia) -->
+  <link rel="stylesheet" href="css/calendar.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  
+  <style>
+    /* Estilos para la sección de inicio */
+    .hero-inicio {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      padding: 80px 0;
+      min-height: 70vh;
+    }
+    
+    .hero-content {
+      max-width: 600px;
+    }
+    
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 16px;
+    }
+    
+    .hero-description {
+      font-size: 1.1rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    
+    .hero-features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px;
+      background: rgba(59, 130, 246, 0.05);
+      border-radius: 12px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .feature-icon {
+      font-size: 24px;
+      margin-top: 4px;
+    }
+    
+    .feature-item h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    
+    .feature-item p {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+    
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-hero {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-hero.primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-hero.primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-hero.secondary {
+      background: white;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .btn-hero.secondary:hover {
+      background: #f9fafb;
+      border-color: #3b82f6;
+      color: #3b82f6;
+      transform: translateY(-2px);
+    }
+    
+    .hero-image {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .product-showcase {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .showcase-item {
+      background: white;
+      padding: 30px 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .showcase-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 16px 40px rgba(59, 130, 246, 0.2);
+      border-color: #3b82f6;
+    }
+    
+    .showcase-icon {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 12px;
+    }
+    
+    .showcase-item span:last-child {
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+
+    
+    /* Responsivo */
+    @media (max-width: 968px) {
+      .hero-inicio {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+        padding: 60px 0;
+      }
+      
+      .hero-title {
+        font-size: 2.8rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.5rem;
+      }
+      
+      .hero-features {
+        grid-template-columns: 1fr;
+      }
+      
+
+      
+      .product-showcase {
+        max-width: 300px;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .hero-title {
+        font-size: 2.2rem;
+      }
+      
+      .hero-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn-hero {
+        width: 100%;
+        justify-content: center;
+        max-width: 280px;
+      }
+      
+      .product-showcase {
+        grid-template-columns: 1fr;
+        max-width: 200px;
+      }
+    }
+
+    /* Estilos base del carrito (por defecto - tema claro) */
+    [data-theme="light"] .cart-modal,
+    .cart-modal {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+    }
+
+    [data-theme="light"] .cart-modal-content,
+    .cart-modal-content {
+      background: white;
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.1);
+    }
+
+    [data-theme="light"] .cart-header,
+    .cart-header {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+    }
+
+    [data-theme="light"] .btn-close-cart,
+    .btn-close-cart {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="light"] .btn-close-cart:hover,
+    .btn-close-cart:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="light"] .cart-body,
+    .cart-body {
+      background: white;
+      color: #334155;
+    }
+
+    [data-theme="light"] .cart-empty,
+    .cart-empty {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      color: #64748b;
+      border: 2px dashed #cbd5e1;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item,
+    .cart-modal .cart-item {
+      background: white !important;
+      border: 1px solid #e2e8f0 !important;
+      color: #374151 !important;
+      margin-bottom: 20px;
+    }
+
+    [data-theme="light"] .cart-item:hover,
+    .cart-item:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    }
+
+    [data-theme="light"] .cart-coupon,
+    .cart-coupon {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #f59e0b;
+    }
+
+    [data-theme="light"] .cart-modal .cart-coupon input,
+    .cart-modal .cart-coupon input {
+      border-color: #f59e0b !important;
+      background: white !important;
+      color: #6b7280 !important;
+    }
+
+    [data-theme="light"] .cart-coupon input:focus,
+    .cart-coupon input:focus {
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    [data-theme="light"] .btn-apply-coupon,
+    .btn-apply-coupon {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    [data-theme="light"] .cart-summary-box,
+    .cart-summary-box {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 1px solid #e2e8f0;
+    }
+
+    [data-theme="light"] .cart-summary-row,
+    .cart-summary-row {
+      color: #334155;
+      border-bottom-color: #e2e8f0;
+    }
+
+    [data-theme="light"] .cart-summary-row.total,
+    .cart-summary-row.total {
+      color: #059669;
+      border-top-color: #059669;
+    }
+
+    [data-theme="light"] .cart-summary-row.discount,
+    .cart-summary-row.discount {
+      color: #dc2626;
+    }
+
+    [data-theme="light"] .cart-footer,
+    .cart-footer {
+      background: linear-gradient(135deg, #f8fafc, #ffffff);
+      border-top-color: #e2e8f0;
+    }
+
+    [data-theme="light"] .btn-checkout,
+    .btn-checkout {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+    }
+
+    [data-theme="light"] .btn-checkout:hover,
+    .btn-checkout:hover {
+      box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+    }
+
+    [data-theme="light"] #closeCartBtnFooter,
+    #closeCartBtnFooter {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #cbd5e1;
+    }
+
+    [data-theme="light"] #closeCartBtnFooter:hover,
+    #closeCartBtnFooter:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    /* Tema oscuro para el carrito */
+    [data-theme="dark"] .cart-modal {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    [data-theme="dark"] .cart-modal-content {
+      background: #1e293b;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      border: 1px solid #374151;
+    }
+
+    [data-theme="dark"] .cart-header {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      color: white;
+    }
+
+    [data-theme="dark"] .btn-close-cart {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    [data-theme="dark"] .btn-close-cart:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    [data-theme="dark"] .cart-body {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .cart-empty {
+      background: linear-gradient(135deg, #334155, #475569);
+      color: #94a3b8;
+      border: 2px dashed #64748b;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item {
+      background: #334155 !important;
+      border: 1px solid #475569 !important;
+      color: #e2e8f0 !important;
+      margin-bottom: 20px;
+    }
+
+    [data-theme="dark"] .cart-item:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      background: #3f4a5f;
+    }
+
+    [data-theme="dark"] .cart-coupon {
+      background: linear-gradient(135deg, #451a03, #78350f);
+      border: 1px solid #92400e;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-coupon input {
+      border-color: #92400e !important;
+      background: #374151 !important;
+      color: #9ca3af !important;
+    }
+
+    [data-theme="dark"] .cart-coupon input:focus {
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+      background: #475569;
+    }
+
+    [data-theme="dark"] .btn-apply-coupon {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: white;
+    }
+
+    [data-theme="dark"] .cart-summary-box {
+      background: linear-gradient(135deg, #334155, #475569);
+      border: 1px solid #64748b;
+    }
+
+    [data-theme="dark"] .cart-summary-row {
+      color: #e2e8f0;
+      border-bottom-color: #64748b;
+    }
+
+    [data-theme="dark"] .cart-summary-row.total {
+      color: #10b981;
+      border-top-color: #10b981;
+    }
+
+    [data-theme="dark"] .cart-summary-row.discount {
+      color: #f87171;
+    }
+
+    [data-theme="dark"] .cart-footer {
+      background: linear-gradient(135deg, #334155, #1e293b);
+      border-top-color: #475569;
+    }
+
+    [data-theme="dark"] .btn-checkout {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    [data-theme="dark"] .btn-checkout:hover {
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    [data-theme="dark"] #closeCartBtnFooter {
+      background: #475569;
+      color: #94a3b8;
+      border-color: #64748b;
+    }
+
+    [data-theme="dark"] #closeCartBtnFooter:hover {
+      background: #64748b;
+      color: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    /* Espaciado mejorado para ambos temas - Override completo */
+    .cart-modal .cart-items {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 20px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .cart-modal .cart-item {
+      margin-bottom: 0 !important;
+      margin-top: 0 !important;
+    }
+
+    .cart-modal .cart-item + .cart-item {
+      margin-top: 20px !important;
+    }
+
+    /* Asegurar que los colores de texto se apliquen correctamente */
+    [data-theme="light"] .cart-modal .cart-item,
+    .cart-modal .cart-item {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item h4 {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item-info h4 {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item-details {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item-price {
+      color: #059669 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item-total {
+      color: #059669 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-coupon input {
+      color: #6b7280 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-coupon input::placeholder {
+      color: #6b7280 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item h4 {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item-info h4 {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item-details {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item-price {
+      color: #10b981 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item-total {
+      color: #10b981 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-coupon input {
+      color: #9ca3af !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-coupon input::placeholder {
+      color: #9ca3af !important;
+    }
+
+    /* Override completo de estilos de texto para tema claro */
+    [data-theme="light"] .cart-modal .cart-item *,
+    .cart-modal .cart-item * {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item .cart-item-price,
+    .cart-modal .cart-item .cart-item-price {
+      color: #059669 !important;
+    }
+
+    [data-theme="light"] .cart-modal .cart-item .cart-item-total {
+      color: #059669 !important;
+    }
+
+    /* Override completo de estilos de texto para tema oscuro */
+    [data-theme="dark"] .cart-modal .cart-item * {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item .cart-item-price {
+      color: #10b981 !important;
+    }
+
+    [data-theme="dark"] .cart-modal .cart-item .cart-item-total {
+      color: #10b981 !important;
+    }
+
+    /* Estilos para "Finalizar Pedido" - Tema de día */
+    [data-theme="light"] .checkout-modal,
+    .checkout-modal {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+
+    [data-theme="light"] .checkout-modal .modal-content,
+    .checkout-modal .modal-content {
+      background: white;
+      box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.1);
+      border-radius: 20px;
+    }
+
+    [data-theme="light"] .checkout-modal .modal-header,
+    .checkout-modal .modal-header {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      padding: 24px 28px;
+      border-radius: 20px 20px 0 0;
+      border-bottom: none;
+    }
+
+    [data-theme="light"] .checkout-modal .modal-header h2,
+    .checkout-modal .modal-header h2 {
+      color: white;
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    [data-theme="light"] .checkout-modal .close-modal,
+    .checkout-modal .close-modal {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    [data-theme="light"] .checkout-modal .close-modal:hover,
+    .checkout-modal .close-modal:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg) scale(1.1);
+    }
+
+    [data-theme="light"] .checkout-modal .modal-body,
+    .checkout-modal .modal-body {
+      background: white;
+      color: #374151;
+      padding: 28px;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-options,
+    .checkout-modal .checkout-options {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option,
+    .checkout-modal .checkout-option {
+      flex: 1;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option:hover,
+    .checkout-modal .checkout-option:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option.active {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option h3,
+    .checkout-modal .checkout-option h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: inherit;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option p,
+    .checkout-modal .checkout-option p {
+      font-size: 14px;
+      margin: 0;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-form,
+    .checkout-modal .checkout-form {
+      margin-bottom: 24px;
+    }
+
+    [data-theme="light"] .checkout-modal .form-input,
+    .checkout-modal .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      background: white;
+      color: #374151;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+
+    [data-theme="light"] .checkout-modal .form-input:focus,
+    .checkout-modal .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: #f8fafc;
+    }
+
+    [data-theme="light"] .checkout-modal .form-input::placeholder {
+      color: #94a3b8;
+    }
+
+    [data-theme="light"] .checkout-modal .delivery-method,
+    .checkout-modal .delivery-method {
+      margin-bottom: 16px;
+    }
+
+    [data-theme="light"] .checkout-modal .delivery-method label,
+    .checkout-modal .delivery-method label {
+      color: #374151;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    [data-theme="light"] .checkout-modal .radio-option,
+    .checkout-modal .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #374151;
+    }
+
+    [data-theme="light"] .checkout-modal .radio-option:hover,
+    .checkout-modal .radio-option:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    [data-theme="light"] .checkout-modal .radio-option input:checked + span,
+    .checkout-modal .radio-option input:checked + span {
+      font-weight: 700;
+      color: #3b82f6;
+    }
+
+    [data-theme="light"] .checkout-modal .btn-checkout,
+    .checkout-modal .btn-checkout {
+      width: 100%;
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+    }
+
+    [data-theme="light"] .checkout-modal .btn-checkout:hover,
+    .checkout-modal .btn-checkout:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(5, 150, 105, 0.4);
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-panel,
+    .checkout-modal .transfer-panel {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-summary,
+    .checkout-modal .transfer-summary {
+      color: #374151;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-summary *,
+    .checkout-modal .transfer-summary * {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-amounts strong,
+    .checkout-modal .transfer-amounts strong {
+      color: #059669 !important;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-amounts,
+    .checkout-modal .transfer-amounts {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-instructions,
+    .checkout-modal .transfer-instructions {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal .transfer-instructions p,
+    .checkout-modal .transfer-instructions p {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal .small-note,
+    .checkout-modal .small-note {
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    [data-theme="light"] .checkout-modal .mis-datos-card,
+    .checkout-modal .mis-datos-card {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    [data-theme="light"] .checkout-modal .mis-datos-toggle,
+    .checkout-modal .mis-datos-toggle {
+      width: 100%;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    [data-theme="light"] .checkout-modal .mis-datos-toggle:hover,
+    .checkout-modal .mis-datos-toggle:hover {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      color: #3b82f6;
+    }
+
+    [data-theme="light"] .checkout-modal .btn-small,
+    .checkout-modal .btn-small {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    [data-theme="light"] .checkout-modal .btn-small:hover,
+    .checkout-modal .btn-small:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Estilos para "Finalizar Pedido" - Tema oscuro (mantener actual) */
+    [data-theme="dark"] .checkout-modal {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    [data-theme="dark"] .checkout-modal .modal-content {
+      background: #1e293b;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      border: 1px solid #374151;
+    }
+
+    [data-theme="dark"] .checkout-modal .modal-header {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      color: white;
+    }
+
+    [data-theme="dark"] .checkout-modal .close-modal {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    [data-theme="dark"] .checkout-modal .close-modal:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    [data-theme="dark"] .checkout-modal .modal-body {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .checkout-modal .checkout-option {
+      background: linear-gradient(135deg, #334155, #475569);
+      border-color: #64748b;
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .checkout-modal .checkout-option:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #3f4a5f, #4a5568);
+    }
+
+    [data-theme="dark"] .checkout-modal .checkout-option.active {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      border-color: #3b82f6;
+    }
+
+    [data-theme="dark"] .checkout-modal .form-input {
+      background: #374151;
+      border-color: #64748b;
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .checkout-modal .form-input:focus {
+      border-color: #3b82f6;
+      background: #475569;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    [data-theme="dark"] .checkout-modal .form-input::placeholder {
+      color: #94a3b8;
+    }
+
+    [data-theme="dark"] .checkout-modal .radio-option {
+      background: #374151;
+      border-color: #64748b;
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .checkout-modal .radio-option:hover {
+      border-color: #3b82f6;
+      background: #475569;
+    }
+
+    [data-theme="dark"] .checkout-modal .transfer-panel {
+      background: linear-gradient(135deg, #334155, #475569);
+      border-color: #64748b;
+    }
+
+    [data-theme="dark"] .checkout-modal .transfer-amounts strong {
+      color: #10b981;
+    }
+
+    [data-theme="dark"] .checkout-modal .small-note {
+      color: #94a3b8;
+    }
+
+    [data-theme="dark"] .checkout-modal .mis-datos-card {
+      background: #334155;
+      border-color: #64748b;
+    }
+
+    [data-theme="dark"] .checkout-modal .mis-datos-toggle {
+      background: linear-gradient(135deg, #475569, #64748b);
+      color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .checkout-modal .mis-datos-toggle:hover {
+      background: linear-gradient(135deg, #64748b, #75859a);
+      color: #3b82f6;
+    }
+
+    [data-theme="dark"] .checkout-modal .btn-small {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    }
+
+    [data-theme="dark"] .checkout-modal .btn-checkout {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    [data-theme="dark"] .checkout-modal .btn-checkout:hover {
+      box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Override completo de colores de texto para tema claro */
+    [data-theme="light"] .checkout-modal *,
+    .checkout-modal * {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal h1,
+    [data-theme="light"] .checkout-modal h2,
+    [data-theme="light"] .checkout-modal h3,
+    [data-theme="light"] .checkout-modal h4,
+    [data-theme="light"] .checkout-modal h5,
+    [data-theme="light"] .checkout-modal h6,
+    .checkout-modal h1,
+    .checkout-modal h2,
+    .checkout-modal h3,
+    .checkout-modal h4,
+    .checkout-modal h5,
+    .checkout-modal h6 {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal p,
+    [data-theme="light"] .checkout-modal span,
+    [data-theme="light"] .checkout-modal div,
+    [data-theme="light"] .checkout-modal label,
+    .checkout-modal p,
+    .checkout-modal span,
+    .checkout-modal div,
+    .checkout-modal label {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal strong,
+    .checkout-modal strong {
+      color: #374151 !important;
+    }
+
+    /* Excepciones para elementos que deben mantener colores específicos */
+    [data-theme="light"] .checkout-modal .modal-header,
+    [data-theme="light"] .checkout-modal .modal-header *,
+    .checkout-modal .modal-header,
+    .checkout-modal .modal-header * {
+      color: white !important;
+    }
+
+    [data-theme="light"] .checkout-modal .checkout-option.active,
+    [data-theme="light"] .checkout-modal .checkout-option.active *,
+    .checkout-modal .checkout-option.active,
+    .checkout-modal .checkout-option.active * {
+      color: white !important;
+    }
+
+    [data-theme="light"] .checkout-modal .btn-checkout,
+    [data-theme="light"] .checkout-modal .btn-checkout *,
+    .checkout-modal .btn-checkout,
+    .checkout-modal .btn-checkout * {
+      color: white !important;
+    }
+
+    [data-theme="light"] .checkout-modal .btn-small,
+    [data-theme="light"] .checkout-modal .btn-small *,
+    .checkout-modal .btn-small,
+    .checkout-modal .btn-small * {
+      color: white !important;
+    }
+
+    /* Colores específicos para cantidades monetarias */
+    [data-theme="light"] .checkout-modal #transferTotal,
+    [data-theme="light"] .checkout-modal #transferDeposit,
+    .checkout-modal #transferTotal,
+    .checkout-modal #transferDeposit {
+      color: #059669 !important;
+      font-weight: 700 !important;
+    }
+
+    /* Override específico para estilos inline del tema día */
+    [data-theme="light"] .checkout-modal div[style*="color"],
+    [data-theme="light"] .checkout-modal p[style*="color"],
+    [data-theme="light"] .checkout-modal span[style*="color"],
+    .checkout-modal div[style*="color"],
+    .checkout-modal p[style*="color"],
+    .checkout-modal span[style*="color"] {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal #pickupAddressText,
+    .checkout-modal #pickupAddressText {
+      color: #374151 !important;
+    }
+
+    [data-theme="light"] .checkout-modal #pickupAddressTextTransfer,
+    .checkout-modal #pickupAddressTextTransfer {
+      color: #374151 !important;
+    }
+
+    /* Override para elementos con colores inline específicos */
+    [data-theme="light"] .checkout-modal [style*="color:#0984e3"],
+    [data-theme="light"] .checkout-modal [style*="color:#cfdcec"],
+    [data-theme="light"] .checkout-modal [style*="color:#cfcfcf"],
+    [data-theme="light"] .checkout-modal [style*="color:#888"],
+    [data-theme="light"] .checkout-modal [style*="color:#b0b0b0"],
+    .checkout-modal [style*="color:#0984e3"],
+    .checkout-modal [style*="color:#cfdcec"],
+    .checkout-modal [style*="color:#cfcfcf"],
+    .checkout-modal [style*="color:#888"],
+    .checkout-modal [style*="color:#b0b0b0"] {
+      color: #374151 !important;
+    }
+
+    /* Regla universal para sobrescribir cualquier estilo inline de color */
+    [data-theme="light"] .checkout-modal [style],
+    .checkout-modal [style] {
+      color: #374151 !important;
+    }
+
+    /* Asegurar que el texto de las instrucciones sea visible */
+    [data-theme="light"] .checkout-modal .transfer-instructions,
+    [data-theme="light"] .checkout-modal .transfer-instructions *,
+    .checkout-modal .transfer-instructions,
+    .checkout-modal .transfer-instructions * {
+      color: #374151 !important;
+    }
+
+    /* Forzar color en divs específicos del pickup */
+    [data-theme="light"] .checkout-modal div:contains("Retiro en local"),
+    .checkout-modal div:contains("Retiro en local") {
+      color: #374151 !important;
+    }
+
+    /* Precios de productos del catálogo en tema día */
+    [data-theme="light"] .catalog-grid .product-card .product-price,
+    [data-theme="light"] .catalog-grid .product-price,
+    [data-theme="light"] .product-card .product-price,
+    [data-theme="light"] .product-price,
+    .catalog-grid .product-card .product-price,
+    .catalog-grid .product-price,
+    .product-card .product-price,
+    .product-price {
+      color: #374151 !important;
+    }
+
+    /* Precios en tarjetas de catálogo con mayor especificidad */
+    [data-theme="light"] #catalogGrid .product-card .product-price,
+    [data-theme="light"] #catalogGrid .product-price,
+    #catalogGrid .product-card .product-price,
+    #catalogGrid .product-price {
+      color: #374151 !important;
+    }
+
+    /* Precios de productos del catálogo en tema oscuro (gris claro) */
+    [data-theme="dark"] .catalog-grid .product-card .product-price,
+    [data-theme="dark"] .catalog-grid .product-price,
+    [data-theme="dark"] .product-card .product-price,
+    [data-theme="dark"] .product-price,
+    [data-theme="dark"] #catalogGrid .product-card .product-price,
+    [data-theme="dark"] #catalogGrid .product-price,
+    .catalog-grid .product-card .product-price[data-theme="dark"],
+    .catalog-grid .product-price[data-theme="dark"] {
+      color: #d1d5db !important;
+    }
+
+    /* Override para cualquier precio con estilos inline en tema oscuro */
+    [data-theme="dark"] .catalog-grid [class*="price"],
+    [data-theme="dark"] .product-card [class*="price"],
+    [data-theme="dark"] [id*="Price"],
+    [data-theme="dark"] [style*="color:#"],
+    [data-theme="dark"] [style*="color: #"] {
+      color: #d1d5db !important;
+    }
+
+    /* Mantener precio en tema claro (refuerzo) */
+    [data-theme="light"] .catalog-grid .product-card .product-price,
+    [data-theme="light"] .catalog-grid .product-price,
+    [data-theme="light"] .product-card .product-price,
+    [data-theme="light"] .product-price {
+      color: #374151 !important;
+    }
+
+    /* Override para cualquier precio con estilos inline */
+    [data-theme="light"] .catalog-grid [class*="price"],
+    [data-theme="light"] .product-card [class*="price"],
+    .catalog-grid [class*="price"],
+    .product-card [class*="price"] {
+      color: #374151 !important;
+    }
+
+    /* Precios generados dinámicamente */
+    [data-theme="light"] .catalog-product-card .product-price,
+    [data-theme="light"] .catalog-product .product-price,
+    .catalog-product-card .product-price,
+    .catalog-product .product-price {
+      color: #374151 !important;
+    }
+
+    /* Títulos y descripciones de opciones de checkout en gris oscuro */
+    [data-theme="light"] .checkout-option h3,
+    [data-theme="light"] .checkout-option p,
+    [data-theme="light"] #whatsappOption h3,
+    [data-theme="light"] #whatsappOption p,
+    [data-theme="light"] #transferOption h3,
+    [data-theme="light"] #transferOption p,
+    .checkout-option h3,
+    .checkout-option p,
+    #whatsappOption h3,
+    #whatsappOption p,
+    #transferOption h3,
+    #transferOption p {
+      color: #374151 !important;
+    }
+
+    /* Específicamente para los textos de las opciones */
+    [data-theme="light"] .checkout-options h3,
+    [data-theme="light"] .checkout-options p,
+    .checkout-options h3,
+    .checkout-options p {
+      color: #374151 !important;
+    }
+
+    /* Opciones de entrega (envío/retiro) en gris oscuro */
+    [data-theme="light"] .radio-option span,
+    [data-theme="light"] .checkout-form .radio-option span,
+    [data-theme="light"] label.radio-option span,
+    .radio-option span,
+    .checkout-form .radio-option span,
+    label.radio-option span {
+      color: #374151 !important;
+    }
+
+    /* Labels de método de entrega */
+    [data-theme="light"] .checkout-form label[style*="font-weight"],
+    [data-theme="light"] .checkout-form label,
+    .checkout-form label[style*="font-weight"],
+    .checkout-form label {
+      color: #374151 !important;
+    }
+
+    /* Título "Mi Carrito" en color blanco */
+    [data-theme="light"] .cart-header h2,
+    [data-theme="light"] .cart-modal .cart-header h2,
+    [data-theme="light"] #cartModal .cart-header h2,
+    .cart-header h2,
+    .cart-modal .cart-header h2,
+    #cartModal .cart-header h2 {
+      color: white !important;
+    }
+
+    /* Textos del modal "Finalizar Pedido" en tema oscuro - gris claro */
+    [data-theme="dark"] .checkout-option h3,
+    [data-theme="dark"] .checkout-option p,
+    [data-theme="dark"] #whatsappOption h3,
+    [data-theme="dark"] #whatsappOption p,
+    [data-theme="dark"] #transferOption h3,
+    [data-theme="dark"] #transferOption p,
+    [data-theme="dark"] .checkout-options h3,
+    [data-theme="dark"] .checkout-options p {
+      color: #d1d5db !important;
+    }
+
+    /* Opciones de entrega en tema oscuro - gris claro */
+    [data-theme="dark"] .radio-option span,
+    [data-theme="dark"] .checkout-form .radio-option span,
+    [data-theme="dark"] label.radio-option span {
+      color: #d1d5db !important;
+    }
+
+    /* Labels de método de entrega en tema oscuro - gris claro */
+    [data-theme="dark"] .checkout-form label[style*="font-weight"],
+    [data-theme="dark"] .checkout-form label {
+      color: #d1d5db !important;
+    }
+
+    /* Campos de entrada en tema oscuro - gris claro */
+    [data-theme="dark"] #checkoutName,
+    [data-theme="dark"] #checkoutPhone,
+    [data-theme="dark"] .checkout-form input[type="text"],
+    [data-theme="dark"] .checkout-form input[type="tel"],
+    [data-theme="dark"] .checkout-form .form-input {
+      color: #d1d5db !important;
+    }
+
+    /* Placeholders en tema oscuro - gris claro */
+    [data-theme="dark"] #checkoutName::placeholder,
+    [data-theme="dark"] #checkoutPhone::placeholder,
+    [data-theme="dark"] .checkout-form input[type="text"]::placeholder,
+    [data-theme="dark"] .checkout-form input[type="tel"]::placeholder,
+    [data-theme="dark"] .checkout-form .form-input::placeholder {
+      color: #9ca3af !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+  <div class="logo">Megafibro</div>
+  
+  <!-- Navegación principal -->
+  <nav class="main-nav">
+    <a href="#inicio-section" class="nav-link active">🏠 Inicio</a>
+    <a href="#catalogo-section" class="nav-link">🛍️ Catálogo</a>
+    <button id="cartNavBtn" class="nav-link cart-nav">🛒 Carrito <span id="navCartCount" class="nav-cart-badge">0</span></button>
+  </nav>
+  
+  <nav class="header-actions">
+    <button class="icon-btn" id="themeToggle" title="Cambiar tema" onclick="toggleTheme()">🌞</button>
+    <button class="icon-btn" id="btnNotifications" title="Notificaciones" aria-haspopup="true" aria-expanded="false">🔔</button>
+    <div id="notificationsPanel" class="notifications-panel" aria-hidden="true"></div>
+    <!-- 'Seguir mi pedido' removido por petición del usuario -->
+    <a href="#" id="openAccountLink" class="tracking-link" style="margin-left:12px;">👤 Mi cuenta</a>
+  <button id="btnCerrarSesionTop" class="btn-logout" title="Cerrar sesión" onclick="testLogout()">Cerrar sesión</button>
+  </nav>
+  </header>
+  <style>
+    /* Estilos para el botón de cerrar sesión en catalog (lado derecho) */
+    .btn-logout {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: inherit;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 12px;
+      font-weight: 600;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.03); }
+  </style>
+  <main class="container">
+    <!-- INICIO -->
+    <section id="inicio-section" class="section">
+      <div class="hero-inicio">
+        <div class="hero-content">
+          <h1 class="hero-title">Bienvenido a Megafibro</h1>
+          <h2 class="hero-subtitle">Productos Láser de Alta Precisión</h2>
+          <p class="hero-description">Descubre nuestra amplia selección de productos cortados con tecnología láser de última generación. Calidad premium, diseños únicos y entrega garantizada.</p>
+          
+          <div class="hero-features">
+            <div class="feature-item">
+              <span class="feature-icon">⚡</span>
+              <div>
+                <h3>Corte Láser de Precisión</h3>
+                <p>Tecnología avanzada para acabados perfectos</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🎯</span>
+              <div>
+                <h3>Diseños Personalizados</h3>
+                <p>Adaptamos cada producto a tus necesidades</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🚚</span>
+              <div>
+                <h3>Entrega Rápida</h3>
+                <p>Envíos seguros y tiempos de entrega garantizados</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">💎</span>
+              <div>
+                <h3>Calidad Premium</h3>
+                <p>Materiales de primera calidad y durabilidad</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="hero-actions">
+            <a href="#catalogo-section" class="btn-hero primary">
+              <span>🛍️</span>
+              <span>Ver Catálogo</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="hero-image">
+          <div class="product-showcase">
+            <div class="showcase-item">
+              <span class="showcase-icon">🔧</span>
+              <span>Herramientas</span>
+            </div>
+            <div class="showcase-item">
+              <span class="showcase-icon">🏠</span>
+              <span>Decoración</span>
+            </div>
+            <div class="showcase-item">
+              <span class="showcase-icon">🎨</span>
+              <span>Arte</span>
+            </div>
+            <div class="showcase-item">
+              <span class="showcase-icon">🎁</span>
+              <span>Regalos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- CATÁLOGO -->
+    <section id="catalogo-section" class="section" style="display: none;">
+      <h1 class="section-title">Catálogo de Productos</h1>
+      <p class="section-sub">Tienda online para tus clientes</p>
+      
+      <!-- Banner de promociones -->
+      <div class="promos-banner">
+        <div class="promo-card">
+          <h3>LASER10</h3>
+          <p>10% off en compras mayores a $10.000</p>
+        </div>
+      </div>
+      
+      <!-- Barra de búsqueda -->
+      <div class="catalog-search">
+        <input type="text" id="catalogSearch" placeholder="Buscar productos...">
+        <select id="catalogFilter">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+      
+      <!-- Grilla de productos -->
+      <div id="catalogGrid" class="catalog-grid"></div>
+      
+      <!-- Carrito flotante -->
+      <button id="cartFloat" class="cart-float">
+        <span>🛒</span>
+        <span id="cartCount" class="cart-badge">0</span>
+      </button>
+    </section>
+  </main>
+
+  <!-- Modal del Carrito -->
+  <div id="cartModal" class="cart-modal">
+    <div class="cart-modal-content">
+      <div class="cart-header">
+        <h2>Mi Carrito</h2>
+        <button id="closeCartBtn" class="btn-close-cart" aria-label="Cerrar carrito">×</button>
+      </div>
+      <div class="cart-body">
+        <div id="cartEmpty" class="cart-empty">Tu carrito está vacío. ¡Agrega productos para continuar!</div>
+        <div id="cartItems" class="cart-items" style="display:none;"></div>
+        <div class="cart-coupon">
+          <input type="text" id="couponInput" placeholder="Ingresa código de cupón">
+          <button id="applyCouponBtn" class="btn-apply-coupon">Aplicar</button>
+        </div>
+        <!-- Ticket visual de promociones aplicadas desde Marketing -->
+        <div id="cartPromoTicket" class="cart-discount-ticket" style="display:none; margin:12px 0; border:1px dashed var(--border-color); padding:10px; border-radius:8px; background: rgba(59,130,246,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div>
+              <div style="font-weight:700;">Promoción aplicada</div>
+              <div id="promoNames" style="font-size:0.9rem; color:var(--muted);">-</div>
+            </div>
+            <div id="promoAmount" style="font-weight:700; color:#ef4444;">- $0</div>
+          </div>
+        </div>
+
+        <!-- Ticket de descuento (se muestra cuando hay cupón activo) -->
+        <div id="cartDiscountTicket" class="cart-discount-ticket" style="display:none; margin:12px 0; border:1px dashed var(--border-color); padding:10px; border-radius:8px; background: rgba(16,185,129,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div>
+              <div style="font-weight:700;">Cupón aplicado: <span id="ticketCode"></span></div>
+              <div id="ticketDesc" style="font-size:0.9rem; color:var(--muted);">Detalle del descuento</div>
+            </div>
+            <div id="ticketAmount" style="font-weight:700; color:var(--danger);">- $0</div>
+          </div>
+        </div>
+
+        <div class="cart-summary">
+          <div class="cart-summary-box">
+            <div class="cart-summary-row">
+              <span>Subtotal</span>
+              <span id="cartSubtotal">$0</span>
+            </div>
+            <div id="cartDiscountRow" class="cart-summary-row discount" style="display:none;">
+              <span>Descuento</span>
+              <span id="cartDiscount">-$0</span>
+            </div>
+            <div class="cart-summary-row total">
+              <span>Total</span>
+              <span id="cartTotal">$0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cart-footer">
+        <button id="btnCheckout" class="btn-checkout">Realizar Pedido</button>
+        <button id="closeCartBtnFooter" class="btn-close-cart">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Checkout -->
+  <div id="checkoutModal" class="checkout-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Finalizar Pedido</h2>
+        <button class="close-modal" id="closeCheckoutBtn" aria-label="Cerrar checkout">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="checkout-options">
+          <div class="checkout-option" id="whatsappOption">
+            <h3>📱 Enviar por WhatsApp</h3>
+            <p>Envía el pedido directamente al chat para confirmar rápido</p>
+          </div>
+          <div class="checkout-option" id="transferOption">
+            <h3>💳 Pagar por Transferencia</h3>
+            <p>Paga el 50% de seña y adjunta el comprobante</p>
+          </div>
+        </div>
+        
+        <!-- Sección WhatsApp (visible por defecto) -->
+        <div id="whatsappSection">
+          <div class="checkout-form">
+            <input type="text" id="checkoutName" class="form-input" placeholder="Nombre completo *" required>
+            <input type="tel" id="checkoutPhone" class="form-input" placeholder="Teléfono de contacto *" required>
+            
+            <!-- Método de entrega -->
+            <div class="delivery-method">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600;">Método de entrega:</label>
+              <div style="display: flex; gap: 12px;">
+                <label class="radio-option">
+                  <input type="radio" name="deliveryMethod" value="envio">
+                  <span>🚚 Envío a domicilio</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="deliveryMethod" value="retiro" checked>
+                  <span>🏪 Retiro en local</span>
+                </label>
+              </div>
+            </div>
+
+            <input type="text" id="checkoutAddress" class="form-input" placeholder="Dirección de entrega *" required>
+            <!-- Información de Retiro en local -->
+            <div id="pickupInfo" style="display:none; margin-top:8px; padding:10px; background:rgba(116,185,255,0.05); border-radius:8px;">
+              <div style="font-weight:700; color:#0984e3;">📍 Retiro en local</div>
+              <div id="pickupAddressText" style="margin-top:6px; color:#cfdcec;">Dirección del local</div>
+              <div style="margin-top:8px; display:flex; gap:8px;">
+                <a id="pickupMapLink" href="https://share.google/BJIz3ApjcmUXg7uk9" target="_blank" rel="noopener noreferrer" class="btn-primary" style="text-decoration:none;">Ver en Google</a>
+                <button id="btnCopyPickup" class="btn-close-cart">Copiar dirección</button>
+              </div>
+            </div>
+            <textarea id="checkoutNotes" class="form-input" rows="3" placeholder="Instrucciones adicionales o personalizaciones"></textarea>
+          </div>
+          <button id="btnWhatsApp" class="btn-checkout">Enviar Pedido a WhatsApp</button>
+        </div>
+        
+        <!-- Sección Transferencia (oculta inicialmente) -->
+        <div id="transferSection" style="display:none;">
+          <div class="transfer-panel">
+            <div class="transfer-summary" style="display:flex; gap:18px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;">
+              <div class="transfer-amounts" style="min-width:220px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Total del pedido:</span><strong id="transferTotal">$0</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>Seña requerida (50%):</span><strong id="transferDeposit">$0</strong></div>
+              </div>
+              <div class="transfer-instructions" style="flex:1; min-width:260px;">
+                <p id="transferNote" style="margin:0 0 6px 0;">Paga el 50% de seña, adjunta el comprobante, Elegí una fecha de entrega disponible.</p>
+                <p style="margin:0; color:#cfcfcf; font-size:0.95rem;">Una vez recibida la seña, confirmamos su fecha de entrega y comenzamos a procesar su pedido.</p>
+              </div>
+            </div>
+
+            <!-- Calendar de disponibilidad para seleccionar fecha de entrega -->
+            <div id="deliveryCalendarWrapper" style="margin:12px 0;">
+              <div id="selectedDateDisplay" style="display:none; font-weight:600; margin-bottom:8px;">Fecha seleccionada: -</div>
+              <div id="deliveryCalendar"></div>
+              <div style="font-size:0.9rem; color:#888; margin-top:8px;">Elegí una fecha de entrega disponible.</div>
+            </div>
+
+              <div class="checkout-form">
+                <!-- Tarjeta colapsable "Mis datos" -->
+                <div class="mis-datos-card">
+                  <button type="button" class="mis-datos-toggle" id="misDatosToggle">Mis datos ▾</button>
+                  <div class="mis-datos-body" id="misDatosBody" style="display:none;">
+                    <div class="mis-datos-row"><label>Nombre</label><div style="display:flex; gap:8px; align-items:center;"><input type="text" id="transferName" class="form-input" readonly><button id="editTransferName" class="btn-small" type="button">Editar</button></div></div>
+                    <div class="mis-datos-row"><label>Teléfono</label><div style="display:flex; gap:8px; align-items:center;"><input type="tel" id="transferPhone" class="form-input" readonly><button id="editTransferPhone" class="btn-small" type="button">Editar</button></div></div>
+                    <div class="mis-datos-row"><label>Email</label><div style="display:flex; gap:8px; align-items:center;"><input type="email" id="transferEmail" class="form-input" readonly><button id="editTransferEmail" class="btn-small" type="button">Editar</button></div></div>
+                  </div>
+                </div>
+
+                <div style="margin-top:6px;">
+                  <label>Dirección de entrega</label>
+                  <input type="text" id="transferAddress" class="form-input">
+
+                  <label style="margin-top:8px; display:block;">Comprobante</label>
+                  <input type="file" id="transferFile" class="form-input" accept="image/jpeg,image/png,application/pdf">
+                  <p class="small-note">Adjunta el comprobante (JPG, PNG o PDF, máx. 5MB)</p>
+                </div>
+              </div>
+              
+              <!-- Método de entrega -->
+              <div class="delivery-method" style="margin-top:10px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Método de entrega:</label>
+                <div style="display: flex; gap: 12px;">
+                  <label class="radio-option">
+                    <input type="radio" name="deliveryMethodTransfer" value="envio">
+                    <span>🚚 Envío a domicilio</span>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" name="deliveryMethodTransfer" value="retiro" checked>
+                    <span>🏪 Retiro en local</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="pickupInfoTransfer" style="display:none; margin-top:8px; padding:10px; background:rgba(116,185,255,0.05); border-radius:8px;">
+                <div style="font-weight:700; color:#0984e3;">📍 Retiro en local</div>
+                <div id="pickupAddressTextTransfer" style="margin-top:6px; color:#cfdcec;">Av. Siempre Viva 742, Barrio Centro, Ciudad - Provincia</div>
+                <div style="margin-top:8px; display:flex; gap:8px;">
+                  <a id="pickupMapLinkTransfer" href="https://share.google/BJIz3ApjcmUXg7uk9" target="_blank" rel="noopener noreferrer" class="btn-primary" style="text-decoration:none;">Ver en Google</a>
+                  <button id="btnCopyPickupTransfer" class="btn-close-cart">Copiar dirección</button>
+                </div>
+              </div>
+
+              <div class="bank-data" style="margin-top:14px;">
+                <h5 style="margin:0 0 8px 0;">Datos para la transferencia</h5>
+                <div style="display:flex; gap:10px; align-items:center;"><strong>Banco:</strong><span> Galicia</span></div>
+                <div style="display:flex; gap:10px; align-items:center; margin-top:6px;"><strong>CBU:</strong><span id="bankCbu">12345678</span><button id="copyCbu" class="btn-small">Copiar CBU</button></div>
+                <div style="display:flex; gap:10px; align-items:center; margin-top:6px;"><strong>Titular:</strong><span>Tu Nombre</span></div>
+                <div style="display:flex; gap:10px; align-items:center; margin-top:6px;"><strong>Alias:</strong><span id="bankAlias">TU.ALIAS.0</span><button id="copyAlias" class="btn-small">Copiar Alias</button></div>
+              </div>
+
+              <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+                <button id="btnSendProof" class="btn-checkout">Enviar Comprobante</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de fecha de entrega -->
+  <div id="dateConfirmModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" style="max-width:480px; text-align:left;">
+      <div class="modal-header">
+        <h3>Confirmar fecha de entrega</h3>
+        <button class="close-modal" id="closeDateConfirm" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body" id="dateConfirmBody" style="min-height:80px;">
+        <!-- Mensaje rellenado por JS -->
+      </div>
+      <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+        <button id="cancelDateBtn" class="btn-close-cart">Cancelar</button>
+        <button id="confirmDateBtn" class="btn-checkout">Solicitar esta fecha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal informativo estilizado -->
+  <div id="infoModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" style="max-width:520px; text-align:left;">
+      <div class="modal-header">
+        <h3 id="infoModalTitle">Aviso</h3>
+        <button class="close-modal" id="closeInfoModal" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body" id="infoModalBody" style="min-height:80px;">
+        <!-- Contenido dinámico -->
+      </div>
+      <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+        <button id="infoModalOk" class="btn-checkout">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Pedido -->
+  <div id="confirmationModal" class="checkout-modal" aria-hidden="true">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
+      <div class="confirmation-icon">✅</div>
+      <h2 style="color: #4CAF50; margin: 20px 0;">¡Pedido Realizado!</h2>
+      <div class="tracking-code">
+        <p style="margin-bottom: 10px;">Tu código de seguimiento es:</p>
+        <div class="code-display" id="trackingCodeDisplay">#PED-2025-001</div>
+      </div>
+      <p style="color: #666; margin: 20px 0;">Guarda este código para hacer seguimiento de tu pedido.</p>
+      <a href="tracking.html" class="btn-checkout" style="display: inline-block; text-decoration: none;">Seguir mi pedido</a>
+      <button id="closeConfirmationBtn" class="btn-close-cart" style="margin-top: 10px;">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- Modal confirmación WhatsApp -->
+  <div id="waConfirmModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h2>Confirmar envío por WhatsApp</h2>
+        <button class="close-modal" id="closeWaConfirm" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body" id="waConfirmBody" style="min-height:120px;">
+        <!-- Contenido rellenado por JS: resumen de pedido -->
+      </div>
+      <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+        <button id="cancelOpenWhatsApp" class="btn-close-cart">Cancelar</button>
+        <button id="confirmOpenWhatsApp" class="btn-checkout">Confirmar y abrir WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS del catálogo -->
+  <!-- Modales (imagen preview) -->
+  <script src="js/modals.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/navigations.js"></script>
+  <script src="js/finanzas.js"></script>
+  <script src="js/promo-engine.js"></script>
+  <script src="js/catalog.js"></script>
+  <!-- Autenticación local (login/signup) -->
+  <script src="js/auth.js"></script>
+  
+  <!-- Image modal (preview al hacer click en miniatura) -->
+  <div id="imageModal" class="image-modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close-modal" aria-label="Cerrar imagen">×</button>
+      <img class="modal-image" src="" alt="Vista previa" style="max-width:90vw; max-height:80vh; display:block; margin:20px auto;" />
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const accLink = document.getElementById('openAccountLink');
+      const logoutBtn = document.getElementById('globalLogoutBtn');
+      // debug helpers
+      function safeLog(...args){ try{ console.log('[catalog.auth]', ...args); }catch(e){} }
+
+      function getCurrentUserSafe(){
+        // En el catálogo SOLO considerar sesiones de catálogo (compradores), no admin
+        try { 
+          if (window.KONDCatalogAuth && typeof window.KONDCatalogAuth.currentUser === 'function') {
+            return window.KONDCatalogAuth.currentUser();
+          }
+          return null; 
+        } catch(e){ return null; }
+      }
+
+      function updateHeaderAuthUI(){
+        const user = getCurrentUserSafe();
+        const topLogoutBtn = document.getElementById('btnCerrarSesionTop');
+        // Toggle logout button
+        if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
+        if (topLogoutBtn) topLogoutBtn.style.display = user ? '' : 'none';
+        // Toggle account link label
+        if (accLink) accLink.textContent = user ? '👤 Mi cuenta' : '👤 Iniciar sesión';
+      }
+
+      // Bind account link (prefer catalog auth for compradores)
+      if (accLink) {
+        accLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          const user = getCurrentUserSafe();
+          if (user) return location.href = 'user.html';
+          // Prefer buyer auth if available
+          if (window.KONDCatalogAuth && typeof window.KONDCatalogAuth.openLoginModal === 'function') return window.KONDCatalogAuth.openLoginModal();
+          if (window.KONDAuth && typeof window.KONDAuth.openLoginModal === 'function') return window.KONDAuth.openLoginModal();
+          location.href = 'user.html';
+        });
+      }
+
+      // Bind logout button -> abre modal de confirmación
+      let logoutConfirmModal = document.getElementById('logoutConfirmModal');
+      let confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      let cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      let closeLogoutConfirm = document.getElementById('closeLogoutConfirm');
+      let topLogoutBtn = document.getElementById('btnCerrarSesionTop');
+
+      // helper to (re)bind when elements become available
+      function bindLogoutHandlers(){
+        logoutConfirmModal = document.getElementById('logoutConfirmModal');
+        confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+        closeLogoutConfirm = document.getElementById('closeLogoutConfirm');
+        topLogoutBtn = document.getElementById('btnCerrarSesionTop');
+
+        if (!logoutConfirmModal) { safeLog('logoutConfirmModal not found yet'); }
+        if (!confirmLogoutBtn) { safeLog('confirmLogoutBtn not found yet'); }
+        if (!topLogoutBtn) { safeLog('btnCerrarSesionTop not found yet'); }
+
+        // open/close modal
+        function openLogoutModal() {
+          if (!logoutConfirmModal) return;
+          logoutConfirmModal.style.display = 'flex';
+          logoutConfirmModal.setAttribute('aria-hidden', 'false');
+        }
+        function closeLogoutModal() {
+          if (!logoutConfirmModal) return;
+          logoutConfirmModal.style.display = 'none';
+          logoutConfirmModal.setAttribute('aria-hidden', 'true');
+        }
+
+        if (topLogoutBtn) {
+          topLogoutBtn.removeEventListener('click', openLogoutModal);
+          topLogoutBtn.addEventListener('click', (e) => { e.preventDefault(); openLogoutModal(); });
+          safeLog('bound top logout button');
+        }
+
+        if (logoutBtn) {
+          logoutBtn.removeEventListener('click', openLogoutModal);
+          logoutBtn.addEventListener('click', (e) => { e.preventDefault(); openLogoutModal(); });
+        }
+
+        if (cancelLogoutBtn) cancelLogoutBtn.addEventListener('click', closeLogoutModal);
+        if (closeLogoutConfirm) closeLogoutConfirm.addEventListener('click', closeLogoutModal);
+
+        if (confirmLogoutBtn) {
+          confirmLogoutBtn.removeEventListener('click', handleConfirmLogout);
+          confirmLogoutBtn.addEventListener('click', handleConfirmLogout);
+        }
+      }
+
+      function handleConfirmLogout(){
+        console.log('🚀 handleConfirmLogout STARTED');
+        
+        // En catálogo solo manejar logout de catálogo, NO tocar sesiones admin
+        try { 
+          if (window.KONDCatalogAuth && typeof window.KONDCatalogAuth.logout === 'function') {
+            window.KONDCatalogAuth.logout();
+            console.log('✅ KONDCatalogAuth.logout() executed');
+          } else {
+            console.log('❌ KONDCatalogAuth.logout not available');
+          }
+        } catch(e){ console.log('💥 KONDCatalogAuth.logout error:', e); }
+        
+        try { 
+          localStorage.removeItem('kond_catalog_session'); 
+          console.log('✅ kond_catalog_session removed from localStorage');
+        } catch(e){ console.log('💥 Catalog session removal error:', e); }
+        
+        console.log('🔄 Updating header UI...');
+        updateHeaderAuthUI();
+        console.log('✅ Header UI updated');
+        
+        if (logoutConfirmModal) { 
+          logoutConfirmModal.style.display = 'none'; 
+          logoutConfirmModal.setAttribute('aria-hidden','true'); 
+          console.log('✅ Modal closed');
+        }
+        
+        // Para catálogo, recargar página en vez de ir a user.html
+        console.log('🔄 Reloading page in 1 second...');
+        setTimeout(() => {
+          try { 
+            location.reload(); 
+          } catch(e){ 
+            console.log('💥 Reload error:', e); 
+          }
+        }, 1000);
+      }
+
+      // initial bind attempt
+      try { bindLogoutHandlers(); } catch(e){ safeLog('bindLogoutHandlers error', e); }
+
+      // if elements are added later, retry binding after a short delay
+      setTimeout(() => { try { bindLogoutHandlers(); } catch(e){ safeLog('retry bind error', e); } }, 400);
+
+      // Simple test function
+      window.testLogout = function(){
+        const catalogUser = getCurrentUserSafe();
+        if (!catalogUser) {
+          alert('No hay usuario de CATÁLOGO logueado. El botón solo funciona para compradores, no para admins.');
+          console.log('=== LOGOUT TEST - NO CATALOG USER ===');
+          console.log('Admin session (NO se toca):', localStorage.getItem('kond_session'));
+          console.log('Catalog session:', localStorage.getItem('kond_catalog_session'));
+          console.log('Para probar logout, primero iniciá sesión como COMPRADOR en el catálogo.');
+          return;
+        }
+        
+        alert('Usuario de catálogo detectado. Procediendo con logout...');
+        console.log('=== LOGOUT TEST - CATALOG USER FOUND ===');
+        console.log('Catalog user:', catalogUser);
+        console.log('Admin session (se mantiene):', localStorage.getItem('kond_session'));
+        console.log('Catalog session (se eliminará):', localStorage.getItem('kond_catalog_session'));
+        
+        // Ahora hacer el logout real
+        triggerLogoutFlow();
+      };
+
+      // Fallback trigger callable from inline onclick
+      window.triggerLogoutFlow = function(){
+        console.log('🔄 triggerLogoutFlow STARTED');
+        const user = getCurrentUserSafe();
+        console.log('👤 Current catalog user:', user);
+        
+        if (!user) {
+          console.log('❌ No catalog user, aborting');
+          alert('No hay usuario de catálogo para desloguar');
+          return;
+        }
+        
+        try {
+          // prefer modal if available
+          const modal = document.getElementById('logoutConfirmModal');
+          console.log('🪟 Modal element found:', !!modal);
+          
+          if (modal) {
+            console.log('🔧 Binding handlers...');
+            try { 
+              bindLogoutHandlers(); 
+              console.log('✅ Handlers bound successfully');
+            } catch(e){ 
+              console.log('❌ bindLogoutHandlers error:', e); 
+            }
+            
+            console.log('🔓 Opening modal...');
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden','false');
+            console.log('✅ Modal should be visible now');
+            
+            // Verificar que el botón de confirmación tenga handler
+            const confirmBtn = document.getElementById('confirmLogoutBtn');
+            console.log('🔘 Confirm button found:', !!confirmBtn);
+            if (confirmBtn) {
+              console.log('🔘 Confirm button onclick:', confirmBtn.onclick);
+              console.log('🔘 Confirm button listeners:', getEventListeners ? getEventListeners(confirmBtn) : 'Cannot check listeners');
+            }
+            return;
+          }
+        } catch(e){ 
+          console.log('💥 Modal error:', e); 
+        }
+        
+        // fallback to native confirm
+        console.log('⚠️ Using native confirm fallback');
+        try {
+          if (confirm('¿Seguro que querés cerrar sesión de catálogo?')) {
+            console.log('✅ User confirmed logout via native confirm');
+            handleConfirmLogout();
+          } else {
+            console.log('❌ User cancelled logout');
+          }
+        } catch(e) { 
+          console.log('💥 Confirm error, forcing logout:', e);
+          handleConfirmLogout(); 
+        }
+      };
+
+      // Init and react to storage changes (otra pestaña)
+      updateHeaderAuthUI();
+      window.addEventListener('storage', (ev) => { 
+        // En catálogo solo reaccionar a cambios de sesión de catálogo
+        if (ev.key === 'kond_catalog_session') updateHeaderAuthUI(); 
+      });
+    });
+  </script>
+  <style>
+    /* Estilos específicos para tracking link */
+    .tracking-link {
+      color: #74b9ff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    
+    .tracking-link:hover {
+      background: rgba(116, 185, 255, 0.1);
+    }
+
+    /* Estilo para nota de confirmación de transferencia */
+    .transfer-confirm {
+      color: #ff9f43; /* naranja claro */
+      font-weight: 600;
+    }
+    
+    /* Estilos para método de entrega */
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .radio-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(116, 185, 255, 0.3);
+    }
+    
+    .radio-option input[type="radio"]:checked + span {
+      font-weight: 700;
+    }
+    
+    /* Modal de confirmación */
+    .confirmation-icon {
+      font-size: 5.5rem;
+      margin: 24px 0;
+      display: inline-block;
+      width: 96px;
+      height: 96px;
+      line-height: 96px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      color: #2e7d32;
+      box-shadow: 0 8px 30px rgba(46,125,50,0.12);
+    }
+    
+    .tracking-code {
+      margin: 30px 0;
+    }
+    
+    .code-display {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #155fa0;
+      padding: 14px 18px;
+      background: linear-gradient(180deg, #f0f8ff 0%, #eaf6ff 100%);
+      border-radius: 10px;
+      border: 1px solid #cfe9ff;
+      margin-top: 10px;
+      font-family: 'Courier New', monospace;
+    }
+    /* Confirmation modal card brighter */
+    #confirmationModal .modal-content {
+      background: #ffffff;
+      color: #222;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 30px 80px rgba(10,20,40,0.08);
+    }
+    /* Asegurar contraste: anular regla global que fuerza texto claro con !important */
+    #confirmationModal .modal-content :not(input):not(textarea):not(button) {
+      color: #222 !important;
+    }
+    #confirmationModal .modal-content .btn-checkout {
+      background: #0984e3;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 18px;
+    }
+  </style>
+  <!-- Login Modal (Usuario) -->
+  <div id="loginModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" role="dialog" style="max-width:420px; margin:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Iniciar sesión</h3>
+        <button class="close-modal" id="closeLoginModal" aria-label="Cerrar">×</button>
+      </div>
+      <div style="margin-top:12px;">
+        <input id="authEmail" type="email" placeholder="Email" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="authPhone" type="text" placeholder="Teléfono (opcional)" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="authPassword" type="password" placeholder="Contraseña" class="form-input" style="width:100%; margin-bottom:12px;" />
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="btnOpenSignup" class="btn-close-cart">Registrarse</button>
+          <button id="btnDoLogin" class="btn-checkout">Iniciar sesión</button>
+        </div>
+        <div style="margin-top:10px; font-size:0.9rem; color:#b0b0b0;">O bien usa tu teléfono o email para buscar pedidos como invitado.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login/Register Modal (Compradores - Catálogo) -->
+  <div id="loginModalCatalog" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" role="dialog" style="max-width:500px; margin:auto; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="modalTitleCatalog">Ingresar como comprador</h3>
+        <button class="close-modal" id="closeLoginModalCatalog" aria-label="Cerrar">×</button>
+      </div>
+      
+      <!-- Login Form -->
+      <div id="loginFormCatalog" style="margin-top:12px;">
+        <input id="authEmailCatalog" type="email" placeholder="Email" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="authPasswordCatalog" type="password" placeholder="Contraseña" class="form-input" style="width:100%; margin-bottom:12px;" />
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="btnShowSignupCatalog" class="btn-close-cart">Registrarse</button>
+          <button id="btnDoLoginCatalog" class="btn-checkout">Iniciar sesión</button>
+        </div>
+      </div>
+      
+      <!-- Registration Form -->
+      <div id="signupFormCatalog" style="margin-top:12px; display:none;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+          <input id="signupNombreCatalog" type="text" placeholder="Nombre" class="form-input" required />
+          <input id="signupApellidoCatalog" type="text" placeholder="Apellido" class="form-input" required />
+        </div>
+        <input id="signupEmailCatalog" type="email" placeholder="Email" class="form-input" style="width:100%; margin-bottom:8px;" required />
+        <input id="signupTelefonoCatalog" type="tel" placeholder="Teléfono" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="signupPasswordCatalog" type="password" placeholder="Contraseña" class="form-input" style="width:100%; margin-bottom:8px;" required />
+        
+        <h4 style="margin:16px 0 8px 0; font-size:0.95rem; color:#64748b;">Datos de envío</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+          <input id="signupProvinciaCatalog" type="text" placeholder="Provincia" class="form-input" required />
+          <input id="signupLocalidadCatalog" type="text" placeholder="Localidad" class="form-input" required />
+        </div>
+        <input id="signupCpCatalog" type="text" placeholder="Código Postal" class="form-input" style="width:100%; margin-bottom:8px;" required />
+        <input id="signupDireccionCatalog" type="text" placeholder="Dirección" class="form-input" style="width:100%; margin-bottom:8px;" required />
+        <textarea id="signupObservacionesCatalog" placeholder="Observaciones (entre calles, referencias, etc.)" class="form-input" style="width:100%; margin-bottom:12px; resize:vertical; min-height:60px;"></textarea>
+        
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="btnShowLoginCatalog" class="btn-close-cart">Ya tengo cuenta</button>
+          <button id="btnDoSignupCatalog" class="btn-checkout">Registrarse</button>
+        </div>
+      </div>
+      
+      <div style="margin-top:10px; font-size:0.9rem; color:#6b7280;">Si solo querés comprar sin registrarte, podés continuar como invitado.</div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Logout -->
+  <div id="logoutConfirmModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" role="dialog" aria-labelledby="logoutConfirmTitle" style="max-width:420px; margin:auto;">
+      <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between;">
+        <h3 id="logoutConfirmTitle" style="margin:0;">Confirmar cierre de sesión</h3>
+        <button class="close-modal" id="closeLogoutConfirm" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0;">¿Seguro que querés cerrar tu sesión?</p>
+      </div>
+      <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; padding:12px;">
+        <button id="cancelLogoutBtn" class="btn-close-cart">Cancelar</button>
+        <button id="confirmLogoutBtn" class="btn-checkout">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth del catálogo (compradores) -->
+  <script src="js/catalog-auth.js"></script>
+  
+  <script>
+    // Sistema de temas
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('catalogTheme', newTheme);
+      
+      // Actualizar icono del botón
+      const themeBtn = document.getElementById('themeToggle');
+      themeBtn.textContent = newTheme === 'light' ? '🌙' : '🌞';
+      themeBtn.title = newTheme === 'light' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro';
+    }
+    
+    // Cargar tema guardado
+    function loadSavedTheme() {
+      const savedTheme = localStorage.getItem('catalogTheme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      const themeBtn = document.getElementById('themeToggle');
+      if (themeBtn) {
+        themeBtn.textContent = savedTheme === 'light' ? '🌙' : '🌞';
+        themeBtn.title = savedTheme === 'light' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro';
+      }
+    }
+    
+    // Navegación del carrito
+    document.addEventListener('DOMContentLoaded', function() {
+      loadSavedTheme();
+      
+      // Navegación entre secciones
+      const navLinks = document.querySelectorAll('.nav-link');
+      const sections = document.querySelectorAll('.section');
+      
+      // Función para mostrar sección
+      function showSection(targetId) {
+        sections.forEach(section => {
+          section.style.display = 'none';
+        });
+        
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.style.display = 'block';
+        }
+        
+        // Actualizar navegación activa
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+        });
+        
+        const activeLink = document.querySelector(`[href="#${targetId}"]`);
+        if (activeLink) {
+          activeLink.classList.add('active');
+        }
+      }
+      
+      // Event listeners para navegación
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.getAttribute('href') && this.getAttribute('href').startsWith('#')) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            showSection(targetId);
+          }
+        });
+      });
+      
+      // Smooth scroll para enlaces internos
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            // Si es una sección, mostrarla primero
+            if (target.classList.contains('section')) {
+              showSection(target.id);
+            } else {
+              // Si es un elemento dentro de una sección, hacer scroll
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+              });
+            }
+          }
+        });
+      });
+      
+      // Mostrar inicio por defecto
+      showSection('inicio-section');
+      
+      // Sincronizar contador de carrito en la navegación
+      const cartNavBtn = document.getElementById('cartNavBtn');
+      const navCartCount = document.getElementById('navCartCount');
+      
+      if (cartNavBtn) {
+        cartNavBtn.addEventListener('click', function() {
+          // Abrir modal del carrito (si existe la función)
+          if (typeof openCartModal === 'function') {
+            openCartModal();
+          }
+        });
+      }
+      
+      // Función para actualizar contador de navegación
+      window.updateNavCartCount = function(count) {
+        if (navCartCount) {
+          navCartCount.textContent = count;
+          navCartCount.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+      };
+      
+      // Conectar función del modal del carrito
+      window.openCartModal = function() {
+        if (typeof showCartModal === 'function') {
+          showCartModal();
+        }
+      };
+      
+      // Inicializar contador
+      updateNavCartCount(0);
+    });
+  </script>
+</body>
+</html>

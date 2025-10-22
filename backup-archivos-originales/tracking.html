@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Pedido - Megafibro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    .back-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .tracking-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+    
+    .search-form {
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn-search {
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .btn-search:hover {
+      background: #5568d3;
+    }
+    
+    .order-details {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .order-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .order-code {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .order-date {
+      opacity: 0.9;
+    }
+    
+    .status-timeline {
+      margin: 30px 0;
+    }
+    
+    .status-step {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .status-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 40px;
+      width: 2px;
+      height: calc(100% + 10px);
+      background: #e0e0e0;
+    }
+    
+    .status-step.active:not(:last-child)::after {
+      background: #667eea;
+    }
+    
+    .status-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      flex-shrink: 0;
+      font-size: 20px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .status-step.active .status-icon {
+      background: #667eea;
+      color: white;
+    }
+    
+    .status-step.completed .status-icon {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .status-info h3 {
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+    
+    .status-info p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .order-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .info-label {
+      color: #666;
+      font-weight: 600;
+    }
+    
+    .info-value {
+      color: #333;
+      text-align: right;
+    }
+    
+    .order-items {
+      margin-top: 20px;
+    }
+    
+    .order-items h3 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    
+    .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .item-name {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .item-quantity {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    
+    .payment-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .payment-status.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .payment-status.partial {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .payment-status.completed {
+      background: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Megafibro</div>
+    <a href="catalog.html" class="back-link">← Volver al catálogo</a>
+  </header>
+  
+  <div class="tracking-container">
+    <h1>🔍 Seguimiento de Pedido</h1>
+    
+    <div class="search-form">
+      <div class="form-group">
+        <label for="trackingCode">Ingresa tu código de seguimiento:</label>
+        <input type="text" id="trackingCode" placeholder="#PED-2025-001">
+      </div>
+      <button class="btn-search" id="btnSearch">Buscar Pedido</button>
+    </div>
+    
+    <div class="error-message" id="errorMessage">
+      No se encontró ningún pedido con ese código. Verifica e intenta nuevamente.
+    </div>
+    
+    <div class="order-details" id="orderDetails">
+      <div class="order-header">
+        <div class="order-code" id="displayCode">#PED-2025-001</div>
+        <div class="order-date" id="displayDate">Fecha: 07/10/2025</div>
+      </div>
+      
+      <div class="status-timeline" id="statusTimeline">
+        <!-- Estados se generan dinámicamente -->
+      </div>
+      
+      <div class="order-info">
+        <h3 style="margin-bottom: 15px; color: #333;">Información del Pedido</h3>
+        <div class="info-row">
+          <span class="info-label">Cliente:</span>
+          <span class="info-value" id="displayCustomer">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Teléfono:</span>
+          <span class="info-value" id="displayPhone">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Entrega:</span>
+          <span class="info-value" id="displayDelivery">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Total:</span>
+          <span class="info-value" id="displayTotal">$0</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Estado de Pago:</span>
+          <span class="info-value"><span class="payment-status pending" id="displayPayment">Sin seña</span></span>
+        </div>
+        <div class="info-row" id="deliveryDateRow" style="display: none;">
+          <span class="info-label">Fecha de Entrega:</span>
+          <span class="info-value" id="displayDeliveryDate">-</span>
+        </div>
+      </div>
+      
+      <div class="order-items">
+        <h3>Productos del Pedido</h3>
+        <div id="itemsList"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Estados posibles del pedido
+    const ORDER_STATES = {
+      'pendiente': { icon: '⏳', label: 'Pendiente de confirmación', desc: 'Revisando tu pedido' },
+      'confirmado': { icon: '✅', label: 'Confirmado', desc: 'Pedido confirmado y en producción' },
+      'produccion': { icon: '🔨', label: 'En producción', desc: 'Trabajando en tu pedido' },
+      'listo': { icon: '📦', label: 'Listo para entregar', desc: 'Tu pedido está listo' },
+      'entregado': { icon: '🎉', label: 'Entregado', desc: 'Pedido completado' },
+      'cancelado': { icon: '❌', label: 'Cancelado', desc: 'Pedido cancelado' }
+    };
+    
+    const stateOrder = ['pendiente', 'confirmado', 'produccion', 'listo', 'entregado'];
+    
+    document.getElementById('btnSearch').addEventListener('click', searchOrder);
+    document.getElementById('trackingCode').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchOrder();
+    });
+    
+    function searchOrder() {
+      const code = document.getElementById('trackingCode').value.trim().toUpperCase();
+      if (!code) return;
+      
+      // Obtener pedidos del catálogo
+      const orders = JSON.parse(localStorage.getItem('catalogOrders') || '[]');
+      const order = orders.find(o => o.trackingCode === code);
+      
+      if (order) {
+        displayOrder(order);
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('orderDetails').style.display = 'block';
+      } else {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('orderDetails').style.display = 'none';
+      }
+    }
+    
+    function displayOrder(order) {
+      // Header
+      document.getElementById('displayCode').textContent = order.trackingCode;
+      document.getElementById('displayDate').textContent = `Fecha: ${formatDate(order.fechaPedido)}`;
+      
+      // Info
+      document.getElementById('displayCustomer').textContent = order.cliente;
+      document.getElementById('displayPhone').textContent = order.telefono;
+      document.getElementById('displayDelivery').textContent = order.metodoEntrega === 'envio' 
+        ? `🚚 Envío: ${order.direccion}` 
+        : '🏪 Retiro en local';
+      document.getElementById('displayTotal').textContent = `$${order.total.toFixed(2)}`;
+      
+      // Estado de pago
+      const paymentEl = document.getElementById('displayPayment');
+      if (order.pagoCompleto) {
+        paymentEl.textContent = 'Pago completo';
+        paymentEl.className = 'payment-status completed';
+      } else if (order.senaPagada) {
+        paymentEl.textContent = `Seña pagada (50%)`;
+        paymentEl.className = 'payment-status partial';
+      } else {
+        paymentEl.textContent = 'Sin seña';
+        paymentEl.className = 'payment-status pending';
+      }
+      
+      // Fecha de entrega
+      if (order.fechaEntrega) {
+        document.getElementById('deliveryDateRow').style.display = 'flex';
+        document.getElementById('displayDeliveryDate').textContent = formatDate(order.fechaEntrega);
+      } else {
+        document.getElementById('deliveryDateRow').style.display = 'none';
+      }
+      
+      // Timeline de estados
+      renderTimeline(order.estado || 'pendiente');
+      
+      // Items
+      renderItems(order.items);
+    }
+    
+    function renderTimeline(currentState) {
+      const timeline = document.getElementById('statusTimeline');
+      timeline.innerHTML = '';
+      
+      const currentIndex = stateOrder.indexOf(currentState);
+      
+      stateOrder.forEach((state, index) => {
+        const stateInfo = ORDER_STATES[state];
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'status-step';
+        
+        if (index < currentIndex) {
+          stepDiv.classList.add('completed');
+        } else if (index === currentIndex) {
+          stepDiv.classList.add('active');
+        }
+        
+        stepDiv.innerHTML = `
+          <div class="status-icon">${stateInfo.icon}</div>
+          <div class="status-info">
+            <h3>${stateInfo.label}</h3>
+            <p>${stateInfo.desc}</p>
+          </div>
+        `;
+        
+        timeline.appendChild(stepDiv);
+      });
+    }
+    
+    function renderItems(items) {
+      const list = document.getElementById('itemsList');
+      list.innerHTML = items.map(item => `
+        <div class="item">
+          <div>
+            <div class="item-name">${item.nombre}</div>
+            <div class="item-quantity">Cantidad: ${item.cantidad}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: 600; color: #667eea;">$${(item.precio * item.cantidad).toFixed(2)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-AR');
+    }
+    
+    // Auto-buscar si hay código en URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      document.getElementById('trackingCode').value = code;
+      searchOrder();
+    }
+  </script>
+</body>
+</html>

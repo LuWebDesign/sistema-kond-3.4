@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mi Cuenta - Pedidos</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>👤</text></svg>">
+  <link rel="stylesheet" href="css/catalog.css">
+  <link rel="stylesheet" href="css/user.css">
+  <link rel="stylesheet" href="css/notifications.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Megafibro</div>
+    <nav class="header-actions">
+      <button class="icon-btn" id="btnNotifications" title="Notificaciones" aria-haspopup="true" aria-expanded="false">🔔</button>
+      <div id="notificationsPanel" class="notifications-panel" aria-hidden="true"></div>
+      <a href="catalog.html" id="openCatalogLink" class="tracking-link">Volver al catálogo →</a>
+    </nav>
+  <!-- Botón de cerrar sesión removido temporalmente -->
+  </header>
+  <main class="container">
+    <div class="user-container">
+      <aside>
+        <div class="profile-header card">
+          <div>
+            <div id="userAvatar" class="avatar">U</div>
+            <div class="avatar-actions">
+                <input id="profileAvatarInput" type="file" accept="image/*" />
+                <button id="btnChangeAvatar" class="btn-secondary">Cambiar foto</button>
+                <button id="btnRemoveAvatar" class="btn-close-cart">Eliminar foto</button>
+              </div>
+          </div>
+          <div>
+            <div id="userDisplayName" class="profile-name">Usuario</div>
+            <div id="userEmailDisplay" style="font-size:0.9rem;color:#bfcbd8;"></div>
+          </div>
+        </div>
+
+        <div class="cards-grid">
+          <div class="card" id="profileCard" aria-expanded="false">
+            <div class="card-header" tabindex="0" role="button" aria-controls="profileCardBody">
+              <h3>Información de perfil</h3>
+              <button class="card-toggle" aria-hidden="true">▾</button>
+            </div>
+            <div class="card-body" id="profileCardBody">
+              <div class="row"><label>Nombre</label><input id="profileName" class="form-input" /></div>
+              <div class="row"><label>Apellido</label><input id="profileApellido" class="form-input" /></div>
+              <div class="row"><label>Teléfono</label><input id="profilePhone" class="form-input" /></div>
+              <div class="row"><label>Provincia</label><input id="profileProvincia" class="form-input" /></div>
+              <div class="row"><label>Localidad</label><input id="profileLocalidad" class="form-input" /></div>
+              <div class="row"><label>Código Postal</label><input id="profileCP" class="form-input" /></div>
+              <div class="row"><label>Dirección</label><input id="profileDireccion" class="form-input" /></div>
+              <div class="row"><label>Observaciones (entre calles)</label><input id="profileObservaciones" class="form-input" /></div>
+              <div class="profile-actions">
+                <button id="btnSaveProfile" class="btn-primary">Guardar</button>
+                <button id="btnEditProfile" class="btn-secondary">Editar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="securityCard" aria-expanded="false">
+            <div class="card-header" tabindex="0" role="button" aria-controls="securityCardBody">
+              <h3>Seguridad</h3>
+              <button class="card-toggle" aria-hidden="true">▾</button>
+            </div>
+            <div class="card-body" id="securityCardBody">
+              <div class="row"><label>Cambiar contraseña</label></div>
+              <div class="row"><input id="currentPassword" type="password" placeholder="Actual" class="form-input" /></div>
+              <div class="row"><input id="newPassword" type="password" placeholder="Nueva" class="form-input" /></div>
+              <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+                <button id="btnChangePassword" class="btn-close-cart">Cambiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section>
+  <h1>Mis compras</h1>
+        
+        <!-- Tabs para separar compras activas y entregadas -->
+        <div class="tabs-container">
+          <div class="tabs-nav">
+            <button id="tabActivas" class="tab-btn active" data-tab="activas">Pendientes</button>
+            <button id="tabEntregadas" class="tab-btn" data-tab="entregadas">Entregadas</button>
+          </div>
+        </div>
+        
+        <!-- Contenido de tabs -->
+        <div id="tabContent-activas" class="tab-content active">
+          <div id="misComprasContainer" class="orders-list"></div>
+          <div id="misComprasEmpty" class="empty-state">Aún no tenés compras pendientes.</div>
+          <!-- Placeholder para paginación (rellenado por JS) -->
+          <div id="misComprasPagination" style="margin-top:12px; text-align:center;"></div>
+        </div>
+        
+        <div id="tabContent-entregadas" class="tab-content">
+          <div id="comprasEntregadasContainer" class="orders-list"></div>
+          <div id="comprasEntregadasEmpty" class="empty-state">Aún no tenés compras entregadas.</div>
+          <!-- Placeholder para paginación de entregadas (rellenado por JS) -->
+          <div id="comprasEntregadasPagination" style="margin-top:12px; text-align:center;"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <!-- Notificaciones -->
+  <div id="notification" class="notification" role="status" aria-live="polite"></div>
+
+  <!-- Scripts: utilidades primero -->
+  <script src="js/utils.js"></script>
+  <script src="js/navigations.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/user.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoutBtn = document.getElementById('globalLogoutBtn');
+      const backLink = document.querySelector('header a[href="catalog.html"]');
+
+      // Modal confirmación logout
+      const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      const closeLogoutConfirm = document.getElementById('closeLogoutConfirm');
+
+      function getCurrentUserSafe(){
+        try { return (window.KONDAuth && typeof window.KONDAuth.currentUser === 'function') ? window.KONDAuth.currentUser() : null; } catch(e){ return null; }
+      }
+      function updateHeaderAuthUI(){
+        const user = getCurrentUserSafe();
+        if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
+        if (backLink) backLink.textContent = user ? '← Volver al catálogo' : '← Ir al catálogo';
+      }
+
+      function openLogoutModal(){
+        if (!logoutConfirmModal) return;
+        logoutConfirmModal.style.display = 'flex';
+        logoutConfirmModal.setAttribute('aria-hidden','false');
+      }
+      function closeLogoutModal(){
+        if (!logoutConfirmModal) return;
+        logoutConfirmModal.style.display = 'none';
+        logoutConfirmModal.setAttribute('aria-hidden','true');
+      }
+
+      if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); openLogoutModal(); });
+      if (cancelLogoutBtn) cancelLogoutBtn.addEventListener('click', closeLogoutModal);
+      if (closeLogoutConfirm) closeLogoutConfirm.addEventListener('click', closeLogoutModal);
+      if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => {
+        try { if (window.KONDAuth && typeof window.KONDAuth.logout === 'function') window.KONDAuth.logout(); } catch(e) {}
+        try { localStorage.removeItem('kond_session'); localStorage.removeItem('user'); } catch(e) {}
+        closeLogoutModal();
+        location.href = 'catalog.html';
+      });
+
+      updateHeaderAuthUI();
+      window.addEventListener('storage', (ev) => { if (ev.key === 'kond_session') updateHeaderAuthUI(); });
+    });
+  </script>
+
+  <!-- Modal Confirmación Logout -->
+  <div id="logoutConfirmModal" class="checkout-modal" aria-hidden="true">
+    <div class="modal-content modal-small" role="dialog" aria-labelledby="logoutConfirmTitle">
+      <div class="modal-header">
+        <h3 id="logoutConfirmTitle">Confirmar cierre de sesión</h3>
+        <button class="close-modal" id="closeLogoutConfirm" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Seguro que querés cerrar tu sesión?</p>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelLogoutBtn" class="btn-close-cart">Cancelar</button>
+        <button id="confirmLogoutBtn" class="btn-checkout">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
