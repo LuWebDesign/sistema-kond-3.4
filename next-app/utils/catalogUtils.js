@@ -304,3 +304,30 @@ export const parseDateYMD = (s) => {
   const d = new Date(str)
   return isNaN(d.getTime()) ? null : d
 }
+
+// Verificar si el usuario actual es administrador
+export const isAdminLogged = () => {
+  try {
+    // Verificar si existe sesión de admin en localStorage
+    const adminSessionStr = localStorage.getItem('adminSession')
+    if (adminSessionStr) {
+      const adminSession = JSON.parse(adminSessionStr)
+      if (adminSession.loggedIn && adminSession.timestamp) {
+        // Verificar que la sesión no haya expirado (24 horas)
+        const sessionAge = Date.now() - adminSession.timestamp
+        const maxAge = 24 * 60 * 60 * 1000 // 24 horas en ms
+        if (sessionAge < maxAge) {
+          return true
+        } else {
+          // Sesión expirada, limpiarla
+          localStorage.removeItem('adminSession')
+        }
+      }
+    }
+
+    return false
+  } catch (error) {
+    console.error('Error verificando permisos de admin:', error)
+    return false
+  }
+}

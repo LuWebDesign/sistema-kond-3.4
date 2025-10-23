@@ -5,6 +5,47 @@
   padding: 0;
 }
 
+/* Variables CSS globales */
+:root {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #64748b;
+  --color-secondary-hover: #475569;
+  --color-success: #059669;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-info: #0891b2;
+
+  --color-text: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-light: #9ca3af;
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+}
+
 /* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
 @media (max-width: 600px) {
   .kond-viewport,
@@ -79,7 +120,7 @@ body[data-theme="dark"] {
   --bg-primary: #1c1f26;
   --bg-secondary: #252a32;
   --bg-tertiary: #1e1e1e;
-  --bg-card: #2a2a2a;
+  --bg-card: #0f1114;
   --bg-input: #333;
   --bg-hover: rgba(255, 255, 255, 0.03);
   
@@ -325,11 +366,18 @@ a:hover {
 }
 
 /* Estilos para tarjetas de 'Mis Pedidos' */
+/* Aplicar diseño mobile a todas las pantallas (PC y mobile) */
 .user-order-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 16px !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .user-order-card .uoc-right {
@@ -339,20 +387,34 @@ a:hover {
 
 /* Nueva UI: uoc-card (estilo unificado PC / Mobile) */
 .uoc-card {
-  background: #0b0b0b;
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
   padding: 16px;
   border-radius: 18px;
-  border: 1px solid #1f2937;
+  border: 1px solid var(--border-color);
   box-shadow: 0 6px 18px rgba(2,6,23,0.6);
 }
 
 .uoc-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.uoc-header-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.uoc-badges-header {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .uoc-date-pill {
   background: #374151;
@@ -385,9 +447,15 @@ a:hover {
 .uoc-badge-status { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
 .uoc-badge-payment { background: rgba(16,185,129,0.06); color: #10b981; border: 1px solid rgba(16,185,129,0.12); }
 
-.uoc-products { background: #0f172a; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.uoc-products { 
+  background: var(--bg-secondary); 
+  border-radius: 12px; 
+  padding: 12px; 
+  margin-bottom: 8px; 
+  width: 100%;
+}
 .uoc-products-row { display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; opacity:0.85; margin-bottom:6px }
-.uoc-products-title { font-size:0.95rem; font-weight:700; color:#f1f5f9 }
+.uoc-products-title { font-size:0.95rem; font-weight:700; color:var(--text-primary) }
 
 .uoc-delivery { font-size:0.85rem; color:#cbd5e1; margin-bottom:8px }
 
@@ -418,108 +486,283 @@ a:hover {
 .confirm-modal__close { margin-left: 12px; background: transparent; color: #fff; border: 1px solid #374151; padding: 8px 12px; border-radius: 10px; cursor:pointer }
 
 
-/* Ocultar por defecto las secciones pensadas sólo para móvil (evita duplicados en desktop) */
+/* Mostrar elementos mobile (ahora usados en todas las pantallas) */
 .user-order-card .uoc-mobile-header,
 .user-order-card .uoc-badges-mobile,
 .user-order-card .uoc-products-preview,
 .user-order-card .uoc-mobile-footer {
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Estilos para elementos mobile */
+.uoc-mobile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.uoc-mobile-header .uoc-order-id {
+  font-size: 0.875rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.uoc-mobile-header .uoc-date-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.uoc-badges-mobile {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.uoc-products-preview {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.uoc-products-preview > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.uoc-mobile-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.uoc-delivery-info {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 8px;
+  text-align: center;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.uoc-mobile-footer .uoc-total {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+/* Ocultar elementos desktop que ya no se usan */
+.user-order-card .uoc-left,
+.user-order-card .uoc-summary-row,
+.user-order-card .uoc-right,
+.user-order-card .uoc-header,
+.user-order-card .uoc-products,
+.user-order-card .uoc-delivery,
+.user-order-card .uoc-payments,
+.user-order-card .uoc-total {
   display: none;
 }
 
-/* Mobile: diseño basado en la imagen HTML de referencia */
-@media (max-width: 600px) {
-  .user-order-card {
-    grid-template-columns: 1fr;
-    gap: 0;
-    padding: 16px !important;
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 16px !important;
+/* Asegurar que el footer móvil (total) ocupe el ancho completo */
+.user-order-card .uoc-mobile-footer > div {
   width: 100% !important;
-  /* permitir ocupar todo el ancho en pantallas pequeñas (incluye 375px) */
-  max-width: 100% !important;
-    margin: 0 auto !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
+  box-sizing: border-box !important;
+}
 
-  /* Ocultar elementos desktop */
-  .user-order-card .uoc-left,
-  .user-order-card .uoc-summary-row,
-  .user-order-card .uoc-right {
-    display: none;
-  }
+/* Transiciones para expandir detalles */
+.user-order-card .uoc-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 300ms ease-in-out;
+  padding: 0;
+}
 
-  /* Mostrar elementos mobile con espaciado correcto */
-  .user-order-card .uoc-mobile-header {
-    display: block;
-    margin-bottom: 12px;
-  }
+.user-order-card.expanded .uoc-details {
+  max-height: 2000px;
+  padding: 12px 0;
+}
 
-  .user-order-card .uoc-badges-mobile {
-    display: flex;
-    margin-bottom: 12px;
-  }
+.user-order-card.expanded .uoc-products-preview {
+  display: none;
+}
 
-  .user-order-card .uoc-products-preview {
-    display: block;
-    margin-bottom: 12px;
-  }
+/* Mejorar la interacción */
+.user-order-card:hover {
+  transform: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
-  .user-order-card .uoc-mobile-footer {
-    display: block;
-  }
+.user-order-card .uoc-products-preview > div {
+  transition: background-color 0.2s ease;
+}
 
-  /* Asegurar que el footer móvil (total) ocupe el ancho completo y esté dentro de la tarjeta */
-  .user-order-card .uoc-mobile-footer > div {
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
+.user-order-card .uoc-products-preview > div:hover {
+  background: #334155 !important;
+}
 
-  /* Ocultar el total de la columna derecha en mobile (desktop-only) */
-  .user-order-card .uoc-right {
-    display: none !important;
-  }
+/* Ocultar el bloque de detalle de seña (lo mostramos sólo en el footer) */
+.user-order-card .uoc-detail-sena {
+  display: none !important;
+}
 
-  /* Transiciones para expandir detalles */
-  .user-order-card .uoc-details {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 300ms ease-in-out;
-    padding: 0;
-  }
+/* Evitar que imágenes provoquen overflow */
+.user-order-card img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
-  .user-order-card.expanded .uoc-details {
-    max-height: 2000px;
-    padding: 12px 0;
-  }
+/* Mobile: ajustes adicionales para pantallas pequeñas */
+@media (max-width: 600px) {
+  .uoc-card { padding: 16px; border-radius: 18px; }
+  .uoc-total { text-align: right }
+}
 
-  .user-order-card.expanded .uoc-products-preview {
-    display: none;
-  }
+/* Tema Light para User Order Cards */
+[data-theme="light"] .uoc-card {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
 
-  /* Mejorar la interacción táctil */
-  .user-order-card:hover {
-    transform: none;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
+[data-theme="light"] .uoc-date-pill {
+  background: #f3f4f6;
+  color: #374151;
+}
 
-  .user-order-card .uoc-products-preview > div {
-    transition: background-color 0.2s ease;
-  }
+[data-theme="light"] .uoc-products-preview {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
 
-  .user-order-card .uoc-products-preview > div:hover {
-    background: #334155 !important;
-  }
+[data-theme="light"] .uoc-delivery-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
 
-  /* Ocultar el bloque de detalle de seña en mobile (lo mostramos sólo en el footer móvil) */
-  .user-order-card .uoc-detail-sena {
-    display: none !important;
-  }
+[data-theme="light"] .uoc-mobile-footer .uoc-total {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
 
-  /* Evitar que imágenes o thumbnails provoquen overflow en móviles */
-  .user-order-card img {
-    max-width: 100%;
-    height: auto;
-    display: block;
+[data-theme="light"] .uoc-products-title {
+  color: #111827;
+}
+
+[data-theme="light"] .uoc-delivery {
+  color: #6b7280;
+}
+
+[data-theme="light"] .uoc-payments {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+[data-theme="light"] .uoc-total {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .uoc-total-label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .uoc-total-amount {
+  color: #111827;
+}
+
+[data-theme="light"] .uoc-badge-status {
+  background: rgba(245,158,11,0.08);
+  color: #d97706;
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+[data-theme="light"] .uoc-badge-payment {
+  background: rgba(16,185,129,0.08);
+  color: #059669;
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+/* Animaciones para componentes desplegables */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos mejorados para badges de categoría */
+.category-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  border-radius: 16px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 16px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.category-badge:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* Estilos mejorados para selector de categorías */
+.category-select {
+  transition: all 0.2s ease !important;
+}
+
+.category-select:hover {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.category-select:focus {
+  outline: none !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
+}
+
+.category-select option {
+  padding: 8px !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.category-select option:hover {
+  background: var(--accent-blue) !important;
+  color: white !important;
+}
+
+/* Estilos para el formulario de perfil */
+.profile-form-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+@media (max-width: 768px) {
+  .profile-form-grid {
+    grid-template-columns: 1fr !important;
   }
 }

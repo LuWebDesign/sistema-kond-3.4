@@ -264,6 +264,11 @@ export function useOrders() {
 
       const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
       
+      // Limitar a los últimos 200 pedidos para evitar exceder la cuota
+      if (existingOrders.length >= 200) {
+        existingOrders.splice(0, existingOrders.length - 199)
+      }
+      
       // Intentar guardar con comprobante
       existingOrders.push(order)
       
@@ -284,13 +289,38 @@ export function useOrders() {
             console.error('Reintento de guardado sin comprobante falló', err2)
             // Remover el pedido del array para evitar inconsistencias
             existingOrders.pop()
-            try { 
-              localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders)) 
-            } catch (e) {}
-            throw err2
+            
+            // Si aún falla, reducir a los últimos 50 pedidos
+            if (existingOrders.length > 50) {
+              existingOrders.splice(0, existingOrders.length - 49)
+              try {
+                existingOrders.push(order)
+                localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
+                console.warn('Pedido guardado después de reducir a 50 pedidos')
+              } catch (err3) {
+                console.error('Falló incluso después de reducir a 50 pedidos', err3)
+                throw err3
+              }
+            } else {
+              throw err2
+            }
           }
         } else {
-          throw err
+          // Si no hay comprobante y aún falla, reducir pedidos antiguos
+          existingOrders.pop()
+          if (existingOrders.length > 50) {
+            existingOrders.splice(0, existingOrders.length - 49)
+            try {
+              existingOrders.push(order)
+              localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
+              console.warn('Pedido guardado después de reducir a 50 pedidos (sin comprobante)')
+            } catch (err2) {
+              console.error('Falló incluso después de reducir a 50 pedidos (sin comprobante)', err2)
+              throw err2
+            }
+          } else {
+            throw err
+          }
         }
       }
       

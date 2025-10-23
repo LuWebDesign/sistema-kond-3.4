@@ -89,18 +89,21 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 🛍️ Catálogo
               </Link>
               
-              <a href="/user-public.html" style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                fontWeight: 500,
-                padding: '8px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
-              onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                👤 Mi Cuenta (Cliente)
-              </a>
+              {/* Solo mostrar Mi Cuenta si no estamos en esa página */}
+              {title !== 'Mi Cuenta - KOND' && (
+                <a href="/user" style={{
+                  color: 'var(--text-primary)',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
+                onMouseLeave={(e) => e.target.style.background = 'transparent'}>
+                  Mi Cuenta
+                </a>
+              )}
             </nav>
           </div>
 
@@ -112,16 +115,18 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             {/* Notificaciones para usuario */}
             <NotificationsButton target="user" />
             
-            {/* Mi cuenta visible en la derecha (útil en móvil) */}
-            <a href="/user-public.html" style={{
-              color: 'var(--text-primary)',
-              textDecoration: 'none',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid transparent',
-              background: 'transparent',
-              display: 'inline-block'
-            }}>👤 Mi cuenta</a>
+            {/* Mi cuenta visible en la derecha (útil en móvil) - solo mostrar si no estamos en la página de usuario */}
+            {title !== 'Mi Cuenta - KOND' && (
+              <a href="/user" style={{
+                color: 'var(--text-primary)',
+                textDecoration: 'none',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid transparent',
+                background: 'transparent',
+                display: 'inline-block'
+              }}>Mi Cuenta</a>
+            )}
             
             {/* Botón de tema */}
             <button
@@ -218,16 +223,20 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   }}>
                     Catálogo de productos
                   </Link>
-                  <a href="/user-public.html" style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    transition: 'color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--accent-blue)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
-                    Mi cuenta
-                  </a>
+                  
+                  {/* Solo mostrar Mi cuenta en menú móvil si no estamos en esa página */}
+                  {title !== 'Mi Cuenta - KOND' && (
+                    <a href="/user" style={{
+                      color: 'var(--text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: '0.9rem',
+                      transition: 'color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--accent-blue)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
+                      Mi cuenta
+                    </a>
+                  )}
                 </div>
               </div>
               

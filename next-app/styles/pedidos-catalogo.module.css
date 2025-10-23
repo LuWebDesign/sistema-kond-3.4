@@ -173,7 +173,8 @@
 
 /* ====== TARJETA DE PEDIDO ====== */
 .pedidoCard {
-  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-section) 100%);
+  /* Usar el mismo color de fondo que la tarjeta "Estadísticas de Pedidos" */
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   border: 1px solid var(--border-color);

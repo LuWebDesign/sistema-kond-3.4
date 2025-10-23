@@ -1112,13 +1112,14 @@ export default function PedidosCatalogo() {
                 {/* Paginación */}
                 {totalPagesPendientes > 1 && (
                   <div className={styles.pagination}>
-                    <button
-                      onClick={() => setCurrentPagePendientes(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPagePendientes === 1}
-                      className={styles.pageBtn}
-                    >
-                      ← Anterior
-                    </button>
+                    {currentPagePendientes > 1 && (
+                      <button
+                        onClick={() => setCurrentPagePendientes(prev => Math.max(prev - 1, 1))}
+                        className={styles.pageBtn}
+                      >
+                        ← Anterior
+                      </button>
+                    )}
 
                     <div className={styles.pageNumbers}>
                       {Array.from({ length: totalPagesPendientes }, (_, i) => i + 1).map(page => (
@@ -1132,13 +1133,14 @@ export default function PedidosCatalogo() {
                       ))}
                     </div>
 
-                    <button
-                      onClick={() => setCurrentPagePendientes(prev => Math.min(prev + 1, totalPagesPendientes))}
-                      disabled={currentPagePendientes === totalPagesPendientes}
-                      className={styles.pageBtn}
-                    >
-                      Siguiente →
-                    </button>
+                    {currentPagePendientes < totalPagesPendientes && (
+                      <button
+                        onClick={() => setCurrentPagePendientes(prev => Math.min(prev + 1, totalPagesPendientes))}
+                        className={styles.pageBtn}
+                      >
+                        Siguiente →
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1289,13 +1291,14 @@ export default function PedidosCatalogo() {
               {/* Paginación */}
               {totalPagesEntregados > 1 && (
                 <div className={styles.pagination}>
-                  <button
-                    onClick={() => setCurrentPageEntregados(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPageEntregados === 1}
-                    className={styles.pageBtn}
-                  >
-                    ← Anterior
-                  </button>
+                  {currentPageEntregados > 1 && (
+                    <button
+                      onClick={() => setCurrentPageEntregados(prev => Math.max(prev - 1, 1))}
+                      className={styles.pageBtn}
+                    >
+                      ← Anterior
+                    </button>
+                  )}
 
                   <div className={styles.pageNumbers}>
                     {Array.from({ length: totalPagesEntregados }, (_, i) => i + 1).map(page => (
@@ -1309,13 +1312,14 @@ export default function PedidosCatalogo() {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() => setCurrentPageEntregados(prev => Math.min(prev + 1, totalPagesEntregados))}
-                    disabled={currentPageEntregados === totalPagesEntregados}
-                    className={styles.pageBtn}
-                  >
-                    Siguiente →
-                  </button>
+                  {currentPageEntregados < totalPagesEntregados && (
+                    <button
+                      onClick={() => setCurrentPageEntregados(prev => Math.min(prev + 1, totalPagesEntregados))}
+                      className={styles.pageBtn}
+                    >
+                      Siguiente →
+                    </button>
+                  )}
                 </div>
               )}
 

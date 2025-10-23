@@ -1,6 +1,5 @@
 import PublicLayout from '../components/PublicLayout'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
-import UserOrderCard from '../components/UserOrderCard'
 import { useProducts, useCart, useCoupons, useOrders } from '../hooks/useCatalog'
 import { 
   formatCurrency, 
@@ -26,12 +25,6 @@ export default function Catalog() {
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
   const [currentUserState, setCurrentUserState] = useState(getCurrentUser())
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
-  const [activeView, setActiveView] = useState('catalog') // 'catalog' o 'my-orders'
-  const [userOrders, setUserOrders] = useState([])
-  const [selectedOrder, setSelectedOrder] = useState(null)
-  // Paginación para 'Mis Pedidos'
-  const [ordersPage, setOrdersPage] = useState(1)
-  const itemsPerPage = 6
 
   // Efecto de prueba para verificar que createToast funciona
   useEffect(() => {
@@ -46,98 +39,6 @@ export default function Catalog() {
     
     return () => clearTimeout(timer)
   }, [])
-
-  // Cargar pedidos del usuario actual
-  useEffect(() => {
-    if (activeView === 'my-orders') {
-      loadUserOrders()
-    }
-  }, [activeView])
-
-  // Listener para actualizaciones desde el módulo de administración (pedidos-catalogo)
-  useEffect(() => {
-    const handler = (e) => {
-      try {
-        if (activeView !== 'my-orders') return
-
-        const detail = e?.detail || {}
-        const { orderId, fecha, type } = detail
-
-        if (orderId && userOrders && userOrders.length > 0) {
-          // intentar actualizar solo el pedido afectado en el estado
-          const idx = userOrders.findIndex(o => o.id === orderId)
-          if (idx !== -1) {
-            setUserOrders(prev => {
-              const copy = [...prev]
-              // Diferenciar entre tipos de evento
-              if (type === 'fechaProduccionChanged' || type === 'assigned') {
-                // actualizar fecha de producción (y campo calendario si aplica)
-                copy[idx] = { ...copy[idx], fechaProduccion: fecha, fechaProduccionCalendario: fecha }
-              } else if (fecha) {
-                // por defecto actualizar fecha de entrega confirmada
-                copy[idx] = { ...copy[idx], fechaConfirmadaEntrega: fecha, fechaEntregaCalendario: fecha }
-              }
-              return copy
-            })
-            return
-          }
-        }
-
-        // fallback: recargar todos los pedidos
-        loadUserOrders()
-      } catch (err) {
-        console.error('Error manejando evento pedidosCatalogo:updated', err)
-      }
-    }
-
-    window.addEventListener('pedidosCatalogo:updated', handler)
-    return () => window.removeEventListener('pedidosCatalogo:updated', handler)
-  }, [activeView, userOrders])
-
-  // Resetear la página cuando cambian los pedidos del usuario
-  useEffect(() => {
-    setOrdersPage(1)
-  }, [userOrders])
-
-  const loadUserOrders = () => {
-    try {
-      const currentUser = getCurrentUser()
-      
-      if (!currentUser) {
-        createToast('Debes iniciar sesión para ver tus pedidos', 'error')
-        setActiveView('catalog')
-        return
-      }
-
-      // Obtener pedidos del localStorage
-      const allOrders = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
-      
-      // Filtrar pedidos del usuario actual (por email o teléfono)
-      const orders = allOrders.filter(order => {
-        if (!order.cliente) return false
-        
-        const emailMatch = currentUser.email && order.cliente.email &&
-          currentUser.email.toLowerCase() === order.cliente.email.toLowerCase()
-
-        const phoneMatch = currentUser.telefono && order.cliente.telefono &&
-          currentUser.telefono.replace(/\D/g, '') === order.cliente.telefono.replace(/\D/g, '')
-
-        return emailMatch || phoneMatch
-      })
-
-      // Ordenar por fecha de creación (más recientes primero)
-      orders.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-      
-      setUserOrders(orders)
-      
-      if (orders.length === 0) {
-        createToast('No tienes pedidos registrados', 'info')
-      }
-    } catch (error) {
-      console.error('Error cargando pedidos del usuario:', error)
-      createToast('Error al cargar tus pedidos', 'error')
-    }
-  }
 
   // Handle profile updates from checkout editor
   const handleProfileUpdated = (updated) => {
@@ -170,6 +71,49 @@ export default function Catalog() {
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
 
+  // Función para obtener estilos de categoría
+  const getCategoryStyle = (categoria) => {
+    const categoryStyles = {
+      'Carteles': {
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        icon: '📋',
+        color: 'white'
+      },
+      'Vinilos': {
+        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        icon: '🎨',
+        color: 'white'
+      },
+      'Lonas': {
+        background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        icon: '🏞️',
+        color: 'white'
+      },
+      'Impresiones': {
+        background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        icon: '🖨️',
+        color: 'white'
+      },
+      'Stickers': {
+        background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        icon: '⭐',
+        color: 'white'
+      },
+      'Banners': {
+        background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        icon: '🚩',
+        color: '#333'
+      },
+      'default': {
+        background: 'linear-gradient(135deg, var(--accent-blue) 0%, #5dade2 100%)',
+        icon: '🏷️',
+        color: 'white'
+      }
+    }
+    
+    return categoryStyles[categoria] || categoryStyles.default
+  }
+
   return (
     <PublicLayout title="Catálogo - KOND">
       <div className="catalog-container" style={{ 
@@ -193,7 +137,7 @@ export default function Catalog() {
               color: 'var(--accent-blue)',
               margin: 0
             }}>
-              {activeView === 'catalog' ? '🛒 Nuestros Productos' : '📦 Mis Pedidos'}
+              🛒 Nuestros Productos
             </h1>
             
             {/* Botones de navegación */}
@@ -205,10 +149,9 @@ export default function Catalog() {
               borderRadius: '8px'
             }}>
               <button
-                onClick={() => setActiveView('catalog')}
                 style={{
-                  background: activeView === 'catalog' ? 'var(--accent-blue)' : 'transparent',
-                  color: activeView === 'catalog' ? 'white' : 'var(--text-secondary)',
+                  background: 'var(--accent-blue)',
+                  color: 'white',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
@@ -221,10 +164,10 @@ export default function Catalog() {
                 Catálogo
               </button>
               <button
-                onClick={() => setActiveView('my-orders')}
+                onClick={() => window.location.href = '/mis-pedidos'}
                 style={{
-                  background: activeView === 'my-orders' ? 'var(--accent-blue)' : 'transparent',
-                  color: activeView === 'my-orders' ? 'white' : 'var(--text-secondary)',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
@@ -233,14 +176,15 @@ export default function Catalog() {
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
+                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
+                onMouseLeave={(e) => e.target.style.background = 'transparent'}
               >
                 Mis Pedidos
               </button>
             </div>
           </div>
           
-          {/* Botón del carrito (solo en vista catálogo) */}
-          {activeView === 'catalog' && (
+          {/* Botón del carrito */}
           <button
             onClick={() => setShowCart(true)}
             style={{
@@ -275,14 +219,10 @@ export default function Catalog() {
               </span>
             )}
           </button>
-          )}
         </div>
 
-        {/* Contenido condicional según vista activa */}
-        {activeView === 'catalog' ? (
-          <>
-            {/* Filtros */}
-            <div className="filters-row" style={{
+        {/* Filtros */}
+        <div className="filters-row" style={{
           gap: '16px',
           marginBottom: '24px',
           padding: '20px',
@@ -306,39 +246,69 @@ export default function Catalog() {
             className="search-input"
           />
           
-          <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    style={{
-                      padding: '12px',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      background: 'var(--bg-input)',
-                      color: 'var(--text-primary)',
-                      fontSize: '1rem',
-                    }}
-                    className="category-select"
-          >
-            <option value="">Todas las categorías</option>
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              style={{
+                padding: '12px 16px',
+                border: '2px solid var(--border-color)',
+                borderRadius: '12px',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '1rem',
+                fontWeight: '500',
+                minWidth: '200px',
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns%3d%27http%3a//www.w3.org/2000/svg%27 width%3d%2712%27 height%3d%2712%27 viewBox%3d%270 0 12 12%27%3e%3cpath fill%3d%27%23666%27 d%3d%27M6 8L2 4h8z%27/%3e%3c/svg%3e")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                backgroundSize: '12px',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              className="category-select"
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = 'var(--accent-blue)'
+                e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = 'var(--border-color)'
+                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                🏷️ Todas las categorías
               </option>
-            ))}
-          </select>
+              {categories.map(category => {
+                const categoryStyle = getCategoryStyle(category)
+                return (
+                  <option 
+                    key={category} 
+                    value={category}
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                  >
+                    {categoryStyle.icon} {category}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
         </div>
 
-                {/* Grid de productos */}
-                <div className="products-grid" style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                  gap: '24px',
-                  marginBottom: '40px'
-                }}>
+        {/* Grid de productos */}
+        <div className="products-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: '24px',
+          marginBottom: '40px'
+        }}>
           {filteredProducts.map(product => (
             <ProductCard 
               key={product.id} 
               product={product} 
+              getCategoryStyle={getCategoryStyle}
               onAddToCart={(productId, quantity) => {
                 const productToAdd = products.find(p => p.id === productId)
                 if (productToAdd) {
@@ -357,157 +327,6 @@ export default function Catalog() {
             color: 'var(--text-secondary)'
           }}>
             No se encontraron productos
-          </div>
-        )}
-          </>
-        ) : (
-          /* Vista de Mis Pedidos */
-          <div style={{ marginTop: '24px' }}>
-            {userOrders.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                background: 'var(--bg-section)',
-                borderRadius: '12px',
-                border: '2px dashed var(--border-color)'
-              }}>
-                <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📦</div>
-                <h3 style={{ 
-                  color: 'var(--text-primary)', 
-                  marginBottom: '8px',
-                  fontSize: '1.2rem'
-                }}>
-                  No tienes pedidos aún
-                </h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-                  ¡Explora nuestro catálogo y realiza tu primer pedido!
-                </p>
-                <button
-                  onClick={() => setActiveView('catalog')}
-                  style={{
-                    background: 'var(--accent-blue)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '12px 24px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Ver Catálogo
-                </button>
-              </div>
-            ) : (
-              <div className={stylesResp.myOrdersList} style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
-              }}>
-                {(() => {
-                  const totalPages = Math.max(1, Math.ceil(userOrders.length / itemsPerPage))
-                  const currentPage = Math.min(Math.max(1, ordersPage), totalPages)
-                  const startIndex = (currentPage - 1) * itemsPerPage
-                  const endIndex = startIndex + itemsPerPage
-                  const currentOrders = userOrders.slice(startIndex, endIndex)
-
-                  return (
-                    <>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {currentOrders.map(order => (
-                          <UserOrderCard
-                            key={order.id}
-                            pedido={order}
-                            onClick={(pedido) => setSelectedOrder(pedido)}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Controles de paginación */}
-                      {totalPages > 1 && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          marginTop: '12px',
-                          flexWrap: 'wrap'
-                        }}>
-                          <button
-                            onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className={stylesResp.btnFullMobile}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              background: currentPage === 1 ? 'var(--bg-section)' : 'white',
-                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                            }}
-                          >
-                            Anterior
-                          </button>
-
-                          {/* Números de página (hasta 7 mostrados) */}
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            {Array.from({ length: totalPages }).map((_, idx) => {
-                              const pageNum = idx + 1
-                              // mostrar solo alrededor del currentPage si hay muchas páginas
-                              const show = totalPages <= 7 || Math.abs(pageNum - currentPage) <= 2 || pageNum === 1 || pageNum === totalPages
-                              if (!show) {
-                                // mostrar separador si corresponde
-                                if (idx === 1 || idx === totalPages - 2) {
-                                  return (
-                                    <span key={`dots-${idx}`} style={{ padding: '0 6px' }}>...</span>
-                                  )
-                                }
-                                return null
-                              }
-
-                              return (
-                                <button
-                                  key={pageNum}
-                                  onClick={() => setOrdersPage(pageNum)}
-                                  style={{
-                                    padding: '8px 10px',
-                                    borderRadius: '6px',
-                                    border: pageNum === currentPage ? '1px solid var(--accent-blue)' : '1px solid var(--border-color)',
-                                    background: pageNum === currentPage ? 'var(--accent-blue)' : 'white',
-                                    color: pageNum === currentPage ? 'white' : 'var(--text-primary)',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  {pageNum}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          <button
-                            onClick={() => setOrdersPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className={stylesResp.btnFullMobile}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              background: currentPage === totalPages ? 'var(--bg-section)' : 'white',
-                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                            }}
-                          >
-                            Siguiente
-                          </button>
-
-                          <div style={{ marginLeft: '8px', color: 'var(--text-secondary)' }}>
-                            Página {currentPage} de {totalPages}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-            )}
           </div>
         )}
 
@@ -557,21 +376,13 @@ export default function Catalog() {
             onProfileUpdate={handleProfileUpdated}
           />
         )}
-
-        {/* Modal de detalles del pedido */}
-        {selectedOrder && (
-          <OrderDetailModal
-            order={selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-          />
-        )}
       </div>
     </PublicLayout>
   )
 }
 
 // Componente de tarjeta de producto
-function ProductCard({ product, onAddToCart }) {
+function ProductCard({ product, onAddToCart, getCategoryStyle }) {
   const [quantity, setQuantity] = useState(1)
 
   const handleAddToCart = () => {
@@ -656,19 +467,23 @@ function ProductCard({ product, onAddToCart }) {
           </p>
         )}
 
-        {product.categoria && (
-          <span style={{
-            display: 'inline-block',
-            padding: '4px 8px',
-            background: 'var(--accent-blue)',
-            color: 'white',
-            borderRadius: '12px',
-            fontSize: '0.8rem',
-            marginBottom: '16px'
-          }}>
-            {product.categoria}
-          </span>
-        )}
+        {product.categoria && (() => {
+          const categoryStyle = getCategoryStyle(product.categoria)
+          return (
+            <div 
+              className="category-badge"
+              style={{
+                background: categoryStyle.background,
+                color: categoryStyle.color,
+                border: '1px solid rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <span>{categoryStyle.icon}</span>
+              <span>{product.categoria}</span>
+            </div>
+          )
+        })()}
 
         <div style={{
           fontSize: '1.2rem',
@@ -898,7 +713,26 @@ function CartModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={onProceedToCheckout} disabled={cart.length === 0} style={{ padding: '12px 10px', borderRadius: 8, background: 'var(--accent-secondary)', color: 'white', border: 'none', cursor: cart.length === 0 ? 'not-allowed' : 'pointer', fontWeight: 700 }}>Proceder al pago</button>
 
-            <button onClick={onClose} style={{ padding: '10px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer' }}>Seguir comprando</button>
+            <button onClick={onClose} style={{ 
+              padding: '10px', 
+              borderRadius: 8, 
+              background: 'transparent', 
+              border: '1px solid var(--border-color)', 
+              cursor: 'pointer',
+              color: 'var(--text-primary)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'var(--accent-blue)';
+              e.target.style.color = 'white';
+              e.target.style.borderColor = 'var(--accent-blue)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+              e.target.style.color = 'var(--text-primary)';
+              e.target.style.borderColor = 'var(--border-color)';
+            }}
+            >Seguir comprando</button>
           </div>
 
           <div style={{ marginTop: 18, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Aceptamos pago por transferencia y coordinamos por WhatsApp.</div>
@@ -1001,6 +835,12 @@ function CheckoutModal({
       const result = saveOrder(orderData)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
+      if (result.order._comprobanteOmitted) {
+        createToast('Pedido guardado, pero el comprobante no pudo almacenarse debido a limitaciones de espacio. El administrador revisará el pedido.', 'warning')
+      } else {
+        createToast('Pedido procesado exitosamente.', 'success')
+      }
+
       if (paymentMethod === 'whatsapp') {
         const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency)
         const whatsappUrl = `https://api.whatsapp.com/send?phone=541136231857&text=${encodeURIComponent(message)}`
@@ -1017,7 +857,11 @@ function CheckoutModal({
       onOrderComplete()
     } catch (error) {
       console.error('Error submitting order:', error)
-      createToast('Error al procesar el pedido. Intenta nuevamente.', 'error')
+      if (error.name === 'QuotaExceededError' || (error.message && error.message.includes('exceeded the quota'))) {
+        createToast('Espacio insuficiente en el navegador. El pedido no pudo guardarse completamente. Contacta al administrador para procesar tu pedido.', 'error')
+      } else {
+        createToast('Error al procesar el pedido. Intenta nuevamente.', 'error')
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -1084,9 +928,9 @@ function CheckoutModal({
           <section style={{ marginBottom: 18 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer' }}>💬 WhatsApp</button>
-              <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer' }}>🏦 Transferencia (Seña 50%)</button>
-              <button onClick={() => setPaymentMethod('retiro')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer' }}>🏪 Retiro</button>
+              <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>
+              <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia (Seña 50%)</button>
+              <button onClick={() => setPaymentMethod('retiro')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏪 Retiro</button>
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
           </section>

@@ -1,13 +1,11 @@
 import PublicLayout from '../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { getCurrentUser, createToast, formatCurrency, formatDate } from '../utils/catalogUtils'
-import { useUserOrders } from '../hooks/useCatalog'
 
 export default function User() {
-  const { userOrders, isLoading: ordersLoading, loadUserOrders } = useUserOrders()
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoginMode, setIsLoginMode] = useState(true)
-  const [activeTab, setActiveTab] = useState('activas')
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,7 +15,8 @@ export default function User() {
     direccion: '',
     localidad: '',
     cp: '',
-    provincia: ''
+    provincia: '',
+    observaciones: ''
   })
   const [avatar, setAvatar] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -74,7 +73,8 @@ export default function User() {
           direccion: '',
           localidad: '',
           cp: '',
-          provincia: ''
+          provincia: '',
+          observaciones: ''
         })
       } else {
         createToast('Por favor completa todos los campos', 'error')
@@ -114,7 +114,8 @@ export default function User() {
           direccion: '',
           localidad: '',
           cp: '',
-          provincia: ''
+          provincia: '',
+          observaciones: ''
         })
       } else {
         createToast('Por favor completa los campos requeridos', 'error')
@@ -161,7 +162,8 @@ export default function User() {
       direccion: '',
       localidad: '',
       cp: '',
-      provincia: ''
+      provincia: '',
+      observaciones: ''
     })
     setAvatar(null)
     createToast('Sesión cerrada correctamente', 'success')
@@ -340,603 +342,541 @@ export default function User() {
               background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
               borderRadius: '16px',
-              padding: '24px'
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '20px'
-              }}>
-                📝 Información del Perfil
-              </h3>
-
-              <form onSubmit={handleUpdateProfile}>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '20px'
-                }}>
+              <div
+                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  padding: '20px 24px',
+                  background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
+                  color: 'white',
+                  transition: 'all 0.3s ease',
+                  borderBottom: isProfileExpanded ? '1px solid var(--border-color)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, var(--accent-blue-dark, #2563eb) 0%, var(--accent-secondary-dark, #7c3aed) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>👤</span>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
+                    <h3 style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      color: 'white'
                     }}>
-                      Nombre *
-                    </label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formData.nombre}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
+                      Información del Perfil
+                    </h3>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      margin: '2px 0 0 0',
+                      opacity: 0.9
                     }}>
-                      Apellido
-                    </label>
-                    <input
-                      type="text"
-                      name="apellido"
-                      value={formData.apellido}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Teléfono
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Dirección
-                    </label>
-                    <input
-                      type="text"
-                      name="direccion"
-                      value={formData.direccion}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Localidad
-                    </label>
-                    <input
-                      type="text"
-                      name="localidad"
-                      value={formData.localidad}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Código Postal
-                    </label>
-                    <input
-                      type="text"
-                      name="cp"
-                      value={formData.cp}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      marginBottom: '4px'
-                    }}>
-                      Provincia
-                    </label>
-                    <input
-                      type="text"
-                      name="provincia"
-                      value={formData.provincia}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                        fontSize: '1rem'
-                      }}
-                    />
+                      Gestiona tus datos personales
+                    </p>
                   </div>
                 </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {!isProfileExpanded && (
+                    <span style={{
+                      fontSize: '0.8rem',
+                      background: 'rgba(255,255,255,0.2)',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontWeight: 500
+                    }}>
+                      Click para editar
+                    </span>
+                  )}
+                  <span style={{
+                    fontSize: '1.2rem',
+                    transition: 'all 0.3s ease',
+                    transform: isProfileExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    display: 'inline-block'
+                  }}>
+                    ▼
+                  </span>
+                </div>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  style={{
-                    background: isLoading ? 'var(--text-muted)' : 'var(--accent-secondary)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {isLoading ? '⏳ Actualizando...' : '💾 Guardar Cambios'}
-                </button>
-              </form>
+              {isProfileExpanded && (
+                <div style={{
+                  padding: '24px',
+                  animation: 'slideDown 0.3s ease-out'
+                }}>
+                  <form onSubmit={handleUpdateProfile}>
+                    {/* Sección Información Personal */}
+                    <div style={{ marginBottom: '32px' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '20px',
+                        paddingBottom: '12px',
+                        borderBottom: '2px solid var(--accent-blue)'
+                      }}>
+                        <span style={{ fontSize: '1.2rem' }}>👤</span>
+                        <h4 style={{
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                          margin: 0
+                        }}>
+                          Información Personal
+                        </h4>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '20px',
+                        marginBottom: '24px'
+                      }}
+                      className="profile-form-grid"
+                      >
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>👤</span>
+                            Nombre *
+                          </label>
+                          <input
+                            type="text"
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                            required
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>📛</span>
+                            Apellido
+                          </label>
+                          <input
+                            type="text"
+                            name="apellido"
+                            value={formData.apellido}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>📧</span>
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                            required
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>📱</span>
+                            Teléfono
+                          </label>
+                          <input
+                            type="tel"
+                            name="telefono"
+                            value={formData.telefono}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sección Dirección */}
+                    <div style={{ marginBottom: '32px' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '20px',
+                        paddingBottom: '12px',
+                        borderBottom: '2px solid var(--accent-secondary)'
+                      }}>
+                        <span style={{ fontSize: '1.2rem' }}>🏠</span>
+                        <h4 style={{
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                          margin: 0
+                        }}>
+                          Dirección de Envío
+                        </h4>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '20px',
+                        marginBottom: '24px'
+                      }}
+                      className="profile-form-grid"
+                      >
+                        <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>🏠</span>
+                            Dirección
+                          </label>
+                          <input
+                            type="text"
+                            name="direccion"
+                            value={formData.direccion}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>🏙️</span>
+                            Localidad
+                          </label>
+                          <input
+                            type="text"
+                            name="localidad"
+                            value={formData.localidad}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>📮</span>
+                            Código Postal
+                          </label>
+                          <input
+                            type="text"
+                            name="cp"
+                            value={formData.cp}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>🗺️</span>
+                            Provincia
+                          </label>
+                          <input
+                            type="text"
+                            name="provincia"
+                            value={formData.provincia}
+                            onChange={handleInputChange}
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+
+                        <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>📝</span>
+                            Observaciones
+                          </label>
+                          <textarea
+                            name="observaciones"
+                            value={formData.observaciones}
+                            onChange={handleInputChange}
+                            placeholder="Ej: Llamar al timbre, dejar en conserjería, horario de entrega preferido..."
+                            style={{
+                              width: '100%',
+                              padding: '14px 16px',
+                              border: '2px solid var(--border-color)',
+                              borderRadius: '12px',
+                              background: 'var(--bg-input)',
+                              color: 'var(--text-primary)',
+                              fontSize: '1rem',
+                              fontFamily: 'inherit',
+                              transition: 'all 0.2s ease',
+                              outline: 'none',
+                              resize: 'vertical',
+                              minHeight: '80px',
+                              maxHeight: '120px'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      paddingTop: '20px',
+                      borderTop: '1px solid var(--border-color)'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileExpanded(false)}
+                        style={{
+                          background: 'var(--bg-section)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-color)',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'var(--bg-card)';
+                          e.target.style.color = 'var(--text-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'var(--bg-section)';
+                          e.target.style.color = 'var(--text-secondary)';
+                        }}
+                      >
+                        ❌ Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                          background: isLoading ? 'var(--text-muted)' : 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 32px',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          cursor: isLoading ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isLoading ? 'none' : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isLoading) {
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isLoading) {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                          }
+                        }}
+                      >
+                        {isLoading ? '⏳ Guardando...' : '💾 Guardar Cambios'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sección de Mis Compras */}
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            padding: '24px',
-            marginTop: '32px'
-          }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              marginBottom: '24px'
-            }}>
-              🛒 Mis Compras
-            </h2>
 
-            {/* Pestañas */}
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              marginBottom: '24px',
-              borderBottom: '1px solid var(--border-color)',
-              paddingBottom: '16px'
-            }}>
-              <button
-                onClick={() => setActiveTab('activas')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 16px',
-                  background: activeTab === 'activas' ? 'var(--accent-secondary)' : 'transparent',
-                  color: activeTab === 'activas' ? 'white' : 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  transition: 'all 0.2s'
-                }}
-              >
-                <span>⏳</span>
-                <span>Pedidos Pendientes</span>
-                <span style={{
-                  background: activeTab === 'activas' ? 'rgba(255,255,255,0.2)' : 'var(--bg-card)',
-                  color: activeTab === 'activas' ? 'white' : 'var(--text-primary)',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 700
-                }}>
-                  {userOrders.activas.length}
-                </span>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('entregadas')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 16px',
-                  background: activeTab === 'entregadas' ? 'var(--accent-secondary)' : 'transparent',
-                  color: activeTab === 'entregadas' ? 'white' : 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  transition: 'all 0.2s'
-                }}
-              >
-                <span>🎉</span>
-                <span>Pedidos Entregados</span>
-                <span style={{
-                  background: activeTab === 'entregadas' ? 'rgba(255,255,255,0.2)' : 'var(--bg-card)',
-                  color: activeTab === 'entregadas' ? 'white' : 'var(--text-primary)',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 700
-                }}>
-                  {userOrders.entregadas.length}
-                </span>
-              </button>
-            </div>
-
-            {/* Contenido de las pestañas */}
-            {ordersLoading ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px',
-                color: 'var(--text-secondary)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-                <p>Cargando tus pedidos...</p>
-              </div>
-            ) : (
-              <div>
-                {activeTab === 'activas' && (
-                  <div>
-                    {userOrders.activas.length === 0 ? (
-                      <div style={{
-                        textAlign: 'center',
-                        padding: '40px',
-                        color: 'var(--text-secondary)'
-                      }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📦</div>
-                        <h3 style={{ marginBottom: '8px' }}>No hay pedidos pendientes</h3>
-                        <p>Cuando realices pedidos aparecerán aquí</p>
-                      </div>
-                    ) : (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px'
-                      }}>
-                        {userOrders.activas.map(order => (
-                          <OrderCard key={order.id} order={order} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'entregadas' && (
-                  <div>
-                    {userOrders.entregadas.length === 0 ? (
-                      <div style={{
-                        textAlign: 'center',
-                        padding: '40px',
-                        color: 'var(--text-secondary)'
-                      }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
-                        <h3 style={{ marginBottom: '8px' }}>No hay pedidos entregados</h3>
-                        <p>Los pedidos completados aparecerán aquí</p>
-                      </div>
-                    ) : (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px'
-                      }}>
-                        {userOrders.entregadas.map(order => (
-                          <OrderCard key={order.id} order={order} isDelivered />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-        </div>
       </div>
     </PublicLayout>
   )
 }
 
-// Componente para mostrar una tarjeta de pedido
-function OrderCard({ order, isDelivered = false }) {
-  const getStatusEmoji = (status) => {
-    const emojis = {
-      'pendiente': '⏳',
-      'confirmado': '✅',
-      'en_preparacion': '🔧',
-      'listo': '📦',
-      'entregado': '🎉',
-      'cancelado': '❌'
-    }
-    return emojis[status] || '📋'
-  }
-
-  const getPaymentStatusColor = (status) => {
-    switch (status) {
-      case 'sin_seña': return '#e74c3c'
-      case 'seña_pagada': return '#f39c12'
-      case 'pagado': return '#27ae60'
-      default: return '#95a5a6'
-    }
-  }
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'pendiente': 'Pendiente',
-      'confirmado': 'Confirmado',
-      'en_preparacion': 'En Preparación',
-      'listo': 'Listo para entrega',
-      'entregado': 'Entregado',
-      'cancelado': 'Cancelado'
-    }
-    return labels[status] || status
-  }
-
-  const getPaymentLabel = (status) => {
-    const labels = {
-      'sin_seña': 'Sin seña',
-      'seña_pagada': 'Seña pagada',
-      'pagado': 'Pagado total'
-    }
-    return labels[status] || status
-  }
-
-  return (
-    <div style={{
-      background: 'var(--bg-section)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '12px',
-      padding: '20px',
-      opacity: isDelivered ? 0.8 : 1
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '16px'
-      }}>
-        <div>
-          <div style={{
-            fontSize: '1.1rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            marginBottom: '4px'
-          }}>
-            {getStatusEmoji(order.estado)} Pedido #{order.id}
-          </div>
-          <div style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem',
-            marginBottom: '8px'
-          }}>
-            {formatDate(order.fechaCreacion)}
-          </div>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            flexWrap: 'wrap'
-          }}>
-            <span style={{
-              padding: '4px 8px',
-              background: 'var(--accent-blue)',
-              color: 'white',
-              borderRadius: '6px',
-              fontSize: '0.8rem',
-              fontWeight: 500
-            }}>
-              {getStatusLabel(order.estado)}
-            </span>
-            <span style={{
-              padding: '4px 8px',
-              background: getPaymentStatusColor(order.estadoPago),
-              color: 'white',
-              borderRadius: '6px',
-              fontSize: '0.8rem',
-              fontWeight: 500
-            }}>
-              {getPaymentLabel(order.estadoPago)}
-            </span>
-          </div>
-        </div>
-
-        <div style={{
-          textAlign: 'right'
-        }}>
-          <div style={{
-            fontSize: '1.2rem',
-            fontWeight: 700,
-            color: 'var(--accent-secondary)'
-          }}>
-            {formatCurrency(order.total)}
-          </div>
-          <div style={{
-            fontSize: '0.8rem',
-            color: 'var(--text-secondary)'
-          }}>
-            {order.productos?.length || 0} productos
-          </div>
-        </div>
-      </div>
-
-      {/* Productos */}
-      {order.productos && order.productos.length > 0 && (
-        <div style={{
-          borderTop: '1px solid var(--border-color)',
-          paddingTop: '16px'
-        }}>
-          <h4 style={{
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            marginBottom: '8px'
-          }}>
-            Productos:
-          </h4>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
-            {order.productos.slice(0, 3).map((producto, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '0.9rem',
-                color: 'var(--text-secondary)'
-              }}>
-                <span>{producto.cantidad}x {producto.nombre}</span>
-                <span>{formatCurrency(producto.subtotal)}</span>
-              </div>
-            ))}
-            {order.productos.length > 3 && (
-              <div style={{
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)',
-                fontStyle: 'italic'
-              }}>
-                +{order.productos.length - 3} productos más...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Información de entrega */}
-      {order.fechaSolicitudEntrega && (
-        <div style={{
-          marginTop: '12px',
-          padding: '8px 12px',
-          background: 'var(--bg-card)',
-          borderRadius: '6px',
-          fontSize: '0.9rem',
-          color: 'var(--text-secondary)'
-        }}>
-          📅 Entrega solicitada: {formatDate(order.fechaSolicitudEntrega)}
-        </div>
-      )}
-    </div>
-  )
-}  // Si no está logueado, mostrar login/registro
+  // Si no está logueado, mostrar login/registro
   return (
     <PublicLayout title="Iniciar Sesión - KOND">
       <div style={{

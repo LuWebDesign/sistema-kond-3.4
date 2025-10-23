@@ -24,6 +24,13 @@ export default function Home() {
     e.preventDefault();
     
     if (adminCredentials.email === 'admin1' && adminCredentials.password === 'kond') {
+      // Establecer sesión de admin
+      localStorage.setItem('adminSession', JSON.stringify({
+        loggedIn: true,
+        timestamp: Date.now(),
+        email: adminCredentials.email
+      }))
+      
       showCustomAlert('✅ Acceso Concedido', 'Redirigiendo al panel administrativo...', 'success', () => {
         router.push('/admin');
       });

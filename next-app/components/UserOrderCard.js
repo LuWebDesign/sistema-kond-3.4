@@ -49,63 +49,88 @@ export default function UserOrderCard({ pedido, onClick }) {
   const restante = Math.max(0, totalAmount - Number(sena || 0))
 
   return (
-    <div className={`uoc-card user-order-card ${expanded ? 'expanded' : ''}`} role="button" tabIndex={0}
+    <div className={`uoc-card user-order-card`} role="button" tabIndex={0}
       onClick={() => { if (!onClick) setExpanded(s => !s) }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!onClick) setExpanded(s => !s) } }}>
 
-      {/* Header */}
-      <div className="uoc-header">
-        <span className="uoc-date-pill">{formatDate(pedido.fechaCreacion)}</span>
-        <span className="uoc-order-id">#{pedido.id}</span>
+      {/* Header Mobile */}
+      <div className="uoc-mobile-header">
+        <div className="uoc-order-id">#{pedido.id}</div>
+        <div className="uoc-date-pill">{formatDate(pedido.fechaCreacion)}</div>
       </div>
 
-      {/* Badges */}
-      <div className="uoc-badges">
+      {/* Badges Mobile */}
+      <div className="uoc-badges-mobile">
         <span className="uoc-badge uoc-badge-status">{statusInfo.emoji} {statusInfo.label}</span>
         <span className="uoc-badge uoc-badge-payment">💰 {paymentInfo.label}</span>
       </div>
 
-      {/* Productos */}
-      <div className="uoc-products">
-        <div className="uoc-products-row">
+      {/* Productos Preview */}
+      <div className="uoc-products-preview">
+        <div>
           <span>📦 Productos ({pedido.productos.length})</span>
           <span>x{pedido.productos.reduce((sum, prod) => sum + (prod.cantidad || 0), 0)}</span>
         </div>
-        <div className="uoc-products-title">{pedido.productos[0]?.nombre} {pedido.productos[0]?.medidas && `(${pedido.productos[0]?.medidas})`}</div>
+        <div style={{fontSize: '0.85rem', opacity: 0.8, marginTop: '4px'}}>
+          {pedido.productos[0]?.nombre} {pedido.productos[0]?.medidas && `(${pedido.productos[0]?.medidas})`}
+          {pedido.productos.length > 1 && ` + ${pedido.productos.length - 1} más`}
+        </div>
+        {/* Total */}
+        {pedido.total && (
+          <div style={{fontSize: '0.9rem', fontWeight: '600', marginTop: '6px', textAlign: 'right'}}>
+            Total: {formatCurrency(pedido.total)}
+          </div>
+        )}
       </div>
 
-          {/* Entrega y método: ocultar fecha de producción al cliente */}
-          <div className="uoc-delivery">
-            {
-              (() => {
-                // Solo exponer la fecha de entrega al cliente. Priorizar campos de calendario si existen.
-                const entrega = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
-
-                if (entrega) {
-                  const label = pedido.fechaConfirmadaEntrega ? 'Entrega confirmada:' : 'Entrega solicitada:'
-                  return (<div><strong>{label}</strong> {formatDate(entrega)}</div>)
-                }
-
-                // Si no hay fecha de entrega, no mostramos la fecha de producción al cliente
-                return null
-              })()
-            }
-
-            {pedido.metodoPago && <div><strong>Método:</strong> {pedido.metodoPago === 'transferencia' ? 'Transferencia' : pedido.metodoPago === 'whatsapp' ? 'WhatsApp' : pedido.metodoPago === 'retiro' ? 'Retiro en Local' : pedido.metodoPago}</div>}
+      {/* Detalles expandidos */}
+      <div className="uoc-details">
+        {/* Productos completos */}
+        <div className="uoc-products">
+          <div className="uoc-products-row">
+            <span>📦 Productos ({pedido.productos.length})</span>
+            <span>x{pedido.productos.reduce((sum, prod) => sum + (prod.cantidad || 0), 0)}</span>
           </div>
-
-      {/* Pagos (seña/restante) - mostrar si existe un total definido (además, se calcula desde montoRecibido o estadoPago) */}
-      {pedido.total != null && (
-        <div className="uoc-payments">
-          <div className="uoc-pay-row"><span>💵 Seña:</span><span className="uoc-pay-seña">{isFullyPaid ? 'Pago total' : formatCurrency(sena)}</span></div>
-          <div className="uoc-pay-row"><span>🔥 Restante:</span><span className="uoc-pay-rest">{formatCurrency(restante)}</span></div>
+          {pedido.productos.map((producto, index) => (
+            <div key={index} className="uoc-products-title">
+              {producto.nombre} {producto.medidas && `(${producto.medidas})`} x{producto.cantidad || 1}
+            </div>
+          ))}
         </div>
-      )}
 
-      {/* Total */}
-      <div className="uoc-total">
-        <div className="uoc-total-label">Total</div>
-        <div className="uoc-total-amount">{formatCurrency(pedido.total)}</div>
+        {/* Entrega y método */}
+        <div className="uoc-delivery">
+          {pedido.metodoPago && <div><strong>Método:</strong> {pedido.metodoPago === 'transferencia' ? 'Transferencia' : pedido.metodoPago === 'whatsapp' ? 'WhatsApp' : pedido.metodoPago === 'retiro' ? 'Retiro en Local' : pedido.metodoPago}</div>}
+        </div>
+
+        {/* Pagos (seña/restante) */}
+        {pedido.total != null && (
+          <div className="uoc-payments">
+            <div className="uoc-pay-row"><span>💵 Seña:</span><span className="uoc-pay-seña">{isFullyPaid ? 'Pago total' : formatCurrency(sena)}</span></div>
+            <div className="uoc-pay-row"><span>🔥 Restante:</span><span className="uoc-pay-rest">{formatCurrency(restante)}</span></div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Mobile */}
+      <div className="uoc-mobile-footer">
+        {/* Información de entrega */}
+        {(() => {
+          const entrega = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
+          if (entrega) {
+            const label = pedido.fechaConfirmadaEntrega ? 'Entrega confirmada:' : 'Entrega solicitada:'
+            return (
+              <div className="uoc-delivery-info">
+                📅 {label} {formatDate(entrega)}
+              </div>
+            )
+          }
+          return null
+        })()}
+        <div className="uoc-total">
+          <div className="uoc-total-label">Total</div>
+          <div className="uoc-total-amount">{formatCurrency(pedido.total)}</div>
+        </div>
       </div>
 
     </div>

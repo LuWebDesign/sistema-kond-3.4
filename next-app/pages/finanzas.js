@@ -331,13 +331,13 @@ export default function Finanzas() {
           <div className={styles.summaryCard}>
             <h3>Movimientos</h3>
             <div className={styles.summaryRow}>
-              <div>
+              <div className={styles.summaryItem}>
                 <div className={styles.summaryLabel}>Ingresos</div>
                 <div className={`${styles.summaryValue} ${styles.ingreso}`}>
                   {formatCurrency(resumen.ingresosHoy)}
                 </div>
               </div>
-              <div>
+              <div className={styles.summaryItem}>
                 <div className={styles.summaryLabel}>Egresos</div>
                 <div className={`${styles.summaryValue} ${styles.egreso}`}>
                   {formatCurrency(resumen.egresosHoy)}
@@ -359,19 +359,24 @@ export default function Finanzas() {
           </div>
 
           <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Dinero disponible</div>
-            <div className={styles.summaryValue}>{formatCurrency(resumen.balance)}</div>
-            <div className={styles.summaryLabel}>Por cobrar</div>
-            <div className={`${styles.summaryValue} ${styles.porCobrar}`}>
-              {formatCurrency(resumen.porCobrar)}
+            <h3>Estado Financiero</h3>
+            <div className={styles.summaryItem}>
+              <div className={styles.summaryLabel}>Dinero disponible</div>
+              <div className={styles.summaryValue}>{formatCurrency(resumen.balance)}</div>
+            </div>
+            <div className={styles.summaryItem}>
+              <div className={styles.summaryLabel}>Por cobrar</div>
+              <div className={`${styles.summaryValue} ${styles.porCobrar}`}>
+                {formatCurrency(resumen.porCobrar)}
+              </div>
             </div>
           </div>
 
-          <button 
+          <button
             className={styles.btnPrimary}
             onClick={() => setShowForm(!showForm)}
           >
-            + Nuevo Movimiento
+            Nuevo Movimiento
           </button>
         </div>
 

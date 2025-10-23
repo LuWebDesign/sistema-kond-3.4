@@ -724,7 +724,7 @@ export default function Products() {
                 {/* Unidades */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Unidades *
+                    Unidades a producir *
                   </label>
                   <input
                     type="number"
@@ -1461,6 +1461,14 @@ function ProductCard({
               </span>
               <span>•</span>
               <span>
+                <strong style={{ color: 'var(--text-primary)' }}>{product.unidadesPorPlaca || 1}</strong> /placa
+              </span>
+              <span>•</span>
+              <span>
+                Uso: <strong style={{ color: 'var(--text-primary)' }}>{product.usoPlacas || 0}</strong>
+              </span>
+              <span>•</span>
+              <span>
                 <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/ud
               </span>
               <span>•</span>
@@ -1484,7 +1492,8 @@ function ProductCard({
               color: 'var(--text-secondary)',
               fontSize: '0.9rem'
             }}>
-              ID: {product.id} • {product.categoria} • {product.medidas}
+              ID: {product.id} • {product.categoria} • {product.medidas} • Creado: {product.fechaCreacion ? new Date(product.fechaCreacion).toLocaleDateString() : '—'}
+              {product.publicado ? ' • Público' : ''}
             </p>
           )}
         </div>
@@ -1554,21 +1563,6 @@ function ProductCard({
                 title={product.publicado ? 'Despublicar del catálogo' : 'Publicar en catálogo'}
               >
                 {product.publicado ? '🌐' : '🔒'}
-              </button>
-              
-              <button
-                onClick={() => onToggleVisibility(product.id)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  padding: '6px',
-                  cursor: 'pointer',
-                  color: product.active === false ? '#ef4444' : '#10b981'
-                }}
-                title={product.active === false ? 'Mostrar producto' : 'Ocultar producto'}
-              >
-                {product.active === false ? '👁️‍🗨️' : '👁️'}
               </button>
               
               <button
@@ -1932,7 +1926,7 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Unidades
+              Unidades a producir
             </label>
             <input
               type="number"
@@ -2071,6 +2065,50 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
               step="0.01"
             />
           </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Costo Placa ($)
+            </label>
+            <input
+              type="number"
+              value={editData.costoPlaca}
+              onChange={(e) => handleInputChange('costoPlaca', Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem'
+              }}
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Margen Material (%)
+            </label>
+            <input
+              type="number"
+              value={editData.margenMaterial}
+              onChange={(e) => handleInputChange('margenMaterial', Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem'
+              }}
+              min="0"
+              step="0.1"
+            />
+          </div>
         </div>
       </div>
 
@@ -2119,6 +2157,14 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Visibilidad / Publicación */}
+      <div style={{ gridColumn: '1 / -1' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="checkbox" checked={editData.publicado || false} onChange={(e) => handleInputChange('publicado', e.target.checked)} />
+          <span style={{ color: 'var(--text-primary)' }}>Publicar en catálogo público</span>
+        </label>
       </div>
     </div>
   )
