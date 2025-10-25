@@ -572,6 +572,13 @@
   justify-content: flex-end;
 }
 
+/* Quitar iconos generados por pseudo-elementos junto al monto */
+.movAmount.ingreso::before,
+.movAmount.egreso::before,
+.movAmount.inversion::before {
+  content: none;
+}
+
 .movAmount .amountPill {
   padding: 0.35rem 0.8rem;
   border-radius: 999px;

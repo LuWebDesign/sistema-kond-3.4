@@ -9,8 +9,7 @@ export default function AvailabilityCalendar({
   cart, 
   selectedDate, 
   onDateSelect,
-  className = '',
-  variant = 'default' // 'default' | 'checkout'
+  className = '' 
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
@@ -131,7 +130,7 @@ export default function AvailabilityCalendar({
   }
 
   return (
-    <div className={`availability-calendar ${className} ${variant === 'checkout' ? 'checkout-variant' : ''}`}>
+    <div className={`availability-calendar ${className}`}>
       <style jsx>{`
         .availability-calendar {
           background: var(--bg-card);
@@ -310,21 +309,6 @@ export default function AvailabilityCalendar({
             grid-template-columns: 1fr;
             gap: 8px;
           }
-        }
-
-        /* Estilos específicos para variante checkout */
-        .checkout-variant .calendar-day.past {
-          background: #e5e7eb; /* Gris claro para días pasados */
-          color: #9ca3af; /* Gris medio para el texto */
-          border: 1px solid #d1d5db;
-          opacity: 0.7;
-        }
-
-        .checkout-variant .calendar-day.available {
-          background: #10b981; /* Verde más brillante para días disponibles */
-          color: white;
-          border: 1px solid rgba(16, 185, 129, 0.3);
-          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
       `}</style>
       

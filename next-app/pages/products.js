@@ -1,4 +1,5 @@
 import Layout from '../components/Layout'
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
 
@@ -29,11 +30,15 @@ export default function Products() {
     usoPlacas: 0,
     costoPlaca: 0,
     costoMaterial: 0,
+    materialId: '',
     margenMaterial: 0,
     precioUnitario: 0,
     ensamble: 'Sin ensamble',
     imagen: ''
   })
+
+  // Lista de materiales para el desplegable de costo de material
+  const [materials, setMaterials] = useState([])
 
   // Estados para campos calculados
   const [calculatedFields, setCalculatedFields] = useState({
@@ -142,7 +147,8 @@ export default function Products() {
         unidadesPorPlaca: p.unidadesPorPlaca || 1,
         usoPlacas: p.usoPlacas || 0,
         costoPlaca: p.costoPlaca || 0,
-        costoMaterial: p.costoMaterial || 0,
+  costoMaterial: p.costoMaterial || 0,
+  materialId: p.materialId || '',
         margenMaterial: p.margenMaterial || 0,
         precioUnitario: p.precioUnitario || 0,
         unidades: p.unidades || 1,
@@ -155,6 +161,16 @@ export default function Products() {
       console.error('Error loading products:', error)
       setProducts([])
     }
+  }, [])
+
+  // Cargar materiales desde localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem('materiales')
+      const list = raw ? JSON.parse(raw) : []
+      setMaterials(list)
+    } catch (e) { console.error('load materiales', e) }
   }, [])
 
   // Guardar productos al localStorage
@@ -302,6 +318,7 @@ export default function Products() {
         usoPlacas: 0,
         costoPlaca: 0,
         costoMaterial: 0,
+        materialId: '',
         margenMaterial: 0,
         precioUnitario: 0,
         ensamble: 'Sin ensamble',
@@ -513,6 +530,19 @@ export default function Products() {
             >
               {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
             </button>
+
+            <Link href="/materiales" style={{
+              marginLeft: '8px',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              padding: '12px 20px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}>Ir a Materiales</Link>
 
             {/* Filtros */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -847,57 +877,55 @@ export default function Products() {
                     onKeyDown={(e) => handleKeyDown(e, 'costoMaterial')}
                     min="0"
                     step="0.01"
+                    readOnly
+                    title="Este valor se extrae del material seleccionado"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
                       borderRadius: '6px',
                       border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-primary)',
+                      cursor: 'not-allowed'
                     }}
                   />
                 </div>
 
-                {/* Costo Material */}
+                {/* Material (selección desde Materiales) */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Costo Material ($)
+                    Material
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="number"
-                      name="costoMaterial"
-                      value={formData.costoMaterial}
-                      onChange={handleInputChange}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      name="materialId"
+                      value={formData.materialId || ''}
+                      onChange={(e) => {
+                        const id = e.target.value
+                        const sel = materials.find(x => String(x.id) === String(id))
+                        if (sel) {
+                          setFormData(prev => ({ ...prev, materialId: id, costoMaterial: Number(sel.costoUnitario || 0), costoPlaca: Number(sel.costoUnitario || 0) }))
+                        } else {
+                          setFormData(prev => ({ ...prev, materialId: '', costoMaterial: 0, costoPlaca: 0 }))
+                        }
+                      }}
                       onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
-                      readOnly={!calculatedFields.isCostoMaterialManual}
-                      min="0"
-                      step="0.01"
                       style={{
                         flex: 1,
                         padding: '8px 12px',
                         borderRadius: '6px',
                         border: '1px solid var(--border-color)',
-                        background: calculatedFields.isCostoMaterialManual ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        cursor: calculatedFields.isCostoMaterialManual ? 'text' : 'not-allowed'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => toggleFieldMode('isCostoMaterialManual')}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
                         background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
+                        color: 'var(--text-primary)'
                       }}
                     >
-                      {calculatedFields.isCostoMaterialManual ? 'Auto' : 'Manual'}
-                    </button>
+                      <option value="">-- Seleccionar material --</option>
+                      {materials.map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -928,43 +956,62 @@ export default function Products() {
                 {/* Precio Unitario */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Precio Unitario ($) *
+                    Precio Unitario *
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="number"
-                      name="precioUnitario"
-                      value={formData.precioUnitario}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => handleKeyDown(e, null)}
-                      readOnly={!calculatedFields.isPrecioUnitarioManual}
-                      min="0"
-                      step="0.01"
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: calculatedFields.isPrecioUnitarioManual ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        cursor: calculatedFields.isPrecioUnitarioManual ? 'text' : 'not-allowed'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => toggleFieldMode('isPrecioUnitarioManual')}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      {calculatedFields.isPrecioUnitarioManual ? 'Auto' : 'Manual'}
-                    </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                    <div style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: '#2563eb',
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      textAlign: 'center'
+                    }}>
+                      {formatCurrency(formData.precioUnitario)}
+                    </div>
+
+                    {calculatedFields.isPrecioUnitarioManual && (
+                      <input
+                        type="number"
+                        name="precioUnitario"
+                        value={formData.precioUnitario}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => handleKeyDown(e, null)}
+                        min="0"
+                        step="0.01"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: '#2563eb',
+                          fontSize: '1.05rem',
+                          fontWeight: 700
+                        }}
+                      />
+                    )}
+
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleFieldMode('isPrecioUnitarioManual')}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        {calculatedFields.isPrecioUnitarioManual ? 'Auto' : 'Manual'}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1083,6 +1130,7 @@ export default function Products() {
                       usoPlacas: 0,
                       costoPlaca: 0,
                       costoMaterial: 0,
+                      materialId: '',
                       margenMaterial: 0,
                       precioUnitario: 0,
                       ensamble: 'Sin ensamble',
@@ -1446,28 +1494,17 @@ function ProductCard({
             )}
           </div>
           
-          {/* Información resumida cuando está colapsada */}
+          {/* Información resumida cuando está colapsada (versión compacta) */}
           {!isExpanded && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
+              gap: '12px',
               color: 'var(--text-secondary)',
-              fontSize: '0.9rem',
+              fontSize: '0.95rem',
               marginTop: '8px'
             }}>
-              <span>
-                <strong style={{ color: 'var(--text-primary)' }}>{product.unidades || 0}</strong> uds
-              </span>
-              <span>•</span>
-              <span>
-                <strong style={{ color: 'var(--text-primary)' }}>{product.unidadesPorPlaca || 1}</strong> /placa
-              </span>
-              <span>•</span>
-              <span>
-                Uso: <strong style={{ color: 'var(--text-primary)' }}>{product.usoPlacas || 0}</strong>
-              </span>
-              <span>•</span>
+              {/* Mostramos sólo precio por unidad y total en la vista cerrada */}
               <span>
                 <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/ud
               </span>
@@ -1615,6 +1652,7 @@ function ProductCard({
               setEditData={setEditData}
               imagePreview={imagePreview}
               onImageChange={handleImageChange}
+              onSave={handleSave}
             />
           ) : (
             // Modo vista
@@ -1690,6 +1728,10 @@ function ViewMode({ product }) {
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidades || 0}</span>
           </div>
           <div>
+            <span style={{ color: 'var(--text-secondary)' }}>Unidades por placa: </span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidadesPorPlaca || 1}</span>
+          </div>
+          <div>
             <span style={{ color: 'var(--text-secondary)' }}>Tiempo unitario: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.tiempoUnitario || '00:00:30'}</span>
           </div>
@@ -1735,6 +1777,12 @@ function ViewMode({ product }) {
               </span>
             </div>
           )}
+          {typeof product.margenMaterial !== 'undefined' && (
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Margen material: </span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{(product.margenMaterial || 0)}%</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1756,6 +1804,14 @@ function ViewMode({ product }) {
                 <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.usoPlacas}</span>
               </div>
             )}
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Unidades por placa: </span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidadesPorPlaca || 1}</span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Costo placa: </span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{formatCurrency(product.costoPlaca || 0)}</span>
+            </div>
             {product.costoMaterial > 0 && (
               <div>
                 <span style={{ color: 'var(--text-secondary)' }}>Costo material: </span>
@@ -1803,7 +1859,7 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
+function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -1974,6 +2030,13 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
               type="number"
               value={editData.precioUnitario}
               onChange={(e) => handleInputChange('precioUnitario', Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  // Trigger parent save if provided
+                  try { onSave && onSave() } catch (err) { console.error(err) }
+                }
+              }}
               style={{
                 width: '100%',
                 padding: '6px 8px',
@@ -2074,6 +2137,8 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
               type="number"
               value={editData.costoPlaca}
               onChange={(e) => handleInputChange('costoPlaca', Number(e.target.value))}
+              readOnly
+              title="Este valor se extrae del material seleccionado"
               style={{
                 width: '100%',
                 padding: '6px 8px',
@@ -2081,7 +2146,9 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange }) {
                 border: '1px solid var(--border-color)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
+                cursor: 'not-allowed',
+                opacity: 0.9
               }}
               min="0"
               step="0.01"

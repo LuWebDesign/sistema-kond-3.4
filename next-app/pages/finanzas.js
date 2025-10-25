@@ -208,10 +208,59 @@ export default function Finanzas() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (!confirm('¿Eliminar este movimiento?')) return;
+  // --- Confirm modal state & helpers ---
+  const [confirmModal, setConfirmModal] = useState({ visible: false, title: '', message: '', onConfirm: null });
+
+  const openConfirm = ({ title, message, onConfirm }) => {
+    setConfirmModal({ visible: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal({ visible: false, title: '', message: '', onConfirm: null });
+  };
+
+  // Actions to run after user confirms
+  const handleEditConfirmed = (mov) => {
+    // same logic as previous handleEdit
+    setFormData({
+      tipo: mov.tipo || 'ingreso',
+      monto: mov.monto || '',
+      fecha: mov.fecha || new Date().toISOString().slice(0, 10),
+      hora: mov.hora || '',
+      categoria: mov.categoria || '',
+      descripcion: mov.descripcion || '',
+      metodoPago: mov.metodoPago || 'efectivo'
+    });
+    setEditingId(mov.id);
+    setShowForm(true);
+  };
+
+  const handleDeleteConfirmed = (id) => {
     const updated = movimientos.filter(m => m.id !== id);
     saveMovimientos(updated);
+  };
+
+  // Open confirmation modal wrappers used from the UI
+  const openEditConfirm = (mov) => {
+    openConfirm({
+      title: 'Editar movimiento',
+      message: 'Se abrirá el formulario para editar este movimiento. ¿Deseas continuar?',
+      onConfirm: () => {
+        handleEditConfirmed(mov);
+        closeConfirm();
+      }
+    });
+  };
+
+  const openDeleteConfirm = (id) => {
+    openConfirm({
+      title: 'Eliminar movimiento',
+      message: '¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.',
+      onConfirm: () => {
+        handleDeleteConfirmed(id);
+        closeConfirm();
+      }
+    });
   };
 
   const handleAddCategory = () => {
@@ -624,13 +673,13 @@ export default function Finanzas() {
                         <div className={styles.movActions}>
                           <button
                             className={styles.btnSecondary}
-                            onClick={() => handleEdit(mov)}
+                            onClick={() => openEditConfirm(mov)}
                           >
                             Editar
                           </button>
                           <button
                             className={styles.btnSecondary}
-                            onClick={() => handleDelete(mov.id)}
+                            onClick={() => openDeleteConfirm(mov.id)}
                           >
                             Eliminar
                           </button>
@@ -706,6 +755,28 @@ export default function Finanzas() {
             </div>
           )}
         </div>
+        {/* Confirm modal (reutiliza estilos globales en next-app/styles/globals.css) */}
+        {confirmModal.visible && (
+          <div className="confirm-modal" role="dialog" aria-modal="true" onClick={closeConfirm}>
+            <div className="confirm-modal__backdrop" />
+            <div className="confirm-modal__box" onClick={(e) => e.stopPropagation()}>
+              <div className="confirm-modal__icon">⚠️</div>
+              <div className="confirm-modal__content">
+                <div className="confirm-modal__title">{confirmModal.title}</div>
+                <div className="confirm-modal__message">{confirmModal.message}</div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button className="confirm-modal__close" onClick={closeConfirm}>Cancelar</button>
+                  <button
+                    onClick={() => { if (confirmModal.onConfirm) confirmModal.onConfirm(); }}
+                    style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 10, cursor: 'pointer' }}
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
