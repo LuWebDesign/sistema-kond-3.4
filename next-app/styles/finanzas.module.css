@@ -688,7 +688,7 @@
   --warning: #f59e0b;
 }
 
-.dark .container {
+.dark {
   background-color: var(--bg);
   color: var(--text);
 }
