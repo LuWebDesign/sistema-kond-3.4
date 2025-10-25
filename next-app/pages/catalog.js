@@ -491,7 +491,15 @@ function ProductCard({ product, onAddToCart, getCategoryStyle }) {
           color: 'var(--accent-blue)',
           marginBottom: '16px'
         }}>
-          {formatCurrency(product.precioUnitario || 0)}
+          {/* Mostrar precio con promoción si corresponde */}
+          {product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>{formatCurrency(product.precioPromocional)}</div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
+            </div>
+          ) : (
+            <div>{formatCurrency(product.precioUnitario || 0)}</div>
+          )}
         </div>
 
         {/* Controles de cantidad y botón */}

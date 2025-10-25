@@ -223,7 +223,12 @@ export default function Products() {
       return sum + totalMin * (p.unidades || 0)
     }, 0)
 
-    const averagePrice = total > 0 ? activeProducts.reduce((sum, p) => sum + (p.precioUnitario || 0), 0) / total : 0
+    // Promedio ponderado por unidades: evita que productos con precio unitario alto
+    // pero sin unidades distorsionen el promedio simple.
+    const totalUnits = activeProducts.reduce((sum, p) => sum + (p.unidades || 0), 0)
+    const averagePrice = totalUnits > 0
+      ? activeProducts.reduce((sum, p) => sum + (p.precioUnitario || 0) * (p.unidades || 0), 0) / totalUnits
+      : 0
 
     // Distribución por tipo
     const typeDistribution = { Venta: 0, Presupuesto: 0, Stock: 0 }
@@ -533,9 +538,9 @@ export default function Products() {
 
             <Link href="/materiales" style={{
               marginLeft: '8px',
-              background: 'transparent',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
+              background: '#e0e0e0', /* gris claro */
+              color: '#000000', /* letras negras */
+              border: '1px solid #d0d0d0',
               borderRadius: '8px',
               padding: '12px 20px',
               cursor: 'pointer',
@@ -1724,7 +1729,7 @@ function ViewMode({ product }) {
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div>
-            <span style={{ color: 'var(--text-secondary)' }}>Unidades: </span>
+            <span style={{ color: 'var(--text-secondary)' }}>Unidades a Producir: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidades || 0}</span>
           </div>
           <div>

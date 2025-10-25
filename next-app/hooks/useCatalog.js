@@ -1,6 +1,7 @@
 // Hooks personalizados para el catálogo
 
 import { useState, useEffect } from 'react'
+import { applyPromotionsToProduct } from '../utils/promoEngine'
 
 // Hook para gestionar productos
 export function useProducts() {
@@ -19,7 +20,25 @@ export function useProducts() {
       p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
     )
     
-    setProducts(validProducts)
+    // Enriquecer productos con información de promociones (si las hay)
+    const enriched = validProducts.map(p => {
+      try {
+        const promo = applyPromotionsToProduct(p)
+        return {
+          ...p,
+          promoResult: promo,
+          precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precioUnitario,
+          hasPromotion: !!(promo && promo.hasPromotion),
+          promotionBadges: promo && promo.badges ? promo.badges : []
+        }
+      } catch (e) {
+        // Si algo falla con el motor de promociones, devolver el producto original
+        console.warn('Error aplicando promociones al producto', p.id, e)
+        return p
+      }
+    })
+
+    setProducts(enriched)
     
     // Extraer categorías únicas
     const uniqueCategories = [...new Set(validProducts

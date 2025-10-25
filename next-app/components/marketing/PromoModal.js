@@ -52,25 +52,67 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     textColor: promo?.textColor || 'auto',
     tags: (promo?.tags || []).join(', '),
     active: promo?.active !== false,
-    productIds: promo?.productIds || [],
+    // asegurar productIds como array de Numbers para comparaciones fiables
+    productIds: (promo?.productIds || []).map(id => Number(id)).filter(n => !Number.isNaN(n)),
     config: promo?.config || {}
   });
+  const [errors, setErrors] = useState({})
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    const newErrors = {}
+
     if (!formData.title.trim()) {
-      alert('El título es obligatorio');
-      return;
+      newErrors.title = 'El título es obligatorio'
     }
-    
-    if (formData.productIds.length === 0 && formData.type !== 'free_shipping') {
-      alert('Selecciona al menos un producto para la promoción');
-      return;
+
+    // Productos requeridos para tipos que afectan precio
+    if ((formData.productIds.length === 0) && formData.type !== 'free_shipping' && formData.type !== 'badge_only') {
+      newErrors.productIds = 'Selecciona al menos un producto para la promoción'
+    }
+
+    // Fecha: si ambas están, validar orden
+    if (formData.start && formData.end) {
+      const s = new Date(formData.start)
+      const eDate = new Date(formData.end)
+      if (s > eDate) newErrors.date = 'La fecha de inicio no puede ser posterior a la fecha de fin'
+    }
+
+    // Validaciones por tipo
+    if (formData.type === 'percentage_discount') {
+      const pct = Number(formData.config.percentage || 0)
+      if (!pct || pct <= 0 || pct >= 100) newErrors.percentage = 'Ingresa un porcentaje válido (1-99)'
+    }
+
+    if (formData.type === 'fixed_price') {
+      const np = Number(formData.config.newPrice || 0)
+      if (!np || np <= 0) newErrors.newPrice = 'Ingresa un precio válido (>0)'
+    }
+
+    if (formData.type === 'buy_x_get_y') {
+      const buy = parseInt(formData.config.buyQuantity || 0, 10)
+      const pay = parseInt(formData.config.payQuantity || 0, 10)
+      if (!buy || buy <= 0) newErrors.buyQuantity = 'Cantidad a llevar inválida'
+      if (!pay || pay <= 0) newErrors.payQuantity = 'Cantidad a pagar inválida'
+      if (buy <= pay) newErrors.buyPay = 'La cantidad a llevar debe ser mayor que la cantidad a pagar'
+    }
+
+    if (formData.type === 'free_shipping') {
+      const minA = Number(formData.config.minAmount || 0)
+      if (minA && minA < 0) newErrors.minAmount = 'Compra mínima inválida'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      // scroll to first error field (best-effort)
+      const firstKey = Object.keys(newErrors)[0]
+      const el = document.querySelector(`[name="${firstKey}"]`) || document.querySelector('.' + firstKey)
+      if (el && el.focus) el.focus()
+      return
     }
 
     const tags = formData.tags.trim() ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-    
+
     onSubmit({
       ...formData,
       tags,
@@ -96,7 +138,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} style={{ maxWidth: 800 }} onClick={(e) => e.stopPropagation()}>
+  <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeModal} onClick={onClose}>×</button>
         <div className={styles.modalHeader}>
           <h3>{isEdit ? 'Editar Promoción' : 'Nueva Promoción'}</h3>
@@ -298,27 +340,46 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
             )}
 
             {/* Selección de productos */}
-            <div className={styles.formField}>
-              <label className={styles.label}>Productos incluidos ({products.length} disponibles)</label>
-              <select
-                multiple
-                size="6"
-                className={styles.input}
-                value={formData.productIds.map(String)}
-                onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions).map(opt => parseInt(opt.value));
-                  updateField('productIds', selected);
-                }}
-                style={{ height: 'auto' }}
-              >
-                {products.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} (#{p.id})
-                  </option>
-                ))}
-              </select>
-              <small className={styles.helpText}>Mantén Ctrl/Cmd para seleccionar múltiples</small>
-            </div>
+              <div className={styles.formField}>
+                <label className={styles.label}>Productos incluidos ({products.length} disponibles)</label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button type="button" className={styles.btnSecondary} onClick={() => updateField('productIds', products.map(p => p.id))}>Seleccionar todos</button>
+                <button type="button" className={styles.btnSecondary} onClick={() => updateField('productIds', [])}>Limpiar</button>
+              </div>
+              <div className={styles.productList} role="list">
+                {products.map(p => {
+                  const pid = Number(p.id)
+                  const checked = Array.isArray(formData.productIds) && formData.productIds.includes(pid)
+                  return (
+                    <label key={p.id} className={styles.productItem} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <input
+                        type="checkbox"
+                        name="productIds"
+                        value={String(pid)}
+                        checked={checked}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          const current = Array.isArray(formData.productIds) ? formData.productIds.slice() : []
+                          if (e.target.checked) {
+                            // add if not present
+                            if (!current.includes(val)) current.push(val)
+                            updateField('productIds', current)
+                          } else {
+                            // remove
+                            updateField('productIds', current.filter(x => x !== val))
+                          }
+                        }}
+                      />
+                      <span style={{ flex: 1 }}>{p.nombre} <span style={{ color: '#9ca3af', marginLeft: 8 }}>#{p.id}</span></span>
+                    </label>
+                  )
+                })}
+              </div>
+              <small className={styles.helpText}>Marca los productos que quieres incluir en la promoción</small>
+              {errors.productIds && <div className={styles.fieldError}>{errors.productIds}</div>}
+              {errors.date && <div className={styles.fieldError}>{errors.date}</div>}
+              </div>
 
             <div className={styles.formActions}>
               <button type="button" className={styles.btnSecondary} onClick={onClose}>

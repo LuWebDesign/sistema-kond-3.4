@@ -105,12 +105,13 @@
 .input {
   width: 100%;
   padding: 10px 12px;
-  background: #1f2937;
+  background: linear-gradient(180deg, #0b1220, #111827);
   color: #e5e7eb;
-  border: 1px solid #374151;
-  border-radius: 8px;
+  border: 1px solid #273143;
+  border-radius: 10px;
   outline: none;
   font-size: 0.95rem;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.06s;
 }
 
 .input::placeholder {
@@ -118,8 +119,9 @@
 }
 
 .input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #60a5fa;
+  box-shadow: 0 6px 18px rgba(96, 165, 250, 0.08);
+  transform: translateY(-1px);
 }
 
 .actions {
@@ -143,9 +145,10 @@
 }
 
 .btnPrimary {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.12);
 }
 
 .btnPrimary:hover {
@@ -153,8 +156,8 @@
 }
 
 .btnSecondary {
-  background: #374151;
-  border-color: #374151;
+  background: linear-gradient(180deg, #263044, #2c3946);
+  border-color: transparent;
   color: #e5e7eb;
 }
 
@@ -561,7 +564,7 @@
   background: #1e1e1e;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  max-width: 700px;
+  max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -621,10 +624,31 @@
   gap: 20px;
 }
 
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  align-items: start;
+}
+
+.specificFields {
+  background: linear-gradient(180deg, rgba(17,24,39,0.6), rgba(17,24,39,0.5));
+  border: 1px solid rgba(55,65,81,0.6);
+  padding: 12px;
+  border-radius: 10px;
+  grid-column: 1 / -1;
+}
+
 .formField {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+}
+
+.fieldError {
+  color: #fca5a5;
+  font-size: 0.85rem;
+  margin-top: 4px;
 }
 
 .label {
@@ -671,6 +695,31 @@
   font-size: 0.8rem;
   color: #9ca3af;
   line-height: 1.4;
+}
+
+/* Lista de productos (para selección en el modal) */
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(17,24,39,0.45), rgba(17,24,39,0.5));
+  border: 1px solid rgba(55,65,81,0.5);
+}
+
+.productItem {
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.productItem input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .checkboxLabel {
@@ -754,10 +803,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid #374151;
-  border-radius: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(17,24,39,0.5), rgba(17,24,39,0.55));
+  border: 1px solid rgba(55,65,81,0.5);
+  border-radius: 10px;
 }
 
 .badgePreview span {
@@ -767,13 +816,23 @@
 
 .previewBadge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.promoPreview {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(17,24,39,0.35), rgba(17,24,39,0.25));
+  border: 1px solid rgba(55,65,81,0.18);
+  color: #e5e7eb;
+  font-size: 0.95rem;
 }
 
 /* Multi-select Products */
