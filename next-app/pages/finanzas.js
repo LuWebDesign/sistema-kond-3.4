@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import styles from '../styles/finanzas.module.css';
 
 export default function Finanzas() {
+  const [darkMode, setDarkMode] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
   const [categorias, setCategorias] = useState(['Ventas', 'Materia Prima', 'Servicios']);
@@ -32,6 +33,13 @@ export default function Finanzas() {
 
   useEffect(() => {
     loadData();
+    // load theme
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('finanzas_dark'));
+        if (typeof saved === 'boolean') setDarkMode(saved);
+      } catch (e) {}
+    }
   }, []);
 
   // Escuchar cambios externos (otra pestaña o módulos que registren movimientos)
@@ -318,11 +326,24 @@ export default function Finanzas() {
 
   return (
     <Layout>
-      <div className={styles.container}>
+      <div className={`${styles.container} ${darkMode ? styles.dark : ''}`}>
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Finanzas</h1>
             <p className={styles.subtitle}>Gestión de ingresos y gastos</p>
+          </div>
+          <div className={styles.headerControls}>
+            <button
+              className={styles.btnSmall}
+              onClick={() => {
+                const next = !darkMode;
+                setDarkMode(next);
+                try { localStorage.setItem('finanzas_dark', JSON.stringify(next)); } catch (e) {}
+              }}
+              aria-label="Toggle theme"
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
           </div>
         </div>
 
@@ -583,12 +604,17 @@ export default function Finanzas() {
                       <div key={mov.id} className={styles.movCard}>
                         <div className={styles.movTop}>
                           <div className={styles.movMeta}>
-                            <strong>{mov.categoria || 'Sin categoría'}</strong>
+                            <strong>
+                              <span className={`${styles.movBadge} ${styles[mov.tipo]}`}>
+                                {mov.tipo === 'ingreso' ? 'Ingreso' : mov.tipo === 'egreso' ? 'Egreso' : 'Inversión'}
+                              </span>
+                              <span>{mov.categoria || 'Sin categoría'}</span>
+                            </strong>
                             {mov.metodoPago && <span> - {mov.metodoPago}</span>}
                             <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
                           </div>
                           <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
-                            {formatCurrency(mov.monto)}
+                            <span className={styles.amountPill}>{formatCurrency(mov.monto)}</span>
                           </div>
                         </div>
                         <div className={styles.movDesc}>{mov.descripcion}</div>
