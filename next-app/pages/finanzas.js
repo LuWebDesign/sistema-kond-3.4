@@ -14,7 +14,16 @@ export default function Finanzas() {
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [showMontoModal, setShowMontoModal] = useState(false);
+  const [tempMonto, setTempMonto] = useState('');
   
+  // Función para formatear número con separadores de miles
+  const formatNumberWithThousands = (value) => {
+    if (!value) return '';
+    const num = value.toString().replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
   // Form fields
   const [formData, setFormData] = useState({
     tipo: 'ingreso',
@@ -397,51 +406,67 @@ export default function Finanzas() {
         </div>
 
         {/* Resumen */}
-        <div className={styles.summaryGrid}>
-          <div className={styles.summaryCard}>
-            <h3>Movimientos</h3>
-            <div className={styles.summaryRow}>
+        <div className={styles.summaryTopRow}>
+          <div className={styles.summaryColumn}>
+            <div className={styles.summaryCard}>
+              <h3>Ingresos</h3>
               <div className={styles.summaryItem}>
-                <div className={styles.summaryLabel}>Ingresos</div>
                 <div className={`${styles.summaryValue} ${styles.ingreso}`}>
                   {formatCurrency(resumen.ingresosHoy)}
                 </div>
               </div>
+            </div>
+
+            <div className={styles.summaryCard}>
+              <h3>Egresos</h3>
               <div className={styles.summaryItem}>
-                <div className={styles.summaryLabel}>Egresos</div>
                 <div className={`${styles.summaryValue} ${styles.egreso}`}>
                   {formatCurrency(resumen.egresosHoy)}
                 </div>
               </div>
             </div>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Balance Total</div>
-              <div className={`${styles.summaryValue} ${styles.balance}`}>
-                {formatCurrency(resumen.balance)}
+          </div>
+
+          <div className={styles.summaryColumn}>
+            <div className={styles.summaryCard}>
+              <h3>Balance Total</h3>
+              <div className={styles.summaryItem}>
+                <div className={`${styles.summaryValue} ${styles.balance}`}>
+                  {formatCurrency(resumen.balance)}
+                </div>
               </div>
             </div>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Equilibrio Hoy</div>
-              <div className={`${styles.summaryValue} ${styles.equilibrio}`}>
-                {formatCurrency(resumen.equilibrioHoy)}
+
+            <div className={styles.summaryCard}>
+              <h3>Equilibrio Hoy</h3>
+              <div className={styles.summaryItem}>
+                <div className={`${styles.summaryValue} ${styles.equilibrio}`}>
+                  {formatCurrency(resumen.equilibrioHoy)}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className={styles.summaryCard}>
-            <h3>Estado Financiero</h3>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Dinero disponible</div>
-              <div className={styles.summaryValue}>{formatCurrency(resumen.balance)}</div>
+          <div className={styles.summaryColumn}>
+            <div className={styles.summaryCard}>
+              <h3>Dinero disponible</h3>
+              <div className={styles.summaryItem}>
+                <div className={styles.summaryValue}>{formatCurrency(resumen.balance)}</div>
+              </div>
             </div>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Por cobrar</div>
-              <div className={`${styles.summaryValue} ${styles.porCobrar}`}>
-                {formatCurrency(resumen.porCobrar)}
+
+            <div className={styles.summaryCard}>
+              <h3>Por cobrar</h3>
+              <div className={styles.summaryItem}>
+                <div className={`${styles.summaryValue} ${styles.porCobrar}`}>
+                  {formatCurrency(resumen.porCobrar)}
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
+        <div className={styles.summaryGrid}>
           <button
             className={styles.btnPrimary}
             onClick={() => setShowForm(!showForm)}
@@ -453,44 +478,76 @@ export default function Finanzas() {
         {/* Form */}
         {showForm && (
           <div className={styles.formContainer}>
+            <div className={styles.formHeader}>
+              <h2>{editingId ? 'Editar Movimiento' : 'Nuevo Movimiento'}</h2>
+              <p>Registra un ingreso, egreso o inversión en tu finanzas.</p>
+            </div>
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.formGrid}>
                 <div className={styles.formField}>
-                  <label>Tipo</label>
+                  <label>Tipo de Movimiento</label>
                   <div className={styles.segmentedControl}>
                     <button
                       type="button"
                       className={formData.tipo === 'ingreso' ? styles.active : ''}
                       onClick={() => setFormData({...formData, tipo: 'ingreso'})}
                     >
-                      Ingreso
+                      💰 Ingreso
                     </button>
                     <button
                       type="button"
                       className={formData.tipo === 'egreso' ? styles.active : ''}
                       onClick={() => setFormData({...formData, tipo: 'egreso'})}
                     >
-                      Egreso
+                      💸 Egreso
                     </button>
                     <button
                       type="button"
                       className={formData.tipo === 'inversion' ? styles.active : ''}
                       onClick={() => setFormData({...formData, tipo: 'inversion'})}
                     >
-                      Inversión
+                      📈 Inversión
                     </button>
                   </div>
                 </div>
 
                 <div className={styles.formField}>
-                  <label>Monto ($)</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={formData.monto}
-                    onChange={(e) => setFormData({...formData, monto: e.target.value})}
-                    required
-                  />
+                  <label>Monto</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="Ej: 15.000"
+                      value={formatNumberWithThousands(formData.monto)}
+                      onChange={(e) => {
+                        const rawValue = e.target.value.replace(/\D/g, '');
+                        setFormData({...formData, monto: rawValue});
+                      }}
+                      required
+                      style={{ paddingRight: '3rem' }}
+                    />
+                    <button
+                      type="button"
+                      className={styles.btnSmall}
+                      onClick={() => {
+                        setTempMonto(formData.monto);
+                        setShowMontoModal(true);
+                      }}
+                      title="Usar teclado numérico"
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        padding: '0.5rem',
+                        fontSize: '1rem',
+                        minWidth: 'auto',
+                        height: 'auto'
+                      }}
+                    >
+                      ⌨️
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.formField}>
@@ -505,13 +562,25 @@ export default function Finanzas() {
                 </div>
 
                 <div className={styles.formField}>
-                  <label>Hora</label>
+                  <label>Hora (opcional)</label>
                   <input
                     type="time"
                     className={styles.input}
                     value={formData.hora}
                     onChange={(e) => setFormData({...formData, hora: e.target.value})}
                   />
+                </div>
+
+                <div className={styles.formField}>
+                  <label>Método de Pago</label>
+                  <select
+                    className={styles.input}
+                    value={formData.metodoPago}
+                    onChange={(e) => setFormData({...formData, metodoPago: e.target.value})}
+                  >
+                    <option value="efectivo">💵 Efectivo</option>
+                    <option value="transferencia">🏦 Transferencia</option>
+                  </select>
                 </div>
 
                 <div className={styles.formField}>
@@ -522,7 +591,7 @@ export default function Finanzas() {
                       value={formData.categoria}
                       onChange={(e) => setFormData({...formData, categoria: e.target.value})}
                     >
-                      <option value="">-- Sin categoría --</option>
+                      <option value="">-- Selecciona una categoría --</option>
                       {categorias.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
@@ -531,15 +600,17 @@ export default function Finanzas() {
                       type="button"
                       className={styles.btnSmall}
                       onClick={() => setShowAddCategory(!showAddCategory)}
+                      title="Agregar nueva categoría"
                     >
-                      +
+                      ➕
                     </button>
                     <button
                       type="button"
                       className={styles.btnSmall}
                       onClick={() => setShowCategoryManager(!showCategoryManager)}
+                      title="Gestionar categorías"
                     >
-                      Gestionar
+                      ⚙️
                     </button>
                   </div>
                   
@@ -548,7 +619,7 @@ export default function Finanzas() {
                       <input
                         type="text"
                         className={styles.input}
-                        placeholder="Nueva categoría"
+                        placeholder="Nombre de la nueva categoría"
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                       />
@@ -569,14 +640,14 @@ export default function Finanzas() {
                               className={styles.btnSmall}
                               onClick={() => handleRenameCategory(cat)}
                             >
-                              Editar
+                              ✏️
                             </button>
                             <button
                               type="button"
                               className={styles.btnSmall}
                               onClick={() => handleDeleteCategory(cat)}
                             >
-                              Eliminar
+                              🗑️
                             </button>
                           </div>
                         </div>
@@ -585,23 +656,12 @@ export default function Finanzas() {
                   )}
                 </div>
 
-                <div className={styles.formField}>
-                  <label>Método de pago</label>
-                  <select
-                    className={styles.input}
-                    value={formData.metodoPago}
-                    onChange={(e) => setFormData({...formData, metodoPago: e.target.value})}
-                  >
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                  </select>
-                </div>
-
                 <div className={styles.formFieldFull}>
-                  <label>Descripción</label>
+                  <label>Descripción (opcional)</label>
                   <input
                     type="text"
                     className={styles.input}
+                    placeholder="Ej: Venta de productos, Pago de servicios..."
                     value={formData.descripcion}
                     onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
                   />
@@ -610,13 +670,105 @@ export default function Finanzas() {
 
               <div className={styles.formActions}>
                 <button type="button" className={styles.btnSecondary} onClick={resetForm}>
-                  Cancelar
+                  ❌ Cancelar
                 </button>
                 <button type="submit" className={styles.btnPrimary}>
-                  {editingId ? 'Actualizar' : 'Guardar'}
+                  {editingId ? '✏️ Actualizar' : '💾 Guardar Movimiento'}
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Monto Modal */}
+        {showMontoModal && (
+          <div className="confirm-modal" role="dialog" aria-modal="true" onClick={() => setShowMontoModal(false)}>
+            <div className="confirm-modal__backdrop" />
+            <div className="confirm-modal__box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+              <div className="confirm-modal__icon" style={{ fontSize: '2rem' }}>⌨️</div>
+              <div className="confirm-modal__content">
+                <div className="confirm-modal__title" style={{ fontSize: '1.25rem', fontWeight: '600' }}>Ingresar Monto</div>
+                <div style={{
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
+                  margin: '1.5rem 0',
+                  textAlign: 'center',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                  borderRadius: '12px',
+                  border: '2px solid #cbd5e1',
+                  color: '#1e293b'
+                }}>
+                  ${formatNumberWithThousands(tempMonto) || '0'}
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '0.75rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  {[1,2,3,4,5,6,7,8,9].map(num => (
+                    <button
+                      key={num}
+                      onClick={() => setTempMonto(prev => prev + num)}
+                      className={styles.keypadButton}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setTempMonto(prev => prev + '.')}
+                    className={styles.keypadButton}
+                  >
+                    .
+                  </button>
+                  <button
+                    onClick={() => setTempMonto(prev => prev + '0')}
+                    className={styles.keypadButton}
+                  >
+                    0
+                  </button>
+                  <button
+                    onClick={() => setTempMonto(prev => prev.slice(0, -1))}
+                    className={styles.keypadButton}
+                    style={{ background: '#ef4444', color: 'white' }}
+                  >
+                    ⌫
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button
+                    className="confirm-modal__close"
+                    onClick={() => setShowMontoModal(false)}
+                    style={{ flex: 1 }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFormData({...formData, monto: tempMonto});
+                      setTempMonto('');
+                      setShowMontoModal(false);
+                    }}
+                    style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      transition: 'transform 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  >
+                    ✅ Aceptar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

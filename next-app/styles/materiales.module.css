@@ -77,3 +77,24 @@
   .grid { grid-template-columns: 1fr }
   .formContainer { order: 2 }
 }
+
+/* Dark theme overrides - apply class `styles.dark` to the root container */
+.dark {
+  background: transparent;
+}
+.dark .container { background: transparent }
+.dark .card { background: #0b1220; border: 1px solid rgba(255,255,255,0.06); color: #e6eef8 }
+.dark .cardHeader { border-color: rgba(255,255,255,0.03) }
+.dark .name { color: #e6eef8 }
+.dark .meta { color: rgba(255,255,255,0.6) }
+.dark .cardBody { color: rgba(255,255,255,0.8) }
+.dark .empty { background: #071229; border-color: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6) }
+.dark .formContainer { background: #071229; border: 1px solid rgba(255,255,255,0.04); color: #e6eef8 }
+.dark .formContainer label { color: rgba(255,255,255,0.65) }
+.dark .formTitle { color: #f3f4f6 }
+.dark .field { background: #0b1220; color: #e6eef8; border-color: rgba(255,255,255,0.04) }
+.dark .field:focus { box-shadow: 0 2px 8px rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.2) }
+.dark .btnPrimary { background: linear-gradient(135deg,#2563eb,#1d4ed8); color: white }
+.dark .btnSecondary { background: transparent; color: #e6eef8; border-color: rgba(255,255,255,0.06) }
+.dark .btnSmall { background: transparent; border-color: rgba(255,255,255,0.06); color: #e6eef8 }
+.dark .costPreviewFull { background: rgba(255,255,255,0.02); color: #e6eef8; border-color: rgba(255,255,255,0.03) }

@@ -212,8 +212,8 @@ export default function Products() {
   const calculateMetrics = useCallback(() => {
     const activeProducts = filteredProducts.filter(p => p.active !== false)
     
-    const total = activeProducts.length
-    const totalValue = activeProducts.reduce((sum, p) => sum + (p.precioUnitario || 0) * (p.unidades || 0), 0)
+  const total = activeProducts.length
+  const totalValue = activeProducts.reduce((sum, p) => sum + (Number(p.precioUnitario) || 0) * (Number(p.unidades) || 0), 0)
     
     // Calcular tiempo total
     const totalMinutes = activeProducts.reduce((sum, p) => {
@@ -223,12 +223,9 @@ export default function Products() {
       return sum + totalMin * (p.unidades || 0)
     }, 0)
 
-    // Promedio ponderado por unidades: evita que productos con precio unitario alto
-    // pero sin unidades distorsionen el promedio simple.
-    const totalUnits = activeProducts.reduce((sum, p) => sum + (p.unidades || 0), 0)
-    const averagePrice = totalUnits > 0
-      ? activeProducts.reduce((sum, p) => sum + (p.precioUnitario || 0) * (p.unidades || 0), 0) / totalUnits
-      : 0
+  // Prefer weighted average by unidades (precio promedio por unidad)
+  const totalUnits = activeProducts.reduce((sum, p) => sum + (Number(p.unidades) || 0), 0)
+  const averagePrice = totalUnits > 0 ? totalValue / totalUnits : (total > 0 ? activeProducts.reduce((sum, p) => sum + (Number(p.precioUnitario) || 0), 0) / total : 0)
 
     // Distribución por tipo
     const typeDistribution = { Venta: 0, Presupuesto: 0, Stock: 0 }

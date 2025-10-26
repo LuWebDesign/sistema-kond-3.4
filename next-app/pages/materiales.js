@@ -17,6 +17,7 @@ export default function Materiales() {
   const [espesores, setEspesores] = useState([])
   const [showNewEspesor, setShowNewEspesor] = useState(false)
   const [newEspesor, setNewEspesor] = useState('')
+  const [darkMode, setDarkMode] = useState(false)
   const [form, setForm] = useState({
     nombre: '',
     tipo: '',
@@ -48,6 +49,11 @@ export default function Materiales() {
       const rawE = localStorage.getItem('espesores')
       if (rawE) setEspesores(JSON.parse(rawE))
     } catch (e) { console.error('load espesores', e) }
+    // load dark mode preference (shared key used in finanzas)
+    try {
+      const saved = JSON.parse(localStorage.getItem('finanzas_dark'))
+      if (typeof saved === 'boolean') setDarkMode(saved)
+    } catch (e) {}
   }, [])
 
   const save = (items) => {
@@ -96,7 +102,7 @@ export default function Materiales() {
 
   return (
     <Layout>
-      <div className={styles.container}>
+  <div className={`${styles.container} ${darkMode ? styles.dark : ''}`}>
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Materiales</h1>
