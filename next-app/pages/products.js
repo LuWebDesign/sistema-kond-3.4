@@ -538,9 +538,9 @@ export default function Products() {
 
             <Link href="/materiales" style={{
               marginLeft: '8px',
-              background: '#e0e0e0', /* gris claro */
-              color: '#000000', /* letras negras */
-              border: '1px solid #d0d0d0',
+              background: '#e5e7eb',
+              color: '#374151',
+              border: '1px solid #d1d5db',
               borderRadius: '8px',
               padding: '12px 20px',
               cursor: 'pointer',
@@ -1729,7 +1729,7 @@ function ViewMode({ product }) {
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div>
-            <span style={{ color: 'var(--text-secondary)' }}>Unidades a Producir: </span>
+            <span style={{ color: 'var(--text-secondary)' }}>Unidades a producir: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidades || 0}</span>
           </div>
           <div>
