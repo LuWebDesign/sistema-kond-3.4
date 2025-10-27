@@ -379,6 +379,156 @@ export default function Home() {
           border-color: #3b82f6;
         }
 
+        /* Pricing Section */
+        .pricing {
+          padding: 80px 0;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .pricing h2 {
+          text-align: center;
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin-bottom: 16px;
+          color: #f8fafc;
+        }
+        .section-subtitle {
+          text-align: center;
+          font-size: 1.1rem;
+          color: #94a3b8;
+          margin-bottom: 48px;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .pricing-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 32px;
+          margin-bottom: 60px;
+          max-width: 1200px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .pricing-card {
+          background: rgba(51, 65, 85, 0.5);
+          border-radius: 16px;
+          border: 1px solid rgba(148, 163, 184, 0.1);
+          padding: 40px 32px;
+          text-align: center;
+          position: relative;
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+        .pricing-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          border-color: rgba(59, 130, 246, 0.3);
+        }
+        .pricing-card.featured {
+          background: linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(51, 65, 85, 0.6) 100%);
+          border: 2px solid #3b82f6;
+          transform: scale(1.05);
+        }
+        .pricing-card.featured:hover {
+          transform: translateY(-8px) scale(1.05);
+        }
+        .pricing-badge {
+          position: absolute;
+          top: -12px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #3b82f6, #06b6d4);
+          color: white;
+          padding: 8px 20px;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .pricing-header {
+          margin-bottom: 32px;
+        }
+        .pricing-header h3 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #f8fafc;
+          margin-bottom: 16px;
+        }
+        .pricing-price {
+          margin-bottom: 16px;
+        }
+        .price-amount {
+          font-size: 3rem;
+          font-weight: 800;
+          color: #3b82f6;
+          line-height: 1;
+        }
+        .price-period {
+          font-size: 1rem;
+          color: #94a3b8;
+          font-weight: 500;
+        }
+        .pricing-description {
+          color: #cbd5e1;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          margin: 0;
+        }
+        .pricing-features {
+          text-align: left;
+          margin-bottom: 32px;
+        }
+        .feature-item {
+          color: #cbd5e1;
+          margin-bottom: 12px;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .feature-item:last-child {
+          margin-bottom: 0;
+        }
+        .pricing-btn {
+          width: 100%;
+          padding: 14px 24px;
+          background: transparent;
+          border: 2px solid #3b82f6;
+          border-radius: 8px;
+          color: #3b82f6;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 1rem;
+        }
+        .pricing-btn:hover {
+          background: #3b82f6;
+          color: white;
+          transform: translateY(-2px);
+        }
+        .featured-btn {
+          background: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
+        }
+        .featured-btn:hover {
+          background: #2563eb;
+          border-color: #2563eb;
+        }
+        .pricing-footer {
+          text-align: center;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .pricing-footer p {
+          color: #94a3b8;
+          margin-bottom: 8px;
+          font-size: 0.9rem;
+        }
+        .pricing-footer strong {
+          color: #f8fafc;
+        }
+
         /* Footer */
         .footer {
           background: rgba(15, 23, 42, 0.8);
@@ -602,6 +752,11 @@ export default function Home() {
           .about-content { grid-template-columns: 1fr; }
           .nav-links { gap: 16px; }
           .header-content { flex-direction: column; gap: 16px; }
+          .pricing-grid { grid-template-columns: 1fr; gap: 24px; }
+          .pricing-card { padding: 32px 24px; }
+          .pricing-card.featured { transform: none; }
+          .pricing-card.featured:hover { transform: translateY(-8px); }
+          .price-amount { font-size: 2.5rem; }
         }
       `}</style>
 
@@ -613,6 +768,7 @@ export default function Home() {
             <nav className="nav-links">
               <a href="#inicio" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }}>Inicio</a>
               <a href="#sobre" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('sobre'); }}>Sobre el Proyecto</a>
+              <a href="#precios" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('precios'); }}>Precios</a>
               <a href="#contacto" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('contacto'); }}>Contacto</a>
               <Link href="/catalog" className="nav-link">Catálogo</Link>
               <button className="btn-admin" onClick={() => setShowLoginModal(true)}>Acceso Admin</button>
@@ -716,6 +872,91 @@ export default function Home() {
             </div>
             <button type="submit" className="btn-primary" style={{width: '100%'}}>Enviar Mensaje</button>
           </form>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="precios" className="pricing">
+        <div className="container">
+          <h2>Planes y Precios</h2>
+          <p className="section-subtitle">Elige el plan perfecto para tu negocio</p>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <div className="pricing-header">
+                <h3>Plan Básico</h3>
+                <div className="pricing-price">
+                  <span className="price-amount">$29</span>
+                  <span className="price-period">/mes</span>
+                </div>
+                <p className="pricing-description">Perfecto para talleres pequeños que empiezan con la digitalización</p>
+              </div>
+              <div className="pricing-features">
+                <div className="feature-item">✅ Gestión de hasta 100 pedidos/mes</div>
+                <div className="feature-item">✅ Catálogo básico online</div>
+                <div className="feature-item">✅ Control de inventario simple</div>
+                <div className="feature-item">✅ Reportes básicos mensuales</div>
+                <div className="feature-item">✅ Soporte por email</div>
+                <div className="feature-item">✅ 1 usuario administrador</div>
+              </div>
+              <button className="pricing-btn" onClick={() => setShowLoginModal(true)}>
+                Comenzar Gratis
+              </button>
+            </div>
+
+            <div className="pricing-card featured">
+              <div className="pricing-badge">Más Popular</div>
+              <div className="pricing-header">
+                <h3>Plan Profesional</h3>
+                <div className="pricing-price">
+                  <span className="price-amount">$79</span>
+                  <span className="price-period">/mes</span>
+                </div>
+                <p className="pricing-description">Ideal para negocios en crecimiento con operaciones medianas</p>
+              </div>
+              <div className="pricing-features">
+                <div className="feature-item">✅ Pedidos ilimitados</div>
+                <div className="feature-item">✅ Catálogo avanzado con personalización</div>
+                <div className="feature-item">✅ Control de inventario avanzado</div>
+                <div className="feature-item">✅ Reportes en tiempo real</div>
+                <div className="feature-item">✅ Integración con WhatsApp</div>
+                <div className="feature-item">✅ Hasta 5 usuarios</div>
+                <div className="feature-item">✅ Soporte prioritario</div>
+                <div className="feature-item">✅ API para integraciones</div>
+              </div>
+              <button className="pricing-btn featured-btn" onClick={() => setShowLoginModal(true)}>
+                Comenzar Ahora
+              </button>
+            </div>
+
+            <div className="pricing-card">
+              <div className="pricing-header">
+                <h3>Plan Empresarial</h3>
+                <div className="pricing-price">
+                  <span className="price-amount">$149</span>
+                  <span className="price-period">/mes</span>
+                </div>
+                <p className="pricing-description">Para grandes operaciones que necesitan máxima eficiencia</p>
+              </div>
+              <div className="pricing-features">
+                <div className="feature-item">✅ Todo del Plan Profesional</div>
+                <div className="feature-item">✅ Usuarios ilimitados</div>
+                <div className="feature-item">✅ Múltiples sucursales</div>
+                <div className="feature-item">✅ Integración ERP completa</div>
+                <div className="feature-item">✅ Analíticas avanzadas con IA</div>
+                <div className="feature-item">✅ Soporte 24/7 telefónico</div>
+                <div className="feature-item">✅ Consultoría personalizada</div>
+                <div className="feature-item">✅ Backup y recuperación garantizada</div>
+              </div>
+              <button className="pricing-btn" onClick={() => setShowLoginModal(true)}>
+                Contactar Ventas
+              </button>
+            </div>
+          </div>
+
+          <div className="pricing-footer">
+            <p>💡 <strong>Todos los planes incluyen:</strong> 14 días gratis, sin compromiso • Actualizaciones automáticas • Seguridad garantizada</p>
+            <p>🔄 Cambia o cancela tu plan en cualquier momento</p>
+          </div>
         </div>
       </section>
 
