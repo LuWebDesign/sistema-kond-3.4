@@ -312,11 +312,12 @@ export const isAdminLogged = () => {
     const adminSessionStr = localStorage.getItem('adminSession')
     if (adminSessionStr) {
       const adminSession = JSON.parse(adminSessionStr)
-      if (adminSession.loggedIn && adminSession.timestamp) {
-        // Verificar que la sesión no haya expirado (24 horas)
+      if ((adminSession.loggedIn || adminSession.isLoggedIn) && adminSession.timestamp) {
+        // Usar duración específica guardada o 24 horas por defecto
+        const sessionDuration = adminSession.sessionDuration || (24 * 60 * 60 * 1000) // ms
         const sessionAge = Date.now() - adminSession.timestamp
-        const maxAge = 24 * 60 * 60 * 1000 // 24 horas en ms
-        if (sessionAge < maxAge) {
+
+        if (sessionAge < sessionDuration) {
           return true
         } else {
           // Sesión expirada, limpiarla
