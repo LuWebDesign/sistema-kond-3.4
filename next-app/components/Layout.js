@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import NotificationsProvider from './NotificationsProvider'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function Layout({ children, title = 'Sistema KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [userInfo, setUserInfo] = useState(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -39,11 +41,13 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
   }
 
   const handleLogout = () => {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-      localStorage.removeItem('adminSession')
-      setUserInfo(null)
-      router.push('/home')
-    }
+    setShowLogoutConfirm(true)
+  }
+
+  const confirmLogout = () => {
+    localStorage.removeItem('adminSession')
+    setUserInfo(null)
+    router.push('/home')
   }
 
   const toggleTheme = () => {
@@ -236,9 +240,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                     onClick={handleLogout}
                     style={{
                       padding: '6px 12px',
-                      background: 'var(--accent-red)',
-                      color: 'white',
-                      border: 'none',
+                      background: 'white',
+                      color: '#1f2937',
+                      border: '2px solid var(--accent-red)',
                       borderRadius: '6px',
                       fontSize: '0.8rem',
                       cursor: 'pointer',
@@ -246,10 +250,12 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.background = '#dc2626'
+                      e.target.style.background = '#f9fafb'
+                      e.target.style.borderColor = '#dc2626'
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.background = 'var(--accent-red)'
+                      e.target.style.background = 'white'
+                      e.target.style.borderColor = 'var(--accent-red)'
                     }}
                   >
                     🚪 Cerrar Sesión
@@ -271,6 +277,18 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           
           {children}
           <NotificationsPanel target="admin" />
+
+          {/* Modal de confirmación para logout */}
+          <ConfirmDialog
+            open={showLogoutConfirm}
+            onClose={() => setShowLogoutConfirm(false)}
+            onConfirm={confirmLogout}
+            title="Cerrar sesión"
+            message="¿Estás seguro de que quieres cerrar sesión?"
+            confirmText="Cerrar sesión"
+            cancelText="Cancelar"
+            type="warning"
+          />
         </main>
       </div>
       
