@@ -1,18 +1,50 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import NotificationsProvider from './NotificationsProvider'
 
 export default function Layout({ children, title = 'Sistema KOND' }) {
   const [theme, setTheme] = useState('dark')
+  const [userInfo, setUserInfo] = useState(null)
+  const router = useRouter()
 
   useEffect(() => {
     // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
     document.body.setAttribute('data-theme', savedTheme)
+
+    // Cargar información del usuario logueado
+    loadUserInfo()
   }, [])
+
+  const loadUserInfo = () => {
+    try {
+      const sessionData = localStorage.getItem('adminSession')
+      if (sessionData) {
+        const session = JSON.parse(sessionData)
+        if (session.isLoggedIn || session.loggedIn) {
+          setUserInfo({
+            email: session.email,
+            loginTime: new Date(session.timestamp).toLocaleString('es-AR'),
+            rememberSession: session.rememberSession || false
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user info:', error)
+    }
+  }
+
+  const handleLogout = () => {
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+      localStorage.removeItem('adminSession')
+      setUserInfo(null)
+      router.push('/home')
+    }
+  }
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
@@ -155,18 +187,85 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           minHeight: '100vh',
           position: 'relative'
         }}>
-          {/* Header con notificaciones */}
+          {/* Header con notificaciones y usuario */}
           <div style={{
             position: 'sticky',
             top: 0,
             right: 0,
             zIndex: 100,
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             padding: '12px 20px',
             background: 'var(--bg-primary)',
             borderBottom: '1px solid var(--border-color)'
           }}>
+            {/* Información del usuario */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '0.9rem'
+            }}>
+              {userInfo ? (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <span style={{ color: 'var(--accent-green)' }}>🟢</span>
+                    <span>Logueado como:</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>
+                      {userInfo.email || 'admin1'}
+                    </strong>
+                  </div>
+                  <div style={{
+                    color: 'var(--text-tertiary)',
+                    fontSize: '0.8rem'
+                  }}>
+                    Desde: {userInfo.loginTime}
+                    {userInfo.rememberSession && (
+                      <span style={{ color: 'var(--accent-blue)', marginLeft: '8px' }}>
+                        (7 días)
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'var(--accent-red)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#dc2626'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'var(--accent-red)'
+                    }}
+                  >
+                    🚪 Cerrar Sesión
+                  </button>
+                </>
+              ) : (
+                <div style={{
+                  color: 'var(--text-tertiary)',
+                  fontSize: '0.9rem'
+                }}>
+                  No logueado
+                </div>
+              )}
+            </div>
+
+            {/* Notificaciones */}
             <NotificationsButton target="admin" />
           </div>
           
