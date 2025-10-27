@@ -405,6 +405,554 @@ export default function Calendar() {
     )
   }
 
+  // Función común para renderizar tarjetas de pedidos
+  const renderPedidoCard = (pedido, tipo) => {
+    // Calcular información común
+    let tiempoTotalMinutos = 0
+    let costoTotal = 0
+    let cantidadTotal = 0
+    let productos = []
+    let clienteInfo = ''
+    let estadoInfo = ''
+    let metodoPagoInfo = ''
+    let estadoPagoInfo = ''
+    let fechaInfo = ''
+    let borderColor = 'var(--accent-blue)'
+    let icon = '🏭'
+
+    if (tipo === 'interno') {
+      // Pedido interno
+      borderColor = 'var(--accent-blue)'
+      icon = '🏭'
+      clienteInfo = typeof pedido.cliente === 'string' ? pedido.cliente : (pedido.cliente?.nombre || 'No especificado')
+      estadoInfo = pedido.estado || 'pendiente'
+      fechaInfo = pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-ES') : 'Sin fecha'
+      productos = pedido.productos || []
+
+      if (productos && Array.isArray(productos)) {
+        productos.forEach(producto => {
+          const prod = products?.find(p => p.id === producto.id)
+          if (prod && prod.tiempoUnitario) {
+            const tiempoUnitarioMin = prod.tiempoUnitario ?
+              (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
+            tiempoTotalMinutos += tiempoUnitarioMin * (producto.cantidad || 0)
+          }
+          costoTotal += (producto.precioUnitario || 0) * (producto.cantidad || 0)
+          cantidadTotal += producto.cantidad || 0
+        })
+      }
+    } else if (tipo === 'produccion') {
+      // Pedido en producción
+      borderColor = '#FF6B35'
+      icon = '🏭'
+      clienteInfo = pedido.cliente?.nombre || 'No especificado'
+      estadoInfo = pedido.estado || 'En proceso'
+      metodoPagoInfo = pedido.metodoPago || 'No especificado'
+      estadoPagoInfo = pedido.estadoPago || 'No especificado'
+      fechaInfo = pedido.fechaProduccionCalendario ? new Date(pedido.fechaProduccionCalendario).toLocaleDateString('es-ES') : 'Sin fecha'
+      productos = pedido.items || pedido.productos || []
+
+      if (productos && Array.isArray(productos)) {
+        productos.forEach(item => {
+          const prod = products?.find(p => p.id === (item.idProducto || item.id))
+          if (prod && prod.tiempoUnitario) {
+            const tiempoUnitarioMin = prod.tiempoUnitario ?
+              (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
+            tiempoTotalMinutos += tiempoUnitarioMin * (item.quantity || item.cantidad || 0)
+          }
+          costoTotal += (item.price || item.precioUnitario || 0) * (item.quantity || item.cantidad || 0)
+          cantidadTotal += item.quantity || item.cantidad || 0
+        })
+      }
+    } else if (tipo === 'entrega') {
+      // Pedido para entrega
+      borderColor = '#28A745'
+      icon = '📦'
+      clienteInfo = pedido.cliente?.nombre || 'No especificado'
+      estadoInfo = pedido.estado || 'Listo para entrega'
+      metodoPagoInfo = pedido.metodoPago || 'No especificado'
+      estadoPagoInfo = pedido.estadoPago || 'No especificado'
+      fechaInfo = pedido.fechaEntregaCalendario ? new Date(pedido.fechaEntregaCalendario).toLocaleDateString('es-ES') : 'Sin fecha'
+      productos = pedido.items || pedido.productos || []
+
+      if (productos && Array.isArray(productos)) {
+        productos.forEach(item => {
+          costoTotal += (item.price || item.precioUnitario || 0) * (item.quantity || item.cantidad || 0)
+          cantidadTotal += item.quantity || item.cantidad || 0
+        })
+      }
+    }
+
+    const tiempoTotalStr = tiempoTotalMinutos > 0 ?
+      `${Math.floor(tiempoTotalMinutos / 60)}:${String(Math.floor(tiempoTotalMinutos % 60)).padStart(2,'0')}:00` :
+      '00:00:00'
+
+    // Función para obtener emoji de estado
+    const getStatusEmoji = (estado) => {
+      switch (estado) {
+        case 'completado':
+        case 'entregado': return '✅'
+        case 'en_proceso':
+        case 'en_preparacion':
+        case 'confirmado': return '🔧'
+        case 'pendiente': return '⏳'
+        case 'listo': return '📦'
+        default: return '📋'
+      }
+    }
+
+    // Función para obtener label de estado
+    const getStatusLabel = (estado) => {
+      switch (estado) {
+        case 'completado': return 'Completado'
+        case 'en_proceso': return 'En Proceso'
+        case 'en_preparacion': return 'En Preparación'
+        case 'confirmado': return 'Confirmado'
+        case 'pendiente': return 'Pendiente'
+        case 'listo': return 'Listo para entrega'
+        case 'entregado': return 'Entregado'
+        default: return estado || 'Sin estado'
+      }
+    }
+
+    return (
+      <div
+        key={`${tipo}-${pedido.id}`}
+        style={{
+          padding: '16px',
+          backgroundColor: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          borderLeft: `4px solid ${borderColor}`,
+          marginBottom: '12px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+      >
+        {/* Header con ID y fecha */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '12px'
+        }}>
+          <div>
+            <div style={{
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              fontSize: '1.1rem',
+              marginBottom: '4px'
+            }}>
+              {icon} {tipo === 'interno' ? 'Pedido Interno' : 'Pedido Catálogo'} #{pedido.id}
+            </div>
+            <div style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.85rem'
+            }}>
+              📅 {tipo === 'interno' ? 'Creado' : tipo === 'produccion' ? 'Producción' : 'Entrega'}: {fechaInfo}
+            </div>
+          </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: borderColor
+          }}>
+            {formatCurrency(costoTotal || pedido.total || 0)}
+          </div>
+        </div>
+
+        {/* Información del cliente */}
+        <div style={{
+          marginBottom: '12px',
+          padding: '12px',
+          backgroundColor: 'var(--bg-card)',
+          borderRadius: '8px'
+        }}>
+          <div style={{
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: '8px'
+          }}>
+            👤 Cliente
+          </div>
+          <div style={{
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem'
+          }}>
+            {clienteInfo}
+          </div>
+          {tipo === 'entrega' && pedido.cliente?.telefono && (
+            <div style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.8rem',
+              marginTop: '4px'
+            }}>
+              📞 {pedido.cliente.telefono}
+            </div>
+          )}
+          {tipo === 'entrega' && pedido.cliente?.email && (
+            <div style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.8rem',
+              marginTop: '2px'
+            }}>
+              ✉️ {pedido.cliente.email}
+            </div>
+          )}
+        </div>
+
+        {/* Estado y badges */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{
+            padding: '4px 12px',
+            backgroundColor: estadoInfo === 'completado' || estadoInfo === 'entregado' ? '#28a745' :
+                           estadoInfo === 'en_proceso' || estadoInfo === 'en_preparacion' || estadoInfo === 'confirmado' ? '#ffc107' :
+                           estadoInfo === 'listo' ? '#17a2b8' : '#6c757d',
+            color: 'white',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            {getStatusEmoji(estadoInfo)} {getStatusLabel(estadoInfo)}
+          </span>
+          {tipo !== 'interno' && metodoPagoInfo && (
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: 'var(--bg-tertiary)',
+              color: 'var(--text-secondary)',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}>
+              💳 {metodoPagoInfo}
+            </span>
+          )}
+          {tipo !== 'interno' && estadoPagoInfo && (
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: estadoPagoInfo === 'pagado' || estadoPagoInfo === 'pagado_total' ? '#28a745' :
+                             estadoPagoInfo === 'seña_pagada' ? '#ffc107' : '#dc3545',
+              color: 'white',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}>
+              💰 {estadoPagoInfo === 'pagado' || estadoPagoInfo === 'pagado_total' ? 'Pagado' :
+                  estadoPagoInfo === 'seña_pagada' ? 'Seña pagada' : 'Pendiente'}
+            </span>
+          )}
+          {/* Información adicional de pago para pedidos de catálogo */}
+          {tipo !== 'interno' && pedido.total && (
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: 'var(--bg-tertiary)',
+              color: 'var(--text-secondary)',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}>
+              💵 Total: {formatCurrency(pedido.total)}
+            </span>
+          )}
+        </div>
+
+        {/* Información de productos y tiempo */}
+        {productos && productos.length > 0 ? (
+          <div style={{
+            marginBottom: '12px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              marginBottom: '8px'
+            }}>
+              📦 Productos ({productos.length})
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '8px',
+              marginBottom: '8px'
+            }}>
+              <div style={{
+                padding: '8px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '6px',
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)'
+              }}>
+                🔢 Cantidad total: {cantidadTotal} unidades
+              </div>
+              {(tipo === 'interno' || tipo === 'produccion') && tiempoTotalMinutos > 0 && (
+                <div style={{
+                  padding: '8px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  ⏱️ Tiempo total: {tiempoTotalStr}
+                </div>
+              )}
+            </div>
+
+            {/* Lista de productos */}
+            <div style={{
+              borderTop: '1px solid var(--border-color)',
+              paddingTop: '8px'
+            }}>
+              {productos.slice(0, 3).map((producto, index) => {
+                let nombreProducto = ''
+                let cantidadProducto = 0
+                let medidasProducto = ''
+                let tiempoProducto = 0
+
+                if (tipo === 'interno') {
+                  nombreProducto = producto.nombre || 'Producto sin nombre'
+                  cantidadProducto = producto.cantidad || 0
+                  const prod = products?.find(p => p.id === producto.id)
+                  if (prod?.tiempoUnitario) {
+                    const tiempoUnitarioMin = prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)
+                    tiempoProducto = tiempoUnitarioMin * cantidadProducto
+                  }
+                } else {
+                  // Para pedidos de catálogo, buscar el nombre desde la lista de productos si no viene en el item
+                  const prod = products?.find(p => p.id === (producto.idProducto || producto.id))
+                  nombreProducto = producto.name || prod?.nombre || 'Producto sin nombre'
+                  cantidadProducto = producto.quantity || producto.cantidad || 0
+                  medidasProducto = producto.measures || ''
+                  if (tipo === 'produccion') {
+                    if (prod?.tiempoUnitario) {
+                      const tiempoUnitarioMin = prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)
+                      tiempoProducto = tiempoUnitarioMin * cantidadProducto
+                    }
+                  }
+                }
+
+                return (
+                  <div key={index} style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '4px',
+                    padding: '4px 8px',
+                    backgroundColor: 'var(--bg-tertiary)',
+                    borderRadius: '4px'
+                  }}>
+                    • {nombreProducto} - Cant: {cantidadProducto}
+                    {tiempoProducto > 0 && ` - Tiempo: ${Math.floor(tiempoProducto / 60)}:${String(Math.floor(tiempoProducto % 60)).padStart(2,'0')}`}
+                    {medidasProducto && ` - ${medidasProducto}`}
+                    {tipo !== 'interno' && ` - ${formatCurrency((producto.price || producto.precioUnitario || 0) * cantidadProducto)}`}
+                  </div>
+                )
+              })}
+              {productos.length > 3 && (
+                <div style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-secondary)',
+                  fontStyle: 'italic',
+                  textAlign: 'center',
+                  padding: '4px'
+                }}>
+                  ... y {productos.length - 3} producto{productos.length - 3 > 1 ? 's' : ''} más
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            marginBottom: '12px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem'
+          }}>
+            📦 No hay productos en este pedido
+          </div>
+        )}
+
+        {/* Información adicional específica por tipo */}
+        {tipo === 'entrega' && pedido.cliente?.direccion && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)'
+          }}>
+            🏠 Dirección: {pedido.cliente.direccion}
+          </div>
+        )}
+
+        {tipo === 'entrega' && pedido.fechaCreacion && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)'
+          }}>
+            📅 Fecha del pedido: {new Date(pedido.fechaCreacion).toLocaleDateString('es-ES')}
+          </div>
+        )}
+
+        {tipo === 'produccion' && pedido.fechaSolicitudEntrega && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)'
+          }}>
+            📋 Fecha solicitada: {new Date(pedido.fechaSolicitudEntrega).toLocaleDateString('es-ES')}
+          </div>
+        )}
+
+        {/* Información de fechas para pedidos internos */}
+        {tipo === 'interno' && (
+          <div style={{
+            display: 'flex',
+            gap: '16px',
+            flexWrap: 'wrap',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)',
+            marginTop: '8px'
+          }}>
+            {pedido.fechaEntrega && (
+              <div>
+                📅 Entrega: {pedido.fechaEntrega}
+              </div>
+            )}
+            {pedido.fecha && (
+              <div>
+                🏭 Producción: {pedido.fecha}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Información adicional para producción */}
+        {tipo === 'produccion' && (
+          <div style={{
+            marginTop: '8px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              marginBottom: '8px',
+              fontSize: '0.9rem'
+            }}>
+              📊 Detalles de Producción
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '8px',
+              fontSize: '0.85rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <div style={{
+                padding: '6px 8px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '4px'
+              }}>
+                ⏱️ Tiempo de corte total: {tiempoTotalStr}
+              </div>
+              <div style={{
+                padding: '6px 8px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '4px'
+              }}>
+                📦 Cantidad total de piezas: {cantidadTotal}
+              </div>
+              {pedido.fechaProduccionCalendario && (
+                <div style={{
+                  padding: '6px 8px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '4px'
+                }}>
+                  📅 Fecha programada: {new Date(pedido.fechaProduccionCalendario).toLocaleDateString('es-ES')}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Información adicional para entrega */}
+        {tipo === 'entrega' && (
+          <div style={{
+            marginTop: '8px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              marginBottom: '8px',
+              fontSize: '0.9rem'
+            }}>
+              📦 Detalles de Entrega
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '8px',
+              fontSize: '0.85rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <div style={{
+                padding: '6px 8px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '4px'
+              }}>
+                📦 Cantidad de piezas: {cantidadTotal}
+              </div>
+              {pedido.fechaEntregaCalendario && (
+                <div style={{
+                  padding: '6px 8px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '4px'
+                }}>
+                  📅 Fecha programada: {new Date(pedido.fechaEntregaCalendario).toLocaleDateString('es-ES')}
+                </div>
+              )}
+              {pedido.total && (
+                <div style={{
+                  padding: '6px 8px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '4px'
+                }}>
+                  💰 Total: {formatCurrency(pedido.total)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Render principal del calendario
   return (
     <Layout title="Calendario - Sistema KOND">
@@ -748,256 +1296,7 @@ export default function Calendar() {
               gap: '16px'
             }}>
               {/* Pedidos internos */}
-              {getPedidosInternosDelDia(selectedDate).map(pedido => {
-                // Calcular tiempo total de producción
-                let tiempoTotalMinutos = 0
-                let costoTotal = 0
-                let cantidadTotal = 0
-
-                if (pedido.productos && Array.isArray(pedido.productos)) {
-                  pedido.productos.forEach(producto => {
-                    const prod = products?.find(p => p.id === producto.id)
-                    if (prod && prod.tiempoUnitario) {
-                      const tiempoUnitarioMin = prod.tiempoUnitario ?
-                        (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
-                      tiempoTotalMinutos += tiempoUnitarioMin * (producto.cantidad || 0)
-                    }
-                    costoTotal += (producto.precioUnitario || 0) * (producto.cantidad || 0)
-                    cantidadTotal += producto.cantidad || 0
-                  })
-                }
-
-                const tiempoTotalStr = tiempoTotalMinutos > 0 ?
-                  `${Math.floor(tiempoTotalMinutos / 60)}:${String(Math.floor(tiempoTotalMinutos % 60)).padStart(2,'0')}:00` :
-                  '00:00:00'
-
-                // Función para obtener emoji de estado
-                const getStatusEmoji = (estado) => {
-                  switch (estado) {
-                    case 'completado': return '✅'
-                    case 'en_proceso': return '🔧'
-                    case 'pendiente': return '⏳'
-                    default: return '📋'
-                  }
-                }
-
-                // Función para obtener label de estado
-                const getStatusLabel = (estado) => {
-                  switch (estado) {
-                    case 'completado': return 'Completado'
-                    case 'en_proceso': return 'En Proceso'
-                    case 'pendiente': return 'Pendiente'
-                    default: return 'Sin estado'
-                  }
-                }
-
-                return (
-                  <div
-                    key={`interno-${pedido.id}`}
-                    style={{
-                      padding: '16px',
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '12px',
-                      borderLeft: '4px solid var(--accent-blue)',
-                      marginBottom: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)'
-                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    {/* Header con ID y fecha */}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '12px'
-                    }}>
-                      <div>
-                        <div style={{
-                          fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          fontSize: '1.1rem',
-                          marginBottom: '4px'
-                        }}>
-                          🏭 Pedido Interno #{pedido.id}
-                        </div>
-                        <div style={{
-                          color: 'var(--text-secondary)',
-                          fontSize: '0.85rem'
-                        }}>
-                          📅 Creado: {pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-ES') : 'Sin fecha'}
-                        </div>
-                      </div>
-                      <div style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: 'var(--accent-blue)'
-                      }}>
-                        {formatCurrency(costoTotal)}
-                      </div>
-                    </div>
-
-                    {/* Información del cliente */}
-                    <div style={{
-                      marginBottom: '12px',
-                      padding: '12px',
-                      backgroundColor: 'var(--bg-card)',
-                      borderRadius: '8px'
-                    }}>
-                      <div style={{
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        marginBottom: '8px'
-                      }}>
-                        👤 Cliente
-                      </div>
-                      <div style={{
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.9rem'
-                      }}>
-                        {typeof pedido.cliente === 'string' ? pedido.cliente : (pedido.cliente?.nombre || 'No especificado')}
-                      </div>
-                    </div>
-
-                    {/* Estado y badges */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '8px',
-                      marginBottom: '12px',
-                      flexWrap: 'wrap'
-                    }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        backgroundColor: pedido.estado === 'completado' ? '#28a745' :
-                                       pedido.estado === 'en_proceso' ? '#ffc107' : '#6c757d',
-                        color: 'white',
-                        borderRadius: '20px',
-                        fontSize: '0.8rem',
-                        fontWeight: 500,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        {getStatusEmoji(pedido.estado)} {getStatusLabel(pedido.estado)}
-                      </span>
-                    </div>
-
-                    {/* Información de productos y tiempo */}
-                    {pedido.productos && pedido.productos.length > 0 && (
-                      <div style={{
-                        marginBottom: '12px',
-                        padding: '12px',
-                        backgroundColor: 'var(--bg-card)',
-                        borderRadius: '8px'
-                      }}>
-                        <div style={{
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          marginBottom: '8px'
-                        }}>
-                          � Productos ({pedido.productos.length})
-                        </div>
-
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                          gap: '8px',
-                          marginBottom: '8px'
-                        }}>
-                          <div style={{
-                            padding: '8px',
-                            backgroundColor: 'var(--bg-secondary)',
-                            borderRadius: '6px',
-                            fontSize: '0.85rem',
-                            color: 'var(--text-secondary)'
-                          }}>
-                            🔢 Cantidad total: {cantidadTotal} unidades
-                          </div>
-                          <div style={{
-                            padding: '8px',
-                            backgroundColor: 'var(--bg-secondary)',
-                            borderRadius: '6px',
-                            fontSize: '0.85rem',
-                            color: 'var(--text-secondary)'
-                          }}>
-                            ⏱️ Tiempo total: {tiempoTotalStr}
-                          </div>
-                        </div>
-
-                        {/* Lista de productos */}
-                        <div style={{
-                          borderTop: '1px solid var(--border-color)',
-                          paddingTop: '8px'
-                        }}>
-                          {pedido.productos.slice(0, 3).map((producto, index) => {
-                            const prod = products?.find(p => p.id === producto.id)
-                            const tiempoUnitarioMin = prod?.tiempoUnitario ?
-                              (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
-                            const tiempoProductoTotal = tiempoUnitarioMin * (producto.cantidad || 0)
-
-                            return (
-                              <div key={index} style={{
-                                fontSize: '0.8rem',
-                                color: 'var(--text-secondary)',
-                                marginBottom: '4px',
-                                padding: '4px 8px',
-                                backgroundColor: 'var(--bg-tertiary)',
-                                borderRadius: '4px'
-                              }}>
-                                • {producto.nombre || 'Producto sin nombre'} - Cant: {producto.cantidad} -
-                                Tiempo: {tiempoProductoTotal > 0 ?
-                                  `${Math.floor(tiempoProductoTotal / 60)}:${String(Math.floor(tiempoProductoTotal % 60)).padStart(2,'0')}` :
-                                  '0:00'
-                                }
-                              </div>
-                            )
-                          })}
-                          {pedido.productos.length > 3 && (
-                            <div style={{
-                              fontSize: '0.8rem',
-                              color: 'var(--text-secondary)',
-                              fontStyle: 'italic',
-                              textAlign: 'center',
-                              padding: '4px'
-                            }}>
-                              ... y {pedido.productos.length - 3} producto{pedido.productos.length - 3 > 1 ? 's' : ''} más
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Información de fechas */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '16px',
-                      flexWrap: 'wrap',
-                      fontSize: '0.85rem',
-                      color: 'var(--text-secondary)'
-                    }}>
-                      {pedido.fechaEntrega && (
-                        <div>
-                          📅 Entrega: {pedido.fechaEntrega}
-                        </div>
-                      )}
-                      {pedido.fecha && (
-                        <div>
-                          🏭 Producción: {pedido.fecha}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+              {getPedidosInternosDelDia(selectedDate).map(pedido => renderPedidoCard(pedido, 'interno'))}
 
               {/* Pedidos de catálogo separados por tipo */}
               {(() => {
@@ -1022,143 +1321,7 @@ export default function Calendar() {
                         }}>
                           🏭 Pedidos en Producción ({pedidosProduccion.length})
                         </h4>
-                        {pedidosProduccion.map(pedido => {
-                          // Calcular tiempo total de producción para catálogo
-                          let tiempoTotalMinutos = 0
-                          let cantidadTotal = 0
-                          
-                          if (pedido.items && Array.isArray(pedido.items)) {
-                            pedido.items.forEach(item => {
-                              const prod = products?.find(p => p.id === item.idProducto)
-                              if (prod && prod.tiempoUnitario) {
-                                const tiempoUnitarioMin = prod.tiempoUnitario ? 
-                                  (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
-                                tiempoTotalMinutos += tiempoUnitarioMin * (item.quantity || 0)
-                              }
-                              cantidadTotal += item.quantity || 0
-                            })
-                          }
-                          
-                          const tiempoTotalStr = tiempoTotalMinutos > 0 ? 
-                            `${Math.floor(tiempoTotalMinutos / 60)}:${String(Math.floor(tiempoTotalMinutos % 60)).padStart(2,'0')}:00` : 
-                            '00:00:00'
-
-                          return (
-                            <div
-                              key={`produccion-${pedido.id}`}
-                              style={{
-                                padding: '16px',
-                                backgroundColor: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                borderLeft: '4px solid #FF6B35',
-                                marginBottom: '8px'
-                              }}
-                            >
-                              <div style={{
-                                fontWeight: 600,
-                                color: 'var(--text-primary)',
-                                marginBottom: '8px'
-                              }}>
-                                🏭 Pedido Catálogo #{pedido.id}
-                              </div>
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem'
-                              }}>
-                                Cliente: {pedido.cliente?.nombre || 'No especificado'}
-                              </div>
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                Total: {formatCurrency(pedido.total || 0)}
-                              </div>
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px',
-                                fontWeight: 500
-                              }}>
-                                ⏱️ Tiempo de corte total: {tiempoTotalStr}
-                              </div>
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                📦 Cantidad total de piezas: {cantidadTotal}
-                              </div>
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                Estado: {pedido.estado || 'En proceso'}
-                              </div>
-                              {pedido.fechaEntregaCalendario && (
-                                <div style={{
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.9rem',
-                                  marginTop: '4px'
-                                }}>
-                                  📅 Entrega programada: {new Date(pedido.fechaEntregaCalendario).toLocaleDateString('es-ES')}
-                                </div>
-                              )}
-                              {pedido.fechaSolicitudEntrega && (
-                                <div style={{
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.9rem',
-                                  marginTop: '4px'
-                                }}>
-                                  📋 Fecha solicitada: {new Date(pedido.fechaSolicitudEntrega).toLocaleDateString('es-ES')}
-                                </div>
-                              )}
-                              {/* Lista detallada de productos del catálogo */}
-                              {pedido.items && pedido.items.length > 0 && (
-                                <div style={{
-                                  marginTop: '8px',
-                                  paddingTop: '8px',
-                                  borderTop: '1px solid var(--border-color)'
-                                }}>
-                                  <div style={{
-                                    fontSize: '0.85rem',
-                                    color: 'var(--text-secondary)',
-                                    fontWeight: 500,
-                                    marginBottom: '6px'
-                                  }}>
-                                    Productos a producir:
-                                  </div>
-                                  {pedido.items.map((item, index) => {
-                                    const prod = products?.find(p => p.id === item.idProducto)
-                                    const tiempoUnitarioMin = prod?.tiempoUnitario ? 
-                                      (prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)) : 0
-                                    const tiempoItemTotal = tiempoUnitarioMin * (item.quantity || 0)
-                                    
-                                    return (
-                                      <div key={index} style={{
-                                        fontSize: '0.8rem',
-                                        color: 'var(--text-secondary)',
-                                        marginLeft: '12px',
-                                        marginBottom: '2px'
-                                      }}>
-                                        • {item.name} - Cant: {item.quantity} - 
-                                        Tiempo: {tiempoItemTotal > 0 ? 
-                                          `${Math.floor(tiempoItemTotal / 60)}:${String(Math.floor(tiempoItemTotal % 60)).padStart(2,'0')}` : 
-                                          '0:00'
-                                        } - {formatCurrency(item.price * item.quantity)}
-                                        {item.measures && (
-                                          <span style={{ color: 'var(--text-tertiary)' }}> - {item.measures}</span>
-                                        )}
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
+                        {pedidosProduccion.map(pedido => renderPedidoCard(pedido, 'produccion'))}
                       </div>
                     )}
 
@@ -1178,134 +1341,7 @@ export default function Calendar() {
                         }}>
                           📦 Pedidos para Entrega ({pedidosEntrega.length})
                         </h4>
-                        {pedidosEntrega.map(pedido => (
-                          <div
-                            key={`entrega-${pedido.id}`}
-                            style={{
-                              padding: '16px',
-                              backgroundColor: 'var(--bg-secondary)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '8px',
-                              borderLeft: '4px solid #28A745',
-                              marginBottom: '8px'
-                            }}
-                          >
-                            <div style={{
-                              fontWeight: 600,
-                              color: 'var(--text-primary)',
-                              marginBottom: '8px'
-                            }}>
-                              � Pedido Catálogo #{pedido.id}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem'
-                            }}>
-                              Cliente: {pedido.cliente?.nombre || 'No especificado'}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem',
-                              marginTop: '4px'
-                            }}>
-                              Total: {formatCurrency(pedido.total || 0)}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem',
-                              marginTop: '4px'
-                            }}>
-                              Estado: {pedido.estado || 'Listo para entrega'}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem',
-                              marginTop: '4px'
-                            }}>
-                              Método de pago: {pedido.metodoPago || 'No especificado'}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem',
-                              marginTop: '4px'
-                            }}>
-                              📦 Cantidad de piezas: {pedido.items ? pedido.items.reduce((acc, item) => acc + (item.quantity || 0), 0) : 0}
-                            </div>
-                            <div style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '0.9rem',
-                              marginTop: '4px'
-                            }}>
-                              💰 Estado de pago: {pedido.estadoPago || 'No especificado'}
-                            </div>
-                            {pedido.cliente?.telefono && (
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                📞 Teléfono: {pedido.cliente.telefono}
-                              </div>
-                            )}
-                            {pedido.cliente?.email && (
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                ✉️ Email: {pedido.cliente.email}
-                              </div>
-                            )}
-                            {pedido.cliente?.direccion && (
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                🏠 Dirección: {pedido.cliente.direccion}
-                              </div>
-                            )}
-                            {pedido.fechaCreacion && (
-                              <div style={{
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem',
-                                marginTop: '4px'
-                              }}>
-                                📅 Fecha del pedido: {new Date(pedido.fechaCreacion).toLocaleDateString('es-ES')}
-                              </div>
-                            )}
-                            {/* Lista de productos para entrega */}
-                            {pedido.items && pedido.items.length > 0 && (
-                              <div style={{
-                                marginTop: '8px',
-                                paddingTop: '8px',
-                                borderTop: '1px solid var(--border-color)'
-                              }}>
-                                <div style={{
-                                  fontSize: '0.85rem',
-                                  color: 'var(--text-secondary)',
-                                  fontWeight: 500,
-                                  marginBottom: '6px'
-                                }}>
-                                  Productos a entregar:
-                                </div>
-                                {pedido.items.map((item, index) => (
-                                  <div key={index} style={{
-                                    fontSize: '0.8rem',
-                                    color: 'var(--text-secondary)',
-                                    marginLeft: '12px',
-                                    marginBottom: '2px'
-                                  }}>
-                                    • {item.name} - Cant: {item.quantity} - {formatCurrency(item.price * item.quantity)}
-                                    {item.measures && (
-                                      <span style={{ color: 'var(--text-tertiary)' }}> - {item.measures}</span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                        {pedidosEntrega.map(pedido => renderPedidoCard(pedido, 'entrega'))}
                       </div>
                     )}
                   </>
