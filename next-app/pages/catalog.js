@@ -71,7 +71,14 @@ export default function Catalog() {
     const setCategoryHandler = (e) => {
       try {
         const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
-        setSelectedCategory(slug)
+        // buscar la categoría original a partir del slug
+        const match = (categories || []).find(cat => {
+          if (!cat) return false
+          const s = cat.toString().trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
+          return s === slug
+        })
+        if (match) setSelectedCategory(match)
+        else setSelectedCategory('')
       } catch (err) {
         // ignore
       }
@@ -160,6 +167,12 @@ export default function Catalog() {
     }
     
     return categoryStyles[categoria] || categoryStyles.default
+  }
+
+  // slugify simple que preserva mayúsculas: reemplaza espacios por '-' y elimina caracteres no alfanuméricos salvo '-'
+  const slugifyPreserveCase = (str) => {
+    if (!str) return ''
+    return str.toString().trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
   }
 
   return (
@@ -296,15 +309,15 @@ export default function Catalog() {
           
           <div style={{ position: 'relative' }}>
             <select
-              value={selectedCategory}
+              value={slugifyPreserveCase(selectedCategory)}
               onChange={(e) => {
                 const v = e.target.value
                 if (!v) {
                   // volver a listado general
                   window.location.href = '/catalog'
                 } else {
-                  // navegar a la URL de categoría (se encargará de seleccionar)
-                  window.location.href = `/catalog/categoria/${encodeURIComponent(v)}`
+                  // navegar a la URL de categoría usando slug
+                  window.location.href = `/catalog/categoria/${v}`
                 }
               }}
               style={{
@@ -340,10 +353,11 @@ export default function Catalog() {
               </option>
               {categories.map(category => {
                 const categoryStyle = getCategoryStyle(category)
+                const slug = slugifyPreserveCase(category)
                 return (
                   <option 
                     key={category} 
-                    value={category}
+                    value={slug}
                     style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                   >
                     {categoryStyle.icon} {category}
