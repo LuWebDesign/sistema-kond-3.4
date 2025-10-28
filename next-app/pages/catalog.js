@@ -212,7 +212,7 @@ export default function Catalog() {
           
           {/* Botón del carrito */}
           <button
-            onClick={() => setShowCart(true)}
+            onClick={() => { window.location.href = '/catalog/mi-carrito' }}
             style={{
               position: 'relative',
               background: 'var(--accent-blue)',
@@ -368,17 +368,13 @@ export default function Catalog() {
               createToast(result.message, result.success ? 'success' : 'error')
               return result.success
             }}
-            onProceedToCheckout={() => {
-              setShowCart(false)
-              setCheckoutMode('order')
-              setShowCheckout(true)
-            }}
+                    onProceedToCheckout={() => { window.location.href = '/catalog/mi-carrito/finalizar-compra' }}
             subtotal={subtotal}
             discount={discount}
             total={total}
             activeCoupon={activeCoupon}
             currentUser={currentUserState}
-            onEditProfile={() => { setCheckoutMode('edit'); setShowCart(false); setShowCheckout(true); }}
+            onEditProfile={() => { window.location.href = '/catalog/mi-carrito/finalizar-compra?mode=edit' }}
           />
         )}
 
