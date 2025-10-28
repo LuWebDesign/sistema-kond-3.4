@@ -197,98 +197,20 @@ export default function Catalog() {
         padding: '20px' 
       }}>
         {/* Header del catálogo */}
-        <div style={{
-          marginBottom: '32px',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'var(--accent-blue)',
-              margin: 0
-            }}>
-              🛒 Nuestros Productos
-            </h1>
-            
-            {/* Botones de navegación */}
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              background: 'var(--bg-section)',
-              padding: '4px',
-              borderRadius: '8px'
-            }}>
-              <button
-                style={{
-                  background: 'var(--accent-blue)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Catálogo
-              </button>
-              <button
-                onClick={() => router.push('/mis-pedidos')}
-                style={{
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
-              >
-                Mis Pedidos
-              </button>
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)', margin: 0 }}>🛒 Nuestros Productos</h1>
+
+            <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: '8px', marginLeft: '12px' }}>
+              <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Catálogo</button>
+              <button onClick={() => router.push('/mis-pedidos')} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Mis Pedidos</button>
             </div>
           </div>
-          
-          {/* Botón del carrito */}
-          <button
-            onClick={() => { router.push('/catalog/mi-carrito') }}
-            style={{
-              position: 'relative',
-              background: 'var(--accent-blue)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '12px 24px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
+
+          <button onClick={() => { router.push('/catalog/mi-carrito') }} style={{ position: 'relative', background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 24px', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
             🛒 Carrito
             {totalItems > 0 && (
-              <span style={{
-                background: '#ef4444',
-                color: 'white',
-                borderRadius: '50%',
-                width: '24px',
-                height: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.8rem',
-                fontWeight: 'bold'
-              }}>
-                {totalItems}
-              </span>
+              <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>{totalItems}</span>
             )}
           </button>
         </div>
