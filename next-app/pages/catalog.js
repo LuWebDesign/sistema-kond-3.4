@@ -30,18 +30,7 @@ export default function Catalog() {
   const [imageModalSrc, setImageModalSrc] = useState(null)
 
   // Efecto de prueba para verificar que createToast funciona
-  useEffect(() => {
-    console.log('🚀 Componente Catalog montado')
-    console.log('📦 createToast disponible:', typeof createToast)
-    
-    // Test de notificación al cargar
-    const timer = setTimeout(() => {
-      console.log('🔔 Intentando mostrar toast de bienvenida...')
-      createToast('¡Bienvenido al catálogo!', 'info', 2000)
-    }, 500)
-    
-    return () => clearTimeout(timer)
-  }, [])
+  // No mostrar toasts de bienvenida automáticos en producción -- removed dev test
 
   // Cerrar lightbox con Esc
   useEffect(() => {
