@@ -72,11 +72,7 @@ export default function Catalog() {
       try {
         const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
         // buscar la categoría original a partir del slug
-        const match = (categories || []).find(cat => {
-          if (!cat) return false
-          const s = cat.toString().trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
-          return s === slug
-        })
+        const match = (categories || []).find(cat => slugifyPreserveCase(cat) === slug)
         if (match) setSelectedCategory(match)
         else setSelectedCategory('')
       } catch (err) {
@@ -169,10 +165,13 @@ export default function Catalog() {
     return categoryStyles[categoria] || categoryStyles.default
   }
 
-  // slugify simple que preserva mayúsculas: reemplaza espacios por '-' y elimina caracteres no alfanuméricos salvo '-'
+  // slugify que preserva mayúsculas y normaliza acentos: NFD + eliminación de marcas diacríticas,
+  // luego reemplaza espacios por '-' y elimina caracteres no alfanuméricos salvo '-'
   const slugifyPreserveCase = (str) => {
     if (!str) return ''
-    return str.toString().trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
+    // Normalizar a NFD para separar letras y diacríticos, eliminar marcas diacríticas
+    const normalized = str.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return normalized.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
   }
 
   return (
