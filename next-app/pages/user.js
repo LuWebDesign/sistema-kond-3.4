@@ -242,13 +242,12 @@ export default function User() {
             </button>
           </div>
 
-          <div style={{
+          <div className="account-grid" style={{
             display: 'grid',
-            gridTemplateColumns: '300px 1fr',
             gap: '32px'
           }}>
             {/* Profile Header */}
-            <div style={{
+            <div className="profile-card-left" style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
               borderRadius: '16px',
