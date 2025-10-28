@@ -40,6 +40,32 @@ export default function Catalog() {
     return () => clearTimeout(timer)
   }, [])
 
+  // Permitir abrir el carrito o el checkout desde otras rutas/links
+  useEffect(() => {
+    const openCartHandler = () => setShowCart(true)
+    const openCheckoutHandler = (e) => {
+      try {
+        const mode = e && e.detail && e.detail.mode ? e.detail.mode : 'order'
+        setCheckoutMode(mode)
+      } catch (err) {
+        setCheckoutMode('order')
+      }
+      setShowCheckout(true)
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('catalog:openCart', openCartHandler)
+      window.addEventListener('catalog:openCheckout', openCheckoutHandler)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('catalog:openCart', openCartHandler)
+        window.removeEventListener('catalog:openCheckout', openCheckoutHandler)
+      }
+    }
+  }, [])
+
   // Handle profile updates from checkout editor
   const handleProfileUpdated = (updated) => {
     try {
@@ -980,7 +1006,7 @@ function CheckoutModal({
               <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
-                  <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} showSelectedBanner={false} />
+                  <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
                 </div>
 
                 <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
