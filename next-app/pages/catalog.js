@@ -663,6 +663,15 @@ function CartModal({
 }) {
   const [couponInput, setCouponInput] = useState('')
 
+  // Cerrar con Esc
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   const handleApplyCoupon = () => {
     if (!couponInput) return
     if (onApplyCoupon(couponInput)) setCouponInput('')
@@ -834,6 +843,15 @@ function CheckoutModal({
   const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
   const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Cerrar con Esc
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   // Prefill datos del usuario si está logueado
   useEffect(() => {
