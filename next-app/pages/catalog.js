@@ -462,16 +462,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle }) {
       border: '1px solid var(--border-color)',
       borderRadius: '12px',
       overflow: 'hidden',
-      transition: 'transform 0.2s, box-shadow 0.2s',
       cursor: 'pointer'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-4px)'
-      e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)'
-      e.currentTarget.style.boxShadow = 'none'
     }}
     >
       {/* Imagen del producto */}
