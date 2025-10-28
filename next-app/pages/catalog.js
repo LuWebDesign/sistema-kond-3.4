@@ -866,7 +866,24 @@ function CheckoutModal({
     } catch (error) {
       console.error('Error submitting order:', error)
       if (error.name === 'QuotaExceededError' || (error.message && error.message.includes('exceeded the quota'))) {
-        createToast('Espacio insuficiente en el navegador. El pedido no pudo guardarse completamente. Contacta al administrador para procesar tu pedido.', 'error')
+        // Mensaje más útil con instrucciones para liberar espacio en el navegador
+        createToast('Espacio insuficiente en el navegador. No se pudo guardar el pedido por completo. Para liberar espacio: abre DevTools → Application → Clear storage, o borra la clave "pedidosCatalogo" en Local Storage. También podés intentarlo en otro navegador.', 'error')
+
+        // Ofrecer al usuario limpiar datos locales automáticamente (confirm)
+        try {
+          if (typeof window !== 'undefined' && window.confirm && window.confirm('Se detectó falta de espacio en el almacenamiento local. ¿Querés que el sitio elimine datos locales temporales (pedidos antiguos y carrito) para intentar liberar espacio ahora?')) {
+            try {
+              localStorage.removeItem('pedidosCatalogo')
+              localStorage.removeItem('cart')
+              createToast('Datos locales eliminados. Intentá enviar el pedido nuevamente.', 'success')
+            } catch (e) {
+              console.error('Error clearing localStorage after QuotaExceededError', e)
+              createToast('No se pudo eliminar datos locales automáticamente. Por favor, borralos manualmente desde DevTools > Application.', 'error')
+            }
+          }
+        } catch (e) {
+          // silenciar si el confirm no está disponible
+        }
       } else {
         createToast('Error al procesar el pedido. Intenta nuevamente.', 'error')
       }
@@ -941,19 +958,44 @@ function CheckoutModal({
               <button onClick={() => setPaymentMethod('retiro')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏪 Retiro</button>
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
+
+            {paymentMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>📍 Retiro en local</div>
+                <div style={{ marginBottom: 8 }}>Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro.</div>
+                <div>Dirección y ubicación: <a href="https://share.google/J7AX4ApHAaXLJ5Pib" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)' }}>Ver ubicación del local</a></div>
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-light)' }}>Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.</div>
+              </div>
+            )}
+
+            {paymentMethod === 'whatsapp' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
+              </div>
+            )}
           </section>
 
           {paymentMethod === 'transferencia' && (
             <section style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
-                  <AvailabilityCalendar cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
+                  <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} showSelectedBanner={false} />
                 </div>
-                <div style={{ width: 160 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Subir comprobante</label>
-                  <input type="file" accept="image/*" onChange={handleFileUpload} style={{ width: '100%' }} />
-                  {comprobante && <div style={{ marginTop: 8, padding: 8, borderRadius: 6, background: 'var(--accent-secondary)', color: '#fff', fontSize: 12 }}>✓ Comprobante cargado</div>}
+
+                <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Subir comprobante</label>
+
+                  {/* input escondido y botón visible para mejor UX en mobile */}
+                  <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
+                    {comprobante && (
+                      <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
+                    )}
+                  </div>
+
+                  {comprobante && <div className="comprobante-saved" style={{ marginTop: 8, padding: '6px 8px', borderRadius: 6, background: 'var(--accent-secondary)', color: '#fff', fontSize: 12 }}>✓ Comprobante cargado</div>}
                 </div>
               </div>
 

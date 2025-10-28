@@ -13,36 +13,46 @@ export default function MisPedidos() {
   const [isLoading, setIsLoading] = useState(true)
   const itemsPerPage = 6
 
-  // Cargar pedidos del usuario actual
-  useEffect(() => {
-    const loadUserOrders = () => {
-      try {
-        const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
-        const user = getCurrentUser()
+  // Cargar pedidos del usuario actual y suscribirse a actualizaciones globales
+  const loadUserOrders = () => {
+    try {
+      const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
+      const user = getCurrentUser()
 
-        setCurrentUserState(user)
-        setIsLoading(false)
+      setCurrentUserState(user)
+      setIsLoading(false)
 
-        if (user && user.email) {
-          // Filtrar pedidos del usuario actual
-          const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
-            pedido.cliente && pedido.cliente.email === user.email
-          )
+      if (user && user.email) {
+        // Filtrar pedidos del usuario actual
+        const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
+          pedido.cliente && pedido.cliente.email === user.email
+        )
 
-          // Ordenar por fecha (más recientes primero)
-          userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+        // Ordenar por fecha (más recientes primero)
+        userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
 
-          setUserOrders(userOrdersFiltered)
-        }
-      } catch (error) {
-        console.error('Error cargando pedidos:', error)
-        setCurrentUserState(null)
-        setIsLoading(false)
-        createToast('Error al cargar los pedidos', 'error')
+        setUserOrders(userOrdersFiltered)
       }
+    } catch (error) {
+      console.error('Error cargando pedidos:', error)
+      setCurrentUserState(null)
+      setIsLoading(false)
+      createToast('Error al cargar los pedidos', 'error')
+    }
+  }
+
+  useEffect(() => {
+    loadUserOrders()
+
+    const handlePedidosUpdated = (e) => {
+      // e.detail puede contener información adicional (type, order)
+      loadUserOrders()
     }
 
-    loadUserOrders()
+    window.addEventListener('pedidosCatalogo:updated', handlePedidosUpdated)
+    return () => {
+      window.removeEventListener('pedidosCatalogo:updated', handlePedidosUpdated)
+    }
   }, [])
 
   // Paginación

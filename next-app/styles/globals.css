@@ -475,6 +475,30 @@ a:hover {
   .uoc-total { text-align: right }
 }
 
+/* En mobile, situar la fecha de pedido en la esquina superior derecha */
+@media (max-width: 600px) {
+  .uoc-card {
+    /* necesario para posicionar la fecha en absoluto dentro de la tarjeta */
+    position: relative;
+    /* dejar espacio superior para los badges absolutos (ID y fecha) y evitar solapamientos) */
+    padding-top: 56px;
+  }
+
+  /* colocar la fecha en la esquina superior derecha sin afectar el flujo del header */
+  .uoc-date-pill {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    transform: none;
+  }
+
+  /* evitar que el ID y otros elementos del header colisionen con la fecha */
+  .uoc-mobile-header .uoc-order-id {
+    padding-right: 72px; /* espacio para la fecha */
+  }
+}
+
 /* Confirm modal styles */
 .confirm-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1200; }
 .confirm-modal__backdrop { position: absolute; inset: 0; background: rgba(2,6,23,0.6); }
@@ -514,6 +538,23 @@ a:hover {
   font-size: 0.75rem;
   font-weight: 600;
   opacity: 0.8;
+}
+
+/* Comprobante upload: estilos reutilizables */
+.comprobante-upload { min-width: 0; }
+.comprobante-controls { display: flex; align-items: center; gap: 8px; }
+.comprobante-btn { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-hover); cursor: pointer; }
+.comprobante-thumb { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.comprobante-saved { font-size: 12px; margin-top: 8px; }
+
+/* Estilo específico para la fecha seleccionada en el modal de checkout */
+.checkout-selected-date {
+  color: #10b981; /* verde */
+  font-weight: 700;
+  background: rgba(16,185,129,0.08);
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
 .uoc-badges-mobile {
@@ -694,6 +735,27 @@ a:hover {
   background: rgba(16,185,129,0.08);
   color: #059669;
   border: 1px solid rgba(16,185,129,0.2);
+}
+
+/* Dark theme override: botón de subir comprobante en gris claro */
+[data-theme="dark"] .comprobante-btn {
+  background: #9ca3af !important; /* gris claro */
+  border-color: #9ca3af !important;
+  color: #0b1220 !important; /* texto oscuro para contraste */
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .comprobante-btn:hover {
+  filter: brightness(0.95) !important;
+}
+
+/* Mobile overrides for comprobante area: stack and sizing */
+@media (max-width: 600px) {
+  .transfer-section { flex-direction: column; }
+  .comprobante-upload { width: 100% !important; }
+  .comprobante-controls { flex-direction: row; justify-content: space-between; gap: 8px; }
+  .comprobante-btn { flex: 1 1 auto; }
+  .comprobante-thumb { width: 64px; height: 64px; margin-left: 8px; }
 }
 
 /* Animaciones para componentes desplegables */

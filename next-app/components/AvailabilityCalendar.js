@@ -14,6 +14,8 @@ export default function AvailabilityCalendar({
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [capacityPerDay, setCapacityPerDay] = useState({})
+  const [pendingDate, setPendingDate] = useState(null)
+  const [showConfirm, setShowConfirm] = useState(false)
   
   const maxDailyCapacity = 480 // 8 horas en minutos
   const cartTime = calculateTotalProductionTime(cart)
@@ -64,6 +66,12 @@ export default function AvailabilityCalendar({
     const isWeekend = date.getDay() === 0 // Solo domingo
 
     if (!isPast && !isWeekend && canFit) {
+      // Si ya hay una fecha seleccionada distinta, pedir confirmación antes de cambiar
+      if (selectedDate && selectedDate !== dateStr) {
+        setPendingDate(dateStr)
+        setShowConfirm(true)
+        return
+      }
       onDateSelect(dateStr)
     }
   }
@@ -131,6 +139,19 @@ export default function AvailabilityCalendar({
 
   return (
     <div className={`availability-calendar ${className}`}>
+      {/* Confirm modal for changing selected date */}
+      {showConfirm && (
+        <div className="ac-confirm-backdrop">
+          <div className="ac-confirm-box" role="dialog" aria-modal="true">
+            <div className="ac-confirm-title">Confirmar cambio de fecha</div>
+            <div className="ac-confirm-message">Ya elegiste una fecha. ¿Querés cambiar la fecha seleccionada?</div>
+            <div className="ac-confirm-actions">
+              <button className="ac-btn ac-btn-cancel" onClick={() => { setShowConfirm(false); setPendingDate(null) }}>Cancelar</button>
+              <button className="ac-btn ac-btn-confirm" onClick={() => { if (pendingDate) { onDateSelect(pendingDate) }; setShowConfirm(false); setPendingDate(null) }}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
       <style jsx>{`
         .availability-calendar {
           background: var(--bg-card);
@@ -138,6 +159,33 @@ export default function AvailabilityCalendar({
           border-radius: 12px;
           padding: 20px;
         }
+        .ac-confirm-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1200;
+        }
+        .ac-confirm-box {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          padding: 16px;
+          border-radius: 10px;
+          width: 320px;
+          max-width: 92%;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .ac-confirm-title { font-weight: 800; margin-bottom: 6px }
+        .ac-confirm-message { color: var(--text-secondary); margin-bottom: 12px }
+        .ac-confirm-actions { display:flex; gap:8px; justify-content:flex-end }
+  .ac-btn { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); cursor:pointer }
+  .ac-btn-confirm { background: var(--accent-secondary); color: white; border: none }
+  /* Cancel button: light gray background for better visibility */
+  .ac-btn-cancel { background: #d1d5db; color: #111827; border-color: #d1d5db }
+  .ac-btn-cancel:hover { filter: brightness(0.98) }
         
         .calendar-header {
           display: flex;
@@ -240,6 +288,19 @@ export default function AvailabilityCalendar({
           color: white !important;
           border: 2px solid var(--accent-secondary) !important;
           font-weight: 700;
+        }
+
+        /* Si el calendario se usa desde el modal de checkout, usar verde para la fecha seleccionada */
+        .availability-calendar.checkout-calendar .calendar-day.selected {
+          background: #10b981 !important; /* verde */
+          color: white !important;
+          border: 2px solid #10b981 !important;
+        }
+        /* Variante mini: fecha seleccionada en azul (para mini-calendar) */
+        .availability-calendar.mini-calendar .calendar-day.selected {
+          background: #3b82f6 !important; /* azul */
+          color: white !important;
+          border: 2px solid #3b82f6 !important;
         }
         
         .day-number {
