@@ -1,5 +1,6 @@
 import Layout from '../components/Layout'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
@@ -16,6 +17,7 @@ const formatTime = (minutes) => {
 }
 
 export default function Calendar() {
+  const router = useRouter()
   // Estados principales
   const [currentDate, setCurrentDate] = useState(new Date())
   const [pedidos, setPedidos] = useState([])
@@ -43,7 +45,7 @@ export default function Calendar() {
 
       if (!adminStatus) {
         setTimeout(() => {
-          window.location.href = '/home'
+          router.push('/home')
         }, 3000)
       }
     }

@@ -1,10 +1,14 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import NotificationsProvider from './NotificationsProvider'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
+import { createToast } from '../utils/catalogUtils'
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
+  const [currentUser, setCurrentUser] = useState(null)
+  const router = useRouter()
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark'
@@ -16,7 +20,27 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     } catch (e) {
       // ignore if document.body is not available yet
     }
+    // Cargar estado de usuario público (si existe)
+    try {
+      const u = localStorage.getItem('currentUser')
+      if (u) setCurrentUser(JSON.parse(u))
+    } catch (e) {
+      // ignore
+    }
   }, [])
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('currentUser')
+      setCurrentUser(null)
+      createToast('Sesión cerrada correctamente', 'success')
+      // llevar al catálogo público
+      router.push('/catalog')
+    } catch (e) {
+      console.error('Logout error', e)
+      createToast('No se pudo cerrar sesión', 'error')
+    }
+  }
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'

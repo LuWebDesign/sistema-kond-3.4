@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
@@ -613,7 +614,7 @@ export default function Home() {
               <a href="#inicio" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('inicio'); }}>Inicio</a>
               <a href="#sobre" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('sobre'); }}>Sobre el Proyecto</a>
               <a href="#contacto" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('contacto'); }}>Contacto</a>
-              <a href="/catalog" className="nav-link">Catálogo</a>
+              <Link href="/catalog" className="nav-link">Catálogo</Link>
               <button className="btn-admin" onClick={() => setShowLoginModal(true)}>Acceso Admin</button>
             </nav>
           </div>
@@ -626,7 +627,7 @@ export default function Home() {
           <h1>Sistema KOND</h1>
           <p>Plataforma integral para gestión de producción láser, control de pedidos, finanzas y catálogo público. Optimiza tu negocio con herramientas profesionales.</p>
           <div className="cta-buttons">
-            <a href="/catalog"><button className="btn-primary">Ver Catálogo</button></a>
+            <Link href="/catalog" className="btn-primary">Ver Catálogo</Link>
             <button className="btn-secondary" onClick={() => scrollToSection('sobre')}>Conocer Más</button>
           </div>
         </div>

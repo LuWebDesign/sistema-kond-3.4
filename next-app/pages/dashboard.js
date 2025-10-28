@@ -1,5 +1,6 @@
 import Layout from '../components/Layout'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { formatCurrency } from '../utils/catalogUtils'
 
 export default function Dashboard() {
@@ -291,17 +292,9 @@ function DashboardSection({ title, children, href }) {
           {title}
         </h2>
         {href && (
-          <a
-            href={href}
-            style={{
-              color: 'var(--accent-blue)',
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              fontWeight: 500
-            }}
-          >
+          <Link href={href} style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>
             Ver todo →
-          </a>
+          </Link>
         )}
       </div>
       <div style={{ padding: '20px' }}>

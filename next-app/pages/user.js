@@ -6,6 +6,7 @@ export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [isProfileExpanded, setIsProfileExpanded] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -61,6 +62,8 @@ export default function User() {
         
         localStorage.setItem('currentUser', JSON.stringify(user))
         setCurrentUser(user)
+  // Inform other parts de la app que el usuario cambió
+  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) } catch (e) { /* noop */ }
         createToast('Sesión iniciada correctamente', 'success')
         
         // Reset form
@@ -102,6 +105,7 @@ export default function User() {
         
         localStorage.setItem('currentUser', JSON.stringify(user))
         setCurrentUser(user)
+  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) } catch (e) { /* noop */ }
         createToast('Usuario registrado correctamente', 'success')
         
         // Reset form
@@ -141,6 +145,7 @@ export default function User() {
       
       localStorage.setItem('currentUser', JSON.stringify(updatedUser))
       setCurrentUser(updatedUser)
+  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
       createToast('Perfil actualizado correctamente', 'success')
     } catch (error) {
       createToast('Error al actualizar perfil', 'error')
@@ -166,6 +171,7 @@ export default function User() {
       observaciones: ''
     })
     setAvatar(null)
+    try { window.dispatchEvent(new CustomEvent('user:updated', { detail: null })) } catch (e) { /* noop */ }
     createToast('Sesión cerrada correctamente', 'success')
   }
 
@@ -334,6 +340,39 @@ export default function User() {
                     🗑️ Eliminar foto
                   </button>
                 )}
+              </div>
+            </div>
+            
+            {/* Account Info Card: Información de cuenta (datos de logeo) */}
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '16px',
+              padding: '16px',
+              color: 'var(--text-primary)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-blue)' }}>🔒 Información de cuenta</h3>
+              <div style={{ marginTop: '12px', display: 'grid', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Email</span>
+                  <strong style={{ color: 'var(--text-primary)' }}>{currentUser.email}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Registrado</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{currentUser.fechaRegistro ? formatDate(currentUser.fechaRegistro) : '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>ID</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{currentUser.id || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Último acceso</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{currentUser.lastLogin ? formatDate(currentUser.lastLogin) : '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Contraseña</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{currentUser.password ? '••••••••' : '—'}</span>
+                </div>
               </div>
             </div>
 
@@ -565,7 +604,55 @@ export default function User() {
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            <span>📱</span>
+                            <span>�</span>
+                            Contraseña
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              name="password"
+                              value={formData.password}
+                              onChange={handleInputChange}
+                              placeholder={formData.password ? '••••••••' : ''}
+                              style={{
+                                width: '100%',
+                                padding: '14px 16px',
+                                border: '2px solid var(--border-color)',
+                                borderRadius: '12px',
+                                background: 'var(--bg-input)',
+                                color: 'var(--text-primary)',
+                                fontSize: '1rem'
+                              }}
+                              onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
+                              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(s => !s)}
+                              style={{
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                background: 'transparent',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer'
+                              }}
+                            >{showPassword ? 'Ocultar' : 'Mostrar'}</button>
+                          </div>
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                          <label style={{
+                            display: 'block',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            marginBottom: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span>�📱</span>
                             Teléfono
                           </label>
                           <input

@@ -5,6 +5,27 @@
   padding: 0;
 }
 
+/* ---- Ajuste: esquinas superiores cuadradas en tarjetas ----
+   Muchas tarjetas usan `background: var(--bg-card)` y `borderRadius` inline.
+   Esta regla global anula el redondeo superior para mantener las esquinas
+   superiores cuadradas mientras conserva el redondeo inferior. Se usa
+   `!important` para sobreescribir estilos inline existentes donde haga falta.
+*/
+/* Selector por atributo cubre elementos con style="background: var(--bg-card)" */
+*[style*="var(--bg-card)"],
+.bg-card,
+.product-card,
+.card,
+.modal,
+.modal-left,
+.modal-right,
+.checkoutModal,
+.card-plain {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+
 /* Variables CSS globales */
 :root {
   --color-primary: #2563eb;
@@ -195,6 +216,29 @@ button {
 a {
   color: var(--accent-blue);
   text-decoration: none;
+}
+
+/* Botón ghost usado en modales y acciones secundarias
+   En modo dark mostramos un gris claro para que destaque sobre el fondo oscuro.
+*/
+.btn-ghost {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+body[data-theme="dark"] .btn-ghost {
+  /* gris claro sutil en dark mode */
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+}
+
+body[data-theme="light"] .btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
 }
 
 a:hover {

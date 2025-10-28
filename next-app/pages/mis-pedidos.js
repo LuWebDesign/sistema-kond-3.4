@@ -3,8 +3,10 @@ import UserOrderCard from '../components/UserOrderCard'
 import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 export default function MisPedidos() {
+  const router = useRouter()
   const { saveOrder } = useOrders()
   const [userOrders, setUserOrders] = useState([])
   const [currentUserState, setCurrentUserState] = useState(null)
@@ -211,7 +213,7 @@ export default function MisPedidos() {
               borderRadius: '8px'
             }}>
               <button
-                onClick={() => window.location.href = '/catalog'}
+                onClick={() => router.push('/catalog')}
                 style={{
                   background: 'transparent',
                   color: 'var(--text-secondary)',

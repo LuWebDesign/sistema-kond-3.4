@@ -10,9 +10,11 @@ import {
   compressImage
 } from '../utils/catalogUtils'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 
 export default function Catalog() {
+  const router = useRouter()
   const { products, categories } = useProducts()
   const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { activeCoupon, applyCoupon, calculateDiscount } = useCoupons()
@@ -25,6 +27,7 @@ export default function Catalog() {
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
   const [currentUserState, setCurrentUserState] = useState(getCurrentUser())
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
+  const [imageModalSrc, setImageModalSrc] = useState(null)
 
   // Efecto de prueba para verificar que createToast funciona
   useEffect(() => {
@@ -39,6 +42,14 @@ export default function Catalog() {
     
     return () => clearTimeout(timer)
   }, [])
+
+  // Cerrar lightbox con Esc
+  useEffect(() => {
+    if (!imageModalSrc) return
+    const onKey = (e) => { if (e.key === 'Escape') setImageModalSrc(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [imageModalSrc])
 
   // Permitir abrir el carrito o el checkout desde otras rutas/links
   useEffect(() => {
@@ -67,6 +78,8 @@ export default function Catalog() {
   }, [])
 
   // Permitir seleccionar categoría desde otras rutas (ej: /catalog/categoria/<slug>)
+  // Selección de categoría local: manejada por el select más abajo
+  // Escuchar eventos de selección por slug desde la página dinámica (restaurado)
   useEffect(() => {
     const setCategoryHandler = (e) => {
       try {
@@ -89,7 +102,7 @@ export default function Catalog() {
         window.removeEventListener('catalog:setCategory', setCategoryHandler)
       }
     }
-  }, [])
+  }, [categories])
 
   // Handle profile updates from checkout editor
   const handleProfileUpdated = (updated) => {
@@ -167,6 +180,8 @@ export default function Catalog() {
 
   // slugify que preserva mayúsculas y normaliza acentos: NFD + eliminación de marcas diacríticas,
   // luego reemplaza espacios por '-' y elimina caracteres no alfanuméricos salvo '-'
+  // Nota: se eliminó la función de slugify; ahora trabajamos con los nombres de categoría tal cual
+  // Restaurando función slugify para rutas canónicas de categoría
   const slugifyPreserveCase = (str) => {
     if (!str) return ''
     // Normalizar a NFD para separar letras y diacríticos, eliminar marcas diacríticas
@@ -183,9 +198,6 @@ export default function Catalog() {
       }}>
         {/* Header del catálogo */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
           marginBottom: '32px',
           flexWrap: 'wrap',
           gap: '16px'
@@ -224,7 +236,7 @@ export default function Catalog() {
                 Catálogo
               </button>
               <button
-                onClick={() => window.location.href = '/mis-pedidos'}
+                onClick={() => router.push('/mis-pedidos')}
                 style={{
                   background: 'transparent',
                   color: 'var(--text-secondary)',
@@ -246,7 +258,7 @@ export default function Catalog() {
           
           {/* Botón del carrito */}
           <button
-            onClick={() => { window.location.href = '/catalog/mi-carrito' }}
+            onClick={() => { router.push('/catalog/mi-carrito') }}
             style={{
               position: 'relative',
               background: 'var(--accent-blue)',
@@ -307,16 +319,16 @@ export default function Catalog() {
           />
           
           <div style={{ position: 'relative' }}>
-            <select
+              <select
               value={slugifyPreserveCase(selectedCategory)}
               onChange={(e) => {
                 const v = e.target.value
                 if (!v) {
-                  // volver a listado general
-                  window.location.href = '/catalog'
+                  // volver a listado general (SPA)
+                  router.push('/catalog')
                 } else {
-                  // navegar a la URL de categoría usando slug
-                  window.location.href = `/catalog/categoria/${v}`
+                  // navegar a la URL de categoría usando slug (SPA)
+                  router.push(`/catalog/categoria/${v}`)
                 }
               }}
               style={{
@@ -379,6 +391,7 @@ export default function Catalog() {
               key={product.id} 
               product={product} 
               getCategoryStyle={getCategoryStyle}
+              onImageClick={(src) => setImageModalSrc(src)}
               onAddToCart={(productId, quantity) => {
                 const productToAdd = products.find(p => p.id === productId)
                 if (productToAdd) {
@@ -404,7 +417,7 @@ export default function Catalog() {
         {showCart && (
           <CartModal
             cart={cart}
-            onClose={() => setShowCart(false)}
+            onClose={() => { setShowCart(false); router.push('/catalog') }}
             onUpdateQuantity={updateQuantity}
             onRemoveItem={removeItem}
             onApplyCoupon={(couponCode) => {
@@ -412,13 +425,13 @@ export default function Catalog() {
               createToast(result.message, result.success ? 'success' : 'error')
               return result.success
             }}
-                    onProceedToCheckout={() => { window.location.href = '/catalog/mi-carrito/finalizar-compra' }}
+                    onProceedToCheckout={() => { router.push('/catalog/mi-carrito/finalizar-compra') }}
             subtotal={subtotal}
             discount={discount}
             total={total}
             activeCoupon={activeCoupon}
             currentUser={currentUserState}
-            onEditProfile={() => { window.location.href = '/catalog/mi-carrito/finalizar-compra?mode=edit' }}
+            onEditProfile={() => { router.push('/catalog/mi-carrito/finalizar-compra?mode=edit') }}
           />
         )}
 
@@ -426,7 +439,7 @@ export default function Catalog() {
         {showCheckout && (
           <CheckoutModal
             cart={cart}
-            onClose={() => setShowCheckout(false)}
+            onClose={() => { setShowCheckout(false); router.push('/catalog') }}
             total={total}
             subtotal={subtotal}
             discount={discount}
@@ -442,13 +455,24 @@ export default function Catalog() {
             onProfileUpdate={handleProfileUpdated}
           />
         )}
+
+        {/* Lightbox para imagen de producto */}
+        {imageModalSrc && (
+          <div onClick={() => setImageModalSrc(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '95vw', maxHeight: '95vh', position: 'relative' }}>
+              <button aria-label="Cerrar" onClick={() => setImageModalSrc(null)} style={{ position: 'absolute', right: -8, top: -8, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', zIndex: 2010 }}>✕</button>
+              <img src={imageModalSrc} alt="Preview" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', display: 'block', borderRadius: 8 }} />
+            </div>
+          </div>
+        )}
       </div>
     </PublicLayout>
   )
 }
 
 // Componente de tarjeta de producto
-function ProductCard({ product, onAddToCart, getCategoryStyle }) {
+function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
+  const router = useRouter()
   const [quantity, setQuantity] = useState(1)
 
   const handleAddToCart = () => {
@@ -475,13 +499,15 @@ function ProductCard({ product, onAddToCart, getCategoryStyle }) {
           <img
             src={product.imagen}
             alt={product.nombre}
+            onClick={() => onImageClick && onImageClick(product.imagen)}
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              cursor: 'zoom-in'
             }}
           />
         ) : (
@@ -504,14 +530,28 @@ function ProductCard({ product, onAddToCart, getCategoryStyle }) {
 
       {/* Info del producto */}
       <div style={{ padding: '20px' }}>
-        <h3 style={{
+          <h3 style={{
           fontSize: '1.1rem',
           fontWeight: 600,
           color: 'var(--text-primary)',
           marginBottom: '8px',
           lineHeight: 1.4
         }}>
-          {product.nombre}
+          <span
+            onClick={() => {
+              try {
+                const catSlug = slugifyPreserveCase(product.categoria)
+                const prodSlug = slugifyPreserveCase(product.nombre)
+                router.push(`/catalog/categoria/${catSlug}/${prodSlug}`)
+              } catch (e) {
+                // fallback a catálogo
+                router.push('/catalog')
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {product.nombre}
+          </span>
         </h3>
 
         {product.medidas && (
@@ -831,7 +871,17 @@ function CheckoutModal({
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
-  const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
+  const [customerData, setCustomerData] = useState(() => {
+    const u = getCurrentUser()
+    if (!u) return { name: '', apellido: '', phone: '', email: '', address: '' }
+    return {
+      name: u.nombre || u.name || u.email || '',
+      apellido: u.apellido || u.lastName || '',
+      phone: u.telefono || u.phone || u.telefonoMovil || '',
+      email: u.email || u.correo || '',
+      address: [u.direccion || u.address || '', u.localidad || u.city || '', u.cp || u.zip || '', u.provincia || u.state || ''].filter(Boolean).join(', ')
+    }
+  })
   const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -846,16 +896,41 @@ function CheckoutModal({
 
   // Prefill datos del usuario si está logueado
   useEffect(() => {
-    const user = getCurrentUser()
-    if (user) {
+    const applyUser = (user) => {
+      if (!user) return
       setCustomerData(prev => ({
         ...prev,
-        name: user.nombre || user.email || '',
-        apellido: user.apellido || '',
-        phone: user.telefono || '',
-        email: user.email || '',
-        address: [user.direccion, user.localidad, user.cp, user.provincia].filter(Boolean).join(', ')
+        name: user.nombre || user.name || user.email || '',
+        apellido: user.apellido || user.lastName || '',
+        phone: user.telefono || user.phone || '',
+        email: user.email || user.correo || '',
+        address: [user.direccion || user.address || '', user.localidad || user.city || '', user.cp || user.zip || '', user.provincia || user.state || ''].filter(Boolean).join(', ')
       }))
+    }
+
+    // Prefill on mount from localStorage (already done via useState), but also listen to updates
+    const onUserUpdated = (e) => {
+      try {
+        const user = e && e.detail ? e.detail : getCurrentUser()
+        if (user) applyUser(user)
+      } catch (err) { /* noop */ }
+    }
+
+    const onStorage = (e) => {
+      if (e.key === 'currentUser') {
+        try {
+          const user = e.newValue ? JSON.parse(e.newValue) : null
+          if (user) applyUser(user)
+        } catch (err) {}
+      }
+    }
+
+    window.addEventListener('user:updated', onUserUpdated)
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      window.removeEventListener('user:updated', onUserUpdated)
+      window.removeEventListener('storage', onStorage)
     }
   }, [])
 
@@ -1083,9 +1158,20 @@ function CheckoutModal({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 }}>
-                  <div><strong>Alias:</strong> KOND.LASER.MP</div>
+                  <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>KOND.LASER.MP</span></div>
                   <div>
-                    <button onClick={() => { navigator.clipboard?.writeText('KOND.LASER.MP'); createToast('Alias copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
+                    <button
+                      onClick={() => { navigator.clipboard?.writeText('KOND.LASER.MP'); createToast('Alias copiado', 'success') }}
+                      aria-label="Copiar alias"
+                      title="Copiar alias"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, padding: 6, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}
+                    >
+                      {/* clipboard icon */}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
@@ -1144,7 +1230,7 @@ function CheckoutModal({
             <>
               <button onClick={handleSubmitOrder} disabled={isSubmitting} style={{ width: '100%', padding: 12, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, marginBottom: 8 }}>{isSubmitting ? '⏳ Procesando...' : paymentMethod === 'whatsapp' ? '💬 Enviar por WhatsApp' : '🚀 Confirmar Pedido'}</button>
 
-              <button onClick={onClose} style={{ width: '100%', padding: 10, borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer' }}>Volver al carrito</button>
+              <button onClick={onClose} className="btn-ghost" style={{ width: '100%' }}>Volver al carrito</button>
             </>
           )}
 

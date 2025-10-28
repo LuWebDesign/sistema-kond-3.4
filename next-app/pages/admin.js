@@ -1,7 +1,9 @@
 import Layout from '../components/Layout'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 export default function Admin() {
+  const router = useRouter()
   const [systemStats, setSystemStats] = useState({
     totalProductos: 0,
     totalPedidos: 0,
@@ -60,7 +62,7 @@ export default function Admin() {
       localStorage.removeItem('adminSession')
       
       // Redirigir a la página home para requerir login
-      window.location.href = '/home'
+      router.push('/home')
     }
   }
 
