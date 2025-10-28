@@ -66,6 +66,28 @@ export default function Catalog() {
     }
   }, [])
 
+  // Permitir seleccionar categoría desde otras rutas (ej: /catalog/categoria/<slug>)
+  useEffect(() => {
+    const setCategoryHandler = (e) => {
+      try {
+        const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
+        setSelectedCategory(slug)
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('catalog:setCategory', setCategoryHandler)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('catalog:setCategory', setCategoryHandler)
+      }
+    }
+  }, [])
+
   // Handle profile updates from checkout editor
   const handleProfileUpdated = (updated) => {
     try {
@@ -275,7 +297,16 @@ export default function Catalog() {
           <div style={{ position: 'relative' }}>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value
+                if (!v) {
+                  // volver a listado general
+                  window.location.href = '/catalog'
+                } else {
+                  // navegar a la URL de categoría (se encargará de seleccionar)
+                  window.location.href = `/catalog/categoria/${encodeURIComponent(v)}`
+                }
+              }}
               style={{
                 padding: '12px 16px',
                 border: '2px solid var(--border-color)',
