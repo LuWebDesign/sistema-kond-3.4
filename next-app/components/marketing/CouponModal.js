@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from '../../styles/marketing.module.css';
 
-export default function CouponModal({ coupon, onSubmit, onClose }) {
+export default function CouponModal({ coupon, onSubmit, onClose, isLight = false }) {
   const isEdit = !!coupon;
   const [formData, setFormData] = useState({
     code: coupon?.code || '',
@@ -56,18 +56,18 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.modalContent} ${isLight ? styles.modalContentLight : ''}`} style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeModal} onClick={onClose}>×</button>
-        <div className={styles.modalHeader}>
+        <div className={`${styles.modalHeader} ${isLight ? styles.modalHeaderLight : ''}`}>
           <h3>{isEdit ? 'Editar Cupón' : 'Nuevo Cupón'}</h3>
         </div>
         <div className={styles.modalBody}>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formField}>
-              <label className={styles.label}>Código del cupón *</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Código del cupón *</label>
               <input
                 type="text"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.code}
                 onChange={(e) => updateField('code', e.target.value)}
                 placeholder="Ej: LASER10, 5X1LLAVEROS"
@@ -79,10 +79,10 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Descripción</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Descripción</label>
               <input
                 type="text"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.description}
                 onChange={(e) => updateField('description', e.target.value)}
                 placeholder="Ej: 10% de descuento en toda la tienda"
@@ -90,9 +90,9 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Tipo de descuento *</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Tipo de descuento *</label>
               <select
-                className={styles.input}
+                className={`${styles.select} ${isLight ? styles.selectLight : ''}`}
                 value={formData.type}
                 onChange={(e) => updateField('type', e.target.value)}
                 required
@@ -103,10 +103,10 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Valor del descuento *</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Valor del descuento *</label>
               <input
                 type="number"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.value}
                 onChange={(e) => updateField('value', e.target.value)}
                 placeholder="Ej: 10 (para 10% o $10)"
@@ -120,10 +120,10 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Monto mínimo de compra</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Monto mínimo de compra</label>
               <input
                 type="number"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.minAmount}
                 onChange={(e) => updateField('minAmount', e.target.value)}
                 placeholder="Ej: 10000"
@@ -136,10 +136,10 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Cantidad mínima de productos</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Cantidad mínima de productos</label>
               <input
                 type="number"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.minQuantity}
                 onChange={(e) => updateField('minQuantity', e.target.value)}
                 placeholder="Ej: 5"
@@ -152,20 +152,20 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Fecha de inicio</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Fecha de inicio</label>
               <input
                 type="date"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.start}
                 onChange={(e) => updateField('start', e.target.value)}
               />
             </div>
 
             <div className={styles.formField}>
-              <label className={styles.label}>Fecha de fin</label>
+              <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Fecha de fin</label>
               <input
                 type="date"
-                className={styles.input}
+                className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                 value={formData.end}
                 onChange={(e) => updateField('end', e.target.value)}
               />

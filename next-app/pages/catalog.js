@@ -500,14 +500,37 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
           marginBottom: '16px'
         }}>
           {/* Mostrar precio con promoción si corresponde */}
-          {product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>{formatCurrency(product.precioPromocional)}</div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
-            </div>
-          ) : (
-            <div>{formatCurrency(product.precioUnitario || 0)}</div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>{formatCurrency(product.precioPromocional)}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
+              </div>
+            ) : (
+              <div>{formatCurrency(product.precioUnitario || 0)}</div>
+            )}
+
+            {/* Mostrar badges de promoción al lado del precio */}
+            {product && product.promotionBadges && product.promotionBadges.length > 0 && (
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {product.promotionBadges.map((badge, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      backgroundColor: badge.color || '#ef4444',
+                      color: badge.textColor || '#ffffff',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {badge.text}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Controles de cantidad y botón */}

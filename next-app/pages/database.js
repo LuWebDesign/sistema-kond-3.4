@@ -9,9 +9,11 @@ export default function Database() {
     search: '',
     visibility: 'visible', // 'visible', 'hidden', 'all'
     category: 'all',
+    material: 'all',
     type: 'all'
   })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+  const [materials, setMaterials] = useState([])
 
   // Cargar productos del localStorage
   const loadProducts = useCallback(() => {
@@ -24,6 +26,20 @@ export default function Database() {
     } catch (error) {
       console.error('Error loading products:', error)
       setProducts([])
+    }
+  }, [])
+
+  // Cargar materiales del localStorage
+  const loadMaterials = useCallback(() => {
+    if (typeof window === 'undefined') return
+    
+    try {
+      const stored = localStorage.getItem('materiales')
+      const materialList = stored ? JSON.parse(stored) : []
+      setMaterials(materialList)
+    } catch (error) {
+      console.error('Error loading materials:', error)
+      setMaterials([])
     }
   }, [])
 
@@ -53,6 +69,7 @@ export default function Database() {
       filtered = filtered.filter(p => 
         p.nombre?.toLowerCase().includes(searchTerm) ||
         p.categoria?.toLowerCase().includes(searchTerm) ||
+        p.tipo?.toLowerCase().includes(searchTerm) ||
         p.medidas?.toLowerCase().includes(searchTerm) ||
         p.material?.toLowerCase().includes(searchTerm) ||
         String(p.id).includes(searchTerm)
@@ -62,6 +79,11 @@ export default function Database() {
     // Filtro por categoría
     if (filters.category !== 'all') {
       filtered = filtered.filter(p => p.categoria === filters.category)
+    }
+
+    // Filtro por material
+    if (filters.material !== 'all') {
+      filtered = filtered.filter(p => p.material === filters.material)
     }
 
     // Filtro por tipo
@@ -180,10 +202,22 @@ export default function Database() {
     return [...new Set(products.map(p => p.categoria).filter(Boolean))]
   }
 
+  // Obtener información completa del material
+  const getMaterialInfo = (materialName) => {
+    if (!materialName) return null
+    return materials.find(m => m.nombre === materialName)
+  }
+
+  // Obtener materiales únicos
+  const getUniqueMaterials = () => {
+    return [...new Set(products.map(p => p.material).filter(Boolean))]
+  }
+
   // Efectos
   useEffect(() => {
     loadProducts()
-  }, [loadProducts])
+    loadMaterials()
+  }, [loadProducts, loadMaterials])
 
   useEffect(() => {
     applyFiltersAndSort()
@@ -234,7 +268,7 @@ export default function Database() {
               </label>
               <input
                 type="text"
-                placeholder="ID, nombre, categoría, medidas..."
+                placeholder="ID, nombre, categoría, tipo, material, medidas..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 style={{
@@ -294,6 +328,31 @@ export default function Database() {
                 <option value="all">Todas</option>
                 {getUniqueCategories().map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro de material */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Material
+              </label>
+              <select
+                value={filters.material}
+                onChange={(e) => setFilters(prev => ({ ...prev, material: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="all">Todos</option>
+                {getUniqueMaterials().map(mat => (
+                  <option key={mat} value={mat}>{mat}</option>
                 ))}
               </select>
             </div>
@@ -383,6 +442,7 @@ export default function Database() {
                     <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('categoria')}>
                       Categoría {getSortIcon('categoria')}
                     </th>
+                    <th style={thStyle}>Material</th>
                     <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('tipo')}>
                       Tipo {getSortIcon('tipo')}
                     </th>
@@ -420,13 +480,13 @@ export default function Database() {
             }}>
               <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🗄️</p>
               <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
-                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.type !== 'all'
+                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.material !== 'all' || filters.type !== 'all'
                   ? 'No se encontraron productos con los filtros aplicados'
                   : 'No hay productos en la base de datos'
                 }
               </p>
               <p style={{ fontSize: '0.9rem' }}>
-                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.type !== 'all'
+                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.material !== 'all' || filters.type !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Agrega productos desde la sección de Productos'
                 }
@@ -460,6 +520,16 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
     }
   }
 
+  // Obtener información completa del material
+  const getMaterialInfo = (materialName) => {
+    if (!materialName) return null
+    // Acceder a materials desde el contexto del componente padre
+    const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
+    return materials.find(m => m.nombre === materialName)
+  }
+
+  const materialInfo = getMaterialInfo(product.material)
+
   const totalValue = (product.precioUnitario || 0) * (product.unidades || 0)
   const isHidden = product.active === false
 
@@ -473,6 +543,30 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
         {product.nombre}
       </td>
       <td style={tdStyle}>{product.categoria || '-'}</td>
+      <td style={tdStyle}>
+        {materialInfo ? (
+          <div style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>
+            <div style={{ fontWeight: '600', color: 'var(--accent-blue)', marginBottom: '2px' }}>
+              {materialInfo.nombre}
+            </div>
+            <div style={{ color: 'var(--text-secondary)' }}>
+              Tipo: {materialInfo.tipo || '-'} • 
+              Espesor: {materialInfo.espesor || '-'}
+            </div>
+          </div>
+        ) : (
+          <span style={{
+            background: 'var(--text-secondary)20',
+            color: 'var(--text-secondary)',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '0.8rem',
+            fontWeight: 500
+          }}>
+            Sin material
+          </span>
+        )}
+      </td>
       <td style={tdStyle}>
         <span style={{
           background: getTypeColor(product.tipo) + '20',

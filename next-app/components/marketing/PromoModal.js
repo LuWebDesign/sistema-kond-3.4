@@ -39,7 +39,7 @@ function getContrastColor(hexColor) {
   return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
-export default function PromoModal({ promo, products, onSubmit, onClose }) {
+export default function PromoModal({ promo, products, onSubmit, onClose, isLight = false }) {
   const isEdit = !!promo;
   const [formData, setFormData] = useState({
     title: promo?.title || '',
@@ -138,19 +138,19 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-  <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+  <div className={`${styles.modalContent} ${isLight ? styles.modalContentLight : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeModal} onClick={onClose}>×</button>
-        <div className={styles.modalHeader}>
+        <div className={`${styles.modalHeader} ${isLight ? styles.modalHeaderLight : ''}`}>
           <h3>{isEdit ? 'Editar Promoción' : 'Nueva Promoción'}</h3>
         </div>
         <div className={styles.modalBody}>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGrid}>
               <div className={styles.formField}>
-                <label className={styles.label}>Título *</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Título *</label>
                 <input
                   type="text"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.title}
                   onChange={(e) => updateField('title', e.target.value)}
                   required
@@ -158,9 +158,9 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Tipo de promoción</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Tipo de promoción</label>
                 <select
-                  className={styles.input}
+                  className={`${styles.select} ${isLight ? styles.selectLight : ''}`}
                   value={formData.type}
                   onChange={(e) => updateField('type', e.target.value)}
                 >
@@ -172,10 +172,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
               </div>
 
               <div className={styles.formField} style={{ gridColumn: '1 / -1' }}>
-                <label className={styles.label}>Descripción</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Descripción</label>
                 <input
                   type="text"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.summary}
                   onChange={(e) => updateField('summary', e.target.value)}
                   placeholder="Resumen corto de la promoción"
@@ -183,30 +183,30 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Fecha de inicio</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Fecha de inicio</label>
                 <input
                   type="date"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.start}
                   onChange={(e) => updateField('start', e.target.value)}
                 />
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Fecha de fin</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Fecha de fin</label>
                 <input
                   type="date"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.end}
                   onChange={(e) => updateField('end', e.target.value)}
                 />
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Insignia (texto del badge)</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Insignia (texto del badge)</label>
                 <input
                   type="text"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.badge}
                   onChange={(e) => updateField('badge', e.target.value)}
                   placeholder="Ej: PROMO, OFERTA"
@@ -214,17 +214,17 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Color del badge</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Color del badge</label>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="color"
-                    className={styles.input}
+                    className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                     value={formData.color}
                     onChange={(e) => updateField('color', e.target.value)}
                     style={{ width: 80, height: 40, padding: 4 }}
                   />
                   <select
-                    className={styles.input}
+                    className={`${styles.select} ${isLight ? styles.selectLight : ''}`}
                     value={formData.textColor}
                     onChange={(e) => updateField('textColor', e.target.value)}
                   >
@@ -249,10 +249,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
               </div>
 
               <div className={styles.formField}>
-                <label className={styles.label}>Tags (separados por coma)</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Tags (separados por coma)</label>
                 <input
                   type="text"
-                  className={styles.input}
+                  className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                   value={formData.tags}
                   onChange={(e) => updateField('tags', e.target.value)}
                   placeholder="verano, outlet"
@@ -277,10 +277,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 <h4>Configuración específica</h4>
                 {typeConfig.fields.includes('percentage') && (
                   <div className={styles.formField}>
-                    <label className={styles.label}>Descuento (%)</label>
+                    <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Descuento (%)</label>
                     <input
                       type="number"
-                      className={styles.input}
+                      className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                       value={formData.config.percentage || ''}
                       onChange={(e) => updateConfig('percentage', parseFloat(e.target.value) || 0)}
                       min="1"
@@ -290,10 +290,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 )}
                 {typeConfig.fields.includes('newPrice') && (
                   <div className={styles.formField}>
-                    <label className={styles.label}>Precio nuevo ($)</label>
+                    <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Precio nuevo ($)</label>
                     <input
                       type="number"
-                      className={styles.input}
+                      className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                       value={formData.config.newPrice || ''}
                       onChange={(e) => updateConfig('newPrice', parseFloat(e.target.value) || 0)}
                       min="1"
@@ -302,10 +302,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 )}
                 {typeConfig.fields.includes('buyQuantity') && (
                   <div className={styles.formField}>
-                    <label className={styles.label}>Cantidad a llevar</label>
+                    <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Cantidad a llevar</label>
                     <input
                       type="number"
-                      className={styles.input}
+                      className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                       value={formData.config.buyQuantity || ''}
                       onChange={(e) => updateConfig('buyQuantity', parseInt(e.target.value) || 1)}
                       min="1"
@@ -314,10 +314,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 )}
                 {typeConfig.fields.includes('payQuantity') && (
                   <div className={styles.formField}>
-                    <label className={styles.label}>Cantidad a pagar</label>
+                    <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Cantidad a pagar</label>
                     <input
                       type="number"
-                      className={styles.input}
+                      className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                       value={formData.config.payQuantity || ''}
                       onChange={(e) => updateConfig('payQuantity', parseInt(e.target.value) || 1)}
                       min="1"
@@ -326,10 +326,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 )}
                 {typeConfig.fields.includes('minAmount') && (
                   <div className={styles.formField}>
-                    <label className={styles.label}>Compra mínima ($)</label>
+                    <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Compra mínima ($)</label>
                     <input
                       type="number"
-                      className={styles.input}
+                      className={`${styles.input} ${isLight ? styles.inputLight : ''}`}
                       value={formData.config.minAmount || ''}
                       onChange={(e) => updateConfig('minAmount', parseFloat(e.target.value) || 0)}
                       min="1"
@@ -341,7 +341,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
 
             {/* Selección de productos */}
               <div className={styles.formField}>
-                <label className={styles.label}>Productos incluidos ({products.length} disponibles)</label>
+                <label className={`${styles.label} ${isLight ? styles.labelLight : ''}`}>Productos incluidos ({products.length} disponibles)</label>
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                 <button type="button" className={styles.btnSecondary} onClick={() => updateField('productIds', products.map(p => p.id))}>Seleccionar todos</button>
                 <button type="button" className={styles.btnSecondary} onClick={() => updateField('productIds', [])}>Limpiar</button>

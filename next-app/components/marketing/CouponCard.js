@@ -9,7 +9,7 @@ function fmtRange(a, b) {
   return `${s} → ${e}`;
 }
 
-export default function CouponCard({ coupon, onEdit, onToggle, onDelete }) {
+export default function CouponCard({ coupon, onEdit, onToggle, onDelete, isLight = false }) {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const isExpired = coupon.end && coupon.end < today;
@@ -42,7 +42,7 @@ export default function CouponCard({ coupon, onEdit, onToggle, onDelete }) {
   if (coupon.minQuantity) conditions.push(`Mín. ${coupon.minQuantity} productos`);
 
   return (
-    <article className={styles.couponCard}>
+    <article className={`${styles.couponCard} ${isLight ? styles.couponCardLight : ''}`}>
       <div className={styles.couponHeader}>
         <span className={styles.couponCode}>{coupon.code}</span>
         <span style={{ fontSize: '.85rem', color: statusColor }}>{statusText}</span>

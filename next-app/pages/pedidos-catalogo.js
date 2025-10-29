@@ -1,17 +1,18 @@
 import Layout from '../components/Layout'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import PedidoCard from '../components/PedidoCard'
+import ConfirmModal from '../components/ConfirmModal'
 import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento } from '../utils/finanzasUtils'
-import { formatCurrency } from '../utils/catalogUtils'
+import { formatCurrency, createToast } from '../utils/catalogUtils'
 
 function OrdersStats({ orders, filteredOrders }) {
   // Calcular estadísticas
   const totalOrders = filteredOrders.length
   const pendingOrders = filteredOrders.filter(o => o.estado === 'pendiente').length
   const confirmedOrders = filteredOrders.filter(o => o.estado === 'confirmado').length
-  const inProgressOrders = filteredOrders.filter(o => o.estado === 'en_preparacion').length
+  const inProgressOrders = filteredOrders.filter(o => o.estado === 'en_preparacion' || o.estado === 'en_produccion').length
   const readyOrders = filteredOrders.filter(o => o.estado === 'listo').length
   const deliveredOrders = filteredOrders.filter(o => o.estado === 'entregado').length
 
@@ -168,11 +169,15 @@ export default function PedidosCatalogo() {
   // Estados
   const [pedidosCatalogo, setPedidosCatalogo] = useState([])
   const [productosBase, setProductosBase] = useState([])
+  const [materiales, setMateriales] = useState([])
   const [activeSubtab, setActiveSubtab] = useState('pendientes')
   const [selectedPedido, setSelectedPedido] = useState(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedAssignDate, setSelectedAssignDate] = useState(null)
+  const [showValidationModal, setShowValidationModal] = useState(false)
+  const [validationMessage, setValidationMessage] = useState('')
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
   
   // Filtros pendientes
   const [filters, setFilters] = useState({
@@ -222,10 +227,12 @@ export default function PedidosCatalogo() {
     try {
       const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
       const productos = JSON.parse(localStorage.getItem('productosBase')) || []
+      const mats = JSON.parse(localStorage.getItem('materiales')) || []
       // Normalizar pedidos al cargarlos para evitar inconsistencias entre legacy y Next
       const normalized = (pedidos || []).map(normalizePedido)
       setPedidosCatalogo(normalized)
       setProductosBase(productos)
+      setMateriales(mats)
     } catch (error) {
       console.error('Error cargando datos:', error)
     }
@@ -235,14 +242,34 @@ export default function PedidosCatalogo() {
   const handleChangeFechaProduccion = (e) => {
     if (!selectedPedido) return
     const valor = e.target.value || ''
+    // Validar que la fecha de producción no esté en el pasado (hoy está permitido)
+    if (valor) {
+      const hoy = new Date()
+      hoy.setHours(0,0,0,0)
+      const fechaProd = new Date(valor + 'T00:00:00')
+      if (fechaProd < hoy) {
+        showValidationError('La fecha de producción no puede ser en el pasado')
+        return
+      }
+    }
+
+    // Validar que la fecha de producción no sea posterior a la fecha de entrega
+    if (valor && selectedPedido.fechaConfirmadaEntrega) {
+      const fechaProd = new Date(valor + 'T00:00:00')
+      const fechaEntrega = new Date(selectedPedido.fechaConfirmadaEntrega + 'T00:00:00')
+      if (fechaProd > fechaEntrega) {
+        showValidationError('La fecha de producción no puede ser posterior a la fecha de entrega confirmada')
+        return
+      }
+    }
 
     // Actualizar selectedPedido localmente
     const updatedPedido = { ...selectedPedido, fechaProduccion: valor }
 
     // Si hay una fecha y el pedido está confirmado, asignarlo automáticamente al calendario
+    // IMPORTANTE: no cambiar el estado a 'en_produccion' aquí — debe permanecer 'confirmado'
     if (valor && updatedPedido.estado === 'confirmado') {
       updatedPedido.asignadoAlCalendario = true
-      updatedPedido.estado = 'en_produccion'
       updatedPedido.fechaProduccionCalendario = valor
     }
 
@@ -265,12 +292,33 @@ export default function PedidosCatalogo() {
     if (!selectedPedido) return
     const valor = e.target.value || ''
 
+    // Validar que la fecha confirmada no esté en el pasado
+    if (valor) {
+      const hoy = new Date()
+      hoy.setHours(0,0,0,0)
+      const fechaEntregaCheq = new Date(valor + 'T00:00:00')
+      if (fechaEntregaCheq < hoy) {
+        createToast('La fecha de entrega no puede ser en el pasado', 'error')
+        return
+      }
+    }
+
+    // Validar que la fecha de entrega no sea anterior a la fecha de producción
+    if (valor && selectedPedido.fechaProduccion) {
+      const fechaEntrega = new Date(valor + 'T00:00:00')
+      const fechaProd = new Date(selectedPedido.fechaProduccion + 'T00:00:00')
+      if (fechaEntrega < fechaProd) {
+        createToast('La fecha de entrega no puede ser anterior a la fecha de producción', 'error')
+        return
+      }
+    }
+
     const updatedPedido = { ...selectedPedido, fechaConfirmadaEntrega: valor }
 
     // Si hay una fecha de entrega y el pedido está confirmado, asignarlo al calendario
+    // IMPORTANTE: no cambiar el estado a 'en_produccion' aquí — debe permanecer 'confirmado'
     if (valor && updatedPedido.estado === 'confirmado') {
       updatedPedido.asignadoAlCalendario = true
-      updatedPedido.estado = 'en_produccion'
       updatedPedido.fechaEntregaCalendario = valor
     }
 
@@ -280,6 +328,54 @@ export default function PedidosCatalogo() {
       updatedPedidos[index] = updatedPedido
       setPedidosCatalogo(updatedPedidos)
       persistAndEmit(updatedPedidos, updatedPedido.id, 'fechaEntregaChanged', valor)
+      setSelectedPedido(updatedPedido)
+    } else {
+      setSelectedPedido(updatedPedido)
+    }
+  }
+
+  // Cuando el admin cambia el estado del pedido desde el modal, aplicar reglas de asignación dinámicas
+  const handleChangeEstado = (newStatus) => {
+    if (!selectedPedido) return
+
+    const updatedPedido = { ...selectedPedido }
+
+    if (newStatus === 'pendiente') {
+      // Si se vuelve a pendiente, quitar asignación al calendario
+      updatedPedido.estado = 'pendiente'
+      updatedPedido.asignadoAlCalendario = false
+      delete updatedPedido.fechaProduccionCalendario
+      delete updatedPedido.fechaEntregaCalendario
+    } else if (newStatus === 'confirmado') {
+      // Marcar confirmado y, si ya hay fechas, asignar al calendario automáticamente
+      updatedPedido.estado = 'confirmado'
+      const fechaProd = updatedPedido.fechaProduccion || updatedPedido.fechaProduccionCalendario || null
+      const fechaEnt = updatedPedido.fechaConfirmadaEntrega || updatedPedido.fechaEntregaCalendario || null
+      if (fechaProd || fechaEnt) {
+        updatedPedido.asignadoAlCalendario = true
+        // Mantener estado en 'confirmado'. La transición a 'en_produccion' debe ocurrir el día indicado.
+        if (fechaProd) updatedPedido.fechaProduccionCalendario = fechaProd
+        if (fechaEnt) updatedPedido.fechaEntregaCalendario = fechaEnt
+      } else {
+        // Sin fechas, mantenemos confirmado pero no asignado
+        updatedPedido.asignadoAlCalendario = false
+      }
+    } else {
+      // Otros estados: aplicar directamente
+      updatedPedido.estado = newStatus
+      // Si se pasa a pendiente explicito, limpiar asignaciones
+      if (newStatus === 'pendiente') {
+        updatedPedido.asignadoAlCalendario = false
+      }
+    }
+
+    // Actualizar en el array global y persistir
+    const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
+    if (index !== -1) {
+      const updatedPedidos = [...pedidosCatalogo]
+      updatedPedidos[index] = updatedPedido
+      setPedidosCatalogo(updatedPedidos)
+      persistAndEmit(updatedPedidos, updatedPedido.id, 'update-status')
       setSelectedPedido(updatedPedido)
     } else {
       setSelectedPedido(updatedPedido)
@@ -451,6 +547,19 @@ export default function PedidosCatalogo() {
     setCurrentPageEntregados(1)
   }, [deliveredFilters])
 
+  // Cerrar modal con ESC
+  useEffect(() => {
+    if (showDetailModal) {
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setShowDetailModal(false)
+        }
+      }
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showDetailModal])
+
   // Calcular paginación para pendientes
   const totalPagesPendientes = Math.ceil(filteredPendientes.length / itemsPerPage)
   const startIndexPendientes = (currentPagePendientes - 1) * itemsPerPage
@@ -487,6 +596,7 @@ export default function PedidosCatalogo() {
       'pendiente': '⏳',
       'confirmado': '✅',
       'en_preparacion': '🔧',
+      'en_produccion': '🔧',
       'listo': '📦',
       'entregado': '🎉',
       'cancelado': '❌'
@@ -499,6 +609,7 @@ export default function PedidosCatalogo() {
       'pendiente': 'Pendiente confirmación',
       'confirmado': 'Confirmado',
       'en_preparacion': 'En preparación',
+      'en_produccion': 'En Producción',
       'listo': 'Listo para entrega',
       'entregado': 'Entregado',
       'cancelado': 'Cancelado'
@@ -547,7 +658,7 @@ export default function PedidosCatalogo() {
 
           if (fechaProd || fechaEntrega) {
             base.asignadoAlCalendario = true
-            base.estado = 'en_produccion'
+            // Mantener el estado como 'confirmado'. La transición a 'en_produccion' se realiza en la fecha.
             if (fechaProd) base.fechaProduccionCalendario = fechaProd
             if (fechaEntrega) base.fechaEntregaCalendario = fechaEntrega
           }
@@ -783,7 +894,7 @@ export default function PedidosCatalogo() {
         }
       }
       
-      alert('Cambios guardados correctamente')
+      setShowConfirmModal(true)
       handleCloseModal()
     }
   }
@@ -796,6 +907,17 @@ export default function PedidosCatalogo() {
 
   const closeAssignModal = () => {
     setShowAssignModal(false)
+    setSelectedAssignDate(null)
+  }
+
+  const showValidationError = (message) => {
+    setValidationMessage(message)
+    setShowValidationModal(true)
+  }
+
+  const closeValidationModal = () => {
+    setShowValidationModal(false)
+    setValidationMessage('')
   }
 
   const buildCalendarCartFromPedido = (pedido) => {
@@ -815,6 +937,25 @@ export default function PedidosCatalogo() {
 
   const confirmAssign = () => {
     if (!selectedPedido || !selectedAssignDate) return
+
+    // Validar que la fecha seleccionada no sea en el pasado (hoy permitido)
+    const hoy = new Date()
+    hoy.setHours(0,0,0,0)
+    const fechaSeleccionada = new Date(selectedAssignDate + 'T00:00:00')
+    if (fechaSeleccionada < hoy) {
+      createToast('No se puede asignar una fecha en el pasado', 'error')
+      return
+    }
+
+    // Validar que la fecha de entrega no sea anterior a la fecha de producción
+    if (selectedPedido.fechaProduccion) {
+      const fechaEntrega = fechaSeleccionada
+      const fechaProd = new Date(selectedPedido.fechaProduccion + 'T00:00:00')
+      if (fechaEntrega < fechaProd) {
+        createToast('La fecha de entrega no puede ser anterior a la fecha de producción', 'error')
+        return
+      }
+    }
 
     try {
       const pedidosInternos = JSON.parse(localStorage.getItem('pedidos') || '[]')
@@ -885,16 +1026,45 @@ export default function PedidosCatalogo() {
     const fechaProduccion = selectedPedido.fechaProduccion || ''
     const fechaEntrega = selectedPedido.fechaConfirmadaEntrega || ''
 
+    // Validar que ninguna de las fechas esté en el pasado (hoy permitido)
+    const hoy = new Date()
+    hoy.setHours(0,0,0,0)
+    if (fechaProduccion) {
+      const fp = new Date(fechaProduccion + 'T00:00:00')
+      if (fp < hoy) {
+        createToast('La fecha de producción no puede ser en el pasado', 'error')
+        return
+      }
+    }
+    if (fechaEntrega) {
+      const fe = new Date(fechaEntrega + 'T00:00:00')
+      if (fe < hoy) {
+        createToast('La fecha de entrega no puede ser en el pasado', 'error')
+        return
+      }
+    }
+
     if (!fechaProduccion && !fechaEntrega) {
       alert('Debe asignar al menos una fecha (producción o entrega) antes de enviar al calendario')
       return
     }
 
-    // Actualizar pedido
+    // Validar que la fecha de producción no sea posterior a la fecha de entrega
+    if (fechaProduccion && fechaEntrega) {
+      const fechaProd = new Date(fechaProduccion + 'T00:00:00')
+      const fechaEnt = new Date(fechaEntrega + 'T00:00:00')
+      if (fechaProd > fechaEnt) {
+        createToast('La fecha de producción no puede ser posterior a la fecha de entrega', 'error')
+        return
+      }
+    }
+
+    // Actualizar pedido: marcar asignado al calendario y mantener/ajustar estado a 'confirmado'
     const updatedPedido = {
       ...selectedPedido,
       asignadoAlCalendario: true,
-      estado: 'en_produccion',
+      // Si estaba pendiente, lo ponemos en 'confirmado'; si ya tenía otro estado lo dejamos como está.
+      estado: selectedPedido.estado === 'pendiente' ? 'confirmado' : selectedPedido.estado,
       fechaProduccionCalendario: fechaProduccion || null,
       fechaEntregaCalendario: fechaEntrega || null
     }
@@ -972,15 +1142,25 @@ export default function PedidosCatalogo() {
     if (productoBase) {
       return {
         tiempoUnitario: productoBase.tiempoUnitario || '00:00:00',
-        precioPorMinuto: productoBase.precioPorMinuto || 0
+        precioPorMinuto: productoBase.precioPorMinuto || 0,
+        material: productoBase.material || null,
+        espesor: productoBase.espesor || null
       }
     }
 
     // Valores por defecto
     return {
       tiempoUnitario: '00:00:00',
-      precioPorMinuto: 0
+      precioPorMinuto: 0,
+      material: null,
+      espesor: null
     }
+  }
+
+  // Función para obtener información completa del material
+  const getMaterialInfo = (materialName) => {
+    if (!materialName) return null
+    return materiales.find(m => m.nombre === materialName)
   }
 
   return (
@@ -1362,45 +1542,40 @@ export default function PedidosCatalogo() {
               </div>
 
               <div className={styles.modalBodyNew}>
-                {/* Estados en Cards Horizontales */}
+                {/* Estados en Cards Horizontales (editable) */}
                 <div className={styles.estadosGrid}>
                   <div className={styles.estadoCard}>
                     <label className={styles.estadoLabel}>Estado del Pedido</label>
-                    <select
-                      value={selectedPedido.estado}
-                      onChange={(e) => setSelectedPedido({ ...selectedPedido, estado: e.target.value })}
-                      className={styles.selectNew}
-                    >
-                      <option value="pendiente">⏳ Pendiente confirmación</option>
-                      <option value="confirmado">✅ Confirmado</option>
-                      <option value="en_preparacion">🔧 En Preparación</option>
-                      <option value="listo">📦 Listo para entrega</option>
-                      <option value="entregado">🎉 Entregado</option>
-                      <option value="cancelado">❌ Cancelado</option>
-                    </select>
+                    <div className={styles.estadoValue}>
+                      <select
+                        value={selectedPedido.estado || 'pendiente'}
+                        onChange={(e) => handleChangeEstado(e.target.value)}
+                        className={styles.selectInline}
+                      >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmado">Confirmado</option>
+                        <option value="en_preparacion">En preparación</option>
+                        <option value="en_produccion">En Producción</option>
+                        <option value="listo">Listo</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
+                      </select>
+                    </div>
                   </div>
-                  
+
                   <div className={styles.estadoCard}>
                     <label className={styles.estadoLabel}>Estado de Pago</label>
-                    <select
-                      value={selectedPedido.estadoPago}
-                      onChange={(e) => {
-                        const newEstado = e.target.value;
-                        const total = Number(selectedPedido.total || 0);
-                        let newMonto = selectedPedido.montoRecibido || 0;
-                        if (newEstado === 'seña_pagada' && newMonto === 0) {
-                          newMonto = Math.round(total * 0.5);
-                        } else if (newEstado === 'pagado_total') {
-                          newMonto = total;
-                        }
-                        setSelectedPedido({ ...selectedPedido, estadoPago: newEstado, montoRecibido: newMonto });
-                      }}
-                      className={styles.selectNew}
-                    >
-                      <option value="sin_seña">Sin seña</option>
-                      <option value="seña_pagada">Seña pagada</option>
-                      <option value="pagado_total">Pagado total</option>
-                    </select>
+                    <div className={styles.estadoValue}>
+                      <select
+                        value={selectedPedido.estadoPago || 'sin_seña'}
+                        onChange={(e) => setSelectedPedido({ ...selectedPedido, estadoPago: e.target.value })}
+                        className={styles.selectInline}
+                      >
+                        <option value="sin_seña">Sin seña</option>
+                        <option value="seña_pagada">Seña pagada (50%)</option>
+                        <option value="pagado_total">Pagado total</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -1411,22 +1586,26 @@ export default function PedidosCatalogo() {
                     <div className={styles.fechaValue}>{formatDate(selectedPedido.fechaSolicitudEntrega)}</div>
                   </div>
                   <div className={styles.fechaItem}>
-                    <label>Fecha Confirmada</label>
-                    <input
-                      type="date"
-                      value={selectedPedido.fechaConfirmadaEntrega || ''}
-                      onChange={(e) => handleChangeFechaConfirmada(e)}
-                      className={styles.inputNew}
-                    />
+                    <label>Fecha de entrega confirmada</label>
+                    <div className={styles.fechaValue}>
+                      <input
+                        type="date"
+                        value={selectedPedido.fechaConfirmadaEntrega || ''}
+                        onChange={handleChangeFechaConfirmada}
+                        className={styles.dateInput}
+                      />
+                    </div>
                   </div>
                   <div className={styles.fechaItem}>
                     <label>Fecha Producción</label>
-                    <input
-                      type="date"
-                      value={selectedPedido.fechaProduccion || ''}
-                      onChange={(e) => handleChangeFechaProduccion(e)}
-                      className={styles.inputNew}
-                    />
+                    <div className={styles.fechaValue}>
+                      <input
+                        type="date"
+                        value={selectedPedido.fechaProduccion || ''}
+                        onChange={handleChangeFechaProduccion}
+                        className={styles.dateInput}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1449,6 +1628,7 @@ export default function PedidosCatalogo() {
                   <div className={styles.productosListNew}>
                     {selectedPedido.productos.map((prod, idx) => {
                       const productData = getProductData(prod)
+                      const materialInfo = productData.material ? getMaterialInfo(productData.material) : null
                       return (
                         <div key={idx} className={styles.productoItemNew}>
                           <div className={styles.productoLeft}>
@@ -1463,6 +1643,11 @@ export default function PedidosCatalogo() {
                                 <span className={styles.precioMinTag}>{formatCurrency(productData.precioPorMinuto)}/min</span>
                               )}
                             </div>
+                            {materialInfo && (
+                              <div className={styles.productoMaterial}>
+                                Material: {materialInfo.nombre} ({materialInfo.espesor || 'N/A'}mm)
+                              </div>
+                            )}
                           </div>
                           <div className={styles.productoRight}>
                             <div className={styles.precioUnit}>{formatCurrency(prod.precioUnitario)}</div>
@@ -1493,21 +1678,28 @@ export default function PedidosCatalogo() {
                     </div>
                   </div>
 
-                  {selectedPedido.estadoPago === 'seña_pagada' && (
+                  {(selectedPedido.estadoPago === 'seña_pagada' || selectedPedido.estadoPago === 'pagado_total') && (
                     <div className={styles.pagosGrid}>
                       <div className={styles.pagoItem}>
                         <label>Monto Recibido</label>
-                        <input
-                          type="number"
-                          value={selectedPedido.montoRecibido || 0}
-                          onChange={(e) => setSelectedPedido({ ...selectedPedido, montoRecibido: parseFloat(e.target.value) || 0 })}
-                          className={styles.inputNew}
-                        />
+                        <div className={styles.montoInputWrapper}>
+                          <span className={styles.currencyPrefix}>$</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            step="1"
+                            min="0"
+                            value={Number(selectedPedido.montoRecibido || 0)}
+                            onChange={(e) => setSelectedPedido({ ...selectedPedido, montoRecibido: Number(e.target.value) })}
+                            className={styles.montoInput}
+                          />
+                        </div>
                       </div>
                       <div className={styles.pagoItem}>
                         <label>Restante</label>
                         <div className={styles.restanteValue}>
-                          {formatCurrency(selectedPedido.total - (selectedPedido.montoRecibido || selectedPedido.total * 0.5))}
+                          {formatCurrency((selectedPedido.total || 0) - (selectedPedido.montoRecibido || (selectedPedido.estadoPago === 'seña_pagada' ? (selectedPedido.total * 0.5) : selectedPedido.total)))}
                         </div>
                       </div>
                     </div>
@@ -1535,14 +1727,15 @@ export default function PedidosCatalogo() {
                 )}
               </div>
 
-              {/* Footer con acciones */}
+              {/* Footer con acciones de edición */}
               <div className={styles.modalFooterNew}>
-                <button onClick={handleDelete} className={styles.btnDeleteNew}>
-                  Eliminar
-                </button>
-                <button onClick={handleSaveChanges} className={styles.btnSaveNew}>
-                  Guardar Cambios
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className={styles.btnDanger} onClick={handleDelete}>Eliminar</button>
+                  <button className={styles.btnSecondary} onClick={handleCloseModal}>Cerrar</button>
+                </div>
+                <div>
+                  <button className={styles.btnSave} onClick={handleSaveChanges}>Guardar cambios</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1550,7 +1743,7 @@ export default function PedidosCatalogo() {
         {/* Modal Asignar Pedido */}
         {showAssignModal && selectedPedido && (
           <div className={styles.modalOverlay}>
-            <div className={styles.modal} style={{ maxWidth: '940px' }}>
+            <div className={styles.modalContent} style={{ maxWidth: '940px' }}>
               <div className={styles.modalHeader}>
                 <h2>Asignar Pedido #{selectedPedido.id}</h2>
                 <button onClick={closeAssignModal} className={styles.closeBtn}>×</button>
@@ -1562,6 +1755,16 @@ export default function PedidosCatalogo() {
                       cart={buildCalendarCartFromPedido(selectedPedido)}
                       selectedDate={selectedAssignDate}
                       onDateSelect={setSelectedAssignDate}
+                      minDateOverride={(() => {
+                        // Fijar mínimo al mayor entre hoy y la fecha de producción (si existe)
+                        const hoy = new Date()
+                        hoy.setHours(0,0,0,0)
+                        if (selectedPedido.fechaProduccion) {
+                          const fp = new Date(selectedPedido.fechaProduccion + 'T00:00:00')
+                          return fp > hoy ? fp : hoy
+                        }
+                        return hoy
+                      })()}
                     />
                   </div>
                   <div>
@@ -1592,6 +1795,66 @@ export default function PedidosCatalogo() {
               <div className={styles.modalFooter}>
                 <button className={styles.btnSecondary} onClick={closeAssignModal}>Cancelar</button>
                 <button className={styles.btnPrimary} disabled={!selectedAssignDate} onClick={confirmAssign}>Confirmar asignación</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Confirmación de Cambios Guardados */}
+        <ConfirmModal
+          open={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          message="Cambios guardados correctamente"
+          type="success"
+        />
+
+        {/* Modal de Validación de Fechas */}
+        {showValidationModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalContent} style={{ maxWidth: '500px', textAlign: 'center' }}>
+              <div className={styles.modalHeader}>
+                <h2 style={{ color: 'var(--color-danger)', margin: 0 }}>⚠️ Error de Validación</h2>
+              </div>
+              <div className={styles.modalBody}>
+                <div style={{ padding: '20px 0' }}>
+                  <div style={{ fontSize: '16px', lineHeight: '1.5', color: 'var(--text-primary)' }}>
+                    {validationMessage}
+                  </div>
+                  <div style={{ marginTop: '20px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    Por favor, ajusta las fechas para mantener la lógica temporal correcta del proceso de producción.
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modalFooter}>
+                <button 
+                  className={styles.btnSave} 
+                  onClick={closeValidationModal}
+                  style={{ 
+                    background: 'var(--accent-blue)', 
+                    color: 'white',
+                    fontWeight: '600',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    margin: '0 auto'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <span>✓</span>
+                  Entendido
+                </button>
               </div>
             </div>
           </div>

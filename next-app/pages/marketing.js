@@ -17,9 +17,25 @@ export default function Marketing() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
+  const [isLight, setIsLight] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const currentTheme = document.body.getAttribute('data-theme');
+      setIsLight(currentTheme === 'light');
+    };
+
+    checkTheme();
+
+    // Escuchar cambios en el tema
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
+
+    return () => observer.disconnect();
   }, []);
 
   const loadData = () => {
@@ -151,7 +167,7 @@ export default function Marketing() {
   return (
     <Layout title="Marketing - Sistema KOND">
       <div className={styles.container}>
-        <header className={styles.header}>
+        <header className={`${styles.header} ${isLight ? styles.headerLight : ''}`}>
           <div>
             <h1 className={styles.title}>🎯 Marketing</h1>
             <nav className={styles.breadcrumbs}>
@@ -216,6 +232,7 @@ export default function Marketing() {
                     onEdit={() => openPromoModal(promo)}
                     onToggle={() => togglePromo(promo.id)}
                     onDelete={() => deletePromo(promo.id)}
+                    isLight={isLight}
                   />
                 ))}
               </div>
@@ -237,6 +254,7 @@ export default function Marketing() {
                     onEdit={() => openCouponModal(coupon)}
                     onToggle={() => toggleCoupon(coupon.id)}
                     onDelete={() => deleteCoupon(coupon.id)}
+                    isLight={isLight}
                   />
                 ))}
               </div>
@@ -261,6 +279,7 @@ export default function Marketing() {
               setShowPromoModal(false);
               setEditingPromo(null);
             }}
+            isLight={isLight}
           />
         )}
 
@@ -272,6 +291,7 @@ export default function Marketing() {
               setShowCouponModal(false);
               setEditingCoupon(null);
             }}
+            isLight={isLight}
           />
         )}
       </div>

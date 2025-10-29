@@ -115,7 +115,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               
               {/* Solo mostrar Mi Cuenta si no estamos en esa página */}
               {title !== 'Mi Cuenta - KOND' && (
-                <a href="/user" style={{
+                <Link href="/user" style={{
                   color: 'var(--text-primary)',
                   textDecoration: 'none',
                   fontWeight: 500,
@@ -126,7 +126,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
                 onMouseLeave={(e) => e.target.style.background = 'transparent'}>
                   Mi Cuenta
-                </a>
+                </Link>
               )}
             </nav>
           </div>
@@ -141,7 +141,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             
             {/* Mi cuenta visible en la derecha (útil en móvil) - solo mostrar si no estamos en la página de usuario */}
             {title !== 'Mi Cuenta - KOND' && (
-              <a href="/user" style={{
+              <Link href="/user" style={{
                 color: 'var(--text-primary)',
                 textDecoration: 'none',
                 padding: '8px 12px',
@@ -149,7 +149,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 border: '1px solid transparent',
                 background: 'transparent',
                 display: 'inline-block'
-              }}>Mi Cuenta</a>
+              }}>Mi Cuenta</Link>
             )}
             
             {/* Botón de tema */}
@@ -250,7 +250,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   
                   {/* Solo mostrar Mi cuenta en menú móvil si no estamos en esa página */}
                   {title !== 'Mi Cuenta - KOND' && (
-                    <a href="/user" style={{
+                    <Link href="/user" style={{
                       color: 'var(--text-secondary)',
                       textDecoration: 'none',
                       fontSize: '0.9rem',
@@ -259,7 +259,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                     onMouseEnter={(e) => e.target.style.color = 'var(--accent-blue)'}
                     onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
                       Mi cuenta
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>

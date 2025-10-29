@@ -291,11 +291,23 @@ export default function Products() {
       // Determinar la categoría final (personalizada o seleccionada)
       const categoriaFinal = formData.categoriaPersonalizada?.trim() || formData.categoria
       
+      let finalFormData = { ...formData }
+      
+      // Si hay materialId, buscar el nombre del material y guardarlo
+      if (finalFormData.materialId && materials.length > 0) {
+        const selectedMaterial = materials.find(m => String(m.id) === String(finalFormData.materialId))
+        if (selectedMaterial) {
+          finalFormData.material = selectedMaterial.nombre
+        }
+      } else {
+        finalFormData.material = ''
+      }
+      
       const newProduct = {
-        ...formData,
+        ...finalFormData,
         id: Date.now() + Math.random(),
         active: true,
-        publicado: formData.publicado || false,
+        publicado: finalFormData.publicado || false,
         fechaCreacion: new Date().toISOString(),
         categoria: categoriaFinal
       }
@@ -1180,6 +1192,7 @@ export default function Products() {
                 <ProductCard
                   key={product.id}
                   product={product}
+                  materials={materials}
                   isExpanded={expandedCards.has(product.id)}
                   isEditing={editingCards.has(product.id)}
                   onDelete={handleDeleteProduct}
@@ -1300,6 +1313,7 @@ function MetricCard({ title, value, icon, color, isAmount = false }) {
 // Componente de tarjeta de producto
 function ProductCard({ 
   product, 
+  materials = [],
   isExpanded, 
   isEditing, 
   onDelete, 
@@ -1320,6 +1334,7 @@ function ProductCard({
     usoPlacas: product.usoPlacas || 0,
     costoPlaca: product.costoPlaca || 0,
     costoMaterial: product.costoMaterial || 0,
+    materialId: product.materialId || '',
     margenMaterial: product.margenMaterial || 0,
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
@@ -1342,6 +1357,7 @@ function ProductCard({
         usoPlacas: product.usoPlacas || 0,
         costoPlaca: product.costoPlaca || 0,
         costoMaterial: product.costoMaterial || 0,
+        materialId: product.materialId || '',
         margenMaterial: product.margenMaterial || 0,
         precioUnitario: product.precioUnitario || 0,
         ensamble: product.ensamble || 'Sin ensamble',
@@ -1396,6 +1412,16 @@ function ProductCard({
     try {
       let finalData = { ...editData }
       
+      // Si hay materialId, buscar el nombre del material y guardarlo
+      if (finalData.materialId && materials.length > 0) {
+        const selectedMaterial = materials.find(m => String(m.id) === String(finalData.materialId))
+        if (selectedMaterial) {
+          finalData.material = selectedMaterial.nombre
+        }
+      } else {
+        finalData.material = ''
+      }
+      
       // Si hay una nueva imagen, convertirla a base64
       if (imageFile) {
         const imageData = await fileToBase64(imageFile)
@@ -1432,6 +1458,17 @@ function ProductCard({
   const tiempoMinutos = product.tiempoUnitario ? timeToMinutes(product.tiempoUnitario) : 0
   const tiempoTotal = tiempoMinutos * (product.unidades || 0)
   const precioPorMinuto = tiempoMinutos > 0 ? (product.precioUnitario || 0) / tiempoMinutos : 0
+
+  // Obtener datos del material
+  const getMaterialData = () => {
+    if (product.materialId && materials.length > 0) {
+      const material = materials.find(m => String(m.id) === String(product.materialId))
+      return material || null
+    }
+    return null
+  }
+
+  const materialData = getMaterialData()
 
   return (
     <div style={{
@@ -1504,13 +1541,23 @@ function ProductCard({
               gap: '12px',
               color: 'var(--text-secondary)',
               fontSize: '0.95rem',
-              marginTop: '8px'
+              marginTop: '8px',
+              flexWrap: 'wrap'
             }}>
-              {/* Mostramos sólo precio por unidad y total en la vista cerrada */}
+              {/* Material, Tipo y Espesor */}
+              <span>
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {materialData ? materialData.nombre : 'Sin material'}
+                </strong> • {materialData ? (materialData.tipo || 'Sin tipo') : 'Sin tipo'} 
+                {materialData && materialData.espesor && ` • ${materialData.espesor}`}
+              </span>
+              <span>•</span>
+              {/* Precio por unidad */}
               <span>
                 <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/ud
               </span>
               <span>•</span>
+              {/* Total */}
               <span>
                 Total: <strong style={{ color: '#10b981' }}>{formatCurrency(totalValue)}</strong>
               </span>
@@ -1655,6 +1702,8 @@ function ProductCard({
               imagePreview={imagePreview}
               onImageChange={handleImageChange}
               onSave={handleSave}
+              materials={materials}
+              currentMaterialId={product.materialId}
             />
           ) : (
             // Modo vista
@@ -1861,10 +1910,22 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave }) {
+function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], currentMaterialId }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
+
+  // Obtener datos del material actual (del editData o del producto original)
+  const getCurrentMaterialData = () => {
+    const materialId = editData.materialId || currentMaterialId
+    if (materialId && materials.length > 0) {
+      const material = materials.find(m => String(m.id) === String(materialId))
+      return material || null
+    }
+    return null
+  }
+
+  const currentMaterialData = getCurrentMaterialData()
 
   return (
     <div style={{
@@ -1966,6 +2027,86 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave }
               <option value="Presupuesto">Presupuesto</option>
               <option value="Stock">Stock</option>
             </select>
+          </div>
+          
+          {/* Información del Material Actual */}
+          {currentMaterialData && (
+            <div style={{
+              padding: '12px',
+              background: 'var(--bg-tertiary)',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color)',
+              marginTop: '8px'
+            }}>
+              <div style={{
+                fontSize: '0.8rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+                fontWeight: 600
+              }}>
+                Material Seleccionado
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.9rem',
+                color: 'var(--text-primary)'
+              }}>
+                <span style={{ fontWeight: 600 }}>
+                  {currentMaterialData.nombre}
+                </span>
+                <span>•</span>
+                <span>{currentMaterialData.tipo || 'Sin tipo'}</span>
+                {currentMaterialData.espesor && (
+                  <>
+                    <span>•</span>
+                    <span>{currentMaterialData.espesor}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Material
+            </label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <select
+                value={editData.materialId || ''}
+                onChange={(e) => {
+                  const id = e.target.value
+                  const sel = materials.find(x => String(x.id) === String(id))
+                  if (sel) {
+                    handleInputChange('materialId', id)
+                    handleInputChange('costoMaterial', Number(sel.costoUnitario || 0))
+                    handleInputChange('costoPlaca', Number(sel.costoUnitario || 0))
+                  } else {
+                    handleInputChange('materialId', '')
+                    handleInputChange('costoMaterial', 0)
+                    handleInputChange('costoPlaca', 0)
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="">-- Seleccionar material --</option>
+                {materials.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>

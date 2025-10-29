@@ -1,28 +1,49 @@
 import styles from '../styles/pedidos-catalogo.module.css'
 
-// Función auxiliar para convertir tiempo HH:MM:SS a minutos
-const timeToMinutes = (timeStr) => {
+// Función auxiliar para convertir tiempo HH:MM:SS a segundos
+const timeToSeconds = (timeStr) => {
   if (!timeStr) return 0
   const parts = timeStr.split(':')
   const hours = parseInt(parts[0]) || 0
   const minutes = parseInt(parts[1]) || 0
   const seconds = parseInt(parts[2]) || 0
-  return hours * 60 + minutes + Math.ceil(seconds / 60)
+  return hours * 3600 + minutes * 60 + seconds
 }
 
-// Función auxiliar para convertir minutos a HH:MM
-const minutesToTime = (minutes) => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+// Función auxiliar para convertir segundos a HH:MM:SS
+const secondsToHHMMSS = (totalSeconds) => {
+  const hrs = Math.floor(totalSeconds / 3600)
+  const mins = Math.floor((totalSeconds % 3600) / 60)
+  const secs = totalSeconds % 60
+  return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
 export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion }) {
-  const thumbnail = getProductThumbnail(pedido)
-  const seña = pedido.estadoPago === 'seña_pagada'
-    ? (pedido.montoRecibido || pedido.total * 0.5)
-    : 0
-  const restante = pedido.total - seña
+  // Calcular monto recibido estimado y restante
+  const recibido = Number(pedido.montoRecibido || 0) || (pedido.estadoPago === 'seña_pagada' ? (Number(pedido.total || 0) * 0.5) : (pedido.estadoPago === 'pagado_total' ? Number(pedido.total || 0) : 0))
+  const seña = pedido.estadoPago === 'seña_pagada' ? recibido : 0
+  const restante = Math.max(0, Number(pedido.total || 0) - recibido)
+
+  // Funciones auxiliares para clases de badges
+  const getStatusBadgeClass = (estado) => {
+    switch (estado) {
+      case 'entregado': return 'entregado'
+      case 'listo': return 'listo'
+      case 'en_preparacion':
+      case 'confirmado': return 'en-proceso'
+      case 'pendiente': return 'pendiente'
+      default: return 'default'
+    }
+  }
+
+  const getPaymentBadgeClass = (estadoPago) => {
+    switch (estadoPago) {
+      case 'pagado_total':
+      case 'pagado': return 'pagado-total'
+      case 'seña_pagada': return 'seña-pagada'
+      default: return 'sin-seña'
+    }
+  }
 
   // Obtener productosBase de localStorage
   let productosBase = []
@@ -32,6 +53,12 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
     } catch (e) {
       console.warn('Error cargando productosBase:', e)
     }
+  }
+
+  // Función para obtener thumbnail de un producto específico
+  const getProductThumbnailIndividual = (prod) => {
+    const productBase = productosBase.find(p => p.id === prod.productId || p.id === prod.idProducto)
+    return productBase?.imagen || null
   }
 
   // Función para obtener datos del producto desde productosBase
@@ -54,126 +81,171 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
     if (productoBase) {
       return {
         tiempoUnitario: productoBase.tiempoUnitario || '00:00:00',
-        precioPorMinuto: productoBase.precioPorMinuto || 0
+        precioPorMinuto: productoBase.precioPorMinuto || 0,
+        material: productoBase.material || null,
+        espesor: productoBase.espesor || null
       }
     }
 
     // Valores por defecto
     return {
       tiempoUnitario: '00:00:00',
-      precioPorMinuto: 0
+      precioPorMinuto: 0,
+      material: null,
+      espesor: null
     }
   }
 
-  // Calcular tiempo total de producción
-  const tiempoTotalMinutos = pedido.productos.reduce((sum, prod) => {
+  // Función para obtener información completa del material
+  const getMaterialInfo = (materialName) => {
+    if (!materialName) return null
+    // Acceder a materials desde localStorage
+    const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
+    return materials.find(m => m.nombre === materialName)
+  }
+
+  // Calcular tiempo total de producción (en segundos) y formatear a HH:MM:SS
+  const tiempoTotalSegundos = pedido.productos.reduce((sum, prod) => {
     const productData = getProductData(prod)
-    const tiempoMinutos = timeToMinutes(productData.tiempoUnitario)
-    return sum + (tiempoMinutos * (prod.cantidad || 1))
+    const tiempoSeg = timeToSeconds(productData.tiempoUnitario)
+    return sum + (tiempoSeg * (prod.cantidad || 1))
   }, 0)
-  const tiempoTotalFormatted = minutesToTime(tiempoTotalMinutos)
+  const tiempoTotalFormatted = secondsToHHMMSS(tiempoTotalSegundos)
+
+  // Handler para abrir el modal (centralizado) y accesibilidad por teclado
+  const openModal = (e) => {
+    // permitir llamadas externas seguras
+    if (typeof onClick === 'function') onClick(pedido)
+  }
+
+  const handleKeyDown = (e) => {
+    // activar con Enter o Space
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      if (typeof onClick === 'function') onClick(pedido)
+    }
+  }
 
   // Calcular costo total por minuto (promedio ponderado)
   const costoTotalPorMinuto = pedido.productos.reduce((sum, prod) => {
     const productData = getProductData(prod)
     if (productData.precioPorMinuto && prod.cantidad) {
-      const tiempoMinutos = timeToMinutes(productData.tiempoUnitario)
+      const tiempoSeg = timeToSeconds(productData.tiempoUnitario)
+      const tiempoMinutos = tiempoSeg / 60
       return sum + (productData.precioPorMinuto * tiempoMinutos * prod.cantidad)
     }
     return sum
   }, 0)
 
+  // Fecha de entrega: preferir fecha de entrega confirmada / calendario, sino fecha solicitada
+  const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
+  const entregaLabel = (pedido.fechaConfirmadaEntrega || pedido.fechaEntregaCalendario) ? 'Entrega confirmada:' : 'Entrega solicitada:'
+
+  // Fecha de producción: preferir fechaProduccionCalendario o fechaProduccion
+  const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
+
   return (
     <div
       className={styles.pedidoCard}
-      onClick={() => onClick(pedido)}
     >
-      {/* Columna izquierda: ID y thumbnail */}
-      <div className={styles.pedidoLeft}>
-        <div className={styles.pedidoId}>
-          <strong>#{pedido.id}</strong>
-          <span className={styles.fechaCreacion}>
-            {formatDate(pedido.fechaCreacion)}
-          </span>
+      {/* Header con miniatura (izquierda), cliente (centro) y total/fecha (derecha) */}
+  <div className={styles.pedidoHeader} onClick={openModal} role="button" tabIndex={0} onKeyDown={handleKeyDown} style={{ cursor: 'pointer' }}>
+        {/* miniatura removida del header por petición (imagen previa) */}
+
+          <div className={styles.pedidoHeaderMain}>
+          <div className={styles.pedidoIdLine}>
+            <strong>N°{pedido.id}</strong>
+            <div className={styles.clienteNombreHead}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
+          </div>
+          {/* tarjeta de estado: estado del pedido + estado de pago (reemplaza badge 'Asignado al calendario') */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusBadge} ${styles.smallBadge}`}>{getStatusLabel(pedido.estado)}</div>
+            <div className={`${styles.paymentBadge} ${styles.smallBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)] || ''}`}>{getPaymentLabel(pedido.estadoPago)}</div>
+          </div>
         </div>
-        <div className={styles.pedidoThumb}>
-          {thumbnail ? (
-            <img src={thumbnail} alt="Producto" />
-          ) : (
-            <span className={styles.placeholder}>
-              {pedido.productos && pedido.productos.length > 0 ? pedido.productos[0].nombre || '📦' : '📦'}
-            </span>
-          )}
+
+        <div className={styles.pedidoHeaderRight}>
+          <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
+
+          <div className={styles.headerDates}>
+            <div className={styles.fechaInfo}>
+              <small className={styles.metaLabel}>Producción:</small>
+              <div>{produccionDate ? formatDate(produccionDate) : 'Sin asignar'}</div>
+            </div>
+
+            <div className={styles.fechaInfo}>
+              <small className={styles.metaLabel}>Entrega:</small>
+              <div>{entregaDate ? formatDate(entregaDate) : 'Sin confirmar'}</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Columna central: Info principal */}
-      <div className={styles.pedidoMain}>
-        <div className={styles.pedidoTopline}>
-          <div className={styles.clienteInfo}>
-            <div className={styles.clienteNombre}>
-              👤 {pedido.cliente.nombre} {pedido.cliente.apellido || ''}
-            </div>
-            <div className={styles.clienteContactLine}>
-              📱 {pedido.cliente.telefono}
-            </div>
+      <div className={styles.pedidoContent}>
+        <div className={styles.pedidoMain}>
+          {/* Productos compactos: nombre + unidades, medidas y material en la misma línea */}
+          <div className={styles.productosPreview}>
+            {pedido.productos && pedido.productos.length > 0 ? (
+              <div className={styles.productosListCompact}>
+                {pedido.productos.slice(0, 3).map((prod, index) => {
+                  const productData = getProductData(prod)
+                  const materialInfo = productData?.material ? getMaterialInfo(productData.material) : null
+                  return (
+                    <div key={index} className={styles.productoItemCompact}>
+                      <div className={styles.productoLine}>
+                        <div className={styles.productoLineLeft}>
+                          <span className={styles.productoNombreCompact}>{prod.nombre}</span>
+                          <span className={styles.productoUnidades}>×{prod.cantidad || 1}</span>
+                          {prod.medidas && <span className={styles.productoMedidas}>· {prod.medidas}</span>}
+                          {materialInfo ? (
+                            <span className={styles.productoMaterialCompact}>· {materialInfo.nombre}{materialInfo.espesor ? ` (${materialInfo.espesor}mm)` : ''}</span>
+                          ) : (productData?.material && (
+                            <span className={styles.productoMaterialCompact}>· {productData.material}{productData.espesor ? ` (${productData.espesor}mm)` : ''}</span>
+                          ))}
+                        </div>
+
+                        <div className={styles.productoLineRight}>
+                          <div className={styles.precioUnitWrap}>
+                            <div className={styles.precioUnitSmallLabel}>Precio unitario</div>
+                            <div className={styles.precioUnitSmall}>{formatCurrency(prod.precioUnitario)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* ocultamos el tiempo por producto aquí para evitar duplicados con el tiempo total; si se quiere mostrar, usar tooltip o detalle */}
+                    </div>
+                  )
+                })}
+
+                {pedido.productos.length > 3 && (
+                  <div className={styles.productosMas}>+{pedido.productos.length - 3} más</div>
+                )}
+              </div>
+            ) : (
+              <div className={styles.sinProductos}>Sin productos</div>
+            )}
+          </div>
+
+          {/* Línea de producción / tiempo total */}
+          <div className={styles.productionLine}>
+            <div className={styles.productionLabel}>Tiempo de corte</div>
+            <div className={styles.productionValue}>⏱ {tiempoTotalFormatted}</div>
+              {/* fechas mostradas en el header; se eliminan aquí para evitar duplicado */}
           </div>
         </div>
 
-        <div className={styles.pedidoBadges}>
-          <span className={`${styles.statusBadge} ${styles[pedido.estado]}`}>
-            {getStatusEmoji(pedido.estado)} {getStatusLabel(pedido.estado)}
-          </span>
-          <span className={`${styles.pagoBadge} ${styles[pedido.estadoPago]}`}>
-            {getPaymentLabel(pedido.estadoPago)}
-          </span>
-        </div>
-
-        <div className={styles.productosPreview}>
-          📦 {pedido.productos.length} producto{pedido.productos.length > 1 ? 's' : ''}
-        </div>
-
-        {/* Información de tiempo de producción (calculada desde el pedido o pasada desde el calendario) */}
-        {tiempoProduccion && (typeof tiempoProduccion === 'object') ? (
-          <div className={styles.tiempoProduccion}>
-            <span>⏱️ Tiempo de producción: {tiempoProduccion.formatted}</span>
-            <span> ({tiempoProduccion.minutos} min)</span>
+        <div className={styles.pedidoRightSummary}>
+          {/* información financiera compacta: Total, Seña, Restante */}
+          <div className={`${styles.totalFloatingRight} ${styles.restanteSmall}`} aria-hidden="false">
+            <span className={styles.totalLabel}>Total</span>
+            <span className={styles.totalAmount}>{formatCurrency(pedido.total)}</span>
           </div>
-        ) : (
-          tiempoTotalMinutos > 0 && (
-            <div className={styles.tiempoProduccion}>
-              <span>⏱️ Tiempo total: {tiempoTotalFormatted}</span>
-              {tiempoTotalMinutos > 0 && (
-                <span>({tiempoTotalMinutos} min)</span>
-              )}
-            </div>
-          )
-        )}
-
-        {/* Resumen financiero */}
-        {pedido.estadoPago === 'seña_pagada' && (
-          <div className={styles.resumenFinanciero}>
-            <span>💵 Seña: {formatCurrency(seña)}</span>
-            <span>•</span>
-            <span>💰 Restante: {formatCurrency(restante)}</span>
-          </div>
-        )}
-
-        {/* Información de fechas */}
-        <div className={styles.fechasInfo}>
-          <span>� Entrega: {formatFechaEntrega(pedido)}</span>
-          <span>•</span>
-          <span>🏭 Producción: {formatFechaProduccion(pedido)}</span>
+          <div className={`${styles.señaInfoSmall} ${styles.restanteSmall}`}><span>Seña: {formatCurrency(seña || 0)}</span></div>
+          <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>
         </div>
       </div>
 
-      {/* Columna derecha: Total */}
-      <div className={styles.pedidoRight}>
-        <div className={styles.totalBox}>
-          <div className={styles.pedidoTotal}>
-            {formatCurrency(pedido.total)}
-          </div>
-        </div>
+      <div className={styles.actionGroup} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.actionButton} onClick={(e) => { e.stopPropagation(); if (typeof onClick === 'function') onClick(pedido) }}>Ver</button>
       </div>
     </div>
   )

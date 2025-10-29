@@ -158,7 +158,7 @@ export default function MisPedidos() {
             }}>
               Debes iniciar sesión para ver tus pedidos
             </p>
-            <a
+            <Link
               href="/user"
               style={{
                 background: 'var(--accent-blue)',
@@ -171,7 +171,7 @@ export default function MisPedidos() {
               }}
             >
               Iniciar Sesión
-            </a>
+            </Link>
           </div>
         </div>
       </PublicLayout>
@@ -287,7 +287,7 @@ export default function MisPedidos() {
             }}>
               ¡Explora nuestro catálogo y realiza tu primer pedido!
             </p>
-            <a
+            <Link
               href="/catalog"
               style={{
                 background: 'var(--accent-blue)',
@@ -311,7 +311,7 @@ export default function MisPedidos() {
               }}
             >
               🛒 Ir al Catálogo
-            </a>
+            </Link>
           </div>
         ) : (
           <>

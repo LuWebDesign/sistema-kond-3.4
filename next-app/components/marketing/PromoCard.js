@@ -27,7 +27,7 @@ function fmtRange(a, b) {
   return `${s} → ${e}`;
 }
 
-export default function PromoCard({ promo, products, onEdit, onToggle, onDelete }) {
+export default function PromoCard({ promo, products, onEdit, onToggle, onDelete, isLight = false }) {
   const typeConfig = PROMO_TYPES[promo.type] || {};
   const productCount = (promo.productIds || []).length;
   const productNames = (promo.productIds || [])
@@ -65,8 +65,8 @@ export default function PromoCard({ promo, products, onEdit, onToggle, onDelete 
   }
 
   return (
-    <article className={styles.promoCard}>
-      <div className={styles.promoHeader}>
+    <article className={`${styles.promoCard} ${isLight ? styles.promoCardLight : ''}`}>
+      <div className={`${styles.promoHeader} ${isLight ? styles.promoHeaderLight : ''}`}>
         <span className={styles.promoType}>{typeConfig.label || promo.type}</span>
         <span className={`${styles.promoStatus} ${promo.active ? styles.active : styles.inactive}`}>
           <span className={styles.statusDot}></span>

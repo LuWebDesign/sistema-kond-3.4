@@ -9,7 +9,8 @@ export default function AvailabilityCalendar({
   cart, 
   selectedDate, 
   onDateSelect,
-  className = '' 
+  className = '',
+  minDateOverride = null
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
@@ -25,7 +26,8 @@ export default function AvailabilityCalendar({
   }, [])
 
   const today = new Date()
-  const minSelectable = getMinSelectableDateForTransfer()
+  const defaultMinSelectable = getMinSelectableDateForTransfer()
+  const minSelectable = minDateOverride ? new Date(Math.max(defaultMinSelectable.getTime(), minDateOverride.getTime())) : defaultMinSelectable
   
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
