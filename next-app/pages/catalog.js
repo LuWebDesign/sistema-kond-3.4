@@ -385,6 +385,43 @@ export default function Catalog() {
 function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
+  const [materials, setMaterials] = useState([])
+
+  // Cargar materiales al montar el componente
+  useEffect(() => {
+    const loadMaterials = () => {
+      try {
+        const storedMaterials = localStorage.getItem('materiales')
+        if (storedMaterials) {
+          setMaterials(JSON.parse(storedMaterials))
+        }
+      } catch (error) {
+        console.error('Error loading materials:', error)
+      }
+    }
+    loadMaterials()
+  }, [])
+
+  // Obtener información del material
+  const getMaterialInfo = () => {
+    if (materials.length === 0) return null
+    
+    // Primero intentar por materialId
+    if (product.materialId) {
+      const material = materials.find(m => String(m.id) === String(product.materialId))
+      if (material) return material
+    }
+    
+    // Si no hay materialId, intentar por nombre del material (para compatibilidad con productos antiguos)
+    if (product.material) {
+      const material = materials.find(m => m.nombre === product.material)
+      if (material) return material
+    }
+    
+    return null
+  }
+
+  const materialInfo = getMaterialInfo()
 
   const handleAddToCart = () => {
     onAddToCart(product.id, quantity)
@@ -472,6 +509,16 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
             marginBottom: '8px'
           }}>
             📏 {product.medidas}
+          </p>
+        )}
+
+        {materialInfo && (
+          <p style={{
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '8px'
+          }}>
+            Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
           </p>
         )}
 

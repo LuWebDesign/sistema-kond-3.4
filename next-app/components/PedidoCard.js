@@ -83,6 +83,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
         tiempoUnitario: productoBase.tiempoUnitario || '00:00:00',
         precioPorMinuto: productoBase.precioPorMinuto || 0,
         material: productoBase.material || null,
+        materialId: productoBase.materialId || null,
         espesor: productoBase.espesor || null
       }
     }
@@ -92,16 +93,29 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
       tiempoUnitario: '00:00:00',
       precioPorMinuto: 0,
       material: null,
+      materialId: null,
       espesor: null
     }
   }
 
   // Función para obtener información completa del material
-  const getMaterialInfo = (materialName) => {
-    if (!materialName) return null
+  const getMaterialInfo = (materialName, materialId) => {
     // Acceder a materials desde localStorage
     const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
-    return materials.find(m => m.nombre === materialName)
+    
+    // Primero intentar por materialId
+    if (materialId) {
+      const material = materials.find(m => String(m.id) === String(materialId))
+      if (material) return material
+    }
+    
+    // Si no hay materialId, intentar por nombre (para compatibilidad con productos antiguos)
+    if (materialName) {
+      const material = materials.find(m => m.nombre === materialName)
+      if (material) return material
+    }
+    
+    return null
   }
 
   // Calcular tiempo total de producción (en segundos) y formatear a HH:MM:SS
@@ -189,7 +203,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
               <div className={styles.productosListCompact}>
                 {pedido.productos.slice(0, 3).map((prod, index) => {
                   const productData = getProductData(prod)
-                  const materialInfo = productData?.material ? getMaterialInfo(productData.material) : null
+                  const materialInfo = productData?.material ? getMaterialInfo(productData.material, productData.materialId) : null
                   return (
                     <div key={index} className={styles.productoItemCompact}>
                       <div className={styles.productoLine}>
@@ -198,7 +212,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                           <span className={styles.productoUnidades}>×{prod.cantidad || 1}</span>
                           {prod.medidas && <span className={styles.productoMedidas}>· {prod.medidas}</span>}
                           {materialInfo ? (
-                            <span className={styles.productoMaterialCompact}>· {materialInfo.nombre}{materialInfo.espesor ? ` (${materialInfo.espesor}mm)` : ''}</span>
+                            <span className={styles.productoMaterialCompact}>· Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm</span>
                           ) : (productData?.material && (
                             <span className={styles.productoMaterialCompact}>· {productData.material}{productData.espesor ? ` (${productData.espesor}mm)` : ''}</span>
                           ))}

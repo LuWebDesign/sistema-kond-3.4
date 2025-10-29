@@ -125,7 +125,7 @@ export default function Materiales() {
                   <div className={styles.cardHeader}>
                     <div>
                       <strong className={styles.name}>{m.nombre}</strong>
-                      <div className={styles.meta}>{m.tipo} • {m.tamano} {m.unidad} • Espesor: {m.espesor}</div>
+                      <div className={styles.meta}>ID: {m.id} • {m.tipo} • {m.tamano} {m.unidad} • Espesor: {m.espesor}</div>
                     </div>
                     <div className={styles.actions}>
                       <button className={styles.btnSmall} onClick={() => handleEdit(m)}>Editar</button>

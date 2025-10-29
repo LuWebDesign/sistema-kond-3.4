@@ -521,7 +521,7 @@ export default function Calendar() {
       <div
         key={`${tipo}-${pedido.id}`}
         style={{
-          padding: '16px',
+          padding: '12px',
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
           borderRadius: '12px',
@@ -574,15 +574,12 @@ export default function Calendar() {
           <div style={{
             fontWeight: 600,
             color: 'var(--text-primary)',
-            marginBottom: '8px'
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
-            👤 Cliente
-          </div>
-          <div style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem'
-          }}>
-            {clienteInfo}
+            👤 Cliente: <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{clienteInfo}</span>
           </div>
           {tipo === 'entrega' && pedido.cliente?.telefono && (
             <div style={{
@@ -604,69 +601,6 @@ export default function Calendar() {
           )}
         </div>
 
-        {/* Estado y badges */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '12px',
-          flexWrap: 'wrap'
-        }}>
-          <span style={{
-            padding: '4px 12px',
-            backgroundColor: estadoInfo === 'completado' || estadoInfo === 'entregado' ? '#28a745' :
-                           estadoInfo === 'en_proceso' || estadoInfo === 'en_preparacion' || estadoInfo === 'confirmado' ? '#ffc107' :
-                           estadoInfo === 'listo' ? '#17a2b8' : '#6c757d',
-            color: 'white',
-            borderRadius: '20px',
-            fontSize: '0.8rem',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            {getStatusEmoji(estadoInfo)} {getStatusLabel(estadoInfo)}
-          </span>
-          {tipo !== 'interno' && metodoPagoInfo && (
-            <span style={{
-              padding: '4px 12px',
-              backgroundColor: 'var(--bg-tertiary)',
-              color: 'var(--text-secondary)',
-              borderRadius: '20px',
-              fontSize: '0.8rem',
-              fontWeight: 500
-            }}>
-              💳 {metodoPagoInfo}
-            </span>
-          )}
-          {tipo !== 'interno' && estadoPagoInfo && (
-            <span style={{
-              padding: '4px 12px',
-              backgroundColor: estadoPagoInfo === 'pagado' || estadoPagoInfo === 'pagado_total' ? '#28a745' :
-                             estadoPagoInfo === 'seña_pagada' ? '#ffc107' : '#dc3545',
-              color: 'white',
-              borderRadius: '20px',
-              fontSize: '0.8rem',
-              fontWeight: 500
-            }}>
-              💰 {estadoPagoInfo === 'pagado' || estadoPagoInfo === 'pagado_total' ? 'Pagado' :
-                  estadoPagoInfo === 'seña_pagada' ? 'Seña pagada' : 'Pendiente'}
-            </span>
-          )}
-          {/* Información adicional de pago para pedidos de catálogo */}
-          {tipo !== 'interno' && pedido.total && (
-            <span style={{
-              padding: '4px 12px',
-              backgroundColor: 'var(--bg-tertiary)',
-              color: 'var(--text-secondary)',
-              borderRadius: '20px',
-              fontSize: '0.8rem',
-              fontWeight: 500
-            }}>
-              💵 Total: {formatCurrency(pedido.total)}
-            </span>
-          )}
-        </div>
-
         {/* Información de productos y tiempo */}
         {productos && productos.length > 0 ? (
           <div style={{
@@ -676,39 +610,11 @@ export default function Calendar() {
             borderRadius: '8px'
           }}>
             <div style={{
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '8px'
-            }}>
-              📦 Productos ({productos.length})
-            </div>
-
-            <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '8px',
               marginBottom: '8px'
             }}>
-              <div style={{
-                padding: '8px',
-                backgroundColor: 'var(--bg-secondary)',
-                borderRadius: '6px',
-                fontSize: '0.85rem',
-                color: 'var(--text-secondary)'
-              }}>
-                🔢 Cantidad total: {cantidadTotal} unidades
-              </div>
-              {(tipo === 'interno' || tipo === 'produccion') && tiempoTotalMinutos > 0 && (
-                <div style={{
-                  padding: '8px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  color: 'var(--text-secondary)'
-                }}>
-                  ⏱️ Tiempo total: {tiempoTotalStr}
-                </div>
-              )}
             </div>
 
             {/* Lista de productos */}
@@ -732,16 +638,33 @@ export default function Calendar() {
                   }
                 } else {
                   // Para pedidos de catálogo, buscar el nombre desde la lista de productos si no viene en el item
-                  const prod = products?.find(p => p.id === (producto.idProducto || producto.id))
-                  nombreProducto = producto.name || prod?.nombre || 'Producto sin nombre'
+                  const prod = products?.find(p => String(p.id) === String(producto.idProducto || producto.id))
+                  nombreProducto = producto.name || producto.nombre || prod?.nombre || 'Producto sin nombre'
                   cantidadProducto = producto.quantity || producto.cantidad || 0
-                  medidasProducto = producto.measures || ''
+                  medidasProducto = producto.measures || producto.medidas || ''
                   if (tipo === 'produccion') {
                     if (prod?.tiempoUnitario) {
                       const tiempoUnitarioMin = prod.tiempoUnitario.split(':').reduce((acc, time, i) => acc + parseInt(time) * [60, 1, 1/60][i], 0)
                       tiempoProducto = tiempoUnitarioMin * cantidadProducto
                     }
                   }
+                }
+
+                // Obtener información del material
+                const prod = tipo === 'interno' 
+                  ? products?.find(p => p.id === producto.id)
+                  : products?.find(p => String(p.id) === String(producto.idProducto || producto.id))
+                
+                let materialInfo = 'Sin material'
+                if (prod?.materialId) {
+                  const allMaterials = JSON.parse(localStorage.getItem('materiales') || '[]')
+                  const materialData = allMaterials.find(m => String(m.id) === String(prod.materialId))
+                  materialInfo = materialData ? `Material: ${materialData.nombre} • ${materialData.tipo} • ${materialData.espesor || 'N/A'}mm` : 'Material no encontrado'
+                } else if (prod?.material) {
+                  // Para compatibilidad con productos antiguos que tienen material por nombre
+                  const allMaterials = JSON.parse(localStorage.getItem('materiales') || '[]')
+                  const materialData = allMaterials.find(m => m.nombre === prod.material)
+                  materialInfo = materialData ? `Material: ${materialData.nombre} • ${materialData.tipo} • ${materialData.espesor || 'N/A'}mm` : `Material: ${prod.material}`
                 }
 
                 return (
@@ -753,10 +676,11 @@ export default function Calendar() {
                     backgroundColor: 'var(--bg-tertiary)',
                     borderRadius: '4px'
                   }}>
-                    • {nombreProducto} - Cant: {cantidadProducto}
+                    • {nombreProducto}
+                    {medidasProducto && ` - Medidas: ${medidasProducto}`}
+                    {` - Cantidad: ${cantidadProducto}`}
                     {tiempoProducto > 0 && ` - Tiempo: ${Math.floor(tiempoProducto / 60)}:${String(Math.floor(tiempoProducto % 60)).padStart(2,'0')}`}
-                    {medidasProducto && ` - ${medidasProducto}`}
-                    {tipo !== 'interno' && ` - ${formatCurrency((producto.price || producto.precioUnitario || 0) * cantidadProducto)}`}
+                    {tipo !== 'interno' && ` - ${materialInfo}`}
                   </div>
                 )
               })}
@@ -879,13 +803,6 @@ export default function Calendar() {
                 borderRadius: '4px'
               }}>
                 ⏱️ Tiempo de corte total: {tiempoTotalStr}
-              </div>
-              <div style={{
-                padding: '6px 8px',
-                backgroundColor: 'var(--bg-secondary)',
-                borderRadius: '4px'
-              }}>
-                📦 Cantidad total de piezas: {cantidadTotal}
               </div>
               {pedido.fechaProduccionCalendario && (
                 <div style={{

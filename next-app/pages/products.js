@@ -1,7 +1,7 @@
 import Layout from '../components/Layout'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency } from '../utils/catalogUtils'
+import { formatCurrency, timeToMinutes, minutesToTime } from '../utils/catalogUtils'
 
 export default function Products() {
   // Estados principales
@@ -37,6 +37,15 @@ export default function Products() {
     imagen: ''
   })
 
+  // Estados para edición de materiales
+  const [editingMaterial, setEditingMaterial] = useState(null)
+  const [materialForm, setMaterialForm] = useState({
+    nombre: '',
+    tipo: '',
+    espesor: '',
+    costoUnitario: ''
+  })
+
   // Lista de materiales para el desplegable de costo de material
   const [materials, setMaterials] = useState([])
 
@@ -60,20 +69,6 @@ export default function Products() {
 
   const pageSize = 10
   const categories = ['Decoración', 'Herramientas', 'Regalos', 'Llaveros', 'Arte', 'Personalizada']
-
-  // Funciones utilitarias para tiempo
-  const timeToMinutes = (timeStr) => {
-    if (!timeStr) return 0
-    const parts = timeStr.split(':')
-    return parseInt(parts[0]) * 60 + parseInt(parts[1] || 0) + (parseInt(parts[2] || 0) / 60)
-  }
-
-  const minutesToTime = (minutes) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = Math.floor(minutes % 60)
-    const secs = Math.floor((minutes % 1) * 60)
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
 
   // Función para actualizar campos calculados
   const updateCalculatedFields = useCallback(() => {
@@ -115,12 +110,21 @@ export default function Products() {
   newFields.precioPorMinuto = tiempoMinutos > 0 ? precioUnitario / tiempoMinutos : 0
 
     setCalculatedFields(newFields)
-  }, [formData, calculatedFields, timeToMinutes, minutesToTime])
+  }, [formData, calculatedFields])
 
-  // Efecto para actualizar campos calculados
+  // Efecto para actualizar costos cuando cambian los materiales
   useEffect(() => {
-    updateCalculatedFields()
-  }, [formData.unidades, formData.unidadesPorPlaca, formData.costoPlaca, formData.margenMaterial, formData.tiempoUnitario, formData.costoMaterial, formData.precioUnitario])
+    if (formData.materialId && materials.length > 0) {
+      const selectedMaterial = materials.find(m => String(m.id) === String(formData.materialId))
+      if (selectedMaterial) {
+        setFormData(prev => ({
+          ...prev,
+          costoMaterial: Number(selectedMaterial.costoUnitario || 0),
+          costoPlaca: Number(selectedMaterial.costoUnitario || 0)
+        }))
+      }
+    }
+  }, [materials, formData.materialId])
 
   // Función para toggle de campos manuales/automáticos
   const toggleFieldMode = (fieldName) => {
@@ -163,6 +167,77 @@ export default function Products() {
     }
   }, [])
 
+  // Función para verificar conexión con base de datos de materiales
+  const checkMaterialsConnection = () => {
+    try {
+      const raw = localStorage.getItem('materiales')
+      const list = raw ? JSON.parse(raw) : []
+      console.log('Conexión con base de datos materiales:', list.length > 0 ? 'OK' : 'Sin materiales', 'Total materiales:', list.length)
+      return list.length > 0
+    } catch (e) {
+      console.error('Error conectando con base de datos materiales:', e)
+      return false
+    }
+  }
+
+  // Funciones para editar materiales
+  const startEditingMaterial = (materialId) => {
+    const material = materials.find(m => String(m.id) === String(materialId))
+    if (material) {
+      setEditingMaterial(materialId)
+      setMaterialForm({
+        nombre: material.nombre || '',
+        tipo: material.tipo || '',
+        espesor: material.espesor || '',
+        costoUnitario: material.costoUnitario || ''
+      })
+    }
+  }
+
+  const cancelEditingMaterial = () => {
+    setEditingMaterial(null)
+    setMaterialForm({
+      nombre: '',
+      tipo: '',
+      espesor: '',
+      costoUnitario: ''
+    })
+  }
+
+  const saveMaterialChanges = () => {
+    try {
+      const updatedMaterials = materials.map(m => 
+        String(m.id) === String(editingMaterial) 
+          ? { ...m, ...materialForm }
+          : m
+      )
+      
+      // Guardar en localStorage
+      localStorage.setItem('materiales', JSON.stringify(updatedMaterials))
+      setMaterials(updatedMaterials)
+      
+      // Actualizar el formData del producto si el material editado está seleccionado
+      if (formData.materialId === editingMaterial) {
+        const updatedMaterial = updatedMaterials.find(m => String(m.id) === String(editingMaterial))
+        if (updatedMaterial) {
+          setFormData(prev => ({ 
+            ...prev, 
+            costoMaterial: Number(updatedMaterial.costoUnitario || 0), 
+            costoPlaca: Number(updatedMaterial.costoUnitario || 0) 
+          }))
+        }
+      }
+      
+      cancelEditingMaterial()
+      
+      // Mostrar notificación de éxito
+      alert('Material actualizado correctamente')
+    } catch (error) {
+      console.error('Error al guardar material:', error)
+      alert('Error al guardar el material')
+    }
+  }
+
   // Cargar materiales desde localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -170,7 +245,10 @@ export default function Products() {
       const raw = localStorage.getItem('materiales')
       const list = raw ? JSON.parse(raw) : []
       setMaterials(list)
-    } catch (e) { console.error('load materiales', e) }
+      checkMaterialsConnection()
+    } catch (e) { 
+      console.error('Error cargando materiales:', e) 
+    }
   }, [])
 
   // Guardar productos al localStorage
@@ -940,7 +1018,149 @@ export default function Products() {
                         </option>
                       ))}
                     </select>
+                    
+                    {formData.materialId && (
+                      <button
+                        type="button"
+                        onClick={() => startEditingMaterial(formData.materialId)}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--accent-blue)',
+                          color: 'white',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        ✏️ Editar
+                      </button>
+                    )}
                   </div>
+                  
+                  {/* Formulario de edición de material */}
+                  {editingMaterial && (
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      background: 'var(--bg-tertiary)'
+                    }}>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
+                        Editar Material
+                      </h4>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Nombre
+                          </label>
+                          <input
+                            type="text"
+                            value={materialForm.nombre}
+                            onChange={(e) => setMaterialForm(prev => ({ ...prev, nombre: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Tipo
+                          </label>
+                          <input
+                            type="text"
+                            value={materialForm.tipo}
+                            onChange={(e) => setMaterialForm(prev => ({ ...prev, tipo: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Espesor
+                          </label>
+                          <input
+                            type="text"
+                            value={materialForm.espesor}
+                            onChange={(e) => setMaterialForm(prev => ({ ...prev, espesor: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Costo Unitario
+                          </label>
+                          <input
+                            type="number"
+                            value={materialForm.costoUnitario}
+                            onChange={(e) => setMaterialForm(prev => ({ ...prev, costoUnitario: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          onClick={cancelEditingMaterial}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-secondary)',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveMaterialChanges}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            background: 'var(--accent-blue)',
+                            color: 'white',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Guardar Cambios
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Margen Material */}
@@ -1343,6 +1563,49 @@ function ProductCard({
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(product.imagen || '')
 
+  // Estados para controlar modos manuales en edición
+  const [editCalculatedFields, setEditCalculatedFields] = useState({
+    isCostoMaterialManual: false,
+    isPrecioUnitarioManual: false
+  })
+
+  // Actualizar costo material cuando cambia el material
+  useEffect(() => {
+    if (editData.materialId && materials.length > 0 && !editCalculatedFields.isCostoMaterialManual) {
+      const selectedMaterial = materials.find(m => String(m.id) === String(editData.materialId))
+      if (selectedMaterial) {
+        setEditData(prev => ({
+          ...prev,
+          costoMaterial: Number(selectedMaterial.costoUnitario || 0),
+          costoPlaca: Number(selectedMaterial.costoUnitario || 0)
+        }))
+      }
+    }
+  }, [editData.materialId, materials, editCalculatedFields.isCostoMaterialManual])
+
+  // Recalcular precio unitario cuando cambian costoMaterial o margenMaterial
+  useEffect(() => {
+    if (!editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial !== undefined && editData.margenMaterial !== undefined) {
+      const precioUnitarioCalc = editData.costoMaterial * (1 + editData.margenMaterial / 100)
+      setEditData(prev => ({
+        ...prev,
+        precioUnitario: parseFloat(precioUnitarioCalc.toFixed(2))
+      }))
+    }
+  }, [editData.costoMaterial, editData.margenMaterial, editCalculatedFields.isPrecioUnitarioManual])
+
+  // Recalcular margen cuando cambia precioUnitario en modo manual
+  useEffect(() => {
+    if (editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial > 0 && editData.precioUnitario !== undefined) {
+      const margenDesdePrecio = ((editData.precioUnitario / editData.costoMaterial) - 1) * 100
+      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+      setEditData(prev => ({
+        ...prev,
+        margenMaterial: margenRedondeado
+      }))
+    }
+  }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
+
   // Actualizar datos de edición cuando cambia el producto
   useEffect(() => {
     if (!isEditing) {
@@ -1365,6 +1628,11 @@ function ProductCard({
       })
       setImagePreview(product.imagen || '')
       setImageFile(null)
+      // Resetear modos manuales
+      setEditCalculatedFields({
+        isCostoMaterialManual: false,
+        isPrecioUnitarioManual: false
+      })
     }
   }, [product, isEditing])
 
@@ -1377,11 +1645,12 @@ function ProductCard({
     }
   }
 
-  // Función auxiliar para convertir tiempo a minutos
-  function timeToMinutes(timeString) {
-    if (!timeString) return 0
-    const [hours, minutes, seconds] = timeString.split(':').map(Number)
-    return (hours * 60) + minutes + (seconds / 60)
+  // Función para toggle de campos manuales en edición
+  const toggleEditFieldMode = (fieldName) => {
+    setEditCalculatedFields(prev => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }))
   }
 
   // Manejar cambio de imagen
@@ -1704,6 +1973,8 @@ function ProductCard({
               onSave={handleSave}
               materials={materials}
               currentMaterialId={product.materialId}
+              editCalculatedFields={editCalculatedFields}
+              toggleEditFieldMode={toggleEditFieldMode}
             />
           ) : (
             // Modo vista
@@ -1721,12 +1992,6 @@ function ViewMode({ product }) {
   const tiempoTotal = tiempoMinutos * (product.unidades || 0)
   const totalValue = (product.precioUnitario || 0) * (product.unidades || 0)
   const precioPorMinuto = tiempoMinutos > 0 ? (product.precioUnitario || 0) / tiempoMinutos : 0
-
-  function timeToMinutes(timeString) {
-    if (!timeString) return 0
-    const [hours, minutes, seconds] = timeString.split(':').map(Number)
-    return (hours * 60) + minutes + (seconds / 60)
-  }
 
   return (
     <div style={{
@@ -1910,7 +2175,7 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], currentMaterialId }) {
+function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -2055,7 +2320,7 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
                 color: 'var(--text-primary)'
               }}>
                 <span style={{ fontWeight: 600 }}>
-                  {currentMaterialData.nombre}
+                  ID: {currentMaterialData.id} • {currentMaterialData.nombre}
                 </span>
                 <span>•</span>
                 <span>{currentMaterialData.tipo || 'Sin tipo'}</span>
@@ -2169,29 +2434,47 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Precio Unitario
             </label>
-            <input
-              type="number"
-              value={editData.precioUnitario}
-              onChange={(e) => handleInputChange('precioUnitario', Number(e.target.value))}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  // Trigger parent save if provided
-                  try { onSave && onSave() } catch (err) { console.error(err) }
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '6px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem'
-              }}
-              min="0"
-              step="0.01"
-            />
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                value={editData.precioUnitario}
+                onChange={(e) => handleInputChange('precioUnitario', Number(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    // Trigger parent save if provided
+                    try { onSave && onSave() } catch (err) { console.error(err) }
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+                min="0"
+                step="0.01"
+              />
+              <button
+                type="button"
+                onClick={() => toggleEditFieldMode('isPrecioUnitarioManual')}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: editCalculatedFields.isPrecioUnitarioManual ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                  color: editCalculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer'
+                }}
+                title={editCalculatedFields.isPrecioUnitarioManual ? 'Modo manual activado' : 'Modo automático activado'}
+              >
+                {editCalculatedFields.isPrecioUnitarioManual ? 'MAN' : 'AUTO'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2254,22 +2537,40 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Costo Material
             </label>
-            <input
-              type="number"
-              value={editData.costoMaterial}
-              onChange={(e) => handleInputChange('costoMaterial', Number(e.target.value))}
-              style={{
-                width: '100%',
-                padding: '6px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem'
-              }}
-              min="0"
-              step="0.01"
-            />
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                value={editData.costoMaterial}
+                onChange={(e) => handleInputChange('costoMaterial', Number(e.target.value))}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+                min="0"
+                step="0.01"
+              />
+              <button
+                type="button"
+                onClick={() => toggleEditFieldMode('isCostoMaterialManual')}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: editCalculatedFields.isCostoMaterialManual ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                  color: editCalculatedFields.isCostoMaterialManual ? 'white' : 'var(--text-primary)',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer'
+                }}
+                title={editCalculatedFields.isCostoMaterialManual ? 'Modo manual activado' : 'Modo automático activado'}
+              >
+                {editCalculatedFields.isCostoMaterialManual ? 'MAN' : 'AUTO'}
+              </button>
+            </div>
           </div>
           
           <div>

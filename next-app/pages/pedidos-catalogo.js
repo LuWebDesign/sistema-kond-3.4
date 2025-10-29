@@ -1144,6 +1144,7 @@ export default function PedidosCatalogo() {
         tiempoUnitario: productoBase.tiempoUnitario || '00:00:00',
         precioPorMinuto: productoBase.precioPorMinuto || 0,
         material: productoBase.material || null,
+        materialId: productoBase.materialId || null,
         espesor: productoBase.espesor || null
       }
     }
@@ -1153,14 +1154,28 @@ export default function PedidosCatalogo() {
       tiempoUnitario: '00:00:00',
       precioPorMinuto: 0,
       material: null,
+      materialId: null,
       espesor: null
     }
   }
 
   // Función para obtener información completa del material
-  const getMaterialInfo = (materialName) => {
-    if (!materialName) return null
-    return materiales.find(m => m.nombre === materialName)
+  const getMaterialInfo = (materialName, materialId) => {
+    if (!materiales || materiales.length === 0) return null
+    
+    // Primero intentar por materialId
+    if (materialId) {
+      const material = materiales.find(m => String(m.id) === String(materialId))
+      if (material) return material
+    }
+    
+    // Si no hay materialId, intentar por nombre (para compatibilidad con productos antiguos)
+    if (materialName) {
+      const material = materiales.find(m => m.nombre === materialName)
+      if (material) return material
+    }
+    
+    return null
   }
 
   return (
@@ -1628,7 +1643,7 @@ export default function PedidosCatalogo() {
                   <div className={styles.productosListNew}>
                     {selectedPedido.productos.map((prod, idx) => {
                       const productData = getProductData(prod)
-                      const materialInfo = productData.material ? getMaterialInfo(productData.material) : null
+                      const materialInfo = productData.material ? getMaterialInfo(productData.material, productData.materialId) : null
                       return (
                         <div key={idx} className={styles.productoItemNew}>
                           <div className={styles.productoLeft}>
@@ -1645,7 +1660,7 @@ export default function PedidosCatalogo() {
                             </div>
                             {materialInfo && (
                               <div className={styles.productoMaterial}>
-                                Material: {materialInfo.nombre} ({materialInfo.espesor || 'N/A'}mm)
+                                Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
                               </div>
                             )}
                           </div>
