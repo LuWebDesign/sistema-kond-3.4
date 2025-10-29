@@ -818,21 +818,22 @@ a:hover {
 .category-badge {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 12px !important;
-  border-radius: 16px !important;
-  font-size: 0.85rem !important;
+  gap: 4px !important;
+  padding: 2px 6px !important;
+  border-radius: 10px !important;
+  font-size: 0.75rem !important;
   font-weight: 600 !important;
-  margin-bottom: 16px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-  border: 1px solid rgba(255,255,255,0.2) !important;
-  backdrop-filter: blur(10px) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  margin-bottom: 6px !important;
+  box-shadow: none !important;
+  border: 1px solid currentColor !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
 }
 
 .category-badge:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Estilos mejorados para selector de categorías */

@@ -478,31 +478,55 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
 
       {/* Info del producto */}
       <div style={{ padding: '20px' }}>
-          <h3 style={{
-          fontSize: '1.1rem',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          marginBottom: '8px',
-          lineHeight: 1.4
-        }}>
-          <span
-            onClick={() => {
-              try {
-                const catSlug = slugifyPreserveCase(product.categoria)
-                const prodSlug = slugifyPreserveCase(product.nombre)
-                router.push(`/catalog/categoria/${catSlug}/${prodSlug}`)
-              } catch (e) {
-                // fallback a catálogo
-                router.push('/catalog')
-              }
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            {product.nombre}
-          </span>
-        </h3>
+          {product.categoria && (() => {
+            const categoryStyle = getCategoryStyle(product.categoria)
+            return (
+              <div
+                className="category-badge"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 8px',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: categoryStyle.color,
+                  background: 'transparent',
+                  border: `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}`,
+                  marginBottom: '8px'
+                }}
+              >
+                <span>{product.categoria}</span>
+              </div>
+            )
+          })()}
 
-        {product.medidas && (
+          <h3 style={{
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: '8px',
+            lineHeight: 1.4
+          }}>
+            <span
+              onClick={() => {
+                try {
+                  const catSlug = slugifyPreserveCase(product.categoria)
+                  const prodSlug = slugifyPreserveCase(product.nombre)
+                  router.push(`/catalog/categoria/${catSlug}/${prodSlug}`)
+                } catch (e) {
+                  // fallback a catálogo
+                  router.push('/catalog')
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {product.nombre}
+            </span>
+          </h3>
+
+          {product.medidas && (
           <p style={{
             color: 'var(--text-secondary)',
             fontSize: '0.9rem',
@@ -522,23 +546,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
           </p>
         )}
 
-        {product.categoria && (() => {
-          const categoryStyle = getCategoryStyle(product.categoria)
-          return (
-            <div 
-              className="category-badge"
-              style={{
-                background: categoryStyle.background,
-                color: categoryStyle.color,
-                border: '1px solid rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <span>{categoryStyle.icon}</span>
-              <span>{product.categoria}</span>
-            </div>
-          )
-        })()}
+        {/* category badge moved above title; duplicate removed */}
 
         <div style={{
           fontSize: '1.2rem',
