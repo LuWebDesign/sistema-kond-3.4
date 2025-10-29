@@ -64,23 +64,6 @@ export default function Catalog() {
         window.removeEventListener('catalog:openCheckout', openCheckoutHandler)
       }
     }
-  }, [])
-
-  // Permitir seleccionar categoría desde otras rutas (ej: /catalog/categoria/<slug>)
-  // Selección de categoría local: manejada por el select más abajo
-  // Escuchar eventos de selección por slug desde la página dinámica (restaurado)
-  useEffect(() => {
-    const setCategoryHandler = (e) => {
-      try {
-        const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
-        // buscar la categoría original a partir del slug
-        const match = (categories || []).find(cat => slugifyPreserveCase(cat) === slug)
-        if (match) setSelectedCategory(match)
-        else setSelectedCategory('')
-      } catch (err) {
-        // ignore
-      }
-    }
 
     if (typeof window !== 'undefined') {
       window.addEventListener('catalog:setCategory', setCategoryHandler)
@@ -433,10 +416,8 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       background: 'var(--bg-card)',
       border: '1px solid var(--border-color)',
       borderRadius: '12px',
-      overflow: 'hidden',
-      cursor: 'pointer'
-    }}
-    >
+      overflow: 'hidden'
+    }}>
       {/* Imagen del producto */}
       <div style={{
         position: 'relative',
@@ -480,22 +461,39 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       <div style={{ padding: '20px' }}>
           {product.categoria && (() => {
             const categoryStyle = getCategoryStyle(product.categoria)
+            const slug = slugifyPreserveCase(product.categoria)
             return (
               <div
                 className="category-badge"
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/catalog/categoria/${slug}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/catalog/categoria/${slug}`) } }}
+                onMouseEnter={(e) => {
+                  try {
+                    const isWhite = String(categoryStyle.color).toLowerCase().includes('white') || String(categoryStyle.color).toLowerCase() === '#fff' || String(categoryStyle.color).toLowerCase() === '#ffffff'
+                    e.currentTarget.style.background = categoryStyle.color || 'transparent'
+                    e.currentTarget.style.color = isWhite ? '#111' : '#fff'
+                  } catch (err) { /* noop */ }
+                }}
+                onMouseLeave={(e) => {
+                  try { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = categoryStyle.color || 'inherit' } catch (err) { /* noop */ }
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 8px',
-                  borderRadius: '999px',
+                  gap: '4px',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   color: categoryStyle.color,
                   background: 'transparent',
                   border: `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}`,
-                  marginBottom: '8px'
+                  marginBottom: '8px',
+                  cursor: 'pointer'
                 }}
+                aria-label={`Ver productos de ${product.categoria}`}
               >
                 <span>{product.categoria}</span>
               </div>
