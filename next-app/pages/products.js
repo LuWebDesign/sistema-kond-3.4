@@ -37,6 +37,33 @@ export default function Products() {
     imagen: ''
   })
 
+  // Estados para manejo de imagen en el formulario de agregar
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
+
+  // Manejar cambio de imagen en el formulario de agregar
+  const handleImageChange = (e) => {
+    const file = e.target.files && e.target.files[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (ev) => setImagePreview(ev.target.result)
+      reader.readAsDataURL(file)
+    } else {
+      setImageFile(null)
+      setImagePreview('')
+    }
+  }
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => reject(error)
+    })
+  }
+
   // Estados para edición de materiales
   const [editingMaterial, setEditingMaterial] = useState(null)
   const [materialForm, setMaterialForm] = useState({
@@ -80,25 +107,39 @@ export default function Products() {
     // Calcular uso de placas automáticamente si no es manual
     if (!isUsoPlacasManual) {
       const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
-      setFormData(prev => ({ ...prev, usoPlacas }))
+      setFormData(prev => {
+        if (Number(prev.usoPlacas) === Number(usoPlacas)) return prev
+        return { ...prev, usoPlacas }
+      })
     }
 
     // Calcular costo de material automáticamente si no es manual
     if (!isCostoMaterialManual) {
       const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
-      setFormData(prev => ({ ...prev, costoMaterial: parseFloat(costoMaterialCalc.toFixed(2)) }))
+      const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
+      setFormData(prev => {
+        if (Number(prev.costoMaterial) === Number(costoMaterialRounded)) return prev
+        return { ...prev, costoMaterial: costoMaterialRounded }
+      })
     }
 
     // Calcular precio/margen según modo seleccionado
     if (!isPrecioUnitarioManual) {
       // Modo auto: derivar precio desde margen y costo material
       const precioUnitarioCalc = costoMaterial * (1 + margenMaterial / 100)
-      setFormData(prev => ({ ...prev, precioUnitario: parseFloat(precioUnitarioCalc.toFixed(2)) }))
+      const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+      setFormData(prev => {
+        if (Number(prev.precioUnitario) === Number(precioRounded)) return prev
+        return { ...prev, precioUnitario: precioRounded }
+      })
     } else {
       // Modo manual de precio: derivar margen desde precio y costo material
       const margenDesdePrecio = costoMaterial > 0 ? ((precioUnitario / costoMaterial) - 1) * 100 : 0
       const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
-      setFormData(prev => ({ ...prev, margenMaterial: margenRedondeado }))
+      setFormData(prev => {
+        if (Number(prev.margenMaterial) === Number(margenRedondeado)) return prev
+        return { ...prev, margenMaterial: margenRedondeado }
+      })
     }
 
     // Calcular tiempo total
@@ -338,11 +379,38 @@ export default function Products() {
   // Manejar cambios en formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target
+
+    // Campos que deben ser tratados como números
+    const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario'])
+
+    let newValue = value
+    if (numericFields.has(name)) {
+      // permitir campo vacío (user clearing input) manteniendo string vacío
+      if (value === '') {
+        newValue = ''
+      } else {
+        // parsear como float; si es entero lógico, seguir siendo entero por validación del input
+        const parsed = parseFloat(value)
+        newValue = Number.isNaN(parsed) ? 0 : parsed
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }))
   }
+
+  // Ejecutar la actualización de campos calculados cuando cambien inputs relevantes
+  useEffect(() => {
+    // Llamamos a la función que actualiza campos calculados
+    try {
+      updateCalculatedFields()
+    } catch (e) {
+      console.error('Error al actualizar campos calculados:', e)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.tiempoUnitario, formData.unidades, formData.unidadesPorPlaca, formData.costoPlaca, formData.costoMaterial, formData.margenMaterial, formData.precioUnitario, calculatedFields.isUsoPlacasManual, calculatedFields.isCostoMaterialManual, calculatedFields.isPrecioUnitarioManual])
 
   // Manejar Enter para pasar al siguiente campo
   const handleKeyDown = (e, nextFieldName) => {
@@ -381,6 +449,17 @@ export default function Products() {
         finalFormData.material = ''
       }
       
+      // Si hay una imagen seleccionada, convertirla a base64 y adjuntarla
+      if (imageFile) {
+        try {
+          const imageData = await fileToBase64(imageFile)
+          finalFormData.imagen = imageData
+        } catch (err) {
+          console.warn('No se pudo convertir la imagen a base64:', err)
+          finalFormData.imagen = ''
+        }
+      }
+
       const newProduct = {
         ...finalFormData,
         id: Date.now() + Math.random(),
@@ -417,6 +496,8 @@ export default function Products() {
         imagen: '',
         publicado: false
       })
+      setImageFile(null)
+      setImagePreview('')
       setShowAddForm(false)
 
       // Mostrar notificación
@@ -1291,6 +1372,30 @@ export default function Products() {
                 </div>
               </div>
 
+              {/* Imagen del producto */}
+              <div style={{
+                marginTop: '12px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  Imagen (opcional)
+                </label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{
+                      flex: 1
+                    }}
+                  />
+                  {imagePreview && (
+                    <div style={{ width: 72, height: 48, borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                      <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Opciones adicionales */}
               <div style={{
                 background: 'var(--bg-tertiary)',
@@ -1413,6 +1518,7 @@ export default function Products() {
                   key={product.id}
                   product={product}
                   materials={materials}
+                  categories={categories}
                   isExpanded={expandedCards.has(product.id)}
                   isEditing={editingCards.has(product.id)}
                   onDelete={handleDeleteProduct}
@@ -1534,6 +1640,7 @@ function MetricCard({ title, value, icon, color, isAmount = false }) {
 function ProductCard({ 
   product, 
   materials = [],
+  categories = [],
   isExpanded, 
   isEditing, 
   onDelete, 
@@ -1972,6 +2079,7 @@ function ProductCard({
               onImageChange={handleImageChange}
               onSave={handleSave}
               materials={materials}
+              categories={categories}
               currentMaterialId={product.materialId}
               editCalculatedFields={editCalculatedFields}
               toggleEditFieldMode={toggleEditFieldMode}
@@ -2175,10 +2283,21 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
+
+  const [showCustomCategory, setShowCustomCategory] = useState(false)
+
+  useEffect(() => {
+    // Si la categoría actual no está entre las categorías predefinidas, mostrar el campo personalizado
+    if (editData.categoria && !categories.includes(editData.categoria)) {
+      setShowCustomCategory(true)
+    } else {
+      setShowCustomCategory(false)
+    }
+  }, [editData.categoria, categories])
 
   // Obtener datos del material actual (del editData o del producto original)
   const getCurrentMaterialData = () => {
@@ -2235,20 +2354,61 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Categoría
             </label>
-            <input
-              type="text"
-              value={editData.categoria}
-              onChange={(e) => handleInputChange('categoria', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '6px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem'
-              }}
-            />
+            <div>
+              <select
+                value={categories.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '__nueva__') {
+                    // switch to custom category input
+                    handleInputChange('categoria', '')
+                    setShowCustomCategory(true)
+                    setTimeout(() => {
+                      const input = document.querySelector('[name="categoriaPersonalizada"]')
+                      if (input) input.focus()
+                    }, 50)
+                  } else {
+                    handleInputChange('categoria', v)
+                    setShowCustomCategory(false)
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="">Seleccionar categoría</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+                <option value="__nueva__">✏️ Crear nueva categoría...</option>
+              </select>
+
+              {showCustomCategory && (
+                <input
+                  type="text"
+                  name="categoriaPersonalizada"
+                  value={editData.categoria || ''}
+                  onChange={(e) => handleInputChange('categoria', e.target.value)}
+                  placeholder="Ingrese nueva categoría"
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.9rem',
+                    marginTop: '8px'
+                  }}
+                />
+              )}
+            </div>
           </div>
           
           <div>
