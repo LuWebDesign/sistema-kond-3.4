@@ -1098,7 +1098,7 @@ export default function Calendar() {
               <div
                 key={index}
                 onClick={() => {
-                        if (dayObj.isCurrentMonth && totalPedidos > 0) {
+                        if (totalPedidos > 0) {
                           const internos = getPedidosInternosDelDia(dayObj.date) || []
                           const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
                           const combined = [...internos, ...catalogoDia]
@@ -1113,7 +1113,7 @@ export default function Calendar() {
                   padding: '6px',
                   backgroundColor: dayObj.isCurrentMonth ? 'var(--bg-card)' : 'var(--bg-tertiary)',
                   border: isToday ? '2px solid var(--accent-blue)' : 'none',
-                  cursor: dayObj.isCurrentMonth && totalPedidos > 0 ? 'pointer' : 'default',
+                  cursor: totalPedidos > 0 ? 'pointer' : 'default',
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
