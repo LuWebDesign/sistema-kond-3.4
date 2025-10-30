@@ -143,6 +143,13 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
                       imageSrc = prod.imagen || prod.image || prod.thumbnail || ''
                     }
 
+                    const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+                      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                        <rect width="100%" height="100%" fill="#f3f4f6" />
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Arial, Helvetica, sans-serif" font-size="18">Sin imagen</text>
+                      </svg>`
+                    )
+
                     return (
                       <div className="producto" key={idx}>
                         <div className="producto-info">
@@ -153,11 +160,9 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
                             {materialInfo && <div className="meta-line">· Material: {materialInfo}</div>}
                           </div>
                         </div>
-                        {imageSrc ? (
-                          <div className="producto-img">
-                            <img src={imageSrc} alt={name} />
-                          </div>
-                        ) : null}
+                        <div className="producto-img">
+                          <img src={imageSrc || placeholder} alt={name} />
+                        </div>
                       </div>
                     )
                   })}

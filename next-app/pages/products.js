@@ -1,7 +1,7 @@
 import Layout from '../components/Layout'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
-import { formatCurrency, timeToMinutes, minutesToTime } from '../utils/catalogUtils'
+import { formatCurrency, timeToMinutes, minutesToTime, compressImage } from '../utils/catalogUtils'
 
 export default function Products() {
   // Estados principales
@@ -55,13 +55,26 @@ export default function Products() {
     }
   }
 
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = error => reject(error)
-    })
+  const fileToBase64 = async (file, maxWidth = 900, quality = 0.75) => {
+    try {
+      // Intentar comprimir la imagen antes de convertir a base64
+      const blob = await compressImage(file, maxWidth, quality)
+      const toRead = (blob && blob.size) ? blob : file
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(toRead)
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = error => reject(error)
+      })
+    } catch (e) {
+      // Fallback: leer el archivo original
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = error => reject(error)
+      })
+    }
   }
 
   // Estados para edición de materiales
@@ -1773,14 +1786,25 @@ function ProductCard({
     }
   }
 
-  // Convertir archivo a base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = error => reject(error)
-    })
+  // Convertir archivo a base64 (intenta comprimir/resamplear antes)
+  const fileToBase64 = async (file, maxWidth = 900, quality = 0.75) => {
+    try {
+      const blob = await compressImage(file, maxWidth, quality)
+      const toRead = (blob && blob.size) ? blob : file
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(toRead)
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = error => reject(error)
+      })
+    } catch (e) {
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = error => reject(error)
+      })
+    }
   }
 
   // Guardar cambios
