@@ -2,12 +2,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import PublicLayout from '../../../../components/PublicLayout'
 import { useProducts } from '../../../../hooks/useCatalog'
-
-const slugifyPreserveCase = (str) => {
-  if (!str) return ''
-  const normalized = String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  return normalized.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
-}
+import { slugifyPreserveCase } from '../../../../utils/slugify'
 
 export default function ProductPage({ params }) {
   const { products } = useProducts()

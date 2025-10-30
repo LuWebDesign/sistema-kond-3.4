@@ -1,4 +1,5 @@
 import Layout from '../components/Layout'
+import PedidosModal from '../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
@@ -24,7 +25,9 @@ export default function Calendar() {
   const [products, setProducts] = useState([])
   const [catalogo, setCatalogo] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
-  const [showDayModal, setShowDayModal] = useState(false)
+  const [showPedidosModal, setShowPedidosModal] = useState(false)
+  const [pedidosForModal, setPedidosForModal] = useState([])
+  const [pedidosModalTitle, setPedidosModalTitle] = useState('')
   const [showCreateInternalModal, setShowCreateInternalModal] = useState(false)
   const [monthStats, setMonthStats] = useState({
     totalPedidos: 0,
@@ -267,22 +270,22 @@ export default function Calendar() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        if (showDayModal) {
-          setShowDayModal(false)
+        if (showPedidosModal) {
+          setShowPedidosModal(false)
         } else if (showCreateInternalModal) {
           setShowCreateInternalModal(false)
         }
       }
     }
 
-    if (showDayModal || showCreateInternalModal) {
+    if (showPedidosModal || showCreateInternalModal) {
       document.addEventListener('keydown', handleKeyDown)
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showDayModal, showCreateInternalModal])
+  }, [showPedidosModal, showCreateInternalModal])
 
   // Navegación del calendario
   const navigateMonth = (direction) => {
@@ -352,9 +355,7 @@ export default function Calendar() {
             }}>
               Verificando permisos...
             </h2>
-            <p style={{
-              color: 'var(--text-secondary)'
-            }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
               Verificando acceso administrativo
             </p>
           </div>
@@ -915,6 +916,28 @@ export default function Calendar() {
             >
               ➕ Nuevo Pedido Interno
             </button>
+            <button
+              onClick={() => {
+                setSelectedDate(null)
+                setPedidosForModal(catalogo || [])
+                setPedidosModalTitle('Todos los pedidos de catálogo')
+                setShowPedidosModal(true)
+              }}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              📦 Ver Pedidos
+            </button>
           </div>
         </div>
 
@@ -1075,11 +1098,16 @@ export default function Calendar() {
               <div
                 key={index}
                 onClick={() => {
-                  if (dayObj.isCurrentMonth && totalPedidos > 0) {
-                    setSelectedDate(dayObj.date)
-                    setShowDayModal(true)
-                  }
-                }}
+                        if (dayObj.isCurrentMonth && totalPedidos > 0) {
+                          const internos = getPedidosInternosDelDia(dayObj.date) || []
+                          const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
+                          const combined = [...internos, ...catalogoDia]
+                          setSelectedDate(dayObj.date)
+                          setPedidosForModal(combined)
+                          setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
+                          setShowPedidosModal(true)
+                        }
+                      }}
                 style={{
                   minHeight: '90px',
                   padding: '6px',
@@ -1158,118 +1186,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Modal de día */}
-      {showDayModal && selectedDate && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '600px',
-            width: '100%',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{
-                color: 'var(--text-primary)',
-                margin: 0
-              }}>
-                Pedidos del {selectedDate.toLocaleDateString('es-ES')}
-              </h3>
-              <button
-                onClick={() => setShowDayModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  color: 'var(--text-secondary)'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              {/* Pedidos internos */}
-              {getPedidosInternosDelDia(selectedDate).map(pedido => renderPedidoCard(pedido, 'interno'))}
-
-              {/* Pedidos de catálogo separados por tipo */}
-              {(() => {
-                const pedidosProduccion = getPedidosCatalogoDelDia(selectedDate).filter(p => p.tipo === 'produccion')
-                const pedidosEntrega = getPedidosCatalogoDelDia(selectedDate).filter(p => p.tipo === 'entrega')
-                
-                return (
-                  <>
-                    {/* Pedidos de Producción */}
-                    {pedidosProduccion.length > 0 && (
-                      <div style={{
-                        marginBottom: '16px'
-                      }}>
-                        <h4 style={{
-                          color: 'var(--text-primary)',
-                          fontSize: '1.1rem',
-                          fontWeight: 600,
-                          marginBottom: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          🏭 Pedidos en Producción ({pedidosProduccion.length})
-                        </h4>
-                        {pedidosProduccion.map(pedido => renderPedidoCard(pedido, 'produccion'))}
-                      </div>
-                    )}
-
-                    {/* Pedidos de Entrega */}
-                    {pedidosEntrega.length > 0 && (
-                      <div style={{
-                        marginBottom: '16px'
-                      }}>
-                        <h4 style={{
-                          color: 'var(--text-primary)',
-                          fontSize: '1.1rem',
-                          fontWeight: 600,
-                          marginBottom: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          📦 Pedidos para Entrega ({pedidosEntrega.length})
-                        </h4>
-                        {pedidosEntrega.map(pedido => renderPedidoCard(pedido, 'entrega'))}
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* PedidosModal es usado también para mostrar pedidos al hacer click en un día */}
 
       {/* Modal Crear Pedido Interno */}
       {showCreateInternalModal && (
@@ -1550,6 +1467,12 @@ export default function Calendar() {
         </div>
       )}
 
+      <PedidosModal
+        open={showPedidosModal}
+        onClose={() => setShowPedidosModal(false)}
+        orders={pedidosForModal.length ? pedidosForModal : catalogo}
+        title={pedidosModalTitle || '📦 Pedidos del Catálogo'}
+      />
     </Layout>
   )
 }

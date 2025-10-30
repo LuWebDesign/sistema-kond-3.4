@@ -77,7 +77,7 @@ export default function DevSeed() {
         </button>
 
         <button
-          onClick={() => router.push('/catalog/categoria/Decoracion/Cartel-Happy-birthday')}
+            onClick={() => router.push('/catalog/Decoracion/Cartel-Happy-birthday')}
           style={{ padding: '8px 12px', cursor: 'pointer' }}
         >
           Abrir producto de ejemplo

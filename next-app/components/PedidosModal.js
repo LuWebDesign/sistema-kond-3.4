@@ -1,0 +1,144 @@
+import { useEffect, useState } from 'react'
+
+export default function PedidosModal({ open = false, onClose = () => {}, orders = null, title = null }) {
+  const [mounted, setMounted] = useState(false)
+  const [localOrders, setLocalOrders] = useState([])
+
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (orders && Array.isArray(orders)) {
+      setLocalOrders(orders)
+      return
+    }
+
+    if (typeof window === 'undefined') return
+    try {
+      const stored = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+      setLocalOrders(stored)
+    } catch (e) {
+      console.warn('Error reading pedidosCatalogo from localStorage', e)
+      setLocalOrders([])
+    }
+  }, [orders])
+
+  // Helpers para calcular tiempo si no viene en el pedido
+  const timeToSeconds = (timeStr) => {
+    if (!timeStr) return 0
+    const parts = ('' + timeStr).split(':')
+    const hours = parseInt(parts[0]) || 0
+    const minutes = parseInt(parts[1]) || 0
+    const seconds = parseInt(parts[2]) || 0
+    return hours * 3600 + minutes * 60 + seconds
+  }
+
+  const secondsToHHMMSS = (totalSeconds) => {
+    const hrs = Math.floor(totalSeconds / 3600)
+    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const secs = totalSeconds % 60
+    return `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`
+  }
+
+  const getProductTiempoUnitario = (prod, productosBase) => {
+    if (!prod) return '00:00:00'
+    if (prod.tiempoUnitario) return prod.tiempoUnitario
+    const found = (productosBase || []).find(p => p.id === prod.productId || p.id === prod.idProducto || (p.nombre && prod.nombre && p.nombre.toLowerCase() === prod.nombre.toLowerCase()))
+    return found?.tiempoUnitario || '00:00:00'
+  }
+
+  const computeTiempoTotalForOrder = (pedido) => {
+    try {
+      const productosBase = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('productosBase') || '[]') : []
+      if (!pedido.productos || !Array.isArray(pedido.productos)) return '00:00:00'
+      const totalSeconds = pedido.productos.reduce((sum, prod) => {
+        const tiempoUnitario = getProductTiempoUnitario(prod, productosBase)
+        const segundos = timeToSeconds(tiempoUnitario)
+        const qty = Number(prod.cantidad || prod.quantity || 1) || 1
+        return sum + (segundos * qty)
+      }, 0)
+      return secondsToHHMMSS(totalSeconds)
+    } catch (e) {
+      return '00:00:00'
+    }
+  }
+
+  useEffect(() => {
+    if (!mounted) return
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    if (open) window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, mounted, onClose])
+
+  if (!mounted) return null
+  if (!open) return null
+
+  return (
+    <div className="pedidos-modal" role="dialog" aria-modal="true" aria-labelledby="pedidos-modal-title" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="close" aria-label="Cerrar" onClick={onClose}>✕</button>
+  <div className="modal-header" id="pedidos-modal-title">{title || '📦 Pedidos del Catálogo'}</div>
+
+        {(!localOrders || localOrders.length === 0) ? (
+          <div className="empty">No hay pedidos de catálogo.</div>
+        ) : (
+          localOrders.map((p) => (
+            <div className="pedido" key={p.id || (p.cliente && p.cliente.telefono) || Math.random()}>
+              <h3>Pedido Catálogo #{p.id}</h3>
+              <p>👤 Cliente: {p.cliente ? (p.cliente.nombre || p.cliente.name) : (p.clienteNombre || '—')}</p>
+              <p>
+                ⏱️ Tiempo de corte: {
+                  (() => {
+                    // Prefer explicit fields, fallback to computed total from productos
+                    if (p.tiempoTotalProduccion) {
+                      if (typeof p.tiempoTotalProduccion === 'string' && p.tiempoTotalProduccion.indexOf(':') !== -1) return p.tiempoTotalProduccion
+                      if (typeof p.tiempoTotalProduccion === 'number') return secondsToHHMMSS(p.tiempoTotalProduccion)
+                    }
+                    if (p.tiempo) return p.tiempo
+                    return computeTiempoTotalForOrder(p)
+                  })()
+                }
+              </p>
+              <p>📅 Fecha programada: {p.fechaSolicitudEntrega || p.fechaProduccionCalendario || (p.fechaCreacion ? (new Date(p.fechaCreacion)).toLocaleDateString() : '—')}</p>
+              <p>📅 Producción: {p.fechaProduccionCalendario || '—'}</p>
+              {p.productos && p.productos.length > 0 && (
+                <p>• {p.productos.map(prod => prod.nombre || prod.name).join(' • ')}</p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <style jsx>{`
+        .pedidos-modal {
+          display: flex;
+          position: fixed;
+          z-index: 1200;
+          left: 0; top: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.6);
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+        }
+        .modal-content {
+          background: #fff;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 520px;
+          max-height: 80vh;
+          overflow-y: auto;
+          padding: 20px;
+          box-shadow: 0 0 14px rgba(0,0,0,0.2);
+          position: relative;
+        }
+        .modal-header { text-align:center; font-weight:600; font-size:1.1rem; margin-bottom:12px }
+        .pedido { background:#fafafa; border-radius:10px; padding:12px 15px; margin-bottom:10px; border:1px solid #eee }
+        .pedido h3 { margin:0 0 6px; font-size:1rem; color:#333 }
+        .pedido p { margin:2px 0; font-size:0.9rem; color:#555 }
+        .close { position:absolute; right:12px; top:10px; background:transparent; border:none; font-size:1.2rem; cursor:pointer }
+        .empty { color:var(--text-secondary); text-align:center; padding:24px }
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-thumb { background:#bbb; border-radius:10px }
+      `}</style>
+    </div>
+  )
+}

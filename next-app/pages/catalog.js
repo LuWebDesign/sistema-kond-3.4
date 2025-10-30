@@ -12,6 +12,7 @@ import {
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
+import { slugifyPreserveCase } from '../utils/slugify'
 
 export default function Catalog() {
   const router = useRouter()
@@ -29,8 +30,59 @@ export default function Catalog() {
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [imageModalSrc, setImageModalSrc] = useState(null)
 
-  // Efecto de prueba para verificar que createToast funciona
-  // No mostrar toasts de bienvenida automáticos en producción -- removed dev test
+  // Función para manejar la selección de categoría desde URLs
+  const setCategoryHandler = (e) => {
+    // Extraer slug lo antes posible y delegar en una función con contador de reintentos
+    const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
+    handleCategorySlug(slug, 0)
+  }
+
+  const handleCategorySlug = (slug, attempt = 0) => {
+    try {
+      const maxAttempts = 20
+      console.log('🔍 setCategoryHandler called with slug:', slug, 'attempt:', attempt)
+
+      if (!slug) {
+        console.log('🔄 Clearing selected category')
+        setSelectedCategory('')
+        return
+      }
+
+      // Si las categorías aún no se han cargado, reintentar un número limitado de veces
+      if (!categories || categories.length === 0) {
+        if (attempt >= maxAttempts) {
+          console.warn('⚠️ Categories not loaded after max retries, clearing selection')
+          setSelectedCategory('')
+          return
+        }
+        console.log('⏳ Categories not loaded yet, retrying in 100ms...')
+        setTimeout(() => handleCategorySlug(slug, attempt + 1), 100)
+        return
+      }
+
+      console.log('📋 Available categories:', categories)
+
+      // Buscar la categoría que corresponde al slug
+      const foundCategory = categories.find(category => {
+        if (!category) return false
+        const categorySlug = slugifyPreserveCase(category)
+        console.log(`🔎 Checking category "${category}" -> slug "${categorySlug}" vs received slug "${slug}"`)
+        return categorySlug === slug
+      })
+
+      console.log('✅ Found category:', foundCategory)
+      if (foundCategory) {
+        console.log('🎯 Setting selectedCategory to:', foundCategory)
+        setSelectedCategory(foundCategory)
+      } else {
+        console.log('❌ Category not found, clearing selection')
+        setSelectedCategory('')
+      }
+    } catch (error) {
+      console.error('❌ Error setting category from URL:', error)
+      setSelectedCategory('')
+    }
+  }
 
   // Cerrar lightbox con Esc
   useEffect(() => {
@@ -53,24 +105,17 @@ export default function Catalog() {
       setShowCheckout(true)
     }
 
+    // Registrar todos los listeners en un solo lugar y devolver una única función de limpieza.
     if (typeof window !== 'undefined') {
       window.addEventListener('catalog:openCart', openCartHandler)
       window.addEventListener('catalog:openCheckout', openCheckoutHandler)
+      window.addEventListener('catalog:setCategory', setCategoryHandler)
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('catalog:openCart', openCartHandler)
         window.removeEventListener('catalog:openCheckout', openCheckoutHandler)
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('catalog:setCategory', setCategoryHandler)
-    }
-
-    return () => {
-      if (typeof window !== 'undefined') {
         window.removeEventListener('catalog:setCategory', setCategoryHandler)
       }
     }
@@ -99,10 +144,15 @@ export default function Catalog() {
                          (product.medidas && product.medidas.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (product.categoria && product.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    const matchesCategory = !selectedCategory || product.categoria === selectedCategory
+    const matchesCategory = !selectedCategory || 
+      (product.categoria && product.categoria.trim() === selectedCategory.trim())
+    
+    console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
     
     return matchesSearch && matchesCategory
   })
+
+  console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
@@ -150,16 +200,7 @@ export default function Catalog() {
     return categoryStyles[categoria] || categoryStyles.default
   }
 
-  // slugify que preserva mayúsculas y normaliza acentos: NFD + eliminación de marcas diacríticas,
-  // luego reemplaza espacios por '-' y elimina caracteres no alfanuméricos salvo '-'
-  // Nota: se eliminó la función de slugify; ahora trabajamos con los nombres de categoría tal cual
-  // Restaurando función slugify para rutas canónicas de categoría
-  const slugifyPreserveCase = (str) => {
-    if (!str) return ''
-    // Normalizar a NFD para separar letras y diacríticos, eliminar marcas diacríticas
-    const normalized = str.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    return normalized.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9\-]/g, '')
-  }
+  // Using shared slugify helper from ../utils/slugify
 
   return (
     <PublicLayout title="Catálogo - KOND">
@@ -217,12 +258,16 @@ export default function Catalog() {
               value={slugifyPreserveCase(selectedCategory)}
               onChange={(e) => {
                 const v = e.target.value
+                // Actualizar el estado local inmediatamente para que el filtro aplique al instante
+                const found = categories.find(c => slugifyPreserveCase(c) === v)
+                setSelectedCategory(found || '')
+
                 if (!v) {
                   // volver a listado general (SPA)
                   router.push('/catalog')
                 } else {
                   // navegar a la URL de categoría usando slug (SPA)
-                  router.push(`/catalog/categoria/${v}`)
+                  router.push(`/catalog/${v}`)
                 }
               }}
               style={{
@@ -370,6 +415,8 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
   const [quantity, setQuantity] = useState(1)
   const [materials, setMaterials] = useState([])
 
+  // ProductCard will use the shared slugify helper imported above
+
   // Cargar materiales al montar el componente
   useEffect(() => {
     const loadMaterials = () => {
@@ -461,24 +508,12 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       <div style={{ padding: '20px' }}>
           {product.categoria && (() => {
             const categoryStyle = getCategoryStyle(product.categoria)
-            const slug = slugifyPreserveCase(product.categoria)
+            // Mostrar la categoría como elemento visual, sin comportamiento de navegación
             return (
               <div
                 className="category-badge"
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/catalog/categoria/${slug}`)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/catalog/categoria/${slug}`) } }}
-                onMouseEnter={(e) => {
-                  try {
-                    const isWhite = String(categoryStyle.color).toLowerCase().includes('white') || String(categoryStyle.color).toLowerCase() === '#fff' || String(categoryStyle.color).toLowerCase() === '#ffffff'
-                    e.currentTarget.style.background = categoryStyle.color || 'transparent'
-                    e.currentTarget.style.color = isWhite ? '#111' : '#fff'
-                  } catch (err) { /* noop */ }
-                }}
-                onMouseLeave={(e) => {
-                  try { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = categoryStyle.color || 'inherit' } catch (err) { /* noop */ }
-                }}
+                // no role/button, no tabIndex, no handlers: accesible como texto decorativo
+                aria-hidden={false}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -491,9 +526,8 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
                   background: 'transparent',
                   border: `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}`,
                   marginBottom: '8px',
-                  cursor: 'pointer'
+                  cursor: 'default'
                 }}
-                aria-label={`Ver productos de ${product.categoria}`}
               >
                 <span>{product.categoria}</span>
               </div>
@@ -512,7 +546,8 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
                 try {
                   const catSlug = slugifyPreserveCase(product.categoria)
                   const prodSlug = slugifyPreserveCase(product.nombre)
-                  router.push(`/catalog/categoria/${catSlug}/${prodSlug}`)
+                  // Navegar a la nueva ruta /catalog/{category}/{product}
+                  router.push(`/catalog/${catSlug}/${prodSlug}`)
                 } catch (e) {
                   // fallback a catálogo
                   router.push('/catalog')
