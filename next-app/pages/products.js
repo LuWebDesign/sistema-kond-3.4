@@ -22,7 +22,7 @@ export default function Products() {
     nombre: '',
     categoria: '',
     categoriaPersonalizada: '',
-    tipo: 'Venta',
+  tipo: 'Stock',
     medidas: '',
     tiempoUnitario: '00:00:30',
     unidades: 1,
@@ -490,11 +490,11 @@ export default function Products() {
       // para mantener las categorías predefinidas, pero el producto la tendrá
       
       // Resetear formulario
-      setFormData({
+        setFormData({
         nombre: '',
         categoria: '',
         categoriaPersonalizada: '',
-        tipo: 'Venta',
+          tipo: 'Stock',
         medidas: '',
         tiempoUnitario: '00:00:30',
         unidades: 1,
@@ -1425,29 +1425,25 @@ export default function Products() {
                   Opciones de Visibilidad
                 </h4>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.publicado || false}
-                      onChange={(e) => setFormData(prev => ({ ...prev, publicado: e.target.checked }))}
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <span style={{ color: 'var(--text-primary)' }}>
-                      Publicar en catálogo público
-                    </span>
-                  </label>
+                <div style={{ padding: '8px', border: '1px solid #e6e6e6', borderRadius: 8, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', maxWidth: '520px' }}>
+                  <div>
+                    <div className="vis-title">Publicar en catálogo público</div>
+                    <div style={{ fontSize:'0.82rem', color:'#6b7280' }}>Visible para clientes en el catálogo público</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.publicado || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, publicado: e.target.checked }))}
+                    aria-label="Publicar en catálogo público"
+                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  />
                 </div>
+                <style jsx>{`
+                  .vis-title { font-weight:700; font-size:0.95rem; color: var(--text-primary); }
+                  @media (prefers-color-scheme: dark) {
+                    .vis-title { color: #374151; }
+                  }
+                `}</style>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
@@ -1474,7 +1470,7 @@ export default function Products() {
                       nombre: '',
                       categoria: '',
                       categoriaPersonalizada: '',
-                      tipo: 'Venta',
+                      tipo: 'Stock',
                       medidas: '',
                       tiempoUnitario: '00:00:30',
                       unidades: 1,
@@ -1667,7 +1663,7 @@ function ProductCard({
     nombre: product.nombre || '',
     categoria: product.categoria || '',
     medidas: product.medidas || '',
-    tipo: product.tipo || 'Venta',
+  tipo: product.tipo || 'Stock',
     tiempoUnitario: product.tiempoUnitario || '00:00:30',
     unidades: product.unidades || 1,
     unidadesPorPlaca: product.unidadesPorPlaca || 1,
@@ -1733,7 +1729,7 @@ function ProductCard({
         nombre: product.nombre || '',
         categoria: product.categoria || '',
         medidas: product.medidas || '',
-        tipo: product.tipo || 'Venta',
+  tipo: product.tipo || 'Stock',
         tiempoUnitario: product.tiempoUnitario || '00:00:30',
         unidades: product.unidades || 1,
         unidadesPorPlaca: product.unidadesPorPlaca || 1,
