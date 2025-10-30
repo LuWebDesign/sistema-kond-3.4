@@ -1022,19 +1022,7 @@ export default function Calendar() {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <button
-            onClick={() => navigateMonth(-1)}
-            style={{
-              padding: '10px 16px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1.2rem'
-            }}
-          >
-            ← Anterior
-          </button>
+          <button onClick={() => navigateMonth(-1)} className="cal-nav-btn">← Anterior</button>
 
           <h2 style={{
             fontSize: '1.5rem',
@@ -1045,20 +1033,33 @@ export default function Calendar() {
             {getMonthName()}
           </h2>
 
-          <button
-            onClick={() => navigateMonth(1)}
-            style={{
-              padding: '10px 16px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1.2rem'
-            }}
-          >
-            Siguiente →
-          </button>
+          <button onClick={() => navigateMonth(1)} className="cal-nav-btn">Siguiente →</button>
         </div>
+
+        <style jsx>{`
+          .cal-nav-btn {
+            padding: 10px 16px;
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            color: var(--text-primary, #0f172a);
+            transition: all 0.12s ease;
+          }
+          .cal-nav-btn:hover {
+            filter: brightness(0.97);
+            transform: translateY(-1px);
+          }
+          .cal-nav-btn:active { transform: translateY(0); opacity: 0.95 }
+          .cal-nav-btn:focus { outline: 2px solid rgba(99,102,241,0.12); outline-offset: 2px }
+
+          @media (prefers-color-scheme: dark) {
+            .cal-nav-btn { background: var(--bg-card, #334155); border-color: rgba(148,163,184,0.06); color: var(--text-primary, #f8fafc) }
+            .cal-nav-btn:hover { filter: brightness(1.04) }
+            .cal-nav-btn:focus { outline: 2px solid rgba(59,130,246,0.18) }
+          }
+        `}</style>
 
         {/* Grid del calendario */}
         <div style={{

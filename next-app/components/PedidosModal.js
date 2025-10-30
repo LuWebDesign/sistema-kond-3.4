@@ -120,24 +120,33 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
           padding: 20px;
         }
         .modal-content {
-          background: #fff;
+          background: var(--bg-card, #ffffff);
+          border: 1px solid var(--border-color, #e2e8f0);
           border-radius: 12px;
           width: 90%;
           max-width: 520px;
           max-height: 80vh;
           overflow-y: auto;
           padding: 20px;
-          box-shadow: 0 0 14px rgba(0,0,0,0.2);
+          box-shadow: var(--shadow, 0 0 14px rgba(0,0,0,0.2));
           position: relative;
         }
-        .modal-header { text-align:center; font-weight:600; font-size:1.1rem; margin-bottom:12px }
-        .pedido { background:#fafafa; border-radius:10px; padding:12px 15px; margin-bottom:10px; border:1px solid #eee }
-        .pedido h3 { margin:0 0 6px; font-size:1rem; color:#333 }
-        .pedido p { margin:2px 0; font-size:0.9rem; color:#555 }
-        .close { position:absolute; right:12px; top:10px; background:transparent; border:none; font-size:1.2rem; cursor:pointer }
+        .modal-header { text-align:center; font-weight:600; font-size:1.1rem; margin-bottom:12px; color: var(--text-primary, #1e293b) }
+        .pedido { background: var(--bg-secondary, #fafafa); border-radius:10px; padding:12px 15px; margin-bottom:10px; border:1px solid var(--border-color, #eee) }
+        .pedido h3 { margin:0 0 6px; font-size:1rem; color: var(--text-primary, #111827) }
+        .pedido p { margin:2px 0; font-size:0.9rem; color: var(--text-secondary, #64748b) }
+        .close { position:absolute; right:12px; top:10px; background:transparent; border:none; font-size:1.2rem; cursor:pointer; color: var(--text-secondary, #64748b) }
         .empty { color:var(--text-secondary); text-align:center; padding:24px }
         ::-webkit-scrollbar { width:6px }
-        ::-webkit-scrollbar-thumb { background:#bbb; border-radius:10px }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius:10px }
+
+        /* Mejor contraste en modo claro/oscuro si el usuario lo tiene configurado */
+        @media (prefers-color-scheme: dark) {
+          .pedidos-modal { background: rgba(0,0,0,0.65); }
+          .modal-content { border-color: rgba(148,163,184,0.06); }
+          .pedido { background: var(--bg-card, #334155); border-color: rgba(148,163,184,0.06); }
+          ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); }
+        }
       `}</style>
     </div>
   )

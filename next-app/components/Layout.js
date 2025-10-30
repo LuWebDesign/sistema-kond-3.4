@@ -17,9 +17,17 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
     document.body.setAttribute('data-theme', savedTheme)
-
     // Cargar información del usuario logueado
     loadUserInfo()
+
+    // Escuchar cambios en localStorage (p. ej. login/logout en otra pestaña)
+    const onStorage = (e) => {
+      if (e.key === 'adminSession') {
+        loadUserInfo()
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   const loadUserInfo = () => {
@@ -115,14 +123,18 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               Catálogo y Ventas
             </div>
             
-            <a 
-              href="/catalog" 
-              target="_blank" 
+            <a
+              href="/catalog"
+              target="_blank"
               rel="noopener noreferrer"
+              aria-label="Abrir Catálogo Público en nueva pestaña"
+              title="Abrir Catálogo Público en nueva pestaña"
               style={{...linkStyle, display: 'flex', alignItems: 'center', gap: '8px'}}
             >
-              🛍️ Catálogo Público
-              <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                🛍️ <span>Catálogo Público</span>
+                <span aria-hidden="true" style={{ fontSize: '0.9rem', opacity: 0.85, marginLeft: 6 }}>↗</span>
+              </span>
             </a>
             
             <Link href="/pedidos" style={linkStyle}>

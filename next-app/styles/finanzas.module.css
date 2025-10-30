@@ -776,15 +776,16 @@
 
 /* Dark theme overrides - apply class `styles.dark` to the root container */
 .dark {
-  --bg: #0b1220;
-  --card: #0f1724;
-  --muted: #94a3b8;
-  --text: #d1d5db;
-  --border: rgba(255,255,255,0.06);
-  --accent: #60a5fa;
-  --success: #34d399;
-  --danger: #fb7185;
-  --warning: #f59e0b;
+  /* New dark palette */
+  --bg: #071423;            /* deep teal-blue background */
+  --card: #0b1b26;          /* slightly lighter card surface */
+  --muted: #9fb6c9;         /* softer muted labels */
+  --text: #e6f0f6;          /* primary text on dark */
+  --border: rgba(230,240,255,0.06);
+  --accent: #06b6d4;        /* cyan/teal accent */
+  --success: #34d399;       /* positive */
+  --danger: #ff6b6b;        /* stronger red for errors */
+  --warning: #f59e0b;       /* amber for warnings */
 }
 
 .dark {
@@ -793,47 +794,47 @@
 }
 
 .dark .summaryCard {
-  background: linear-gradient(180deg, #071026, #071522);
+  background: linear-gradient(180deg, #071423 0%, #0b2230 100%);
   border: 1px solid var(--border);
-  box-shadow: none;
+  box-shadow: 0 6px 18px rgba(4, 10, 18, 0.5);
 }
 
 .dark .summaryCard::before {
-  background: linear-gradient(90deg, #60a5fa, #34d399);
+  background: linear-gradient(90deg, var(--accent), var(--success));
 }
 
 .dark .summaryRow,
 .dark .summaryItem {
   background: transparent;
-  border-color: rgba(255,255,255,0.04);
+  border-color: rgba(230,240,255,0.04);
 }
 
 .dark .summaryLabel { color: var(--muted); }
 .dark .summaryValue { color: var(--text); }
 
 .dark .movCard {
-  background: linear-gradient(180deg,#071018,#081226);
-  border: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg,#071423 0%, #071826 100%);
+  border: 1px solid rgba(230,240,255,0.03);
 }
 
 .dark .movMeta strong { color: var(--text); }
-.dark .movMeta small { color: rgba(255,255,255,0.45); }
-.dark .movDesc { color: rgba(255,255,255,0.6); }
+.dark .movMeta small { color: rgba(230,240,255,0.6); }
+.dark .movDesc { color: rgba(230,240,255,0.72); }
 
-.dark .movCliente { color: #7dd3fc; }
+.dark .movCliente { color: var(--accent); }
 
-.dark .movAmount.income, .dark .movAmount.ingreso { color: var(--success); }
+.dark .movAmount.ingreso { color: var(--success); }
 .dark .movAmount.egreso { color: var(--danger); }
 .dark .movAmount.inversion { color: var(--warning); }
 
-.dark .movBadge.ingreso { background: linear-gradient(90deg,#059669,#10b981); }
-.dark .movBadge.egreso { background: linear-gradient(90deg,#dc2626,#ef4444); }
-.dark .movBadge.inversion { background: linear-gradient(90deg,#b45309,#f59e0b); }
+.dark .movBadge.ingreso { background: linear-gradient(90deg,#059e71,#10b981); color: white; }
+.dark .movBadge.egreso { background: linear-gradient(90deg,#ff6b6b,#ef4444); color: white; }
+.dark .movBadge.inversion { background: linear-gradient(90deg,#d97706,#f59e0b); color: white; }
 
-.dark .btnPrimary { background: linear-gradient(135deg,#2563eb,#1d4ed8); color: white; }
-.dark .btnSecondary { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.06); }
+.dark .btnPrimary { background: linear-gradient(135deg, var(--accent), #0ea5b5); color: white; box-shadow: 0 6px 18px rgba(6, 182, 212, 0.12); }
+.dark .btnSecondary { background: transparent; color: var(--text); border-color: rgba(230,240,255,0.04); }
 
-.dark .input { background: #071229; color: var(--text); border-color: rgba(255,255,255,0.04); }
+.dark .input { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); color: var(--text); border-color: rgba(230,240,255,0.04); }
 
 .dark .container { background: var(--bg); }
 
@@ -843,23 +844,23 @@
 
 .dark .subtitle { color: var(--muted); }
 
-.dark .formContainer { background: var(--card); border: 1px solid var(--border); }
+.dark .formContainer { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(2,8,12,0.45); }
 
-.dark .segmentedControl button { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.06); }
+.dark .segmentedControl button { background: transparent; color: var(--text); border-color: rgba(230,240,255,0.03); }
 
-.dark .segmentedControl button.active { background: var(--accent); color: white; }
+.dark .segmentedControl button.active { background: linear-gradient(90deg, var(--accent), #0ea5b5); color: white; box-shadow: 0 6px 14px rgba(6,182,212,0.12); }
 
 .dark .categoryControl { border-color: rgba(255,255,255,0.06); }
 
-.dark .btnSmall { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.06); }
+.dark .btnSmall { background: transparent; color: var(--text); border-color: rgba(230,240,255,0.03); }
 
 .dark .empty { color: var(--muted); }
 
-.dark .groupHeader { border-bottom: 1px solid var(--border); }
+.dark .groupHeader { border-bottom: 1px solid rgba(230,240,255,0.03); background: linear-gradient(90deg, rgba(6,182,212,0.02), transparent); }
 
 .dark .groupDate { color: var(--text); }
 
-.dark .groupSubtotal { color: var(--accent); }
+.dark .groupSubtotal { color: var(--success); }
 
 .dark .registroCard { background: var(--card); border: 1px solid var(--border); }
 
@@ -894,13 +895,13 @@
 .dark .summaryCard h3 { color: #f3f4f6; }
 
 .dark .keypadButton {
-  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-  border-color: #6b7280;
-  color: #f9fafb;
+  background: linear-gradient(135deg, #0f1724 0%, #122430 100%);
+  border-color: rgba(230,240,255,0.03);
+  color: var(--text);
 }
 
 .dark .keypadButton:hover {
-  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
-  border-color: #9ca3af;
+  background: linear-gradient(135deg, #122430 0%, #163541 100%);
+  border-color: rgba(230,240,255,0.06);
 }
 
