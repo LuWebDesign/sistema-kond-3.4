@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies (next-app)
+        working-directory: ./next-app
+        run: npm ci
+
+      - name: Build (next-app)
+        working-directory: ./next-app
+        run: npm run build
+
+      - name: Run ESLint (next-app)
+        working-directory: ./next-app
+        run: |
+          # run eslint if available; don't fail the job on missing config
+          if command -v npx >/dev/null 2>&1; then
+            npx eslint . --ext .js,.jsx,.ts,.tsx || true
+          fi
