@@ -68,7 +68,8 @@ export default function Admin() {
 
   const openMainSystem = () => {
     // Abrir el sistema principal (index.html) en nueva pestaña
-    window.open('/index.html', '_blank', 'noopener,noreferrer')
+    // Ahora abrimos la ruta raíz manejada por Next
+    window.open('/', '_blank', 'noopener,noreferrer')
   }
 
   const openHomePage = () => {
@@ -426,7 +427,7 @@ export default function Admin() {
                   margin: '0 0 8px 0',
                   fontSize: '0.9rem'
                 }}>
-                  <strong>URL:</strong> <code>/home.html</code>
+                  <strong>URL:</strong> <code>/home</code>
                 </p>
                 <p style={{
                   color: 'var(--text-secondary)',
@@ -455,7 +456,7 @@ export default function Admin() {
                   margin: '0 0 8px 0',
                   fontSize: '0.9rem'
                 }}>
-                  <strong>URL:</strong> <code>/index.html</code>
+                  <strong>URL:</strong> <code>/</code>
                 </p>
                 <p style={{
                   color: 'var(--text-secondary)',
@@ -582,7 +583,7 @@ export default function Admin() {
                 fontSize: '0.8rem',
                 lineHeight: 1.4
               }}>
-                Estas credenciales se utilizan en el modal de login de <code>home.html</code> para acceder al sistema administrativo.
+                Estas credenciales se utilizan en el modal de login de <code>/home</code> para acceder al sistema administrativo.
               </div>
             </div>
           </div>
