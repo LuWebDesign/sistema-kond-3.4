@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { applyPromotionsToProduct } from '../utils/promoEngine'
 import Layout from '../components/Layout';
 import PromoCard from '../components/marketing/PromoCard';
 import CouponCard from '../components/marketing/CouponCard';
@@ -59,6 +60,31 @@ export default function Marketing() {
     try {
       localStorage.setItem('marketing_promotions', JSON.stringify(list));
       setPromotions(list);
+      // Actualizar productos en `productosBase` aplicando las promociones guardadas
+      try {
+        const prodsRaw = localStorage.getItem('productosBase') || '[]'
+        const prods = JSON.parse(prodsRaw)
+        const updated = prods.map(p => {
+          // solo productos que permiten promos mantienen el campo
+          if (p.allowPromotions === false) return p
+          try {
+            const promoResult = applyPromotionsToProduct(p)
+            // persistir precioPromos y flag hasPromotion
+            return {
+              ...p,
+              precioPromos: promoResult.discountedPrice,
+              hasPromotion: promoResult.hasPromotion
+            }
+          } catch (e) {
+            return p
+          }
+        })
+        localStorage.setItem('productosBase', JSON.stringify(updated))
+        // Notificar al resto de la app que productos cambiaron
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('productos:updated'))
+      } catch (e) {
+        console.error('Error updating products with promotions:', e)
+      }
     } catch (e) {
       console.error('Error saving promotions:', e);
       alert('No se pudo guardar la promoción. El almacenamiento local puede estar lleno.');

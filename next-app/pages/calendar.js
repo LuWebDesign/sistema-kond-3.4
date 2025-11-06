@@ -1022,7 +1022,20 @@ export default function Calendar() {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <button onClick={() => navigateMonth(-1)} className="cal-nav-btn">← Anterior</button>
+          <button
+            onClick={() => navigateMonth(-1)}
+            style={{
+              padding: '10px 16px',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              fontSize: '1.2rem'
+            }}
+          >
+            ← Anterior
+          </button>
 
           <h2 style={{
             fontSize: '1.5rem',
@@ -1033,33 +1046,21 @@ export default function Calendar() {
             {getMonthName()}
           </h2>
 
-          <button onClick={() => navigateMonth(1)} className="cal-nav-btn">Siguiente →</button>
+          <button
+            onClick={() => navigateMonth(1)}
+            style={{
+              padding: '10px 16px',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              fontSize: '1.2rem'
+            }}
+          >
+            Siguiente →
+          </button>
         </div>
-
-        <style jsx>{`
-          .cal-nav-btn {
-            padding: 10px 16px;
-            background: var(--bg-card, #fff);
-            border: 1px solid var(--border-color, #e2e8f0);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.05rem;
-            color: var(--text-primary, #0f172a);
-            transition: all 0.12s ease;
-          }
-          .cal-nav-btn:hover {
-            filter: brightness(0.97);
-            transform: translateY(-1px);
-          }
-          .cal-nav-btn:active { transform: translateY(0); opacity: 0.95 }
-          .cal-nav-btn:focus { outline: 2px solid rgba(99,102,241,0.12); outline-offset: 2px }
-
-          @media (prefers-color-scheme: dark) {
-            .cal-nav-btn { background: var(--bg-card, #334155); border-color: rgba(148,163,184,0.06); color: var(--text-primary, #f8fafc) }
-            .cal-nav-btn:hover { filter: brightness(1.04) }
-            .cal-nav-btn:focus { outline: 2px solid rgba(59,130,246,0.18) }
-          }
-        `}</style>
 
         {/* Grid del calendario */}
         <div style={{
@@ -1095,6 +1096,11 @@ export default function Calendar() {
             const pedidosCatalogo = getPedidosCatalogoDelDia(dayObj.date)
             const totalPedidos = pedidosInternos.length + pedidosCatalogo.length
 
+            // Detectar si hay pedidos marcados como 'listo' (producidos y listos)
+            // (Se manejará per-pedido: mostramos check dentro de la tarjeta producida)
+
+            // ya no marcamos toda la celda en rojo; manejaremos iconos por pedido específico
+
             return (
               <div
                 key={index}
@@ -1129,18 +1135,58 @@ export default function Calendar() {
                   {dayObj.date.getDate()}
                 </div>
 
+                {/* Los checks se muestran dentro de la tarjeta específica de cada pedido producido */}
+
                 {/* Indicadores de pedidos */}
                 {pedidosInternos.length > 0 && (
-                  <div style={{
-                    fontSize: '0.65rem',
-                    padding: '1px 4px',
-                    backgroundColor: 'var(--accent-blue)',
-                    color: 'white',
-                    borderRadius: '10px',
-                    textAlign: 'center',
-                    marginBottom: '1px'
-                  }}>
-                    🏭 {pedidosInternos.length} Interno{pedidosInternos.length > 1 ? 's' : ''}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
+                    <div style={{
+                      fontSize: '0.65rem',
+                      padding: '1px 4px',
+                      backgroundColor: 'var(--accent-blue)',
+                      color: 'white',
+                      borderRadius: '10px',
+                      textAlign: 'center'
+                    }}>
+                      🏭 {pedidosInternos.length} Interno{pedidosInternos.length > 1 ? 's' : ''}
+                    </div>
+                    {/* mostrar chips por pedidos internos con fecha de entrega/ asignada y su estado */}
+                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).map(pi => {
+                      const pedDate = pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha
+                      const pedDateStr = pedDate ? String(pedDate) : ''
+                      const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
+                      const isPedPast = pedIso && (pedIso < todayStr)
+                      const estadoPi = ((pi.estado || pi.estadoPago || '')).toString().toLowerCase()
+                      const isDelivered = estadoPi === 'entregado'
+                      const isOverdue = isPedPast && !isDelivered
+                      const symbol = isOverdue ? '❌' : (estadoPi === 'listo' ? '✅' : null)
+
+                      // Determinar si este interno corresponde a una entrega (fechaEntrega) o producción (fecha)
+                      const isDeliveryInterno = !!pi.fechaEntrega
+                      // Etiqueta legible según estado y fecha
+                      let tipoLabel = ''
+                      if (estadoPi === 'entregado') {
+                        tipoLabel = 'Entregado'
+                      } else if (estadoPi === 'listo') {
+                        // consideramos 'listo' como producido cuando aplica
+                        tipoLabel = isDeliveryInterno ? 'Listo' : 'Producido'
+                      } else if (isPedPast) {
+                        tipoLabel = isDeliveryInterno ? 'Sin entregar' : 'Sin producir'
+                      } else {
+                        tipoLabel = isDeliveryInterno ? 'A entregar' : 'A producir'
+                      }
+
+                      return (
+                        <div key={pi.id || pi.cliente?.telefono || Math.random()} style={{
+                          display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', padding: '4px 6px', backgroundColor: 'var(--accent-blue)', color: 'white', borderRadius: '8px'
+                        }}>
+                          <span style={{marginRight:6}}>🏭</span>
+                          <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{pi.cliente?.nombre || pi.cliente || `Interno ${pi.id || ''}`}</span>
+                          <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{tipoLabel}</span>
+                          {symbol && <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:18,height:18,borderRadius:9,backgroundColor:isOverdue?'#ef4444':'#10b981',color:'white',fontSize:12}}>{symbol}</span>}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 
@@ -1152,30 +1198,116 @@ export default function Calendar() {
                   return (
                     <>
                       {pedidosProduccion.length > 0 && (
-                        <div style={{
-                          fontSize: '0.65rem',
-                          padding: '1px 4px',
-                          backgroundColor: '#FF6B35',
-                          color: 'white',
-                          borderRadius: '10px',
-                          textAlign: 'center',
-                          marginBottom: '1px'
-                        }}>
-                          🏭 {pedidosProduccion.length} Producción
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
+                          {pedidosProduccion.map(ped => {
+                            // determinar la fecha relevante del pedido (producción o entrega)
+                            const pedDate = ped.fechaProduccionCalendario || ped.fechaEntregaCalendario || ped.fechaSolicitudEntrega || ped.fechaCreacion || ped.fecha
+                            const pedDateStr = pedDate ? String(pedDate) : ''
+                            // normalizar a YYYY-MM-DD si viene en ISO (se mantiene por compatibilidad)
+                            const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
+                            const estadoPed = ((ped.estado || '')).toString().toLowerCase()
+                            const isPedPast = pedIso && (pedIso < todayStr)
+
+                            // Símbolo solo si está listo
+                            const symbol = estadoPed === 'listo' ? '✅' : null
+
+                            // Etiqueta para pedidos de producción: A producir / Sin producir / Producido
+                            let prodLabel = ''
+                            if (estadoPed === 'listo') {
+                              prodLabel = 'Producido'
+                            } else if (isPedPast) {
+                              prodLabel = 'Sin producir'
+                            } else {
+                              prodLabel = 'A producir'
+                            }
+
+                            return (
+                              <div key={ped.id} title={`Pedido ${ped.id}`} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '0.65rem',
+                                padding: '4px 6px',
+                                backgroundColor: '#FF6B35',
+                                color: 'white',
+                                borderRadius: '8px',
+                                textAlign: 'left'
+                              }}>
+                                <span style={{marginRight:6}}>🏭</span>
+                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{ped.cliente?.nombre || ped.cliente || `Pedido ${ped.id}`}</span>
+                                <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{prodLabel}</span>
+                                {symbol && (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 9,
+                                    backgroundColor: '#10b981',
+                                    color: 'white',
+                                    fontSize: 12
+                                  }} aria-label={'Producido y listo'}>{symbol}</span>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
-                      
+
                       {pedidosEntrega.length > 0 && (
-                        <div style={{
-                          fontSize: '0.65rem',
-                          padding: '1px 4px',
-                          backgroundColor: '#28A745',
-                          color: 'white',
-                          borderRadius: '10px',
-                          textAlign: 'center',
-                          marginBottom: '1px'
-                        }}>
-                          📦 {pedidosEntrega.length} Entrega{pedidosEntrega.length > 1 ? 's' : ''}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
+                          {pedidosEntrega.map(pe => {
+                            const pedDate = pe.fechaEntregaCalendario || pe.fechaSolicitudEntrega || pe.fechaCreacion || pe.fecha
+                            const pedDateStr = pedDate ? String(pedDate) : ''
+                            const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
+                            const isPedPast = pedIso && (pedIso < todayStr)
+                            const estadoPe = ((pe.estado || '')).toString().toLowerCase()
+                            const isDelivered = estadoPe === 'entregado'
+                            const isOverdueUndeliveredPed = isPedPast && !isDelivered
+                            const symbol = isOverdueUndeliveredPed ? '❌' : (estadoPe === 'listo' ? '✅' : null)
+
+                            // Etiqueta para pedidos de entrega: A entregar / Sin entregar / Entregado
+                            let entregaLabel = ''
+                            if (estadoPe === 'entregado') {
+                              entregaLabel = 'Entregado'
+                            } else if (isPedPast) {
+                              entregaLabel = 'Sin entregar'
+                            } else {
+                              entregaLabel = 'A entregar'
+                            }
+
+                            return (
+                              <div key={pe.id} title={`Pedido ${pe.id}`} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '0.65rem',
+                                padding: '4px 6px',
+                                backgroundColor: '#28A745',
+                                color: 'white',
+                                borderRadius: '8px',
+                                textAlign: 'left'
+                              }}>
+                                <span style={{marginRight:6}}>📦</span>
+                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{pe.cliente?.nombre || pe.cliente || `Pedido ${pe.id}`}</span>
+                                <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{entregaLabel}</span>
+                                {symbol && (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 9,
+                                    backgroundColor: isOverdueUndeliveredPed ? '#ef4444' : '#10b981',
+                                    color: 'white',
+                                    fontSize: 12
+                                  }} aria-label={isOverdueUndeliveredPed ? 'Vencido y no entregado' : 'Listo para entrega'}>{symbol}</span>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </>

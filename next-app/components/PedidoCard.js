@@ -173,8 +173,8 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
           </div>
           {/* tarjeta de estado: estado del pedido + estado de pago (reemplaza badge 'Asignado al calendario') */}
           <div className={styles.statusCard}>
-            <div className={`${styles.statusBadge} ${styles.smallBadge}`}>{getStatusLabel(pedido.estado)}</div>
-            <div className={`${styles.paymentBadge} ${styles.smallBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)] || ''}`}>{getPaymentLabel(pedido.estadoPago)}</div>
+            <div className={`${styles.statusBadge} ${styles.smallBadge} ${styles[getStatusBadgeClass(pedido.estado)] || ''}`}>{getStatusLabel(pedido.estado)}</div>
+            <div className={`${styles.paymentBadge} ${styles.smallBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)] || ''}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</div>
           </div>
         </div>
 

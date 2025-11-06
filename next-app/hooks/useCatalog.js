@@ -62,8 +62,36 @@ export function useCart() {
   const loadCart = () => {
     if (typeof window === 'undefined') return
     
-    const savedCart = JSON.parse(localStorage.getItem('cart')) || []
-    setCart(savedCart)
+    try {
+      const savedCart = JSON.parse(localStorage.getItem('cart')) || []
+      // Normalizar items del carrito para aplicar precios promocionales actuales
+      const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
+      const normalized = savedCart.map(item => {
+        try {
+          const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
+          if (!prod) return item
+          // aplicar motor de promociones al producto cuando exista
+          const promo = applyPromotionsToProduct(prod)
+          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : (prod.precioPromocional !== undefined ? prod.precioPromocional : prod.precioUnitario)
+          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (prod.precioUnitario || item.price || 0)
+          return {
+            ...item,
+            price: unitPrice,
+            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (prod.precioUnitario || unitPrice)
+          }
+        } catch (e) {
+          return item
+        }
+      })
+
+      // Persistir la versión normalizada para evitar discrepancias visuales
+      localStorage.setItem('cart', JSON.stringify(normalized))
+      setCart(normalized)
+    } catch (err) {
+      console.warn('Error loading/normalizing cart:', err)
+      const fallback = JSON.parse(localStorage.getItem('cart') || '[]')
+      setCart(fallback)
+    }
   }
 
   const saveCart = (newCart) => {
@@ -84,12 +112,16 @@ export function useCart() {
           : item
       )
     } else {
+      // Preferir precio promocional si el producto tiene una promoción aplicada
+      const unitPrice = (product.precioPromocional !== undefined && product.precioPromocional !== null) ? product.precioPromocional : (product.precioUnitario || 0)
       newCart = [...cart, {
         productId: product.id,
         idProducto: product.id,
         name: product.nombre,
-        price: product.precioUnitario || 0,
-        originalPrice: product.precioUnitario || 0,
+        // price: precio que se usa para cálculos (puede ser promocional)
+        price: unitPrice,
+        // originalPrice: precio base del producto (para mostrar ahorro si aplica)
+        originalPrice: product.precioUnitario || unitPrice,
         measures: product.medidas || '',
         image: product.imagen,
         quantity,

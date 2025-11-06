@@ -4,8 +4,24 @@ import PedidoCard from '../components/PedidoCard'
 import ConfirmModal from '../components/ConfirmModal'
 import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
-import { registrarMovimiento } from '../utils/finanzasUtils'
+import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
+
+// Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
+const formatInputNumber = (n) => {
+  if (n === null || n === undefined || n === '') return ''
+  const num = Number(n)
+  if (isNaN(num)) return ''
+  return new Intl.NumberFormat('es-AR').format(Math.round(num))
+}
+
+// Parsea el string con separadores y devuelve número entero
+const parseInputNumber = (str) => {
+  if (str === null || str === undefined) return 0
+  const cleaned = String(str).replace(/[^0-9-]/g, '')
+  if (cleaned === '' || cleaned === '-') return 0
+  return Number(cleaned)
+}
 
 function OrdersStats({ orders, filteredOrders }) {
   // Calcular estadísticas
@@ -369,16 +385,163 @@ export default function PedidosCatalogo() {
       }
     }
 
+    if (newStatus === 'confirmado') {
+      const totalPedido = Number(updatedPedido.total || 0)
+      const montoActual = Number(updatedPedido.montoRecibido || 0)
+      if (totalPedido > 0 && montoActual >= totalPedido) {
+        updatedPedido.estadoPago = 'pagado_total'
+        updatedPedido.montoRecibido = totalPedido
+      } else if (montoActual > 0 && (updatedPedido.estadoPago === 'sin_seña' || !updatedPedido.estadoPago)) {
+        updatedPedido.estadoPago = 'seña_pagada'
+      } else if (!updatedPedido.estadoPago) {
+        updatedPedido.estadoPago = 'sin_seña'
+      }
+    }
+
     // Actualizar en el array global y persistir
     const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
     if (index !== -1) {
+      const pedidoAnterior = pedidosCatalogo[index]
       const updatedPedidos = [...pedidosCatalogo]
       updatedPedidos[index] = updatedPedido
       setPedidosCatalogo(updatedPedidos)
       persistAndEmit(updatedPedidos, updatedPedido.id, 'update-status')
+      actualizarMovimientosPedido(updatedPedido, pedidoAnterior)
       setSelectedPedido(updatedPedido)
     } else {
       setSelectedPedido(updatedPedido)
+    }
+  }
+
+  const handleChangeEstadoPago = (newEstadoPago) => {
+    if (!selectedPedido) return
+
+    const totalPedido = Number(selectedPedido.total || 0)
+    const montoActual = Number(selectedPedido.montoRecibido || 0)
+    const updatedPedido = { ...selectedPedido, estadoPago: newEstadoPago }
+
+    if (newEstadoPago === 'sin_seña') {
+      updatedPedido.montoRecibido = 0
+    } else if (newEstadoPago === 'seña_pagada') {
+      const senaSugerida = Math.round(totalPedido * 0.5)
+      updatedPedido.montoRecibido = montoActual > 0 ? montoActual : senaSugerida
+    } else if (newEstadoPago === 'pagado_total') {
+      updatedPedido.montoRecibido = totalPedido
+    }
+
+    setSelectedPedido(updatedPedido)
+  }
+
+  const actualizarMovimientosPedido = (pedidoActualizado, pedidoAnterior = null) => {
+    try {
+      if (!pedidoActualizado || !pedidoActualizado.id) return
+
+      const estadoActualPago = normalizeEstadoPago(pedidoActualizado.estadoPago)
+      const montoActual = Number(pedidoActualizado.montoRecibido || 0)
+      const estadoPrevioPago = pedidoAnterior ? normalizeEstadoPago(pedidoAnterior.estadoPago) : null
+      const montoPrevio = Number(pedidoAnterior?.montoRecibido || 0)
+      const totalPedido = Number(pedidoActualizado.total || 0)
+
+      const clienteName = `${pedidoActualizado.cliente?.nombre || ''} ${pedidoActualizado.cliente?.apellido || ''}`.trim()
+      const metodoPagoMovimiento = pedidoActualizado.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo'
+      const fechaMovimiento = new Date().toISOString().slice(0, 10)
+
+      const movementKeys = {
+        sena: `pedido:${pedidoActualizado.id}:sena`,
+        pagoTotal: `pedido:${pedidoActualizado.id}:pago_total`,
+        restante: `pedido:${pedidoActualizado.id}:restante`
+      }
+
+      const upsertMovimiento = ({ monto, categoria, descripcion, key }) => {
+        if (!key) return
+        if (!monto || Number(monto) <= 0) {
+          eliminarMovimientoPorIdempotencyKey(key)
+          return
+        }
+
+        registrarMovimiento({
+          tipo: 'ingreso',
+          monto: Number(monto),
+          categoria,
+          descripcion,
+          fecha: fechaMovimiento,
+          clienteName,
+          pedidoId: pedidoActualizado.id,
+          metodoPago: metodoPagoMovimiento,
+          idempotencyKey: key,
+          replaceIfExists: true
+        })
+      }
+
+      switch (estadoActualPago) {
+        case 'sin_seña':
+          eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
+          eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
+          eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+          break
+        case 'seña_pagada':
+          upsertMovimiento({
+            monto: montoActual,
+            categoria: 'Seña',
+            descripcion: `Seña pedido #${pedidoActualizado.id}`,
+            key: movementKeys.sena
+          })
+          eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
+          eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+          break
+        case 'pagado_total': {
+          const senaAnterior = (() => {
+            if (estadoPrevioPago === 'seña_pagada') return Math.max(0, montoPrevio)
+            if (estadoPrevioPago === 'pagado_total') {
+              const existing = obtenerMovimientoPorIdempotencyKey(movementKeys.sena)
+              return existing ? Number(existing.monto || 0) : 0
+            }
+            const existing = obtenerMovimientoPorIdempotencyKey(movementKeys.sena)
+            return existing ? Number(existing.monto || 0) : 0
+          })()
+
+          if (senaAnterior > 0) {
+            upsertMovimiento({
+              monto: senaAnterior,
+              categoria: 'Seña',
+              descripcion: `Seña pedido #${pedidoActualizado.id}`,
+              key: movementKeys.sena
+            })
+          } else if (estadoPrevioPago !== 'pagado_total') {
+            eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
+          }
+
+          const restante = senaAnterior > 0 ? Math.max(0, montoActual - senaAnterior) : 0
+
+          if (senaAnterior > 0) {
+            if (restante > 0) {
+              upsertMovimiento({
+                monto: restante,
+                categoria: 'Pago restante',
+                descripcion: `Pago restante pedido #${pedidoActualizado.id}`,
+                key: movementKeys.restante
+              })
+            } else {
+              eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+            }
+            eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
+          } else {
+            const montoFinal = montoActual > 0 ? montoActual : totalPedido
+            upsertMovimiento({
+              monto: montoFinal,
+              categoria: 'Pago total',
+              descripcion: `Pago total pedido #${pedidoActualizado.id}`,
+              key: movementKeys.pagoTotal
+            })
+            eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+          }
+          break
+        }
+        default:
+          break
+      }
+    } catch (finErr) {
+      console.error('Error actualizando movimientos financieros del pedido catálogo:', finErr)
     }
   }
 
@@ -447,6 +610,12 @@ export default function PedidosCatalogo() {
     const monto = Number(p.montoRecibido ?? p.senaMonto ?? p['señaMonto'] ?? 0)
     clone.montoRecibido = isNaN(monto) ? 0 : monto
     clone.estadoPago = normalizeEstadoPago(p.estadoPago)
+    const totalPedido = Number(p.total ?? clone.total ?? 0)
+    if (clone.estadoPago === 'pagado_total' && totalPedido > 0) {
+      clone.montoRecibido = totalPedido
+    } else if (clone.estadoPago === 'seña_pagada' && totalPedido > 0 && (!clone.montoRecibido || clone.montoRecibido <= 0)) {
+      clone.montoRecibido = Math.round(totalPedido * 0.5)
+    }
     // asegurar cliente con nombre/apellido
     if (!clone.cliente) clone.cliente = { nombre: '', apellido: '' }
     else {
@@ -497,6 +666,12 @@ export default function PedidosCatalogo() {
 
       return matches
     })
+      // ordenar por fecha de creación descendente (últimos primero)
+      .sort((a, b) => {
+        const ta = new Date(a.fechaCreacion || 0).getTime()
+        const tb = new Date(b.fechaCreacion || 0).getTime()
+        return tb - ta
+      })
 
   // Filtrar pedidos entregados
   const filteredEntregados = pedidosCatalogo
@@ -537,6 +712,12 @@ export default function PedidosCatalogo() {
 
       return matches
     })
+      // ordenar por fecha de creación descendente (últimos primero)
+      .sort((a, b) => {
+        const ta = new Date(a.fechaCreacion || 0).getTime()
+        const tb = new Date(b.fechaCreacion || 0).getTime()
+        return tb - ta
+      })
 
   // Resetear paginación cuando cambien filtros
   useEffect(() => {
@@ -617,10 +798,21 @@ export default function PedidosCatalogo() {
     return labels[status] || status
   }
 
-  const getPaymentLabel = (status) => {
+  const getPaymentLabel = (status, pedido = null) => {
+    // Si tenemos el pedido, calcular porcentaje dinámico según montoRecibido / total
+    if (status === 'seña_pagada') {
+      const total = Number(pedido?.total || 0)
+      const recibido = Number(pedido?.montoRecibido || 0)
+      if (total > 0 && recibido > 0) {
+        const pct = Math.round((recibido / total) * 100)
+        return `Seña pagada (${pct}%)`
+      }
+      // fallback histórico
+      return 'Seña pagada (50%)'
+    }
+
     const labels = {
       'sin_seña': 'Sin seña',
-      'seña_pagada': 'Seña pagada (50%)',
       'pagado_total': 'Pagado total'
     }
     return labels[status] || status
@@ -795,108 +987,40 @@ export default function PedidosCatalogo() {
     if (!selectedPedido) return
 
     const index = pedidosCatalogo.findIndex(p => p.id === selectedPedido.id)
-    if (index !== -1) {
-      const pedidoAnterior = pedidosCatalogo[index]
-      const previoEstadoPago = pedidoAnterior.estadoPago || 'sin_seña'
-      const previoMontoRecibido = Number(pedidoAnterior.montoRecibido || 0)
-      const nuevoEstadoPago = selectedPedido.estadoPago || 'sin_seña'
-      const nuevoMontoRecibido = Number(selectedPedido.montoRecibido || 0)
-      const totalPedido = Number(selectedPedido.total || 0)
-      
-      // Si el admin marcó pagado_total, forzamos montoRecibido = total
-      if (nuevoEstadoPago === 'pagado_total') {
-        selectedPedido.montoRecibido = totalPedido
-      }
-      
-      const updatedPedidos = [...pedidosCatalogo]
-      updatedPedidos[index] = selectedPedido
-      
-      setPedidosCatalogo(updatedPedidos)
-      persistAndEmit(updatedPedidos, selectedPedido.id, 'save-changes')
-      
-      // LÓGICA FINANCIERA: Registrar movimientos según cambios de estado de pago
-      if (previoEstadoPago !== nuevoEstadoPago) {
-        const fechaMovimiento = new Date().toISOString().slice(0, 10)
-        const clienteName = `${selectedPedido.cliente.nombre || ''} ${selectedPedido.cliente.apellido || ''}`.trim()
-        
-        // 1. Si cambió de "sin_seña" a "seña_pagada" → registrar la seña
-        if (previoEstadoPago === 'sin_seña' && nuevoEstadoPago === 'seña_pagada') {
-          const montoSena = Math.max(0, nuevoMontoRecibido - previoMontoRecibido)
-          if (montoSena > 0) {
-            registrarMovimiento({
-              tipo: 'ingreso',
-              monto: montoSena,
-              categoria: 'Señas',
-              descripcion: `Seña pedido #${selectedPedido.id}`,
-              fecha: fechaMovimiento,
-              clienteName,
-              pedidoId: selectedPedido.id,
-              metodoPago: selectedPedido.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo',
-              idempotencyKey: `pedido:${selectedPedido.id}:sena:${fechaMovimiento}:${montoSena}`
-            })
-          }
-        }
-        
-        // 2. Si cambió de "sin_seña" directamente a "pagado_total" → registrar el monto completo
-        else if (previoEstadoPago === 'sin_seña' && nuevoEstadoPago === 'pagado_total') {
-          const montoCompleto = Math.max(0, nuevoMontoRecibido - previoMontoRecibido)
-          if (montoCompleto > 0) {
-            registrarMovimiento({
-              tipo: 'ingreso',
-              monto: montoCompleto,
-              categoria: 'Ventas',
-              descripcion: `Pago completo pedido #${selectedPedido.id}`,
-              fecha: fechaMovimiento,
-              clienteName,
-              pedidoId: selectedPedido.id,
-              metodoPago: selectedPedido.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo',
-              idempotencyKey: `pedido:${selectedPedido.id}:venta:${fechaMovimiento}:${montoCompleto}`
-            })
-          }
-        }
-        
-        // 3. Si cambió de "seña_pagada" a "pagado_total" → registrar solo el restante
-        else if (previoEstadoPago === 'seña_pagada' && nuevoEstadoPago === 'pagado_total') {
-          const montoRestante = Math.max(0, nuevoMontoRecibido - previoMontoRecibido)
-          if (montoRestante > 0) {
-            registrarMovimiento({
-              tipo: 'ingreso',
-              monto: montoRestante,
-              categoria: 'Ventas',
-              descripcion: `Pago restante pedido #${selectedPedido.id}`,
-              fecha: fechaMovimiento,
-              clienteName,
-              pedidoId: selectedPedido.id,
-              metodoPago: selectedPedido.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo',
-              idempotencyKey: `pedido:${selectedPedido.id}:restante:${fechaMovimiento}:${montoRestante}`
-            })
-          }
-        }
-      }
-      // 4. Si el monto recibido aumentó mientras se mantiene el mismo estado de pago
-      else if (nuevoMontoRecibido > previoMontoRecibido && previoEstadoPago === 'seña_pagada' && nuevoEstadoPago === 'seña_pagada') {
-        const incrementoSena = nuevoMontoRecibido - previoMontoRecibido
-        if (incrementoSena > 0) {
-          const fechaMovimiento = new Date().toISOString().slice(0, 10)
-          const clienteName = `${selectedPedido.cliente.nombre || ''} ${selectedPedido.cliente.apellido || ''}`.trim()
-          
-          registrarMovimiento({
-            tipo: 'ingreso',
-            monto: incrementoSena,
-            categoria: 'Señas',
-            descripcion: `Seña adicional pedido #${selectedPedido.id}`,
-            fecha: fechaMovimiento,
-            clienteName,
-            pedidoId: selectedPedido.id,
-            metodoPago: selectedPedido.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo',
-            idempotencyKey: `pedido:${selectedPedido.id}:sena_adicional:${fechaMovimiento}:${incrementoSena}`
-          })
-        }
-      }
-      
-      setShowConfirmModal(true)
-      handleCloseModal()
+    if (index === -1) return
+
+    const pedidoAnterior = pedidosCatalogo[index]
+    const previoEstadoPago = normalizeEstadoPago(pedidoAnterior.estadoPago || 'sin_seña')
+    const previoMontoRecibido = Number(pedidoAnterior.montoRecibido || 0)
+
+    const pedidoActualizado = { ...selectedPedido }
+    let nuevoEstadoPago = normalizeEstadoPago(pedidoActualizado.estadoPago || 'sin_seña')
+    const totalPedido = Number(pedidoActualizado.total || 0)
+    let nuevoMontoRecibido = Number(pedidoActualizado.montoRecibido || 0)
+
+    if (nuevoEstadoPago === 'pagado_total') {
+      pedidoActualizado.montoRecibido = totalPedido
+      nuevoMontoRecibido = totalPedido
+    } else if (nuevoEstadoPago === 'seña_pagada' && nuevoMontoRecibido <= 0 && totalPedido > 0) {
+      const senaSugerida = Math.round(totalPedido * 0.5)
+      pedidoActualizado.montoRecibido = senaSugerida
+      nuevoMontoRecibido = senaSugerida
+    } else {
+      pedidoActualizado.montoRecibido = nuevoMontoRecibido
     }
+
+    pedidoActualizado.estadoPago = nuevoEstadoPago
+
+    const updatedPedidos = [...pedidosCatalogo]
+    updatedPedidos[index] = pedidoActualizado
+
+    setPedidosCatalogo(updatedPedidos)
+    persistAndEmit(updatedPedidos, pedidoActualizado.id, 'save-changes')
+
+    actualizarMovimientosPedido(pedidoActualizado, pedidoAnterior)
+
+    setShowConfirmModal(true)
+    handleCloseModal()
   }
 
   const openAssignModal = (pedido) => {
@@ -1417,71 +1541,22 @@ export default function PedidosCatalogo() {
             ) : (
               <>
                 <div className={styles.pedidosGrid}>
-                  {currentEntregados.map(pedido => {
-                    const thumbnail = getProductThumbnail(pedido)
-
-                    return (
-                      <div
-                        key={pedido.id}
-                        className={`${styles.pedidoCard} ${styles.entregado}`}
-                        onClick={() => handleCardClick(pedido)}
-                      >
-                        {/* Similar estructura pero con estilo entregado */}
-                        <div className={styles.pedidoLeft}>
-                          <div className={styles.pedidoId}>
-                            <strong>#{pedido.id}</strong>
-                            <span className={styles.fechaCreacion}>
-                              {formatDate(pedido.fechaCreacion)}
-                            </span>
-                          </div>
-                          <div className={styles.pedidoThumb}>
-                            {thumbnail ? (
-                              <img src={thumbnail} alt="Producto" />
-                            ) : (
-                              <span className={styles.placeholder}>
-                                {pedido.productos && pedido.productos.length > 0 ? pedido.productos[0].nombre || '📦' : '📦'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className={styles.pedidoMain}>
-                          <div className={styles.pedidoTopline}>
-                            <div className={styles.clienteInfo}>
-                              <div className={styles.clienteNombre}>
-                                👤 {pedido.cliente.nombre} {pedido.cliente.apellido || ''}
-                              </div>
-                              <div className={styles.clienteContactLine}>
-                                📱 {pedido.cliente.telefono}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className={styles.pedidoBadges}>
-                            <span className={`${styles.statusBadge} ${styles.entregado}`}>
-                            🎉 Entregado
-                          </span>
-                          <span className={`${styles.pagoBadge} ${styles[pedido.estadoPago]}`}>
-                            {getPaymentLabel(pedido.estadoPago)}
-                          </span>
-                        </div>
-
-                        <div className={styles.productosPreview}>
-                          📦 {pedido.productos.length} producto{pedido.productos.length > 1 ? 's' : ''}
-                        </div>
-                      </div>
-
-                      <div className={styles.pedidoRight}>
-                        <div className={styles.totalBox}>
-                          <div className={styles.pedidoTotal}>
-                            {formatCurrency(pedido.total)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                  {currentEntregados.map(pedido => (
+                    <PedidoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      onClick={handleCardClick}
+                      formatCurrency={formatCurrency}
+                      formatDate={formatDate}
+                      getStatusEmoji={getStatusEmoji}
+                      getStatusLabel={getStatusLabel}
+                      getPaymentLabel={getPaymentLabel}
+                      getProductThumbnail={getProductThumbnail}
+                      formatFechaEntrega={formatFechaEntrega}
+                      formatFechaProduccion={formatFechaProduccion}
+                    />
+                  ))}
+                </div>
 
               {/* Paginación */}
               {totalPagesEntregados > 1 && (
@@ -1583,11 +1658,11 @@ export default function PedidosCatalogo() {
                     <div className={styles.estadoValue}>
                       <select
                         value={selectedPedido.estadoPago || 'sin_seña'}
-                        onChange={(e) => setSelectedPedido({ ...selectedPedido, estadoPago: e.target.value })}
+                        onChange={(e) => handleChangeEstadoPago(e.target.value)}
                         className={styles.selectInline}
                       >
                         <option value="sin_seña">Sin seña</option>
-                        <option value="seña_pagada">Seña pagada (50%)</option>
+                        <option value="seña_pagada">Seña pagada</option>
                         <option value="pagado_total">Pagado total</option>
                       </select>
                     </div>
@@ -1700,13 +1775,15 @@ export default function PedidosCatalogo() {
                         <div className={styles.montoInputWrapper}>
                           <span className={styles.currencyPrefix}>$</span>
                           <input
-                            type="number"
+                            type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            step="1"
-                            min="0"
-                            value={Number(selectedPedido.montoRecibido || 0)}
-                            onChange={(e) => setSelectedPedido({ ...selectedPedido, montoRecibido: Number(e.target.value) })}
+                            value={formatInputNumber(selectedPedido.montoRecibido)}
+                            onChange={(e) => {
+                              const raw = e.target.value
+                              const numeric = parseInputNumber(raw)
+                              setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
+                            }}
                             className={styles.montoInput}
                           />
                         </div>
@@ -1714,7 +1791,7 @@ export default function PedidosCatalogo() {
                       <div className={styles.pagoItem}>
                         <label>Restante</label>
                         <div className={styles.restanteValue}>
-                          {formatCurrency((selectedPedido.total || 0) - (selectedPedido.montoRecibido || (selectedPedido.estadoPago === 'seña_pagada' ? (selectedPedido.total * 0.5) : selectedPedido.total)))}
+                          {formatCurrency(Math.max(0, Number(selectedPedido.total || 0) - Number(selectedPedido.montoRecibido || 0)))}
                         </div>
                       </div>
                     </div>

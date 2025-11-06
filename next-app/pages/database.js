@@ -162,6 +162,7 @@ export default function Database() {
       'ID', 'Nombre', 'Categoría', 'Tipo', 'Medidas', 'Tiempo Unitario', 
       'Unidades', 'Unidades por Placa', 'Uso Placas', 'Costo Placa', 
       'Costo Material', 'Margen Material (%)', 'Precio Unitario', 
+      'Precio Promos',
       'Ensamble', 'Activo', 'Publicado'
     ]
     
@@ -179,6 +180,8 @@ export default function Database() {
       p.costoMaterial,
       p.margenMaterial,
       p.precioUnitario,
+      // precioPromos: si no existe, fallback a precioUnitario
+      (p.precioPromos !== undefined && p.precioPromos !== null) ? p.precioPromos : p.precioUnitario,
       p.ensamble,
       p.active !== false ? 'Sí' : 'No',
       p.publicado ? 'Sí' : 'No'
@@ -453,6 +456,9 @@ export default function Database() {
                     <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioUnitario')}>
                       Precio {getSortIcon('precioUnitario')}
                     </th>
+                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioPromos')}>
+                      Precio Promos {getSortIcon('precioPromos')}
+                    </th>
                     <th style={thStyle}>Tiempo</th>
                     <th style={thStyle}>Estados</th>
                     <th style={thStyle}>Acciones</th>
@@ -583,6 +589,9 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
       <td style={tdStyle}>{product.unidades || 0}</td>
       <td style={{ ...tdStyle, fontWeight: '600', color: 'var(--accent-blue)' }}>
         {formatCurrency(product.precioUnitario || 0)}
+      </td>
+      <td style={{ ...tdStyle, fontWeight: '600', color: 'var(--accent-blue)' }}>
+        {formatCurrency((product.precioPromos !== undefined && product.precioPromos !== null) ? product.precioPromos : (product.precioUnitario || 0))}
       </td>
       <td style={tdStyle}>{product.tiempoUnitario || '00:00:30'}</td>
       <td style={tdStyle}>

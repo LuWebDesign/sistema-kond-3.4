@@ -22,24 +22,56 @@ export function registrarMovimiento({
   clienteName = '',
   pedidoId = null,
   metodoPago = 'efectivo',
-  idempotencyKey = null
+  idempotencyKey = null,
+  replaceIfExists = false
 }) {
   if (typeof window === 'undefined') return null;
 
   try {
     const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
-    // Si se pasó idempotencyKey, comprobar si ya existe
+    const fechaFinal = fecha || new Date().toISOString().slice(0, 10);
+    const horaActual = new Date().toTimeString().slice(0, 8);
+
     if (idempotencyKey) {
-      const exists = finanzas.some(m => m.idempotencyKey && m.idempotencyKey === idempotencyKey);
-      if (exists) {
-        // retornar el movimiento existente para idempotencia
-        const existing = finanzas.find(m => m.idempotencyKey === idempotencyKey);
-        return existing || null;
+      const existingIndex = finanzas.findIndex(m => m.idempotencyKey && m.idempotencyKey === idempotencyKey);
+      if (existingIndex !== -1) {
+        if (!replaceIfExists) {
+          return finanzas[existingIndex];
+        }
+
+        const existente = finanzas[existingIndex];
+        const movimientoActualizado = {
+          ...existente,
+          tipo: tipo || existente.tipo,
+          monto: Number(monto),
+          categoria: categoria || existente.categoria,
+          descripcion: descripcion || existente.descripcion,
+          fecha: fechaFinal,
+          hora: horaActual,
+          metodoPago: metodoPago || existente.metodoPago
+        };
+
+        if (clienteName) movimientoActualizado.clienteName = clienteName;
+        if (pedidoId !== null && pedidoId !== undefined) movimientoActualizado.pedidoId = pedidoId;
+
+        finanzas[existingIndex] = movimientoActualizado;
+        try {
+          localStorage.setItem('finanzas', JSON.stringify(finanzas));
+        } catch (e) {
+          console.error('Error actualizando finanzas en localStorage:', e);
+        }
+
+        if (typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('finanzasUpdated', { detail: { ...movimientoActualizado, action: 'updated' } }));
+          } catch (evtErr) {
+            console.warn('No se pudo emitir evento finanzasUpdated (update):', evtErr);
+          }
+        }
+
+        return movimientoActualizado;
       }
     }
-    
-    const fechaFinal = fecha || new Date().toISOString().slice(0, 10);
-    const hora = new Date().toTimeString().slice(0, 8);
     
     const movimiento = {
       id: Date.now() + Math.floor(Math.random() * 100000),
@@ -48,7 +80,7 @@ export function registrarMovimiento({
       categoria,
       descripcion,
       fecha: fechaFinal,
-      hora,
+      hora: horaActual,
       metodoPago,
       registrado: false
     };
@@ -75,12 +107,56 @@ export function registrarMovimiento({
     
     // Disparar evento personalizado para que la UI se actualice
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('finanzasUpdated', { detail: movimiento }));
+      window.dispatchEvent(new CustomEvent('finanzasUpdated', { detail: { ...movimiento, action: 'created' } }));
     }
     
     return movimiento;
   } catch (error) {
     console.error('Error registrando movimiento:', error);
+    return null;
+  }
+}
+
+export function eliminarMovimientoPorIdempotencyKey(idempotencyKey) {
+  if (typeof window === 'undefined') return false;
+  if (!idempotencyKey) return false;
+
+  try {
+    const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
+    const index = finanzas.findIndex(m => m.idempotencyKey === idempotencyKey);
+    if (index === -1) return false;
+
+    const [removed] = finanzas.splice(index, 1);
+    try {
+      localStorage.setItem('finanzas', JSON.stringify(finanzas));
+    } catch (err) {
+      console.error('Error eliminando movimiento en localStorage:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('finanzasUpdated', { detail: { ...removed, action: 'deleted' } }));
+      } catch (evtErr) {
+        console.warn('No se pudo emitir evento finanzasUpdated (delete):', evtErr);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error eliminando movimiento:', error);
+    return false;
+  }
+}
+
+export function obtenerMovimientoPorIdempotencyKey(idempotencyKey) {
+  if (typeof window === 'undefined') return null;
+  if (!idempotencyKey) return null;
+
+  try {
+    const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
+    return finanzas.find(m => m.idempotencyKey === idempotencyKey) || null;
+  } catch (error) {
+    console.error('Error obteniendo movimiento por idempotencyKey:', error);
     return null;
   }
 }
@@ -184,6 +260,8 @@ export function formatCurrency(value) {
 
 export default {
   registrarMovimiento,
+  eliminarMovimientoPorIdempotencyKey,
+  obtenerMovimientoPorIdempotencyKey,
   obtenerResumenFinanciero,
   obtenerMovimientosPorFecha,
   obtenerMovimientosPorPedido,

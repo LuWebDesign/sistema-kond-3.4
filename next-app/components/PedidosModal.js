@@ -75,8 +75,8 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
   return (
     <div className="pedidos-modal" role="dialog" aria-modal="true" aria-labelledby="pedidos-modal-title" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-    <button className="close" aria-label="Cerrar" onClick={onClose}>✕</button>
-    <div className="modal-header" id="pedidos-modal-title">{title || '📦 Pedidos del Catálogo'}</div>
+        <button className="close" aria-label="Cerrar" onClick={onClose}>✕</button>
+  <div className="modal-header" id="pedidos-modal-title">{title || '📦 Pedidos del Catálogo'}</div>
 
         {(!localOrders || localOrders.length === 0) ? (
           <div className="empty">No hay pedidos de catálogo.</div>
@@ -85,6 +85,22 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
             <div className="pedido" key={p.id || (p.cliente && p.cliente.telefono) || Math.random()}>
               <h3>Pedido Catálogo #{p.id}</h3>
               <p>👤 Cliente: {p.cliente ? (p.cliente.nombre || p.cliente.name) : (p.clienteNombre || '—')}</p>
+              {/* Mostrar estado/etiqueta de producido / listo para entrega */}
+              {(() => {
+                const estado = (p.estado || '').toString().toLowerCase()
+                let label = null
+                let color = null
+                if (estado === 'listo') {
+                  if (p.tipo === 'produccion') { label = 'Producto producido'; color = '#10b981' }
+                  else if (p.tipo === 'entrega') { label = 'Producto listo para entrega'; color = '#10b981' }
+                  else { label = 'Listo'; color = '#10b981' }
+                } else if (estado === 'entregado') { label = 'Entregado'; color = '#6b7280' }
+                else if (estado) { label = estado.charAt(0).toUpperCase() + estado.slice(1) ; color = '#6b7280' }
+
+                return label ? (
+                  <p style={{ marginTop: 6 }}><strong>Estado:</strong> <span style={{ color }}>{label}</span></p>
+                ) : null
+              })()}
               <p>
                 ⏱️ Tiempo de corte: {
                   (() => {
@@ -185,102 +201,54 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
           padding: 20px;
         }
         .modal-content {
-          background: var(--bg-card, #ffffff);
-          border: 1px solid var(--border-color, #e2e8f0);
+          background: var(--bg-card);
           border-radius: 12px;
           width: 90%;
           max-width: 520px;
           max-height: 80vh;
           overflow-y: auto;
           padding: 20px;
-          box-shadow: var(--shadow, 0 0 14px rgba(0,0,0,0.2));
+          box-shadow: var(--shadow, 0 6px 18px rgba(0,0,0,0.12));
           position: relative;
         }
-        .modal-header {
-          text-align:center;
-          font-weight:600;
-          font-size:1.1rem;
-          margin-bottom:12px;
-          color: var(--text-primary, #1e293b);
-        }
-        .pedido {
-          background: var(--bg-secondary, #fafafa);
-          border-radius:10px;
-          padding:12px 15px;
-          margin-bottom:10px;
-          border:1px solid var(--border-color, #eee);
-        }
-        .pedido h3 {
-          margin:0 0 6px;
-          font-size:1rem;
-          color: var(--text-primary, #111827);
-        }
-        .pedido p {
-          margin:2px 0;
-          font-size:0.9rem;
-          color: var(--text-secondary, #64748b);
-        }
-        .productos-list { margin-top:8px; }
-        .producto {
-          background: var(--bg-card, #ffffff);
-          border-radius:8px;
-          padding:8px;
-          margin-bottom:8px;
-          border:1px solid var(--border-color, #f0f0f0);
-          display:flex;
-          gap:12px;
-          align-items:flex-start;
-        }
-        .producto-info { flex:1; }
-        .producto-title {
-          font-weight:600;
-          color: var(--text-primary, #1e293b);
-          margin-bottom:4px;
-        }
-        .producto-qty {
-          color: var(--text-primary, #0f172a);
-          font-weight:700;
-          margin-bottom:6px;
-        }
-        .producto-meta {
-          color: var(--text-secondary, #64748b);
-          font-size:0.9rem;
-        }
-        .meta-line { margin:2px 0; }
-        .producto-img {
-          width:88px;
-          flex:0 0 88px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
-        .producto-img img {
-          max-width:100%;
-          height:auto;
-          border-radius:6px;
-          object-fit:cover;
-        }
-        .close {
-          position:absolute;
-          right:12px;
-          top:10px;
-          background:transparent;
-          border:none;
-          font-size:1.2rem;
-          cursor:pointer;
-          color: var(--text-secondary, #64748b);
-        }
-        .empty { color:var(--text-secondary); text-align:center; padding:24px; }
-        ::-webkit-scrollbar { width:6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius:10px; }
-
-        /* Mejor contraste en modo claro/oscuro si el usuario lo tiene configurado */
+        .modal-header { text-align:center; font-weight:600; font-size:1.1rem; margin-bottom:12px; color: var(--text-primary) }
+        .pedido { background: var(--bg-secondary); border-radius:10px; padding:12px 15px; margin-bottom:10px; border:1px solid var(--border-color) }
+        .pedido h3 { margin:0 0 6px; font-size:1rem; color:var(--text-primary) }
+        .pedido p { margin:2px 0; font-size:0.9rem; color:var(--text-secondary) }
+  .productos-list { margin-top:8px }
+  .producto { background: var(--bg-card); border-radius:8px; padding:8px; margin-bottom:8px; border:1px solid var(--border-color); display:flex; gap:12px; align-items:flex-start; }
+  .producto-info { flex:1; }
+  .producto-title { font-weight:600; color:var(--text-primary); margin-bottom:4px }
+  .producto-qty { color:var(--text-primary); font-weight:700; margin-bottom:6px }
+  .producto-meta { color:var(--text-secondary); font-size:0.9rem }
+  .meta-line { margin:2px 0 }
+  .producto-img { width:88px; flex:0 0 88px; display:flex; align-items:center; justify-content:center }
+  .producto-img img { max-width:100%; height:auto; border-radius:6px; object-fit:cover }
+        .close { position:absolute; right:12px; top:10px; background:transparent; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-secondary) }
+        .empty { color:var(--text-secondary); text-align:center; padding:24px }
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius:10px }
+      `}</style>
+      <style jsx>{`
         @media (prefers-color-scheme: dark) {
-          .pedidos-modal { background: rgba(0,0,0,0.65); }
-          .modal-content { border-color: rgba(148,163,184,0.06); }
-          .pedido { background: var(--bg-card, #334155); border-color: rgba(148,163,184,0.06); }
-          .producto { border-color: rgba(148,163,184,0.12); }
-          ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); }
+          .modal-content {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+          }
+          .modal-header { color: var(--text-primary) }
+          .pedido { background: var(--bg-secondary); border: 1px solid var(--border-color); }
+          .pedido h3 { color: var(--text-primary) }
+          .pedido p { color: var(--text-secondary) }
+          .productos-list { margin-top:8px }
+          .producto { background: var(--bg-card); border: 1px solid var(--border-color); }
+          .producto-title { color: var(--text-primary) }
+          .producto-qty { color: var(--text-primary) }
+          .producto-meta { color: var(--text-secondary) }
+          .producto-img { background: var(--bg-tertiary) }
+          .close { color: var(--text-secondary) }
+          .empty { color: var(--text-secondary) }
+          ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
         }
       `}</style>
     </div>

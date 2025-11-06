@@ -33,6 +33,8 @@ export default function Products() {
     materialId: '',
     margenMaterial: 0,
     precioUnitario: 0,
+    // Nuevo campo: precio que refleja el valor afectado por promociones/cupones
+    precioPromos: 0,
     ensamble: 'Sin ensamble',
     imagen: ''
   })
@@ -209,6 +211,8 @@ export default function Products() {
   materialId: p.materialId || '',
         margenMaterial: p.margenMaterial || 0,
         precioUnitario: p.precioUnitario || 0,
+        // Migración / fallback: mantener precioPromos si existe, sino tomar precioPromocional o precioUnitario
+        precioPromos: (p.precioPromos !== undefined && p.precioPromos !== null) ? p.precioPromos : (p.precioPromocional || p.precioUnitario || 0),
         unidades: p.unidades || 1,
         ensamble: p.ensamble || 'Sin ensamble',
         fechaCreacion: p.fechaCreacion || new Date().toISOString()
@@ -394,7 +398,7 @@ export default function Products() {
     const { name, value } = e.target
 
     // Campos que deben ser tratados como números
-    const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario'])
+  const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos'])
 
     let newValue = value
     if (numericFields.has(name)) {
@@ -505,6 +509,7 @@ export default function Products() {
         materialId: '',
         margenMaterial: 0,
         precioUnitario: 0,
+        precioPromos: 0,
         ensamble: 'Sin ensamble',
         imagen: '',
         publicado: false
@@ -1323,6 +1328,28 @@ export default function Products() {
                       />
                     )}
 
+                    {/* Precio Promos (opcional) */}
+                    <div style={{ width: '100%', marginTop: '8px' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Precio Promos (opcional)</label>
+                      <input
+                        type="number"
+                        name="precioPromos"
+                        value={formData.precioPromos}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="0.01"
+                        placeholder="Dejar vacío para usar precio unitario o precio promocional"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+
                     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                       <button
                         type="button"
@@ -1481,6 +1508,7 @@ export default function Products() {
                       materialId: '',
                       margenMaterial: 0,
                       precioUnitario: 0,
+                      precioPromos: 0,
                       ensamble: 'Sin ensamble',
                       imagen: '',
                       publicado: false

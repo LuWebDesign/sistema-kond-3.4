@@ -355,29 +355,31 @@ export default function Catalog() {
         {/* Modal del carrito */}
         {showCart && (
           <CartModal
-            cart={cart}
-            onClose={() => { setShowCart(false); router.push('/catalog') }}
-            onUpdateQuantity={updateQuantity}
-            onRemoveItem={removeItem}
-            onApplyCoupon={(couponCode) => {
-              const result = applyCoupon(couponCode, cart, subtotal)
-              createToast(result.message, result.success ? 'success' : 'error')
-              return result.success
-            }}
-                    onProceedToCheckout={() => { router.push('/catalog/mi-carrito/finalizar-compra') }}
-            subtotal={subtotal}
-            discount={discount}
-            total={total}
-            activeCoupon={activeCoupon}
-            currentUser={currentUserState}
-            onEditProfile={() => { router.push('/catalog/mi-carrito/finalizar-compra?mode=edit') }}
-          />
+              cart={cart}
+              products={products}
+              onClose={() => { setShowCart(false); router.push('/catalog') }}
+              onUpdateQuantity={updateQuantity}
+              onRemoveItem={removeItem}
+              onApplyCoupon={(couponCode) => {
+                const result = applyCoupon(couponCode, cart, subtotal)
+                createToast(result.message, result.success ? 'success' : 'error')
+                return result.success
+              }}
+                      onProceedToCheckout={() => { router.push('/catalog/mi-carrito/finalizar-compra') }}
+              subtotal={subtotal}
+              discount={discount}
+              total={total}
+              activeCoupon={activeCoupon}
+              currentUser={currentUserState}
+              onEditProfile={() => { router.push('/catalog/mi-carrito/finalizar-compra?mode=edit') }}
+            />
         )}
 
         {/* Modal de checkout */}
         {showCheckout && (
           <CheckoutModal
             cart={cart}
+            products={products}
             onClose={() => { setShowCheckout(false); router.push('/catalog') }}
             total={total}
             subtotal={subtotal}
@@ -704,6 +706,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
 // Modal del carrito
 function CartModal({ 
   cart, 
+  products = [],
   onClose, 
   onUpdateQuantity, 
   onRemoveItem, 
@@ -712,7 +715,9 @@ function CartModal({
   subtotal,
   discount,
   total,
-  activeCoupon
+  activeCoupon,
+  currentUser,
+  onEditProfile
 }) {
   const [couponInput, setCouponInput] = useState('')
 
@@ -793,8 +798,38 @@ function CartModal({
                       </div>
 
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(item.price * item.quantity)}</div>
-                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatCurrency(item.price)} × {item.quantity}</div>
+                        {/* Mostrar precio considerando posible descuento */}
+                        {
+                          (() => {
+                            // Buscar producto original para referencia si falta originalPrice en el item
+                            const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+                            const original = (item.originalPrice !== undefined && item.originalPrice !== null) ? item.originalPrice : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+                            const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+                            const totalLine = unitPrice * item.quantity
+
+                            if (original > unitPrice) {
+                              const savings = (original - unitPrice) * item.quantity
+                              const percent = Math.round(((original - unitPrice) / original) * 100)
+                              return (
+                                <div>
+                                  <div style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(totalLine)}</div>
+                                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textDecoration: 'line-through' }}>{formatCurrency(original)}</div>
+                                    <div style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', fontWeight: 700, padding: '2px 6px', borderRadius: 8, fontSize: '0.8rem' }}>-{percent}%</div>
+                                  </div>
+                                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatCurrency(unitPrice)} × {item.quantity} <span style={{ color: '#059669', marginLeft: 8 }}>Ahorras {formatCurrency(savings)}</span></div>
+                                </div>
+                              )
+                            }
+
+                            return (
+                              <div>
+                                <div style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(unitPrice * item.quantity)}</div>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatCurrency(unitPrice)} × {item.quantity}</div>
+                              </div>
+                            )
+                          })()
+                        }
                       </div>
                     </div>
 
@@ -881,6 +916,7 @@ function CartModal({
 // Modal de checkout completo
 function CheckoutModal({ 
   cart, 
+  products = [],
   onClose, 
   total,
   subtotal,
@@ -1217,13 +1253,53 @@ function CheckoutModal({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-            {cart.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name} × {item.quantity}</div>
-                <div style={{ marginLeft: 8, fontWeight: 700 }}>{formatCurrency(item.price * item.quantity)}</div>
-              </div>
-            ))}
+            {cart.map((item, idx) => {
+              const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+              const original = (item.originalPrice !== undefined && item.originalPrice !== null) ? item.originalPrice : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+              const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+              const lineTotal = unitPrice * item.quantity
+              const lineSavings = Math.max(0, (original - unitPrice) * item.quantity)
+
+              return (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: 14, alignItems: 'center' }}>
+                  <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{item.name} × {item.quantity}</div>
+                    {original > unitPrice && (
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        <span style={{ textDecoration: 'line-through', marginRight: 8 }}>{formatCurrency(original)}</span>
+                        <span style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(unitPrice)}</span>
+                        <span style={{ marginLeft: 8, color: '#059669' }}>Ahorras {formatCurrency(lineSavings)}</span>
+                      </div>
+                    )}
+                    {original <= unitPrice && (
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatCurrency(unitPrice)} cada uno</div>
+                    )}
+                  </div>
+                  <div style={{ marginLeft: 8, fontWeight: 700 }}>{formatCurrency(lineTotal)}</div>
+                </div>
+              )
+            })}
           </div>
+
+          {/* Mostrar total ahorrado por promociones */}
+          {(() => {
+            const totalSaved = cart.reduce((sum, item) => {
+              const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+              const original = (item.originalPrice !== undefined && item.originalPrice !== null) ? item.originalPrice : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+              const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+              return sum + Math.max(0, (original - unitPrice) * item.quantity)
+            }, 0)
+
+            if (totalSaved > 0) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: 700, marginBottom: 8 }}>
+                  <div>Has ahorrado</div>
+                  <div>{formatCurrency(totalSaved)}</div>
+                </div>
+              )
+            }
+            return null
+          })()}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
             <div>Subtotal</div>

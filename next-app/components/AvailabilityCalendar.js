@@ -12,6 +12,8 @@ export default function AvailabilityCalendar({
   className = '',
   minDateOverride = null
 }) {
+  // Estado local para reflejar la fecha seleccionada inmediatamente en la UI
+  const [localSelected, setLocalSelected] = useState(selectedDate || null)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [capacityPerDay, setCapacityPerDay] = useState({})
@@ -24,6 +26,11 @@ export default function AvailabilityCalendar({
   useEffect(() => {
     setCapacityPerDay(getAvailableCapacityPerDay())
   }, [])
+
+  // Sincronizar selección local cuando la prop cambie desde afuera
+  useEffect(() => {
+    setLocalSelected(selectedDate || null)
+  }, [selectedDate])
 
   const today = new Date()
   const defaultMinSelectable = getMinSelectableDateForTransfer()
@@ -69,11 +76,13 @@ export default function AvailabilityCalendar({
 
     if (!isPast && !isWeekend && canFit) {
       // Si ya hay una fecha seleccionada distinta, pedir confirmación antes de cambiar
-      if (selectedDate && selectedDate !== dateStr) {
+      if (localSelected && localSelected !== dateStr) {
         setPendingDate(dateStr)
         setShowConfirm(true)
         return
       }
+      // actualizar selección local para que el cambio se vea de inmediato
+      setLocalSelected(dateStr)
       onDateSelect(dateStr)
     }
   }
@@ -97,7 +106,8 @@ export default function AvailabilityCalendar({
       const canFit = availableCapacity >= cartTime
       const isPast = date < minSelectable
       const isWeekend = date.getDay() === 0
-      const isSelected = selectedDate === dateStr
+  // usar la selección local para que la UI refleje el cambio inmediatamente
+  const isSelected = (localSelected || selectedDate) === dateStr
 
       let dayClass = 'calendar-day'
       let dayTitle = 'Disponible'
@@ -149,7 +159,7 @@ export default function AvailabilityCalendar({
             <div className="ac-confirm-message">Ya elegiste una fecha. ¿Querés cambiar la fecha seleccionada?</div>
             <div className="ac-confirm-actions">
               <button className="ac-btn ac-btn-cancel" onClick={() => { setShowConfirm(false); setPendingDate(null) }}>Cancelar</button>
-              <button className="ac-btn ac-btn-confirm" onClick={() => { if (pendingDate) { onDateSelect(pendingDate) }; setShowConfirm(false); setPendingDate(null) }}>Confirmar</button>
+              <button className="ac-btn ac-btn-confirm" onClick={() => { if (pendingDate) { setLocalSelected(pendingDate); onDateSelect(pendingDate) }; setShowConfirm(false); setPendingDate(null) }}>Confirmar</button>
             </div>
           </div>
         </div>
@@ -255,14 +265,16 @@ export default function AvailabilityCalendar({
           visibility: hidden;
         }
         
-        .calendar-day.available {
+        .calendar-day.available,
+        .calendar-day-grid .calendar-day.available {
           background: var(--accent-available, #059669); /* fallback verde */
           color: white;
           border: 1px solid rgba(0,0,0,0.06);
           box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
         
-        .calendar-day.available:hover {
+        .calendar-day.available:hover,
+        .calendar-day-grid .calendar-day.available:hover {
           transform: translateY(-3px) scale(1.06);
           box-shadow: 0 8px 22px rgba(59,130,246,0.18);
         }
@@ -285,7 +297,9 @@ export default function AvailabilityCalendar({
           border: 1px solid rgba(245, 158, 11, 0.2);
         }
         
-        .calendar-day.selected {
+        .calendar-day.selected,
+        .calendar-day-grid .calendar-day.selected,
+        .availability-calendar.calendar-day-grid .calendar-day.selected {
           background: var(--accent-secondary) !important;
           color: white !important;
           border: 2px solid var(--accent-secondary) !important;
@@ -293,13 +307,17 @@ export default function AvailabilityCalendar({
         }
 
         /* Si el calendario se usa desde el modal de checkout, usar verde para la fecha seleccionada */
-        .availability-calendar.checkout-calendar .calendar-day.selected {
+        .availability-calendar.checkout-calendar .calendar-day.selected,
+        .calendar-day-grid.checkout-calendar .calendar-day.selected,
+        .calendar-day-grid .availability-calendar.checkout-calendar .calendar-day.selected {
           background: #10b981 !important; /* verde */
           color: white !important;
           border: 2px solid #10b981 !important;
         }
         /* Variante mini: fecha seleccionada en azul (para mini-calendar) */
-        .availability-calendar.mini-calendar .calendar-day.selected {
+        .availability-calendar.mini-calendar .calendar-day.selected,
+        .calendar-day-grid.mini-calendar .calendar-day.selected,
+        .calendar-day-grid .availability-calendar.mini-calendar .calendar-day.selected {
           background: #3b82f6 !important; /* azul */
           color: white !important;
           border: 2px solid #3b82f6 !important;

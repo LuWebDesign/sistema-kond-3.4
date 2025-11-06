@@ -389,8 +389,10 @@
 }
 
 .paymentBadge.seña-pagada {
-  background-color: #ffc107;
-  color: white;
+  /* Usar mismos estilos que 'pendiente de confirmacion' (azul) */
+  background: rgba(9, 132, 227, 0.15);
+  border: 1px solid rgba(9, 132, 227, 0.3);
+  color: #0984e3;
 }
 
 .paymentBadge.sin-seña {
@@ -802,6 +804,19 @@
     box-shadow: 0 12px 34px rgba(0,0,0,0.28);
     transform: translateY(-2px);
   }
+
+  /* Ajustes de colores para badges en modo oscuro */
+  .statusBadge.listo {
+    background: rgba(76, 175, 80, 0.22);
+    border: 1px solid rgba(76, 175, 80, 0.35);
+    color: #4CAF50;
+  }
+
+  .statusBadge.pendiente {
+    background: rgba(9, 132, 227, 0.22);
+    border: 1px solid rgba(9, 132, 227, 0.35);
+    color: #0984e3;
+  }
 }
 
 /* También soportar el tema oscuro controlado por la app mediante data-theme="dark" */
@@ -816,6 +831,25 @@
   filter: brightness(0.80);
   box-shadow: 0 12px 34px rgba(0,0,0,0.28);
   transform: translateY(-2px);
+}
+
+/* Colores específicos para badges en tema dark (data-theme) */
+[data-theme="dark"] .statusBadge.listo {
+  background: rgba(76, 175, 80, 0.22);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: #4CAF50;
+}
+
+[data-theme="dark"] .statusBadge.pendiente {
+  background: rgba(9, 132, 227, 0.22);
+  border: 1px solid rgba(9, 132, 227, 0.35);
+  color: #0984e3;
+}
+
+[data-theme="dark"] .statusBadge.confirmado {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #b45309;
 }
 
 .actionButton:hover {
@@ -879,9 +913,10 @@
 }
 
 .statusBadge.confirmado {
-  background: rgba(33, 150, 243, 0.15);
-  border: 1px solid rgba(33, 150, 243, 0.3);
-  color: #2196F3;
+  /* Amarillo transparente para 'Confirmado' */
+  background: rgba(251, 191, 36, 0.12); /* amber-300 transparent */
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #b45309; /* amber/dark for text */
 }
 
 .statusBadge.en_produccion {
@@ -909,6 +944,12 @@
   color: #f44336;
 }
 
+  /* Aplicar mismo estilo azul para pago con seña en modo oscuro */
+  .paymentBadge.seña-pagada {
+    background: rgba(9, 132, 227, 0.22);
+    border: 1px solid rgba(9, 132, 227, 0.35);
+    color: #0984e3;
+  }
 .pagoBadge.seña_pagada {
   background: rgba(255, 193, 7, 0.15);
   border: 1px solid rgba(255, 193, 7, 0.3);
@@ -927,6 +968,12 @@
   text-align: center;
 }
 
+/* Aplicar mismo estilo azul para pago con seña en tema dark */
+[data-theme="dark"] .paymentBadge.seña-pagada {
+  background: rgba(9, 132, 227, 0.22);
+  border: 1px solid rgba(9, 132, 227, 0.35);
+  color: #0984e3;
+}
 .productosList {
   display: flex;
   flex-direction: column;
@@ -1660,25 +1707,61 @@
   }
 }
 
-/* Header Minimalista */
+/* Header Minimalista (compact) */
 .modalHeaderNew {
   background: linear-gradient(135deg, var(--accent-blue) 0%, #0652b3 100%);
   color: white;
-  padding: 24px 32px;
+  /* reduced padding to make header less tall */
+  padding: 12px 24px;
   border-radius: 16px 16px 0 0;
+}
+
+/* Dark-mode: dropdown/select text inside modal should be darker grey for readability */
+[data-theme="dark"] .modalContentNew select,
+[data-theme="dark"] .modalContentNew .selectInline {
+  color: #374151; /* slate-700 / grey-dark */
+}
+
+@media (prefers-color-scheme: dark) {
+  .modalContentNew select,
+  .modalContentNew .selectInline {
+    color: #374151;
+  }
+}
+
+/* Dark-mode: texto de los datos seleccionados dentro del modal debe ser gris claro */
+[data-theme="dark"] .modalContentNew .estadoValue,
+[data-theme="dark"] .modalContentNew .fechaValue,
+[data-theme="dark"] .modalContentNew .clienteContacto,
+[data-theme="dark"] .modalContentNew .montoInput,
+[data-theme="dark"] .modalContentNew input,
+[data-theme="dark"] .modalContentNew .selectInline {
+  color: #d1d5db; /* gris claro (slate-300) */
+}
+
+@media (prefers-color-scheme: dark) {
+  .modalContentNew .estadoValue,
+  .modalContentNew .fechaValue,
+  .modalContentNew .clienteContacto,
+  .modalContentNew .montoInput,
+  .modalContentNew input,
+  .modalContentNew .selectInline {
+    color: #d1d5db;
+  }
 }
 
 .headerTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  /* tighten spacing under header */
+  margin-bottom: 8px;
 }
 
 .pedidoId {
-  font-size: 1.75rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .closeBtnNew {
@@ -2048,8 +2131,8 @@
 .financieroSection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 12px;
   background: var(--bg-section);
   border-radius: 12px;
   border: 2px solid var(--border-color);
@@ -2065,9 +2148,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  font-size: 1rem;
-  color: var(--text-primary);
+  padding: 6px 0;
+  font-size: 0.95rem; /* ligeramente más compacto */
+  color: var(--text-secondary);
 }
 
 .finItem.descuento {
@@ -2076,9 +2159,9 @@
 }
 
 .finItem.total {
-  padding-top: 16px;
-  border-top: 2px solid var(--border-color);
-  font-size: 1.5rem;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 1.25rem; /* menos grande y más equilibrado */
   font-weight: 700;
   color: var(--accent-blue);
 }
