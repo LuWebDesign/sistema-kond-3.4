@@ -58,10 +58,12 @@ SUPABASE_SERVICE_ROLE_KEY=<tu-service-role-key>
    - Click en **"Import"**
 4. **Configurar proyecto:**
    - **Framework Preset:** Next.js (detectado automáticamente)
-   - **Root Directory:** `next-app` (⚠️ IMPORTANTE)
-   - **Build Command:** `npm run build` (default)
-   - **Output Directory:** `.next` (default)
-   - **Install Command:** `npm install` (default)
+   - **Root Directory:** `next-app` (⚠️ **MUY IMPORTANTE** - Click en "Edit" y cambiar de "./" a "next-app")
+   - **Build Command:** `npm run build` (default - dejar como está)
+   - **Output Directory:** `.next` (default - dejar como está)
+   - **Install Command:** `npm install` (default - dejar como está)
+   
+   ⚠️ **CRÍTICO:** Si no configurás el Root Directory como `next-app`, el build fallará con error "Command exited with 1".
 
 5. **Agregar Variables de Entorno:**
    - En la sección **Environment Variables**, agregar:
@@ -163,6 +165,15 @@ Si tienes un dominio propio:
 ---
 
 ## Troubleshooting Común
+
+### Error: "Command exited with 1" durante npm install
+**Causa:** Root Directory no está configurado correctamente. Vercel está intentando ejecutar comandos desde la raíz del proyecto en lugar de desde `next-app`.  
+**Solución:**
+- En Vercel Dashboard → Tu proyecto → Settings → General
+- Buscar **Root Directory**
+- Cambiar de "./" o vacío a **"next-app"** (sin comillas en la UI)
+- Guardar y re-deployar
+- **Alternativa CLI:** Al hacer `vercel`, cuando pregunte "In which directory is your code located?", responder `./next-app`
 
 ### Error: "Module not found"
 **Causa:** Imports relativos sin extensión `.js` o dependencias faltantes.  
