@@ -2,13 +2,26 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import withAdminAuth from '../components/withAdminAuth';
 import styles from '../styles/finanzas.module.css';
+import { 
+  getCategorias, 
+  createCategoria, 
+  deleteCategoria,
+  getMovimientos,
+  createMovimiento,
+  updateMovimiento,
+  deleteMovimiento,
+  getRegistrosCierre,
+  upsertRegistroCierre
+} from '../utils/supabaseFinanzas';
+import { getAllPedidosCatalogo } from '../utils/supabasePedidos';
 
 function Finanzas() {
   const [darkMode, setDarkMode] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
-  const [categorias, setCategorias] = useState(['Ventas', 'Materia Prima', 'Servicios']);
+  const [categorias, setCategorias] = useState([]);
   const [pedidosCatalogo, setPedidosCatalogo] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -84,36 +97,103 @@ function Finanzas() {
     };
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
     if (typeof window === 'undefined') return;
     
+    setIsLoading(true);
     try {
-      const movs = JSON.parse(localStorage.getItem('finanzas') || '[]');
-      const regs = JSON.parse(localStorage.getItem('registros') || '[]');
-      const cats = JSON.parse(localStorage.getItem('categoriasFin') || '["Ventas", "Materia Prima", "Servicios"]');
-      const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]');
-      
-      setMovimientos(movs);
-      setRegistros(regs);
-      setCategorias(cats);
-      setPedidosCatalogo(pedidos);
+      // Cargar movimientos desde Supabase
+      const { data: movs, error: movError } = await getMovimientos();
+      if (movError) {
+        console.error('Error loading movimientos:', movError);
+      } else {
+        // Mapear campos de snake_case a camelCase
+        const mappedMovs = (movs || []).map(m => ({
+          id: m.id,
+          tipo: m.tipo,
+          monto: m.monto,
+          fecha: m.fecha,
+          hora: m.hora,
+          categoria: m.categoria,
+          descripcion: m.descripcion,
+          metodoPago: m.metodo_pago || 'efectivo',
+          createdAt: m.created_at
+        }));
+        setMovimientos(mappedMovs);
+      }
+
+      // Cargar registros de cierre desde Supabase
+      const { data: regs, error: regError } = await getRegistrosCierre();
+      if (regError) {
+        console.error('Error loading registros:', regError);
+      } else {
+        const mappedRegs = (regs || []).map(r => ({
+          id: r.id,
+          fecha: r.fecha,
+          efectivo: r.efectivo,
+          transferencia: r.transferencia,
+          tarjeta: r.tarjeta,
+          total: r.total,
+          observaciones: r.observaciones,
+          createdAt: r.created_at
+        }));
+        setRegistros(mappedRegs);
+      }
+
+      // Cargar categorías desde Supabase
+      const { data: cats, error: catError } = await getCategorias();
+      if (catError) {
+        console.error('Error loading categorias:', catError);
+      } else {
+        // Convertir array de objetos a array de strings para compatibilidad
+        const categoryNames = (cats || []).map(c => c.nombre);
+        setCategorias(categoryNames);
+      }
+
+      // Cargar pedidos del catálogo desde Supabase
+      const { data: pedidos, error: pedError } = await getAllPedidosCatalogo();
+      if (pedError) {
+        console.error('Error loading pedidos catalogo:', pedError);
+      } else {
+        // Mapear pedidos (similar al formato anterior)
+        const mappedPedidos = (pedidos || []).map(p => ({
+          id: p.id,
+          cliente: {
+            nombre: p.cliente_nombre,
+            apellido: p.cliente_apellido,
+            telefono: p.cliente_telefono,
+            email: p.cliente_email,
+            direccion: p.cliente_direccion
+          },
+          metodoPago: p.metodo_pago,
+          estadoPago: p.estado_pago,
+          comprobanteUrl: p.comprobante_url,
+          comprobanteOmitido: p.comprobante_omitido,
+          fechaCreacion: p.fecha_creacion,
+          fechaSolicitudEntrega: p.fecha_solicitud_entrega,
+          total: p.total,
+          items: p.items || [] // Los items se cargan con JOIN en getAllPedidosCatalogo
+        }));
+        setPedidosCatalogo(mappedPedidos);
+      }
     } catch (e) {
-      console.error('Error loading finanzas:', e);
+      console.error('Error in loadData:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Ya no usamos localStorage, los datos se guardan directamente en Supabase
   const saveMovimientos = (movs) => {
-    localStorage.setItem('finanzas', JSON.stringify(movs));
     setMovimientos(movs);
   };
 
   const saveCategorias = (cats) => {
-    localStorage.setItem('categoriasFin', JSON.stringify(cats));
     setCategorias(cats);
   };
 
+  // Ya no usamos localStorage para registros
   const saveRegistros = (regs) => {
-    localStorage.setItem('registros', JSON.stringify(regs));
     setRegistros(regs);
   };
 
@@ -156,7 +236,7 @@ function Finanzas() {
   const resumen = calcularResumen();
 
   // Handlers
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const monto = parseFloat(formData.monto) || 0;
@@ -168,23 +248,37 @@ function Finanzas() {
     const hora = formData.hora || new Date().toTimeString().slice(0, 8);
 
     if (editingId) {
-      // Edit mode
-      const updated = movimientos.map(m => 
-        m.id === editingId 
-          ? { ...m, ...formData, monto, hora } 
-          : m
-      );
-      saveMovimientos(updated);
-    } else {
-      // Create mode
-      const newMov = {
-        id: Date.now() + Math.floor(Math.random() * 100000),
+      // Edit mode - actualizar en Supabase
+      const { error } = await updateMovimiento(editingId, {
         ...formData,
         monto,
-        hora,
-        registrado: false
-      };
-      saveMovimientos([...movimientos, newMov]);
+        hora
+      });
+      
+      if (error) {
+        console.error('Error updating movimiento:', error);
+        alert('Error al actualizar el movimiento');
+        return;
+      }
+      
+      // Recargar datos
+      await loadData();
+    } else {
+      // Create mode - crear en Supabase
+      const { error } = await createMovimiento({
+        ...formData,
+        monto,
+        hora
+      });
+      
+      if (error) {
+        console.error('Error creating movimiento:', error);
+        alert('Error al crear el movimiento');
+        return;
+      }
+      
+      // Recargar datos
+      await loadData();
     }
 
     resetForm();
@@ -245,9 +339,17 @@ function Finanzas() {
     setShowForm(true);
   };
 
-  const handleDeleteConfirmed = (id) => {
-    const updated = movimientos.filter(m => m.id !== id);
-    saveMovimientos(updated);
+  const handleDeleteConfirmed = async (id) => {
+    const { error } = await deleteMovimiento(id);
+    
+    if (error) {
+      console.error('Error deleting movimiento:', error);
+      alert('Error al eliminar el movimiento');
+      return;
+    }
+    
+    // Recargar datos
+    await loadData();
   };
 
   // Open confirmation modal wrappers used from the UI
@@ -273,7 +375,7 @@ function Finanzas() {
     });
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const name = newCategoryName.trim();
     if (!name) {
       alert('Ingrese el nombre de la categoría');
@@ -283,14 +385,43 @@ function Finanzas() {
       alert('La categoría ya existe');
       return;
     }
-    saveCategorias([...categorias, name]);
+    
+    const { error } = await createCategoria(name);
+    
+    if (error) {
+      console.error('Error creating categoria:', error);
+      alert('Error al crear la categoría');
+      return;
+    }
+    
+    // Recargar datos
+    await loadData();
     setNewCategoryName('');
     setShowAddCategory(false);
   };
 
-  const handleDeleteCategory = (name) => {
+  const handleDeleteCategory = async (name) => {
     if (!confirm(`¿Eliminar categoría "${name}"?`)) return;
-    saveCategorias(categorias.filter(c => c !== name));
+    
+    // Buscar el ID de la categoría por nombre
+    const { data: cats } = await getCategorias();
+    const categoria = (cats || []).find(c => c.nombre === name);
+    
+    if (!categoria) {
+      alert('Categoría no encontrada');
+      return;
+    }
+    
+    const { error } = await deleteCategoria(categoria.id);
+    
+    if (error) {
+      console.error('Error deleting categoria:', error);
+      alert('Error al eliminar la categoría');
+      return;
+    }
+    
+    // Recargar datos
+    await loadData();
   };
 
   const handleRenameCategory = (oldName) => {
@@ -318,11 +449,11 @@ function Finanzas() {
     setRegistrosDelDia(regs);
   };
 
-  const handleCerrarCaja = () => {
+  const handleCerrarCaja = async () => {
     if (!confirm(`¿Cerrar caja para ${registroFecha}?`)) return;
     
     const movsDelDia = movimientos.filter(m => 
-      m.fecha?.startsWith(registroFecha) && !m.registrado
+      m.fecha?.startsWith(registroFecha)
     );
     
     if (movsDelDia.length === 0) {
@@ -330,25 +461,40 @@ function Finanzas() {
       return;
     }
     
+    // Calcular totales por método de pago
+    const efectivo = movsDelDia
+      .filter(m => m.tipo === 'ingreso' && m.metodoPago === 'efectivo')
+      .reduce((acc, m) => acc + m.monto, 0);
+    
+    const transferencia = movsDelDia
+      .filter(m => m.tipo === 'ingreso' && m.metodoPago === 'transferencia')
+      .reduce((acc, m) => acc + m.monto, 0);
+    
+    const tarjeta = movsDelDia
+      .filter(m => m.tipo === 'ingreso' && m.metodoPago === 'tarjeta')
+      .reduce((acc, m) => acc + m.monto, 0);
+    
     const total = movsDelDia.reduce((acc, m) => 
       acc + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
     );
     
-    const newRegistro = {
-      id: Date.now() + Math.floor(Math.random() * 100000),
+    const { error } = await upsertRegistroCierre({
       fecha: registroFecha,
+      efectivo,
+      transferencia,
+      tarjeta,
       total,
-      movimientos: movsDelDia.map(m => m.id),
-      cerradoAt: new Date().toISOString()
-    };
+      observaciones: `Cierre automático - ${movsDelDia.length} movimientos`
+    });
     
-    saveRegistros([...registros, newRegistro]);
+    if (error) {
+      console.error('Error saving registro cierre:', error);
+      alert('Error al cerrar la caja');
+      return;
+    }
     
-    const updatedMovs = movimientos.map(m => 
-      m.fecha?.startsWith(registroFecha) ? { ...m, registrado: true } : m
-    );
-    saveMovimientos(updatedMovs);
-    
+    // Recargar datos
+    await loadData();
     handleVerRegistros();
   };
 

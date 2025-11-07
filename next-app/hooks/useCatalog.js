@@ -2,53 +2,107 @@
 
 import { useState, useEffect } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
+import { getProductosPublicados } from '../utils/supabaseProducts'
 
 // Hook para gestionar productos
 export function useProducts() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
     loadProducts()
   }, [])
 
-  const loadProducts = () => {
+  const loadProducts = async () => {
     if (typeof window === 'undefined') return
     
-    const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
-    const validProducts = productosBase.filter(p => 
-      p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
-    )
-    
-    // Enriquecer productos con información de promociones (si las hay)
-    const enriched = validProducts.map(p => {
-      try {
-        const promo = applyPromotionsToProduct(p)
-        return {
-          ...p,
-          promoResult: promo,
-          precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precioUnitario,
-          hasPromotion: !!(promo && promo.hasPromotion),
-          promotionBadges: promo && promo.badges ? promo.badges : []
-        }
-      } catch (e) {
-        // Si algo falla con el motor de promociones, devolver el producto original
-        console.warn('Error aplicando promociones al producto', p.id, e)
-        return p
+    setIsLoading(true)
+    try {
+      // Obtener productos publicados desde Supabase
+      const { data: productosBase, error } = await getProductosPublicados()
+      
+      if (error) {
+        console.error('Error loading published products:', error)
+        setProducts([])
+        setCategories([])
+        setIsLoading(false)
+        return
       }
-    })
+      
+      // Mapear campos de snake_case a camelCase
+      const mappedProducts = (productosBase || []).map(p => {
+        // Calcular costo material
+        const unidadesPorPlaca = p.unidades_por_placa || 1
+        const costoPlaca = p.costo_placa || 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          categoria: p.categoria,
+          tipo: p.tipo,
+          medidas: p.medidas,
+          tiempoUnitario: p.tiempo_unitario || '00:00:30',
+          active: p.active !== undefined ? p.active : true,
+          publicado: p.publicado !== undefined ? p.publicado : false,
+          hiddenInProductos: p.hidden_in_productos || false,
+          unidadesPorPlaca: unidadesPorPlaca,
+          usoPlacas: p.uso_placas || 0,
+          costoPlaca: costoPlaca,
+          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+          materialId: p.material_id || '',
+          material: p.material || '',
+          margenMaterial: p.margen_material || 0,
+          precioUnitario: p.precio_unitario || 0,
+          precioPromos: p.precio_promos || 0,
+          unidades: p.unidades || 1,
+          ensamble: p.ensamble || 'Sin ensamble',
+          imagen: p.imagen_url || '',
+          fechaCreacion: p.created_at || new Date().toISOString()
+        }
+      })
+      
+      const validProducts = mappedProducts.filter(p => 
+        p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
+      )
+      
+      // Enriquecer productos con información de promociones (si las hay)
+      const enriched = validProducts.map(p => {
+        try {
+          const promo = applyPromotionsToProduct(p)
+          return {
+            ...p,
+            promoResult: promo,
+            precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precioUnitario,
+            hasPromotion: !!(promo && promo.hasPromotion),
+            promotionBadges: promo && promo.badges ? promo.badges : []
+          }
+        } catch (e) {
+          // Si algo falla con el motor de promociones, devolver el producto original
+          console.warn('Error aplicando promociones al producto', p.id, e)
+          return p
+        }
+      })
 
-    setProducts(enriched)
-    
-    // Extraer categorías únicas
-    const uniqueCategories = [...new Set(validProducts
-      .map(p => p.categoria)
-      .filter(cat => cat && cat.trim() !== ''))]
-    
-    setCategories(uniqueCategories)
+      setProducts(enriched)
+      
+      // Extraer categorías únicas
+      const uniqueCategories = [...new Set(validProducts
+        .map(p => p.categoria)
+        .filter(cat => cat && cat.trim() !== ''))]
+      
+      setCategories(uniqueCategories)
+    } catch (error) {
+      console.error('Error in loadProducts:', error)
+      setProducts([])
+      setCategories([])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  return { products, categories, loadProducts }
+  return { products, categories, isLoading, reloadProducts: loadProducts }
 }
 
 // Hook para gestionar el carrito
