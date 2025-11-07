@@ -55,11 +55,17 @@ export function useProducts() {
       
       // DEBUG: Verificar datos recibidos
       if (productosBase && productosBase.length > 0) {
-        console.log('🔍 Primer producto recibido:', {
+        console.log('✅ 🔍 DATOS DESDE loadProductosPublicados():')
+        console.log('Total productos:', productosBase.length)
+        console.log('Primer producto COMPLETO:', JSON.stringify({
+          id: productosBase[0].id,
           nombre: productosBase[0].nombre,
           precio: productosBase[0].precioUnitario,
-          imagen: productosBase[0].imagen ? productosBase[0].imagen.substring(0, 50) + '...' : 'NO TIENE'
-        })
+          imagen: productosBase[0].imagen,
+          tipo: productosBase[0].tipo,
+          active: productosBase[0].active,
+          publicado: productosBase[0].publicado
+        }, null, 2))
       }
       
       // Filtrar solo productos activos de tipo Venta o Stock
