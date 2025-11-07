@@ -2,9 +2,56 @@ import PublicLayout from '../components/PublicLayout'
 import UserOrderCard from '../components/UserOrderCard'
 import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
+import { getPedidosByEmail } from '../utils/supabasePedidos'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+
+// Mapea pedido de Supabase (snake_case) a formato frontend (camelCase)
+const mapSupabasePedidoToFrontend = (pedidoDB) => {
+  if (!pedidoDB) return null
+  
+  return {
+    id: pedidoDB.id,
+    cliente: {
+      nombre: pedidoDB.cliente_nombre || '',
+      apellido: pedidoDB.cliente_apellido || '',
+      telefono: pedidoDB.cliente_telefono || '',
+      email: pedidoDB.cliente_email || '',
+      direccion: pedidoDB.cliente_direccion || ''
+    },
+    items: (pedidoDB.items || []).map(item => ({
+      idProducto: item.producto_id,
+      name: item.producto_nombre,
+      price: item.producto_precio,
+      quantity: item.cantidad,
+      measures: item.medidas
+    })),
+    productos: (pedidoDB.items || []).map(item => ({
+      idProducto: item.producto_id,
+      name: item.producto_nombre,
+      price: item.producto_precio,
+      quantity: item.cantidad,
+      measures: item.medidas
+    })),
+    metodoPago: pedidoDB.metodo_pago,
+    estadoPago: pedidoDB.estado_pago || 'sin_seña',
+    comprobante: pedidoDB.comprobante_url,
+    _comprobanteOmitted: pedidoDB.comprobante_omitido || false,
+    fechaCreacion: pedidoDB.fecha_creacion,
+    fechaSolicitudEntrega: pedidoDB.fecha_solicitud_entrega,
+    fechaConfirmadaEntrega: pedidoDB.fecha_confirmada_entrega,
+    fechaProduccion: pedidoDB.fecha_produccion,
+    fechaProduccionCalendario: pedidoDB.fecha_produccion_calendario,
+    fechaEntrega: pedidoDB.fecha_entrega,
+    estado: pedidoDB.estado || 'pendiente',
+    total: pedidoDB.total || 0,
+    montoRecibido: pedidoDB.monto_recibido || 0,
+    asignadoAlCalendario: pedidoDB.asignado_al_calendario || false,
+    notas: pedidoDB.notas || '',
+    notasAdmin: pedidoDB.notas_admin || ''
+  }
+}
 
 export default function MisPedidos() {
   const router = useRouter()
@@ -17,29 +64,57 @@ export default function MisPedidos() {
   const itemsPerPage = 6
 
   // Cargar pedidos del usuario actual y suscribirse a actualizaciones globales
-  const loadUserOrders = () => {
+  const loadUserOrders = async () => {
     try {
-      const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
       const user = getCurrentUser()
-
       setCurrentUserState(user)
-      setIsLoading(false)
 
       if (user && user.email) {
-        // Filtrar pedidos del usuario actual
-        const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
-          pedido.cliente && pedido.cliente.email === user.email
-        )
-
-        // Ordenar por fecha (más recientes primero)
-        userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-
-        setUserOrders(userOrdersFiltered)
+        console.log('📦 Cargando pedidos del usuario:', user.email)
+        
+        // Intentar cargar desde Supabase primero
+        const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
+        
+        if (!error && pedidosDB && pedidosDB.length > 0) {
+          console.log('✅ Pedidos del usuario cargados desde Supabase:', pedidosDB.length)
+          // Mapear de snake_case a camelCase
+          const pedidosMapped = pedidosDB.map(mapSupabasePedidoToFrontend)
+          // Ordenar por fecha (más recientes primero)
+          pedidosMapped.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+          setUserOrders(pedidosMapped)
+        } else {
+          console.log('⚠️ No hay pedidos en Supabase o error, intentando localStorage...')
+          // Fallback a localStorage
+          const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
+          const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
+            pedido.cliente && pedido.cliente.email === user.email
+          )
+          userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+          setUserOrders(userOrdersFiltered)
+          console.log('📂 Pedidos cargados desde localStorage:', userOrdersFiltered.length)
+        }
+      } else {
+        setUserOrders([])
       }
+      
+      setIsLoading(false)
     } catch (error) {
-      console.error('Error cargando pedidos:', error)
+      console.error('❌ Error cargando pedidos:', error)
       setCurrentUserState(null)
       setIsLoading(false)
+      // Fallback final a localStorage
+      try {
+        const user = getCurrentUser()
+        if (user && user.email) {
+          const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
+          const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
+            pedido.cliente && pedido.cliente.email === user.email
+          )
+          setUserOrders(userOrdersFiltered)
+        }
+      } catch (fallbackError) {
+        console.error('❌ Error en fallback:', fallbackError)
+      }
       createToast('Error al cargar los pedidos', 'error')
     }
   }

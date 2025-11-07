@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
+import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
 const formatInputNumber = (n) => {
@@ -22,6 +23,52 @@ const parseInputNumber = (str) => {
   const cleaned = String(str).replace(/[^0-9-]/g, '')
   if (cleaned === '' || cleaned === '-') return 0
   return Number(cleaned)
+}
+
+// Mapea pedido de Supabase (snake_case) a formato frontend (camelCase)
+const mapSupabasePedidoToFrontend = (pedidoDB) => {
+  if (!pedidoDB) return null
+  
+  return {
+    id: pedidoDB.id,
+    cliente: {
+      nombre: pedidoDB.cliente_nombre || '',
+      apellido: pedidoDB.cliente_apellido || '',
+      telefono: pedidoDB.cliente_telefono || '',
+      email: pedidoDB.cliente_email || '',
+      direccion: pedidoDB.cliente_direccion || ''
+    },
+    items: (pedidoDB.items || []).map(item => ({
+      idProducto: item.producto_id,
+      name: item.producto_nombre,
+      price: item.producto_precio,
+      quantity: item.cantidad,
+      measures: item.medidas
+    })),
+    productos: (pedidoDB.items || []).map(item => ({
+      idProducto: item.producto_id,
+      name: item.producto_nombre,
+      price: item.producto_precio,
+      quantity: item.cantidad,
+      measures: item.medidas
+    })),
+    metodoPago: pedidoDB.metodo_pago,
+    estadoPago: pedidoDB.estado_pago || 'sin_seña',
+    comprobante: pedidoDB.comprobante_url,
+    _comprobanteOmitted: pedidoDB.comprobante_omitido || false,
+    fechaCreacion: pedidoDB.fecha_creacion,
+    fechaSolicitudEntrega: pedidoDB.fecha_solicitud_entrega,
+    fechaConfirmadaEntrega: pedidoDB.fecha_confirmada_entrega,
+    fechaProduccion: pedidoDB.fecha_produccion,
+    fechaProduccionCalendario: pedidoDB.fecha_produccion_calendario,
+    fechaEntrega: pedidoDB.fecha_entrega,
+    estado: pedidoDB.estado || 'pendiente',
+    total: pedidoDB.total || 0,
+    montoRecibido: pedidoDB.monto_recibido || 0,
+    asignadoAlCalendario: pedidoDB.asignado_al_calendario || false,
+    notas: pedidoDB.notas || '',
+    notasAdmin: pedidoDB.notas_admin || ''
+  }
 }
 
 function OrdersStats({ orders, filteredOrders }) {
@@ -230,7 +277,7 @@ function PedidosCatalogo() {
     totalEntregado: 0
   })
 
-  // Cargar datos desde localStorage
+  // Cargar datos desde Supabase (y fallback a localStorage)
   useEffect(() => {
     loadData()
   }, [])
@@ -240,18 +287,45 @@ function PedidosCatalogo() {
     calculateStats()
   }, [pedidosCatalogo])
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
+      console.log('📦 Cargando pedidos catálogo...')
+      
+      // Intentar cargar desde Supabase primero
+      const { data: pedidosDB, error } = await getAllPedidosCatalogo()
+      
+      if (!error && pedidosDB && pedidosDB.length > 0) {
+        console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
+        // Mapear de snake_case a camelCase
+        const pedidosMapped = pedidosDB.map(mapSupabasePedidoToFrontend)
+        // Normalizar pedidos
+        const normalized = pedidosMapped.map(normalizePedido)
+        setPedidosCatalogo(normalized)
+      } else {
+        console.log('⚠️ No hay pedidos en Supabase o error, intentando localStorage...')
+        // Fallback a localStorage
+        const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        const normalized = (pedidos || []).map(normalizePedido)
+        setPedidosCatalogo(normalized)
+        console.log('📂 Pedidos cargados desde localStorage:', normalized.length)
+      }
+      
+      // Cargar productos y materiales (aún desde localStorage)
+      const productos = JSON.parse(localStorage.getItem('productosBase')) || []
+      const mats = JSON.parse(localStorage.getItem('materiales')) || []
+      setProductosBase(productos)
+      setMateriales(mats)
+      
+    } catch (error) {
+      console.error('❌ Error cargando datos:', error)
+      // Fallback final a localStorage
       const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
       const productos = JSON.parse(localStorage.getItem('productosBase')) || []
       const mats = JSON.parse(localStorage.getItem('materiales')) || []
-      // Normalizar pedidos al cargarlos para evitar inconsistencias entre legacy y Next
       const normalized = (pedidos || []).map(normalizePedido)
       setPedidosCatalogo(normalized)
       setProductosBase(productos)
       setMateriales(mats)
-    } catch (error) {
-      console.error('Error cargando datos:', error)
     }
   }
 
