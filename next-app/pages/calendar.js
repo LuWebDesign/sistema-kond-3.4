@@ -4,6 +4,7 @@ import PedidosModal from '../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
+import { loadAllProductos } from '../utils/productosUtils'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
 const timeToMinutes = (timeStr = '00:00:00') => {
