@@ -28,62 +28,55 @@ function fmtRange(a, b) {
 }
 
 export default function PromoCard({ promo, products, onEdit, onToggle, onDelete, isLight = false }) {
-  const typeConfig = PROMO_TYPES[promo.type] || {};
-  const productCount = (promo.productIds || []).length;
-  const productNames = (promo.productIds || [])
-    .map(id => {
-      const prod = products.find(p => p.id === id);
-      return prod ? prod.nombre : `#${id}`;
-    })
-    .slice(0, 3);
-
-  let configDesc = '';
-  if (promo.config) {
-    const cfg = promo.config;
-    switch (promo.type) {
-      case 'percentage_discount':
-        configDesc = `${cfg.percentage || 0}% de descuento`;
-        break;
-      case 'fixed_price':
-        configDesc = `Precio fijo: $${(cfg.newPrice || 0).toLocaleString()}`;
-        break;
-      case 'buy_x_get_y':
-        configDesc = `Lleva ${cfg.buyQuantity || 1}, paga ${cfg.payQuantity || 1}`;
-        break;
-      case 'free_shipping':
-        configDesc = `Envío gratis desde $${(cfg.minAmount || 0).toLocaleString()}`;
-        break;
-      case 'badge_only':
-        configDesc = 'Solo insignia decorativa';
-        break;
-    }
+  const typeConfig = PROMO_TYPES[promo.tipo] || {};
+  
+  // Determinar qué productos aplican según aplicaA
+  let aplicaDesc = '';
+  if (promo.aplicaA === 'todos') {
+    aplicaDesc = 'Todos los productos';
+  } else if (promo.aplicaA === 'categoria') {
+    aplicaDesc = `Categoría: ${promo.categoria || 'No especificada'}`;
+  } else if (promo.aplicaA === 'producto') {
+    const prod = products.find(p => p.id === promo.productoId);
+    aplicaDesc = prod ? `Producto: ${prod.nombre}` : `Producto #${promo.productoId}`;
   }
 
-  let badgeTextColor = promo.textColor || '#ffffff';
+  let configDesc = '';
+  if (promo.descuentoPorcentaje) {
+    configDesc = `${promo.descuentoPorcentaje}% de descuento`;
+  } else if (promo.precioEspecial) {
+    configDesc = `Precio especial: $${promo.precioEspecial.toLocaleString()}`;
+  } else if (promo.descuentoMonto) {
+    configDesc = `Monto mínimo: $${promo.descuentoMonto.toLocaleString()}`;
+  } else if (promo.tipo === 'badge_only') {
+    configDesc = 'Solo insignia decorativa';
+  }
+
+  let badgeTextColor = promo.badgeTextColor || '#ffffff';
   if (badgeTextColor === 'auto') {
-    badgeTextColor = getContrastColor(promo.color || '#3b82f6');
+    badgeTextColor = getContrastColor(promo.badgeColor || '#3b82f6');
   }
 
   return (
     <article className={`${styles.promoCard} ${isLight ? styles.promoCardLight : ''}`}>
       <div className={`${styles.promoHeader} ${isLight ? styles.promoHeaderLight : ''}`}>
-        <span className={styles.promoType}>{typeConfig.label || promo.type}</span>
-        <span className={`${styles.promoStatus} ${promo.active ? styles.active : styles.inactive}`}>
+        <span className={styles.promoType}>{typeConfig.label || promo.tipo}</span>
+        <span className={`${styles.promoStatus} ${promo.activo ? styles.active : styles.inactive}`}>
           <span className={styles.statusDot}></span>
-          {promo.active ? 'Activa' : 'Inactiva'}
+          {promo.activo ? 'Activa' : 'Inactiva'}
         </span>
       </div>
 
       <div className={styles.promoTitleContainer}>
-        {promo.badge && (
+        {promo.badgeTexto && (
           <span
             className={styles.promoBadge}
-            style={{ background: promo.color || '#3b82f6', color: badgeTextColor }}
+            style={{ background: promo.badgeColor || '#3b82f6', color: badgeTextColor }}
           >
-            {promo.badge}
+            {promo.badgeTexto}
           </span>
         )}
-        <h3 className={styles.promoTitle}>{promo.title || 'Promoción sin título'}</h3>
+        <h3 className={styles.promoTitle}>{promo.nombre || 'Promoción sin nombre'}</h3>
       </div>
 
       {promo.summary && <p className={styles.promoSummary}>{promo.summary}</p>}
@@ -92,17 +85,16 @@ export default function PromoCard({ promo, products, onEdit, onToggle, onDelete,
 
       <div className={styles.promoDetails}>
         <div className={styles.promoDetail}>
+          <span className={styles.detailIcon}>�</span>
+          <span className={styles.detailText}>{configDesc || 'Sin configuración'}</span>
+        </div>
+        <div className={styles.promoDetail}>
           <span className={styles.detailIcon}>📅</span>
-          <span className={styles.detailText}>{fmtRange(promo.start, promo.end)}</span>
+          <span className={styles.detailText}>{fmtRange(promo.fechaInicio, promo.fechaFin)}</span>
         </div>
         <div className={styles.promoDetail}>
           <span className={styles.detailIcon}>🎯</span>
-          <span className={styles.detailText}>
-            {productCount} producto{productCount !== 1 ? 's' : ''}
-            {productNames.length > 0
-              ? `: ${productNames.join(', ')}${productCount > 3 ? '...' : ''}`
-              : ''}
-          </span>
+          <span className={styles.detailText}>{aplicaDesc}</span>
         </div>
         {promo.tags && promo.tags.length > 0 && (
           <div className={styles.promoDetail}>
@@ -118,11 +110,11 @@ export default function PromoCard({ promo, products, onEdit, onToggle, onDelete,
           Editar
         </button>
         <button
-          className={`${styles.cardBtn} ${styles.btnToggle} ${promo.active ? styles.deactivate : styles.activate}`}
+          className={`${styles.cardBtn} ${styles.btnToggle} ${promo.activo ? styles.deactivate : styles.activate}`}
           onClick={onToggle}
         >
-          <span className={styles.btnIcon}>{promo.active ? '⏸️' : '▶️'}</span>
-          {promo.active ? 'Desactivar' : 'Activar'}
+          <span className={styles.btnIcon}>{promo.activo ? '⏸️' : '▶️'}</span>
+          {promo.activo ? 'Desactivar' : 'Activar'}
         </button>
         <button className={`${styles.cardBtn} ${styles.btnDelete}`} onClick={onDelete}>
           <span className={styles.btnIcon}>🗑️</span>

@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
 import { getProductosPublicados } from '../utils/supabaseProducts'
+import { getPromocionesActivas } from '../utils/supabaseMarketing'
 
 // Hook para gestionar productos
 export function useProducts() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [promociones, setPromociones] = useState([])
   
   useEffect(() => {
     loadProducts()
@@ -19,6 +21,34 @@ export function useProducts() {
     
     setIsLoading(true)
     try {
+      // Cargar promociones activas desde Supabase
+      const { data: promosData, error: promosError } = await getPromocionesActivas()
+      if (promosError) {
+        console.error('Error loading promociones:', promosError)
+      }
+      
+      const promocionesActivas = (promosData || []).map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        tipo: p.tipo,
+        valor: p.valor,
+        aplicaA: p.aplica_a,
+        categoria: p.categoria,
+        productoId: p.producto_id,
+        fechaInicio: p.fecha_inicio,
+        fechaFin: p.fecha_fin,
+        activo: p.activo,
+        prioridad: p.prioridad,
+        badgeTexto: p.badge_texto,
+        badgeColor: p.badge_color,
+        badgeTextColor: p.badge_text_color,
+        descuentoPorcentaje: p.descuento_porcentaje,
+        descuentoMonto: p.descuento_monto,
+        precioEspecial: p.precio_especial
+      }))
+      
+      setPromociones(promocionesActivas)
+      
       // Obtener productos publicados desde Supabase
       const { data: productosBase, error } = await getProductosPublicados()
       
@@ -67,10 +97,10 @@ export function useProducts() {
         p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
       )
       
-      // Enriquecer productos con información de promociones (si las hay)
+      // Enriquecer productos con información de promociones
       const enriched = validProducts.map(p => {
         try {
-          const promo = applyPromotionsToProduct(p)
+          const promo = applyPromotionsToProduct(p, promocionesActivas)
           return {
             ...p,
             promoResult: promo,

@@ -18,36 +18,44 @@ export function getContrastColor(hexColor) {
   return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
-// Cargar promociones activas
-export function getActivePromotions() {
-  if (typeof window === 'undefined') return [];
-  
+// Filtrar promociones activas según fecha actual
+export function getActivePromotions(allPromos = []) {
   try {
-    const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
     
     return allPromos.filter(promo => {
-      if (!promo.active) return false;
+      if (!promo.activo) return false;
       
       // Validar rango de fechas si están definidas
-      if (promo.start && promo.start > today) return false;
-      if (promo.end && promo.end < today) return false;
+      if (promo.fechaInicio && promo.fechaInicio > today) return false;
+      if (promo.fechaFin && promo.fechaFin < today) return false;
       
       return true;
     });
   } catch (e) {
-    console.warn('Error cargando promociones:', e);
+    console.warn('Error filtrando promociones:', e);
     return [];
   }
 }
 
 // Aplicar promociones a un producto específico
-export function applyPromotionsToProduct(product) {
-  const activePromos = getActivePromotions();
-  const applicablePromos = activePromos.filter(promo => 
-    promo.productIds && promo.productIds.includes(product.id)
-  );
+export function applyPromotionsToProduct(product, allPromos = []) {
+  const activePromos = getActivePromotions(allPromos);
+  
+  // Filtrar promociones que aplican a este producto
+  const applicablePromos = activePromos.filter(promo => {
+    // Si aplica a todos los productos
+    if (promo.aplicaA === 'todos') return true;
+    
+    // Si aplica a una categoría específica
+    if (promo.aplicaA === 'categoria' && promo.categoria === product.categoria) return true;
+    
+    // Si aplica a un producto específico
+    if (promo.aplicaA === 'producto' && promo.productoId === product.id) return true;
+    
+    return false;
+  });
 
   let result = {
     originalPrice: product.precioUnitario || 0,
@@ -56,9 +64,8 @@ export function applyPromotionsToProduct(product) {
     promotions: [],
     badge: null,
     badgeColor: null,
+    badgeTextColor: null,
     badges: [], // Array de todos los badges aplicables
-    discountBadgeColor: '#10b981', // Color por defecto del badge de descuento
-    discountBadgeTextColor: 'auto' // Color de texto por defecto
   };
 
   if (applicablePromos.length === 0) {
@@ -68,61 +75,42 @@ export function applyPromotionsToProduct(product) {
   result.hasPromotion = true;
   result.promotions = applicablePromos;
   
-  // Aplicar TODAS las promociones de tipo descuento de forma acumulativa
+  // Aplicar promociones de forma prioritaria (mayor prioridad primero)
+  const sortedPromos = [...applicablePromos].sort((a, b) => (b.prioridad || 0) - (a.prioridad || 0));
+  
   let currentPrice = result.originalPrice;
   
-  applicablePromos.forEach(promo => {
+  sortedPromos.forEach(promo => {
     // Recopilar badges
-    if (promo.badge) {
+    if (promo.badgeTexto) {
       // Calcular color de texto si es 'auto'
-      let textColor = promo.textColor || 'auto';
+      let textColor = promo.badgeTextColor || 'auto';
       if (textColor === 'auto') {
-        textColor = getContrastColor(promo.color || '#3b82f6');
+        textColor = getContrastColor(promo.badgeColor || '#3b82f6');
       }
       
       result.badges.push({
-        text: promo.badge,
-        color: promo.color || '#3b82f6',
+        text: promo.badgeTexto,
+        color: promo.badgeColor || '#3b82f6',
         textColor: textColor
       });
-      // El primer badge se usa como principal
+      
+      // El primer badge (mayor prioridad) se usa como principal
       if (!result.badge) {
-        result.badge = promo.badge;
-        result.badgeColor = promo.color || '#3b82f6';
+        result.badge = promo.badgeTexto;
+        result.badgeColor = promo.badgeColor || '#3b82f6';
         result.badgeTextColor = textColor;
       }
     }
-    
-    // Tomar los colores del badge de descuento de la primera promoción que los defina
-    if (promo.config?.discountBadgeColor && result.discountBadgeColor === '#10b981') {
-      result.discountBadgeColor = promo.config.discountBadgeColor;
-    }
-    if (promo.config?.discountBadgeTextColor && result.discountBadgeTextColor === 'auto') {
-      result.discountBadgeTextColor = promo.config.discountBadgeTextColor;
-    }
 
-    // Aplicar descuentos acumulativos (excepto fixed_price y buy_x_get_y)
-    switch (promo.type) {
-      case 'percentage_discount':
-        const percentage = promo.config?.percentage || 0;
-        currentPrice = currentPrice * (1 - percentage / 100);
-        break;
-        
-      case 'fixed_price':
-        // Precio fijo: usar el más bajo encontrado
-        const newPrice = promo.config?.newPrice || 0;
-        if (newPrice > 0 && newPrice < currentPrice) {
-          currentPrice = newPrice;
-        }
-        break;
-        
-      case 'badge_only':
-        // Solo badge, precio no cambia
-        break;
-        
-      case 'buy_x_get_y':
-        // Este tipo se maneja mejor en el carrito
-        break;
+    // Aplicar descuentos según tipo
+    if (promo.tipo === 'percentage_discount' && promo.descuentoPorcentaje) {
+      currentPrice = currentPrice * (1 - promo.descuentoPorcentaje / 100);
+    } else if (promo.tipo === 'fixed_price' && promo.precioEspecial) {
+      // Precio fijo: usar el más bajo encontrado
+      currentPrice = Math.min(currentPrice, promo.precioEspecial);
+    } else if (promo.tipo === 'badge_only') {
+      // Solo badge, no afecta el precio
     }
   });
 
@@ -132,8 +120,8 @@ export function applyPromotionsToProduct(product) {
 }
 
 // Obtener badge de promoción para un producto
-export function getPromotionBadge(product) {
-  const promoResult = applyPromotionsToProduct(product);
+export function getPromotionBadge(product, allPromos = []) {
+  const promoResult = applyPromotionsToProduct(product, allPromos);
   return promoResult.badge ? {
     text: promoResult.badge,
     color: promoResult.badgeColor,
@@ -142,8 +130,8 @@ export function getPromotionBadge(product) {
 }
 
 // Calcular precio con descuento
-export function calculateDiscountedPrice(product, quantity = 1) {
-  const promoResult = applyPromotionsToProduct(product);
+export function calculateDiscountedPrice(product, quantity = 1, allPromos = []) {
+  const promoResult = applyPromotionsToProduct(product, allPromos);
   const activePromos = promoResult.promotions;
   
   if (activePromos.length === 0) {
