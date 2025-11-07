@@ -460,6 +460,14 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
     setQuantity(1)
   }
 
+  // Debug: log product data
+  console.log('🎨 Rendering product:', {
+    nombre: product.nombre,
+    precio: product.precioUnitario,
+    imagen: product.imagen ? product.imagen.substring(0, 50) + '...' : 'NO TIENE',
+    hasPromotion: product.hasPromotion
+  })
+
   return (
     <div className="product-card" style={{
       background: 'var(--bg-card)',
