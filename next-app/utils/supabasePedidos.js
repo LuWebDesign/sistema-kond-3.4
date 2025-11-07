@@ -6,7 +6,60 @@
 import supabase from './supabaseClient';
 
 /**
+ * Obtener tombstones locales (IDs de pedidos eliminados localmente)
+ */
+function getTombstones() {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Agregar un pedido al tombstone local
+ */
+export function addTombstone(pedidoId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const tomb = getTombstones();
+    if (!tomb.includes(pedidoId)) {
+      tomb.push(pedidoId);
+      localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(tomb));
+    }
+  } catch (e) {
+    console.warn('No se pudo guardar tombstone local:', e);
+  }
+}
+
+/**
+ * Remover un pedido del tombstone local
+ */
+export function removeTombstone(pedidoId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const tomb = getTombstones();
+    const filtered = tomb.filter(id => id !== pedidoId);
+    localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(filtered));
+  } catch (e) {
+    console.warn('No se pudo limpiar tombstone local:', e);
+  }
+}
+
+/**
+ * Filtrar pedidos aplicando tombstones locales
+ */
+function applyTombstoneFilter(pedidos) {
+  if (!pedidos || !Array.isArray(pedidos)) return pedidos;
+  const tombstones = getTombstones();
+  if (tombstones.length === 0) return pedidos;
+  return pedidos.filter(p => !tombstones.includes(p.id));
+}
+
+/**
  * Obtener todos los pedidos catálogo (solo admins)
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getAllPedidosCatalogo() {
   try {
@@ -19,7 +72,11 @@ export async function getAllPedidosCatalogo() {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('Error al obtener pedidos catálogo:', error);
     return { data: null, error: error.message };
@@ -28,9 +85,16 @@ export async function getAllPedidosCatalogo() {
 
 /**
  * Obtener un pedido catálogo por ID
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidoCatalogoById(id) {
   try {
+    // Verificar si está en tombstones antes de consultar
+    const tombstones = getTombstones();
+    if (tombstones.includes(id)) {
+      return { data: null, error: 'Pedido eliminado localmente' };
+    }
+
     const { data, error } = await supabase
       .from('pedidos_catalogo')
       .select(`
@@ -227,6 +291,7 @@ export async function getComprobanteSignedUrl(filePath) {
 
 /**
  * Filtrar pedidos por estado de pago
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByEstadoPago(estadoPago) {
   try {
@@ -240,7 +305,11 @@ export async function getPedidosByEstadoPago(estadoPago) {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('Error al filtrar pedidos:', error);
     return { data: null, error: error.message };
@@ -249,6 +318,7 @@ export async function getPedidosByEstadoPago(estadoPago) {
 
 /**
  * Filtrar pedidos por método de pago
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByMetodoPago(metodoPago) {
   try {
@@ -262,7 +332,11 @@ export async function getPedidosByMetodoPago(metodoPago) {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('Error al filtrar pedidos por método:', error);
     return { data: null, error: error.message };
@@ -271,6 +345,7 @@ export async function getPedidosByMetodoPago(metodoPago) {
 
 /**
  * Buscar pedidos por cliente (nombre, teléfono o email)
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function searchPedidosByCliente(searchTerm) {
   try {
@@ -284,7 +359,11 @@ export async function searchPedidosByCliente(searchTerm) {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('Error al buscar pedidos:', error);
     return { data: null, error: error.message };
@@ -293,6 +372,7 @@ export async function searchPedidosByCliente(searchTerm) {
 
 /**
  * Obtener pedidos de un cliente específico por email (vista pública)
+ * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByEmail(email) {
   try {
@@ -306,8 +386,12 @@ export async function getPedidosByEmail(email) {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    console.log('✅ Pedidos del usuario cargados desde Supabase:', data?.length || 0);
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    console.log('✅ Pedidos del usuario cargados desde Supabase:', filtered?.length || 0);
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('❌ Error al obtener pedidos del usuario:', error);
     return { data: null, error: error.message };

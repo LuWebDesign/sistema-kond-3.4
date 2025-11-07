@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo, deletePedidoCatalogo } from '../utils/supabasePedidos'
+import { getAllPedidosCatalogo, deletePedidoCatalogo, addTombstone, removeTombstone } from '../utils/supabasePedidos'
 import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
@@ -311,24 +311,14 @@ function PedidosCatalogo() {
       // Cargar productos usando utilidad híbrida (Supabase + fallback a localStorage)
       const productosBase = await loadAllProductos()
       
-      // Cargar pedidos desde Supabase
+      // Cargar pedidos desde Supabase (ya incluye filtro de tombstones automático)
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()
       
-      if (!error && pedidosDB && pedidosDB.length > 0) {
+      if (!error && pedidosDB && pedidosDB.length >= 0) {
         console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
 
-        // Aplicar filtro local de 'tombstones' para pedidos eliminados localmente
-        let tombstones = []
-        try {
-          tombstones = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
-        } catch (e) {
-          tombstones = []
-        }
-
-        const serverPedidos = (pedidosDB || []).filter(p => !tombstones.includes(p.id))
-
         // Mapear de snake_case a camelCase con productos para imágenes
-        const pedidosMapped = serverPedidos.map(pedidoDB => 
+        const pedidosMapped = (pedidosDB || []).map(pedidoDB => 
           mapSupabasePedidoToFrontend(pedidoDB, productosBase)
         )
         // Normalizar pedidos
@@ -1271,15 +1261,7 @@ function PedidosCatalogo() {
     (async () => {
       try {
         // Mark tombstone locally so reloads don't show the pedido until server confirms
-        try {
-          const tomb = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
-          if (!tomb.includes(selectedPedido.id)) {
-            tomb.push(selectedPedido.id)
-            localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(tomb))
-          }
-        } catch (e) {
-          console.warn('No se pudo guardar tombstone local:', e)
-        }
+        addTombstone(selectedPedido.id)
 
         const { error } = await deletePedidoCatalogo(selectedPedido.id)
         if (error) {
@@ -1287,11 +1269,7 @@ function PedidosCatalogo() {
           createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
         } else {
           // Si la eliminación en servidor fue exitosa, limpiar tombstone
-          try {
-            const tomb = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
-            const filtered = tomb.filter(id => id !== selectedPedido.id)
-            localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(filtered))
-          } catch (e) {}
+          removeTombstone(selectedPedido.id)
           createToast('Pedido eliminado correctamente.', 'success')
         }
       } catch (err) {
