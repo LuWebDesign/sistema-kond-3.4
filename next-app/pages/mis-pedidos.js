@@ -3,12 +3,14 @@ import UserOrderCard from '../components/UserOrderCard'
 import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
 import { getPedidosByEmail } from '../utils/supabasePedidos'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 
 // Mapea pedido de Supabase (snake_case) a formato frontend (camelCase)
-const mapSupabasePedidoToFrontend = (pedidoDB) => {
+// productosBase se pasa como parámetro para incluir imágenes
+const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   if (!pedidoDB) return null
   
   return {
@@ -20,20 +22,36 @@ const mapSupabasePedidoToFrontend = (pedidoDB) => {
       email: pedidoDB.cliente_email || '',
       direccion: pedidoDB.cliente_direccion || ''
     },
-    items: (pedidoDB.items || []).map(item => ({
-      idProducto: item.producto_id,
-      name: item.producto_nombre,
-      price: item.producto_precio,
-      quantity: item.cantidad,
-      measures: item.medidas
-    })),
-    productos: (pedidoDB.items || []).map(item => ({
-      idProducto: item.producto_id,
-      name: item.producto_nombre,
-      price: item.producto_precio,
-      quantity: item.cantidad,
-      measures: item.medidas
-    })),
+    items: (pedidoDB.items || []).map(item => {
+      const producto = productosBase.find(p => p.id === item.producto_id)
+      return {
+        idProducto: item.producto_id,
+        name: item.producto_nombre,
+        nombre: item.producto_nombre,
+        price: item.producto_precio,
+        precio: item.producto_precio,
+        quantity: item.cantidad,
+        cantidad: item.cantidad,
+        measures: item.medidas,
+        medidas: item.medidas,
+        imagen: producto?.imagen || null
+      }
+    }),
+    productos: (pedidoDB.items || []).map(item => {
+      const producto = productosBase.find(p => p.id === item.producto_id)
+      return {
+        idProducto: item.producto_id,
+        name: item.producto_nombre,
+        nombre: item.producto_nombre,
+        price: item.producto_precio,
+        precio: item.producto_precio,
+        quantity: item.cantidad,
+        cantidad: item.cantidad,
+        measures: item.medidas,
+        medidas: item.medidas,
+        imagen: producto?.imagen || null
+      }
+    }),
     metodoPago: pedidoDB.metodo_pago,
     estadoPago: pedidoDB.estado_pago || 'sin_seña',
     comprobante: pedidoDB.comprobante_url,
@@ -72,13 +90,27 @@ export default function MisPedidos() {
       if (user && user.email) {
         console.log('📦 Cargando pedidos del usuario:', user.email)
         
-        // Intentar cargar desde Supabase primero
+        // Cargar productos desde Supabase primero, fallback a localStorage
+        let productosBase = []
+        const { data: productosDB, error: productosError } = await getAllProductos()
+        
+        if (!productosError && productosDB && productosDB.length > 0) {
+          console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+          productosBase = productosDB.map(mapProductoToFrontend)
+        } else {
+          console.log('⚠️ Cargando productos desde localStorage como fallback')
+          productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
+        }
+        
+        // Intentar cargar pedidos desde Supabase
         const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
         
         if (!error && pedidosDB && pedidosDB.length > 0) {
           console.log('✅ Pedidos del usuario cargados desde Supabase:', pedidosDB.length)
-          // Mapear de snake_case a camelCase
-          const pedidosMapped = pedidosDB.map(mapSupabasePedidoToFrontend)
+          // Mapear de snake_case a camelCase con productos para imágenes
+          const pedidosMapped = pedidosDB.map(pedidoDB => 
+            mapSupabasePedidoToFrontend(pedidoDB, productosBase)
+          )
           // Ordenar por fecha (más recientes primero)
           pedidosMapped.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
           setUserOrders(pedidosMapped)
