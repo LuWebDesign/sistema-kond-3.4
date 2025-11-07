@@ -316,8 +316,19 @@ function PedidosCatalogo() {
       
       if (!error && pedidosDB && pedidosDB.length > 0) {
         console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
+
+        // Aplicar filtro local de 'tombstones' para pedidos eliminados localmente
+        let tombstones = []
+        try {
+          tombstones = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
+        } catch (e) {
+          tombstones = []
+        }
+
+        const serverPedidos = (pedidosDB || []).filter(p => !tombstones.includes(p.id))
+
         // Mapear de snake_case a camelCase con productos para imágenes
-        const pedidosMapped = pedidosDB.map(pedidoDB => 
+        const pedidosMapped = serverPedidos.map(pedidoDB => 
           mapSupabasePedidoToFrontend(pedidoDB, productosBase)
         )
         // Normalizar pedidos
@@ -1259,11 +1270,28 @@ function PedidosCatalogo() {
     // Try to delete from Supabase. If fails, keep local deletion but notify admin.
     (async () => {
       try {
+        // Mark tombstone locally so reloads don't show the pedido until server confirms
+        try {
+          const tomb = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
+          if (!tomb.includes(selectedPedido.id)) {
+            tomb.push(selectedPedido.id)
+            localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(tomb))
+          }
+        } catch (e) {
+          console.warn('No se pudo guardar tombstone local:', e)
+        }
+
         const { error } = await deletePedidoCatalogo(selectedPedido.id)
         if (error) {
           console.error('Error eliminando pedido en Supabase:', error)
           createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
         } else {
+          // Si la eliminación en servidor fue exitosa, limpiar tombstone
+          try {
+            const tomb = JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || []
+            const filtered = tomb.filter(id => id !== selectedPedido.id)
+            localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(filtered))
+          } catch (e) {}
           createToast('Pedido eliminado correctamente.', 'success')
         }
       } catch (err) {
