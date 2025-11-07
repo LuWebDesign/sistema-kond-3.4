@@ -105,9 +105,6 @@ export async function loginWithEmail(email, password) {
       console.warn('Usuario autenticado pero no encontrado en tabla usuarios:', fetchError);
     }
 
-    console.log('🔍 Usuario desde BD:', usuario);
-    console.log('🔍 Rol del usuario:', usuario?.rol);
-
     const user = {
       id: authData.user.id,
       email: authData.user.email,

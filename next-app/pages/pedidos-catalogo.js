@@ -307,11 +307,9 @@ function PedidosCatalogo() {
 
   const loadData = async () => {
     try {
-      console.log('📦 Cargando pedidos catálogo...')
       
       // Cargar productos usando utilidad híbrida (Supabase + fallback a localStorage)
       const productosBase = await loadAllProductos()
-      console.log(`✅ ${productosBase.length} productos cargados`)
       
       // Cargar pedidos desde Supabase
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()

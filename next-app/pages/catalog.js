@@ -40,10 +40,8 @@ export default function Catalog() {
   const handleCategorySlug = (slug, attempt = 0) => {
     try {
       const maxAttempts = 20
-      console.log('🔍 setCategoryHandler called with slug:', slug, 'attempt:', attempt)
 
       if (!slug) {
-        console.log('🔄 Clearing selected category')
         setSelectedCategory('')
         return
       }
@@ -147,12 +145,8 @@ export default function Catalog() {
     const matchesCategory = !selectedCategory || 
       (product.categoria && product.categoria.trim() === selectedCategory.trim())
     
-    console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
-    
     return matchesSearch && matchesCategory
   })
-
-  console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
@@ -459,14 +453,6 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
     onAddToCart(product.id, quantity)
     setQuantity(1)
   }
-
-  // Debug: log product data
-  console.log('🎨 Rendering product:', {
-    nombre: product.nombre,
-    precio: product.precioUnitario,
-    imagen: product.imagen ? product.imagen.substring(0, 50) + '...' : 'NO TIENE',
-    hasPromotion: product.hasPromotion
-  })
 
   return (
     <div className="product-card" style={{

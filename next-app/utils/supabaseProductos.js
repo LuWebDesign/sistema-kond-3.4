@@ -16,7 +16,6 @@ export async function getAllProductos() {
       .order('nombre', { ascending: true });
 
     if (error) throw error;
-    console.log('✅ Productos cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos:', error);
@@ -55,7 +54,6 @@ export async function getProductosPublicados() {
       .order('nombre', { ascending: true });
 
     if (error) throw error;
-    console.log('✅ Productos publicados cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos publicados:', error);

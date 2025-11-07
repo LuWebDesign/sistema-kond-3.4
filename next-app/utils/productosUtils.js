@@ -92,7 +92,6 @@ export async function loadAllProductos() {
     
     if (data && data.length > 0) {
       const productos = data.map(mapProductoToFrontend)
-      console.log(`✅ ${productos.length} productos cargados desde Supabase`)
       
       // Sincronizar con localStorage para compatibilidad
       if (typeof window !== 'undefined') {
@@ -127,12 +126,10 @@ export async function loadProductosPublicados() {
     
     if (data && data.length > 0) {
       const productos = data.map(mapProductoToFrontend)
-      console.log(`✅ ${productos.length} productos publicados cargados desde Supabase`)
       return productos
     }
     
     // Si Supabase está vacío, intentar con localStorage
-    console.log('⚠️ Supabase vacío, usando localStorage')
     return loadProductosFromLocalStorage().filter(p => p.publicado)
     
   } catch (error) {
