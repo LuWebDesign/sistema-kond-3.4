@@ -23,6 +23,10 @@ const nextConfig = {
   async rewrites() {
     // Sin backend Express: no reescrituras a /api
     return []
+  },
+  // Forzar rebuild sin cache
+  generateBuildId: async () => {
+    return `build-${Date.now()}`
   }
 }
 
