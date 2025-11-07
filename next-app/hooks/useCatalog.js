@@ -53,6 +53,15 @@ export function useProducts() {
       // NOTA: loadProductosPublicados() ya retorna productos mapeados a camelCase
       const productosBase = await loadProductosPublicados()
       
+      // DEBUG: Verificar datos recibidos
+      if (productosBase && productosBase.length > 0) {
+        console.log('🔍 Primer producto recibido:', {
+          nombre: productosBase[0].nombre,
+          precio: productosBase[0].precioUnitario,
+          imagen: productosBase[0].imagen ? productosBase[0].imagen.substring(0, 50) + '...' : 'NO TIENE'
+        })
+      }
+      
       // Filtrar solo productos activos de tipo Venta o Stock
       const validProducts = (productosBase || []).filter(p => 
         p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
