@@ -8,6 +8,17 @@ import PromoModal from '../components/marketing/PromoModal';
 import CouponModal from '../components/marketing/CouponModal';
 import EmptyState from '../components/marketing/EmptyState';
 import styles from '../styles/marketing.module.css';
+import { getAllProductos } from '../utils/supabaseProducts';
+import { 
+  getPromociones, 
+  createPromocion, 
+  updatePromocion, 
+  deletePromocion,
+  getCupones,
+  createCupon,
+  updateCupon,
+  deleteCupon
+} from '../utils/supabaseMarketing';
 
 function Marketing() {
   const [currentTab, setCurrentTab] = useState('promotions'); // 'promotions' | 'coupons'
@@ -20,6 +31,7 @@ function Marketing() {
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [isLight, setIsLight] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -40,69 +52,95 @@ function Marketing() {
     return () => observer.disconnect();
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
     if (typeof window === 'undefined') return;
     
+    setIsLoading(true);
     try {
-      const promos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
-      const cups = JSON.parse(localStorage.getItem('marketing_coupons') || '[]');
-      const prods = JSON.parse(localStorage.getItem('productosBase') || '[]')
-        .filter(p => p.allowPromotions !== false);
-      
-      setPromotions(promos);
-      setCoupons(cups);
-      setProducts(prods);
+      // Cargar promociones desde Supabase
+      const { data: promos, error: promosError } = await getPromociones();
+      if (promosError) {
+        console.error('Error loading promociones:', promosError);
+      } else {
+        // Mapear campos de snake_case a camelCase
+        const mappedPromos = (promos || []).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          tipo: p.tipo,
+          valor: p.valor,
+          aplicaA: p.aplica_a,
+          categoria: p.categoria,
+          productoId: p.producto_id,
+          fechaInicio: p.fecha_inicio,
+          fechaFin: p.fecha_fin,
+          activo: p.activo,
+          prioridad: p.prioridad,
+          badgeTexto: p.badge_texto,
+          badgeColor: p.badge_color,
+          badgeTextColor: p.badge_text_color,
+          descuentoPorcentaje: p.descuento_porcentaje,
+          descuentoMonto: p.descuento_monto,
+          precioEspecial: p.precio_especial,
+          createdAt: p.created_at
+        }));
+        setPromotions(mappedPromos);
+      }
+
+      // Cargar cupones desde Supabase
+      const { data: cups, error: cupsError } = await getCupones();
+      if (cupsError) {
+        console.error('Error loading cupones:', cupsError);
+      } else {
+        // Mapear campos de snake_case a camelCase
+        const mappedCups = (cups || []).map(c => ({
+          id: c.id,
+          codigo: c.codigo,
+          nombre: c.nombre,
+          tipo: c.tipo,
+          valor: c.valor,
+          montoMinimo: c.monto_minimo,
+          usosMaximos: c.usos_maximos,
+          usosActuales: c.usos_actuales,
+          fechaInicio: c.fecha_inicio,
+          fechaExpiracion: c.fecha_expiracion,
+          activo: c.activo,
+          createdAt: c.created_at
+        }));
+        setCoupons(mappedCups);
+      }
+
+      // Cargar productos desde Supabase
+      const { data: prods, error: prodsError } = await getAllProductos();
+      if (prodsError) {
+        console.error('Error loading productos:', prodsError);
+      } else {
+        // Mapear y filtrar productos que permiten promociones
+        const mappedProds = (prods || [])
+          .filter(p => p.allow_promotions !== false)
+          .map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            categoria: p.categoria,
+            tipo: p.tipo,
+            precioUnitario: p.precio_unitario || 0,
+            allowPromotions: p.allow_promotions !== false
+          }));
+        setProducts(mappedProds);
+      }
     } catch (e) {
       console.error('Error loading marketing data:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Ya no guardamos en localStorage, solo actualizamos el estado
   const savePromotions = (list) => {
-    try {
-      localStorage.setItem('marketing_promotions', JSON.stringify(list));
-      setPromotions(list);
-      // Actualizar productos en `productosBase` aplicando las promociones guardadas
-      try {
-        const prodsRaw = localStorage.getItem('productosBase') || '[]'
-        const prods = JSON.parse(prodsRaw)
-        const updated = prods.map(p => {
-          // solo productos que permiten promos mantienen el campo
-          if (p.allowPromotions === false) return p
-          try {
-            const promoResult = applyPromotionsToProduct(p)
-            // persistir precioPromos y flag hasPromotion
-            return {
-              ...p,
-              precioPromos: promoResult.discountedPrice,
-              hasPromotion: promoResult.hasPromotion
-            }
-          } catch (e) {
-            return p
-          }
-        })
-        localStorage.setItem('productosBase', JSON.stringify(updated))
-        // Notificar al resto de la app que productos cambiaron
-        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('productos:updated'))
-      } catch (e) {
-        console.error('Error updating products with promotions:', e)
-      }
-    } catch (e) {
-      console.error('Error saving promotions:', e);
-      alert('No se pudo guardar la promoción. El almacenamiento local puede estar lleno.');
-    }
+    setPromotions(list);
   };
 
   const saveCoupons = (list) => {
-    try {
-      localStorage.setItem('marketing_coupons', JSON.stringify(list));
-      setCoupons(list);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('coupons:updated'));
-      }
-    } catch (e) {
-      console.error('Error saving coupons:', e);
-      alert('No se pudo guardar el cupón. El almacenamiento local puede estar lleno.');
-    }
+    setCoupons(list);
   };
 
   const openPromoModal = (promo = null) => {
@@ -115,60 +153,124 @@ function Marketing() {
     setShowCouponModal(true);
   };
 
-  const handlePromoSubmit = (promoData) => {
-    const list = [...promotions];
-    if (editingPromo) {
-      const idx = list.findIndex(p => p.id === editingPromo.id);
-      if (idx !== -1) {
-        list[idx] = { ...promoData, id: editingPromo.id, createdAt: editingPromo.createdAt, updatedAt: new Date().toISOString() };
+  const handlePromoSubmit = async (promoData) => {
+    try {
+      if (editingPromo) {
+        // Actualizar promoción existente
+        const { error } = await updatePromocion(editingPromo.id, promoData);
+        if (error) {
+          console.error('Error updating promocion:', error);
+          alert('Error al actualizar la promoción');
+          return;
+        }
+      } else {
+        // Crear nueva promoción
+        const { error } = await createPromocion(promoData);
+        if (error) {
+          console.error('Error creating promocion:', error);
+          alert('Error al crear la promoción');
+          return;
+        }
       }
-    } else {
-      list.unshift({ ...promoData, id: Date.now() + Math.floor(Math.random() * 100000), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      
+      // Recargar datos
+      await loadData();
+      setShowPromoModal(false);
+      setEditingPromo(null);
+    } catch (e) {
+      console.error('Error in handlePromoSubmit:', e);
+      alert('Error al guardar la promoción');
     }
-    savePromotions(list);
-    setShowPromoModal(false);
-    setEditingPromo(null);
   };
 
-  const handleCouponSubmit = (couponData) => {
-    const list = [...coupons];
-    if (editingCoupon) {
-      const idx = list.findIndex(c => c.id === editingCoupon.id);
-      if (idx !== -1) {
-        list[idx] = { ...couponData, id: editingCoupon.id, createdAt: editingCoupon.createdAt, updatedAt: new Date().toISOString() };
+  const handleCouponSubmit = async (couponData) => {
+    try {
+      if (editingCoupon) {
+        // Actualizar cupón existente
+        const { error } = await updateCupon(editingCoupon.id, couponData);
+        if (error) {
+          console.error('Error updating cupon:', error);
+          alert('Error al actualizar el cupón');
+          return;
+        }
+      } else {
+        // Crear nuevo cupón
+        const { error } = await createCupon(couponData);
+        if (error) {
+          console.error('Error creating cupon:', error);
+          alert('Error al crear el cupón');
+          return;
+        }
       }
-    } else {
-      list.unshift({ ...couponData, id: Date.now() + Math.floor(Math.random() * 100000), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      
+      // Recargar datos
+      await loadData();
+      setShowCouponModal(false);
+      setEditingCoupon(null);
+    } catch (e) {
+      console.error('Error in handleCouponSubmit:', e);
+      alert('Error al guardar el cupón');
     }
-    saveCoupons(list);
-    setShowCouponModal(false);
-    setEditingCoupon(null);
   };
 
-  const togglePromo = (id) => {
-    const list = promotions.map(p => p.id === id ? { ...p, active: !p.active, updatedAt: new Date().toISOString() } : p);
-    savePromotions(list);
-  };
-
-  const deletePromo = (id) => {
+  const togglePromo = async (id) => {
     const promo = promotions.find(p => p.id === id);
-    if (confirm(`¿Eliminar la promoción "${promo?.title}" permanentemente?`)) {
-      const list = promotions.filter(p => p.id !== id);
-      savePromotions(list);
+    if (!promo) return;
+    
+    const { error } = await updatePromocion(id, { activo: !promo.activo });
+    if (error) {
+      console.error('Error toggling promocion:', error);
+      alert('Error al cambiar el estado de la promoción');
+      return;
     }
+    
+    // Recargar datos
+    await loadData();
   };
 
-  const toggleCoupon = (id) => {
-    const list = coupons.map(c => c.id === id ? { ...c, active: !c.active, updatedAt: new Date().toISOString() } : c);
-    saveCoupons(list);
+  const deletePromo = async (id) => {
+    const promo = promotions.find(p => p.id === id);
+    if (!confirm(`¿Eliminar la promoción "${promo?.nombre}" permanentemente?`)) return;
+    
+    const { error } = await deletePromocion(id);
+    if (error) {
+      console.error('Error deleting promocion:', error);
+      alert('Error al eliminar la promoción');
+      return;
+    }
+    
+    // Recargar datos
+    await loadData();
   };
 
-  const deleteCoupon = (id) => {
+  const toggleCoupon = async (id) => {
     const coupon = coupons.find(c => c.id === id);
-    if (confirm(`¿Eliminar el cupón "${coupon?.code}" permanentemente?`)) {
-      const list = coupons.filter(c => c.id !== id);
-      saveCoupons(list);
+    if (!coupon) return;
+    
+    const { error } = await updateCupon(id, { activo: !coupon.activo });
+    if (error) {
+      console.error('Error toggling cupon:', error);
+      alert('Error al cambiar el estado del cupón');
+      return;
     }
+    
+    // Recargar datos
+    await loadData();
+  };
+
+  const deleteCoupon = async (id) => {
+    const coupon = coupons.find(c => c.id === id);
+    if (!confirm(`¿Eliminar el cupón "${coupon?.codigo}" permanentemente?`)) return;
+    
+    const { error } = await deleteCupon(id);
+    if (error) {
+      console.error('Error deleting cupon:', error);
+      alert('Error al eliminar el cupón');
+      return;
+    }
+    
+    // Recargar datos
+    await loadData();
   };
 
   const filteredPromotions = promotions.filter(p => {
