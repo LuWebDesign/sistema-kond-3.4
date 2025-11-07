@@ -119,7 +119,8 @@ function Products() {
   })
 
   const pageSize = 10
-  const categories = ['Decoración', 'Herramientas', 'Regalos', 'Llaveros', 'Arte', 'Personalizada']
+  // Obtener categorías dinámicamente desde los productos cargados (sin valores predefinidos)
+  const categories = Array.from(new Set(products.map(p => p.categoria).filter(cat => cat && String(cat).trim() !== '')))
 
   // Función para actualizar campos calculados
   const updateCalculatedFields = useCallback(() => {
