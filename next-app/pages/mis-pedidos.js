@@ -3,7 +3,7 @@ import UserOrderCard from '../components/UserOrderCard'
 import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
 import { getPedidosByEmail } from '../utils/supabasePedidos'
-import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -90,17 +90,8 @@ export default function MisPedidos() {
       if (user && user.email) {
         console.log('📦 Cargando pedidos del usuario:', user.email)
         
-        // Cargar productos desde Supabase primero, fallback a localStorage
-        let productosBase = []
-        const { data: productosDB, error: productosError } = await getAllProductos()
-        
-        if (!productosError && productosDB && productosDB.length > 0) {
-          console.log('✅ Productos cargados desde Supabase:', productosDB.length)
-          productosBase = productosDB.map(mapProductoToFrontend)
-        } else {
-          console.log('⚠️ Cargando productos desde localStorage como fallback')
-          productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
-        }
+        // Cargar productos usando utilidad híbrida
+        const productosBase = await loadAllProductos()
         
         // Intentar cargar pedidos desde Supabase
         const { data: pedidosDB, error } = await getPedidosByEmail(user.email)

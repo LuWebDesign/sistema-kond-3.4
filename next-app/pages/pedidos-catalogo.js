@@ -8,7 +8,7 @@ import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
-import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
 const formatInputNumber = (n) => {
@@ -309,17 +309,9 @@ function PedidosCatalogo() {
     try {
       console.log('📦 Cargando pedidos catálogo...')
       
-      // Cargar productos desde Supabase primero, fallback a localStorage
-      let productosBase = []
-      const { data: productosDB, error: productosError } = await getAllProductos()
-      
-      if (!productosError && productosDB && productosDB.length > 0) {
-        console.log('✅ Productos cargados desde Supabase:', productosDB.length)
-        productosBase = productosDB.map(mapProductoToFrontend)
-      } else {
-        console.log('⚠️ Cargando productos desde localStorage como fallback')
-        productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
-      }
+      // Cargar productos usando utilidad híbrida (Supabase + fallback a localStorage)
+      const productosBase = await loadAllProductos()
+      console.log(`✅ ${productosBase.length} productos cargados`)
       
       // Cargar pedidos desde Supabase
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()
@@ -351,11 +343,11 @@ function PedidosCatalogo() {
       console.error('❌ Error cargando datos:', error)
       // Fallback final a localStorage
       const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      const productos = JSON.parse(localStorage.getItem('productosBase')) || []
+      const productosBase = await loadAllProductos()
       const mats = JSON.parse(localStorage.getItem('materiales')) || []
       const normalized = (pedidos || []).map(normalizePedido)
       setPedidosCatalogo(normalized)
-      setProductosBase(productos)
+      setProductosBase(productosBase)
       setMateriales(mats)
     }
   }

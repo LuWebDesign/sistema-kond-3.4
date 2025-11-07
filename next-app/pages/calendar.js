@@ -58,16 +58,18 @@ function Calendar() {
   }, [])
 
   // Cargar datos del localStorage
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     if (typeof window === 'undefined') return
     
     try {
       const storedPedidos = localStorage.getItem('pedidos')
-      const storedProducts = localStorage.getItem('productosBase')
       const storedCatalogo = localStorage.getItem('pedidosCatalogo')
       
+      // Cargar productos desde Supabase (con fallback a localStorage)
+      const productosBase = await loadAllProductos()
+      
       setPedidos(storedPedidos ? JSON.parse(storedPedidos) : [])
-      setProducts(storedProducts ? JSON.parse(storedProducts) : [])
+      setProducts(productosBase)
       setCatalogo(storedCatalogo ? JSON.parse(storedCatalogo) : [])
     } catch (error) {
       console.error('Error loading calendar data:', error)

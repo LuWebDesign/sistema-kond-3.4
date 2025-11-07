@@ -2,6 +2,7 @@ import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { loadAllProductos } from '../utils/productosUtils'
 
 function Admin() {
   const router = useRouter()
@@ -16,10 +17,10 @@ function Admin() {
     loadSystemStats()
   }, [])
 
-  const loadSystemStats = () => {
+  const loadSystemStats = async () => {
     try {
-      // Cargar productos
-      const productos = JSON.parse(localStorage.getItem('productosBase') || '[]')
+      // Cargar productos desde Supabase (con fallback a localStorage)
+      const productos = await loadAllProductos()
       
       // Cargar pedidos
       const pedidosInternos = JSON.parse(localStorage.getItem('pedidos') || '[]')

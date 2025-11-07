@@ -3,7 +3,7 @@
 // Funciones para gestión de materiales de inventario
 // ============================================
 
-import supabase from './supabaseClient';
+import supabase from './supabaseClient.js';
 
 // ============================================
 // MATERIALES

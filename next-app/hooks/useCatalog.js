@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
-import { getProductosPublicados } from '../utils/supabaseProducts'
+import { loadProductosPublicados, mapProductoToFrontend } from '../utils/productosUtils'
 import { getPromocionesActivas } from '../utils/supabaseMarketing'
 
 // Hook para gestionar productos
@@ -49,16 +49,8 @@ export function useProducts() {
       
       setPromociones(promocionesActivas)
       
-      // Obtener productos publicados desde Supabase
-      const { data: productosBase, error } = await getProductosPublicados()
-      
-      if (error) {
-        console.error('Error loading published products:', error)
-        setProducts([])
-        setCategories([])
-        setIsLoading(false)
-        return
-      }
+      // Obtener productos publicados usando utilidad híbrida
+      const productosBase = await loadProductosPublicados()
       
       // Mapear campos de snake_case a camelCase
       const mappedProducts = (productosBase || []).map(p => {

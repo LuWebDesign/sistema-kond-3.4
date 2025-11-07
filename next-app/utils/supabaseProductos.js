@@ -3,7 +3,7 @@
 // Funciones para gestión de productos
 // ============================================
 
-import supabase from './supabaseClient';
+import supabase from './supabaseClient.js';
 
 /**
  * Obtener todos los productos
