@@ -146,7 +146,7 @@ export default function UserOrderCard({ pedido, onClick }) {
           ) : (
             <>
               {firstProduct && (
-                <img src={(getStoredProductImage(firstProduct) || firstProduct.imagen || '/images/placeholder.png')} alt={firstProduct.nombre || 'producto'} style={{width: 48, height: 48, objectFit: 'cover', borderRadius: 6, marginRight: 10}} />
+                <img src={(getStoredProductImage(firstProduct) || firstProduct.imagen || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Crect width="48" height="48" fill="%23e5e7eb"/%3E%3Cpath d="M24 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm-8 8a8 8 0 0 1 16 0h2a10 10 0 0 0-20 0h2z" fill="%239ca3af"/%3E%3C/svg%3E')} alt={firstProduct.nombre || 'producto'} style={{width: 48, height: 48, objectFit: 'cover', borderRadius: 6, marginRight: 10}} />
               )}
               <div>
                 {firstProduct?.nombre} {firstProduct?.medidas && `(${firstProduct?.medidas})`}

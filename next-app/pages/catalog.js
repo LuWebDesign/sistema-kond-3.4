@@ -1048,7 +1048,7 @@ function CheckoutModal({
       }
       if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
 
-      const result = saveOrder(orderData)
+      const result = await saveOrder(orderData)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
       if (result.order._comprobanteOmitted) {
