@@ -50,42 +50,11 @@ export function useProducts() {
       setPromociones(promocionesActivas)
       
       // Obtener productos publicados usando utilidad híbrida
+      // NOTA: loadProductosPublicados() ya retorna productos mapeados a camelCase
       const productosBase = await loadProductosPublicados()
       
-      // Mapear campos de snake_case a camelCase
-      const mappedProducts = (productosBase || []).map(p => {
-        // Calcular costo material
-        const unidadesPorPlaca = p.unidades_por_placa || 1
-        const costoPlaca = p.costo_placa || 0
-        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
-        
-        return {
-          id: p.id,
-          nombre: p.nombre,
-          categoria: p.categoria,
-          tipo: p.tipo,
-          medidas: p.medidas,
-          tiempoUnitario: p.tiempo_unitario || '00:00:30',
-          active: p.active !== undefined ? p.active : true,
-          publicado: p.publicado !== undefined ? p.publicado : false,
-          hiddenInProductos: p.hidden_in_productos || false,
-          unidadesPorPlaca: unidadesPorPlaca,
-          usoPlacas: p.uso_placas || 0,
-          costoPlaca: costoPlaca,
-          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
-          materialId: p.material_id || '',
-          material: p.material || '',
-          margenMaterial: p.margen_material || 0,
-          precioUnitario: p.precio_unitario || 0,
-          precioPromos: p.precio_promos || 0,
-          unidades: p.unidades || 1,
-          ensamble: p.ensamble || 'Sin ensamble',
-          imagen: p.imagen_url || '',
-          fechaCreacion: p.created_at || new Date().toISOString()
-        }
-      })
-      
-      const validProducts = mappedProducts.filter(p => 
+      // Filtrar solo productos activos de tipo Venta o Stock
+      const validProducts = (productosBase || []).filter(p => 
         p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
       )
       
