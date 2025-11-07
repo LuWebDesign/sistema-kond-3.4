@@ -307,6 +307,8 @@ export const parseDateYMD = (s) => {
 
 // Verificar si el usuario actual es administrador
 export const isAdminLogged = () => {
+  if (typeof window === 'undefined') return false
+  
   try {
     // Verificar si existe sesión de admin en localStorage
     const adminSessionStr = localStorage.getItem('adminSession')
@@ -318,7 +320,10 @@ export const isAdminLogged = () => {
         const sessionAge = Date.now() - adminSession.timestamp
 
         if (sessionAge < sessionDuration) {
-          return true
+          // Verificar que el usuario sea admin
+          if (adminSession.user && adminSession.user.rol === 'admin') {
+            return true
+          }
         } else {
           // Sesión expirada, limpiarla
           localStorage.removeItem('adminSession')
@@ -329,6 +334,34 @@ export const isAdminLogged = () => {
     return false
   } catch (error) {
     console.error('Error verificando permisos de admin:', error)
+    return false
+  }
+}
+
+// Verificar si el usuario actual es administrador (versión async con Supabase)
+export const checkIsAdmin = async () => {
+  if (typeof window === 'undefined') return false
+  
+  try {
+    // Importar dinámicamente para evitar problemas de SSR
+    const { getCurrentSession } = await import('./supabaseAuthV2')
+    const session = await getCurrentSession()
+    
+    if (session?.user?.rol === 'admin') {
+      // Sincronizar con localStorage para compatibilidad
+      localStorage.setItem('adminSession', JSON.stringify({
+        loggedIn: true,
+        isLoggedIn: true,
+        timestamp: Date.now(),
+        sessionDuration: 24 * 60 * 60 * 1000,
+        user: session.user
+      }))
+      return true
+    }
+    
+    return false
+  } catch (error) {
+    console.error('Error verificando permisos de admin (async):', error)
     return false
   }
 }

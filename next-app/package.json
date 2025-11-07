@@ -8,6 +8,8 @@
     "start": "next start -p 3000"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.80.0",
+    "bcryptjs": "^3.0.3",
     "cross-env": "^7.0.3",
     "next": "^16.0.1",
     "react": "^19.2.0",

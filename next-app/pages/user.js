@@ -1,6 +1,7 @@
 import PublicLayout from '../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { getCurrentUser, createToast, formatCurrency, formatDate } from '../utils/catalogUtils'
+import { loginWithEmail, logout as supabaseLogout, getCurrentSession } from '../utils/supabaseAuthV2'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -24,15 +25,18 @@ export default function User() {
 
   // Cargar usuario actual
   useEffect(() => {
-    const user = getCurrentUser()
-    if (user) {
-      setCurrentUser(user)
-      setFormData(prev => ({
-        ...prev,
-        ...user
-      }))
-      setAvatar(user.avatar || null)
+    const loadUser = async () => {
+      const session = await getCurrentSession()
+      if (session) {
+        setCurrentUser(session.user)
+        setFormData(prev => ({
+          ...prev,
+          email: session.user.email,
+          nombre: session.user.username
+        }))
+      }
     }
+    loadUser()
   }, [])
 
   // Manejar cambios en el formulario
@@ -50,20 +54,28 @@ export default function User() {
     setIsLoading(true)
 
     try {
-      // Simulación de login - en producción esto sería una llamada al backend
-      if (formData.email && formData.password) {
-        const user = {
-          id: Date.now(),
-          email: formData.email,
-          nombre: formData.nombre || 'Usuario',
-          avatar: null,
-          fechaRegistro: new Date().toISOString()
-        }
-        
-        localStorage.setItem('currentUser', JSON.stringify(user))
+      console.log('🔐 Intentando login con:', formData.email)
+      // Login con Supabase Auth
+      const result = await loginWithEmail(formData.email, formData.password)
+      console.log('📝 Resultado del login:', result)
+      
+      const { user, error } = result
+      
+      if (error) {
+        console.error('❌ Error en login:', error)
+        createToast(error, 'error')
+        setIsLoading(false)
+        return
+      }
+      
+      if (user) {
         setCurrentUser(user)
-  // Inform other parts de la app que el usuario cambió
-  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) } catch (e) { /* noop */ }
+        // Informar otras partes de la app que el usuario cambió
+        try { 
+          window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) 
+        } catch (e) { 
+          /* noop */ 
+        }
         createToast('Sesión iniciada correctamente', 'success')
         
         // Reset form
@@ -79,10 +91,9 @@ export default function User() {
           provincia: '',
           observaciones: ''
         })
-      } else {
-        createToast('Por favor completa todos los campos', 'error')
       }
     } catch (error) {
+      console.error('Error en login:', error)
       createToast('Error al iniciar sesión', 'error')
     } finally {
       setIsLoading(false)
@@ -155,8 +166,13 @@ export default function User() {
   }
 
   // Cerrar sesión
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser')
+  const handleLogout = async () => {
+    const { error } = await supabaseLogout()
+    if (error) {
+      createToast('Error al cerrar sesión', 'error')
+      return
+    }
+    
     setCurrentUser(null)
     setFormData({
       email: '',

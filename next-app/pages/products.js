@@ -1,9 +1,18 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency, timeToMinutes, minutesToTime, compressImage } from '../utils/catalogUtils'
+import { 
+  getAllProductos, 
+  createProducto, 
+  updateProducto, 
+  deleteProducto, 
+  toggleProductoPublicado,
+  uploadProductoImagen 
+} from '../utils/supabaseProducts'
 
-export default function Products() {
+function Products() {
   // Estados principales
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
@@ -190,32 +199,43 @@ export default function Products() {
     }))
   }
 
-  // Cargar datos del localStorage
-  const loadProducts = useCallback(() => {
+  // Cargar datos desde Supabase
+  const loadProducts = useCallback(async () => {
     if (typeof window === 'undefined') return
     
     try {
-      const stored = localStorage.getItem('productosBase')
-      const productList = stored ? JSON.parse(stored) : []
+      const { data: productList, error } = await getAllProductos()
       
-      // Inicializar productos con valores por defecto
-      const initializedProducts = productList.map(p => ({
-        ...p,
-        id: p.id || Date.now() + Math.random(),
+      if (error) {
+        console.error('Error loading products from Supabase:', error)
+        setProducts([])
+        return
+      }
+      
+      // Mapear campos de snake_case a camelCase y inicializar valores
+      const initializedProducts = (productList || []).map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        categoria: p.categoria,
+        tipo: p.tipo,
+        medidas: p.medidas,
+        tiempoUnitario: p.tiempo_unitario || '00:00:30',
         active: p.active !== undefined ? p.active : true,
         publicado: p.publicado !== undefined ? p.publicado : false,
-        unidadesPorPlaca: p.unidadesPorPlaca || 1,
-        usoPlacas: p.usoPlacas || 0,
-        costoPlaca: p.costoPlaca || 0,
-  costoMaterial: p.costoMaterial || 0,
-  materialId: p.materialId || '',
-        margenMaterial: p.margenMaterial || 0,
-        precioUnitario: p.precioUnitario || 0,
-        // Migración / fallback: mantener precioPromos si existe, sino tomar precioPromocional o precioUnitario
-        precioPromos: (p.precioPromos !== undefined && p.precioPromos !== null) ? p.precioPromos : (p.precioPromocional || p.precioUnitario || 0),
+        hiddenInProductos: p.hidden_in_productos || false,
+        unidadesPorPlaca: p.unidades_por_placa || 1,
+        usoPlacas: p.uso_placas || 0,
+        costoPlaca: p.costo_placa || 0,
+        costoMaterial: p.costo_material || 0,
+        materialId: p.material_id || '',
+        material: p.material || '',
+        margenMaterial: p.margen_material || 0,
+        precioUnitario: p.precio_unitario || 0,
+        precioPromos: p.precio_promos || 0,
         unidades: p.unidades || 1,
         ensamble: p.ensamble || 'Sin ensamble',
-        fechaCreacion: p.fechaCreacion || new Date().toISOString()
+        imagen: p.imagen_url || '',
+        fechaCreacion: p.created_at || new Date().toISOString()
       }))
 
       setProducts(initializedProducts)
@@ -309,13 +329,11 @@ export default function Products() {
     }
   }, [])
 
-  // Guardar productos al localStorage
+  // Guardar productos ya no necesita hacer nada (Supabase guarda automáticamente)
+  // Mantenemos la función por compatibilidad pero vacía
   const saveProducts = useCallback((productList) => {
-    try {
-      localStorage.setItem('productosBase', JSON.stringify(productList))
-    } catch (error) {
-      console.error('Error saving products:', error)
-    }
+    // No-op: Supabase guarda automáticamente en cada operación
+    console.log('saveProducts called (no-op with Supabase)')
   }, [])
 
   // Aplicar filtros
@@ -466,32 +484,53 @@ export default function Products() {
         finalFormData.material = ''
       }
       
-      // Si hay una imagen seleccionada, convertirla a base64 y adjuntarla
-      if (imageFile) {
+      // Preparar datos del nuevo producto
+      const newProductData = {
+        nombre: finalFormData.nombre,
+        categoria: categoriaFinal,
+        tipo: finalFormData.tipo,
+        medidas: finalFormData.medidas,
+        tiempoUnitario: finalFormData.tiempoUnitario,
+        publicado: finalFormData.publicado || false,
+        hiddenInProductos: false,
+        unidadesPorPlaca: finalFormData.unidadesPorPlaca,
+        usoPlacas: finalFormData.usoPlacas,
+        costoPlaca: finalFormData.costoPlaca,
+        costoMaterial: finalFormData.costoMaterial,
+        materialId: finalFormData.materialId,
+        margenMaterial: finalFormData.margenMaterial,
+        precioUnitario: finalFormData.precioUnitario,
+        precioPromos: finalFormData.precioPromos,
+        unidades: finalFormData.unidades,
+        ensamble: finalFormData.ensamble,
+        imagen: '' // URL de imagen se asignará después si hay archivo
+      }
+
+      // Crear producto en Supabase
+      const { data: createdProduct, error } = await createProducto(newProductData)
+      
+      if (error) {
+        console.error('Error creating product:', error)
+        alert('Error al crear el producto: ' + error)
+        return
+      }
+
+      // Si hay imagen, subirla a Storage y actualizar el producto
+      if (imageFile && createdProduct) {
         try {
-          const imageData = await fileToBase64(imageFile)
-          finalFormData.imagen = imageData
-        } catch (err) {
-          console.warn('No se pudo convertir la imagen a base64:', err)
-          finalFormData.imagen = ''
+          const { data: uploadData, error: uploadError } = await uploadProductoImagen(imageFile, createdProduct.id)
+          
+          if (!uploadError && uploadData) {
+            // Actualizar producto con la URL de la imagen
+            await updateProducto(createdProduct.id, { imagen: uploadData.url })
+          }
+        } catch (uploadErr) {
+          console.warn('No se pudo subir la imagen:', uploadErr)
         }
       }
 
-      const newProduct = {
-        ...finalFormData,
-        id: Date.now() + Math.random(),
-        active: true,
-        publicado: finalFormData.publicado || false,
-        fechaCreacion: new Date().toISOString(),
-        categoria: categoriaFinal
-      }
-
-      const updatedProducts = [...products, newProduct]
-      setProducts(updatedProducts)
-      saveProducts(updatedProducts)
-      
-      // Si se creó una categoría nueva, no la agregamos automáticamente al array
-      // para mantener las categorías predefinidas, pero el producto la tendrá
+      // Recargar productos desde Supabase
+      await loadProducts()
       
       // Resetear formulario
         setFormData({
@@ -532,34 +571,56 @@ export default function Products() {
       }
     } catch (error) {
       console.error('Error adding product:', error)
+      alert('Error al agregar el producto')
     }
   }
 
   // Eliminar producto
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = async (id) => {
     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      const updatedProducts = products.filter(p => p.id !== id)
-      setProducts(updatedProducts)
-      saveProducts(updatedProducts)
+      const { error } = await deleteProducto(id)
+      
+      if (error) {
+        console.error('Error deleting product:', error)
+        alert('Error al eliminar el producto')
+        return
+      }
+
+      // Recargar productos
+      await loadProducts()
     }
   }
 
   // Cambiar visibilidad del producto
-  const toggleProductVisibility = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, active: !p.active } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductVisibility = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+
+    const { error } = await updateProducto(id, { active: !product.active })
+    
+    if (error) {
+      console.error('Error toggling visibility:', error)
+      return
+    }
+
+    // Recargar productos
+    await loadProducts()
   }
 
   // Alternar publicación en catálogo
-  const toggleProductPublication = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, publicado: !p.publicado } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductPublication = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+
+    const { error } = await toggleProductoPublicado(id, !product.publicado)
+    
+    if (error) {
+      console.error('Error toggling publication:', error)
+      return
+    }
+
+    // Recargar productos
+    await loadProducts()
   }
 
   // Alternar expansión de tarjeta
@@ -597,11 +658,17 @@ export default function Products() {
   // Guardar cambios de producto editado
   const saveProductChanges = async (id, newData) => {
     try {
-      const updatedProducts = products.map(p => 
-        p.id === id ? { ...p, ...newData } : p
-      )
-      setProducts(updatedProducts)
-      saveProducts(updatedProducts)
+      // Actualizar en Supabase
+      const { error } = await updateProducto(id, newData)
+      
+      if (error) {
+        console.error('Error al guardar producto:', error)
+        alert('Error al guardar el producto')
+        return
+      }
+
+      // Recargar productos desde Supabase
+      await loadProducts()
       
       // Salir del modo edición
       setEditingCards(prev => {
@@ -612,8 +679,15 @@ export default function Products() {
 
       // Mostrar notificación de éxito
       if (typeof window !== 'undefined') {
-        // Aquí podrías agregar una notificación
-        console.log('Producto actualizado correctamente')
+        const notification = document.createElement('div')
+        notification.textContent = '✅ Producto actualizado'
+        notification.style.cssText = `
+          position: fixed; top: 20px; right: 20px; z-index: 1000;
+          background: #10b981; color: white; padding: 12px 20px;
+          border-radius: 8px; font-weight: 600;
+        `
+        document.body.appendChild(notification)
+        setTimeout(() => notification.remove(), 3000)
       }
     } catch (error) {
       console.error('Error al guardar producto:', error)
@@ -2888,3 +2962,6 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
     </div>
   )
 }
+
+// Exportar componente protegido con autenticación de admin
+export default withAdminAuth(Products)

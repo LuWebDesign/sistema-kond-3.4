@@ -1,8 +1,9 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 
-export default function Admin() {
+function Admin() {
   const router = useRouter()
   const [systemStats, setSystemStats] = useState({
     totalProductos: 0,
@@ -702,3 +703,5 @@ export default function Admin() {
     </Layout>
   )
 }
+
+export default withAdminAuth(Admin)

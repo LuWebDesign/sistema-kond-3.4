@@ -1,8 +1,9 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
 
-export default function Database() {
+function Database() {
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [filters, setFilters] = useState({
@@ -682,3 +683,5 @@ const tdStyle = {
   color: 'var(--text-secondary)',
   verticalAlign: 'top'
 }
+
+export default withAdminAuth(Database)

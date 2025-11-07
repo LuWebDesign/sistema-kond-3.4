@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import styles from '../styles/materiales.module.css'
 
 const STORAGE_KEY = 'materiales'
 
-export default function Materiales() {
+function Materiales() {
   const [materiales, setMateriales] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -327,3 +328,5 @@ export default function Materiales() {
     </Layout>
   )
 }
+
+export default withAdminAuth(Materiales)

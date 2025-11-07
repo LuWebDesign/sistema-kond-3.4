@@ -1,9 +1,10 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '../utils/catalogUtils'
 
-export default function Dashboard() {
+function Dashboard() {
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
   const [catalogOrders, setCatalogOrders] = useState([])
@@ -524,3 +525,5 @@ function SystemStatusItem({ label, status, value }) {
     </div>
   )
 }
+
+export default withAdminAuth(Dashboard)

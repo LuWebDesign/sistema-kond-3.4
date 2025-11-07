@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import withAdminAuth from '../components/withAdminAuth';
 import styles from '../styles/finanzas.module.css';
 
-export default function Finanzas() {
+function Finanzas() {
   const [darkMode, setDarkMode] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
@@ -933,3 +934,5 @@ export default function Finanzas() {
     </Layout>
   );
 }
+
+export default withAdminAuth(Finanzas);

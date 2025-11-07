@@ -1,4 +1,5 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import PedidoCard from '../components/PedidoCard'
 import ConfirmModal from '../components/ConfirmModal'
@@ -181,7 +182,7 @@ function OrdersStats({ orders, filteredOrders }) {
   )
 }
 
-export default function PedidosCatalogo() {
+function PedidosCatalogo() {
   // Estados
   const [pedidosCatalogo, setPedidosCatalogo] = useState([])
   const [productosBase, setProductosBase] = useState([])
@@ -1955,3 +1956,5 @@ export default function PedidosCatalogo() {
     </Layout>
   )
 }
+
+export default withAdminAuth(PedidosCatalogo)

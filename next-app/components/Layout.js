@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import NotificationsProvider from './NotificationsProvider'
 import ConfirmDialog from './ConfirmDialog'
+import { getCurrentSession, logout as supabaseLogout } from '../utils/supabaseAuthV2'
 
 export default function Layout({ children, title = 'Sistema KOND' }) {
   const [theme, setTheme] = useState('dark')
@@ -17,30 +18,34 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
     document.body.setAttribute('data-theme', savedTheme)
-    // Cargar información del usuario logueado
-    loadUserInfo()
 
-    // Escuchar cambios en localStorage (p. ej. login/logout en otra pestaña)
-    const onStorage = (e) => {
-      if (e.key === 'adminSession') {
-        loadUserInfo()
-      }
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+    // Cargar información del usuario logueado desde Supabase
+    loadUserInfo()
   }, [])
 
-  const loadUserInfo = () => {
+  const loadUserInfo = async () => {
     try {
-      const sessionData = localStorage.getItem('adminSession')
-      if (sessionData) {
-        const session = JSON.parse(sessionData)
-        if (session.isLoggedIn || session.loggedIn) {
-          setUserInfo({
-            email: session.email,
-            loginTime: new Date(session.timestamp).toLocaleString('es-AR'),
-            rememberSession: session.rememberSession || false
-          })
+      const session = await getCurrentSession()
+      if (session?.user) {
+        setUserInfo({
+          email: session.user.email,
+          username: session.user.username,
+          rol: session.user.rol,
+          loginTime: new Date().toLocaleString('es-AR')
+        })
+      } else {
+        // Fallback: intentar cargar de localStorage (compatibilidad)
+        const sessionData = localStorage.getItem('adminSession')
+        if (sessionData) {
+          const localSession = JSON.parse(sessionData)
+          if (localSession.isLoggedIn || localSession.loggedIn) {
+            setUserInfo({
+              email: localSession.email || localSession.user?.email,
+              username: localSession.user?.username,
+              rol: localSession.user?.rol,
+              loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
+            })
+          }
         }
       }
     } catch (error) {
@@ -52,10 +57,22 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     setShowLogoutConfirm(true)
   }
 
-  const confirmLogout = () => {
-    localStorage.removeItem('adminSession')
-    setUserInfo(null)
-    router.push('/home')
+  const confirmLogout = async () => {
+    try {
+      // Cerrar sesión en Supabase
+      await supabaseLogout()
+      // Limpiar localStorage
+      localStorage.removeItem('adminSession')
+      setUserInfo(null)
+      // Redirigir al login admin
+      router.push('/admin-login')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+      // Limpiar de todas formas
+      localStorage.removeItem('adminSession')
+      setUserInfo(null)
+      router.push('/admin-login')
+    }
   }
 
   const toggleTheme = () => {
@@ -123,18 +140,14 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               Catálogo y Ventas
             </div>
             
-            <a
-              href="/catalog"
-              target="_blank"
+            <a 
+              href="/catalog" 
+              target="_blank" 
               rel="noopener noreferrer"
-              aria-label="Abrir Catálogo Público en nueva pestaña"
-              title="Abrir Catálogo Público en nueva pestaña"
               style={{...linkStyle, display: 'flex', alignItems: 'center', gap: '8px'}}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                🛍️ <span>Catálogo Público</span>
-                <span aria-hidden="true" style={{ fontSize: '0.9rem', opacity: 0.85, marginLeft: 6 }}>↗</span>
-              </span>
+              🛍️ Catálogo Público
+              <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
             </a>
             
             <Link href="/pedidos" style={linkStyle}>

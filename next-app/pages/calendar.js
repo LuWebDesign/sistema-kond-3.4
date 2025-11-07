@@ -1,4 +1,5 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import PedidosModal from '../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
@@ -17,7 +18,7 @@ const formatTime = (minutes) => {
   return `${hours}h ${mins}m`
 }
 
-export default function Calendar() {
+function Calendar() {
   const router = useRouter()
   // Estados principales
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -1609,3 +1610,5 @@ export default function Calendar() {
     </Layout>
   )
 }
+
+export default withAdminAuth(Calendar)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { applyPromotionsToProduct } from '../utils/promoEngine'
 import Layout from '../components/Layout';
+import withAdminAuth from '../components/withAdminAuth';
 import PromoCard from '../components/marketing/PromoCard';
 import CouponCard from '../components/marketing/CouponCard';
 import PromoModal from '../components/marketing/PromoModal';
@@ -8,7 +9,7 @@ import CouponModal from '../components/marketing/CouponModal';
 import EmptyState from '../components/marketing/EmptyState';
 import styles from '../styles/marketing.module.css';
 
-export default function Marketing() {
+function Marketing() {
   const [currentTab, setCurrentTab] = useState('promotions'); // 'promotions' | 'coupons'
   const [promotions, setPromotions] = useState([]);
   const [coupons, setCoupons] = useState([]);
@@ -324,3 +325,5 @@ export default function Marketing() {
     </Layout>
   );
 }
+
+export default withAdminAuth(Marketing);

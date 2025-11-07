@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import PedidoCard from '../components/PedidoCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import { formatCurrency } from '../utils/catalogUtils'
@@ -162,7 +163,7 @@ function OrdersStats({ orders, filteredOrders }) {
   )
 }
 
-export default function InternalOrders() {
+function InternalOrders() {
   const [pedidos, setPedidos] = useState([])
   const [productosBase, setProductosBase] = useState([])
   const [pedidosCatalogo, setPedidosCatalogo] = useState([])
@@ -1161,3 +1162,5 @@ function normalizeInternalPedidoForCard(p) {
     asignadoAlCalendario: p.asignadoAlCalendario || false
   }
 }
+
+export default withAdminAuth(InternalOrders)

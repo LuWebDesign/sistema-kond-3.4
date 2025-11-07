@@ -1,9 +1,10 @@
 import Layout from '../components/Layout'
+import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useInternalOrders } from '../hooks/useCatalog'
 import { formatCurrency, formatDate } from '../utils/catalogUtils'
 
-export default function Pedidos() {
+function Pedidos() {
   // Estados para pestañas principales
   const [activeTab, setActiveTab] = useState('internos')
   
@@ -316,3 +317,5 @@ export default function Pedidos() {
     </Layout>
   )
 }
+
+export default withAdminAuth(Pedidos)
