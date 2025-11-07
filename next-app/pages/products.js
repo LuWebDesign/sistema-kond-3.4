@@ -212,31 +212,38 @@ function Products() {
         return
       }
       
-      // Mapear campos de snake_case a camelCase y inicializar valores
-      const initializedProducts = (productList || []).map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        categoria: p.categoria,
-        tipo: p.tipo,
-        medidas: p.medidas,
-        tiempoUnitario: p.tiempo_unitario || '00:00:30',
-        active: p.active !== undefined ? p.active : true,
-        publicado: p.publicado !== undefined ? p.publicado : false,
-        hiddenInProductos: p.hidden_in_productos || false,
-        unidadesPorPlaca: p.unidades_por_placa || 1,
-        usoPlacas: p.uso_placas || 0,
-        costoPlaca: p.costo_placa || 0,
-        costoMaterial: p.costo_material || 0,
-        materialId: p.material_id || '',
-        material: p.material || '',
-        margenMaterial: p.margen_material || 0,
-        precioUnitario: p.precio_unitario || 0,
-        precioPromos: p.precio_promos || 0,
-        unidades: p.unidades || 1,
-        ensamble: p.ensamble || 'Sin ensamble',
-        imagen: p.imagen_url || '',
-        fechaCreacion: p.created_at || new Date().toISOString()
-      }))
+      // Mapear campos de snake_case a camelCase y calcular costoMaterial
+      const initializedProducts = (productList || []).map(p => {
+        // Calcular costo material: costoPlaca / unidadesPorPlaca
+        const unidadesPorPlaca = p.unidades_por_placa || 1
+        const costoPlaca = p.costo_placa || 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          categoria: p.categoria,
+          tipo: p.tipo,
+          medidas: p.medidas,
+          tiempoUnitario: p.tiempo_unitario || '00:00:30',
+          active: p.active !== undefined ? p.active : true,
+          publicado: p.publicado !== undefined ? p.publicado : false,
+          hiddenInProductos: p.hidden_in_productos || false,
+          unidadesPorPlaca: unidadesPorPlaca,
+          usoPlacas: p.uso_placas || 0,
+          costoPlaca: costoPlaca,
+          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+          materialId: p.material_id || '',
+          material: p.material || '',
+          margenMaterial: p.margen_material || 0,
+          precioUnitario: p.precio_unitario || 0,
+          precioPromos: p.precio_promos || 0,
+          unidades: p.unidades || 1,
+          ensamble: p.ensamble || 'Sin ensamble',
+          imagen: p.imagen_url || '',
+          fechaCreacion: p.created_at || new Date().toISOString()
+        }
+      })
 
       setProducts(initializedProducts)
     } catch (error) {

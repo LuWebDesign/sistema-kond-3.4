@@ -2,6 +2,7 @@ import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
+import { getAllProductos, updateProducto, deleteProducto } from '../utils/supabaseProducts'
 
 function Database() {
   const [products, setProducts] = useState([])
@@ -15,22 +16,65 @@ function Database() {
   })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [materials, setMaterials] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Cargar productos del localStorage
-  const loadProducts = useCallback(() => {
+  // Cargar productos desde Supabase
+  const loadProducts = useCallback(async () => {
     if (typeof window === 'undefined') return
     
+    setIsLoading(true)
     try {
-      const stored = localStorage.getItem('productosBase')
-      const productList = stored ? JSON.parse(stored) : []
-      setProducts(productList)
+      const { data: productList, error } = await getAllProductos()
+      
+      if (error) {
+        console.error('Error loading products from Supabase:', error)
+        setProducts([])
+        return
+      }
+      
+      // Mapear campos de snake_case a camelCase y calcular costo material
+      const mappedProducts = (productList || []).map(p => {
+        // Calcular costo material basado en la fórmula: costoPlaca / unidadesPorPlaca
+        const unidadesPorPlaca = p.unidades_por_placa || 1
+        const costoPlaca = p.costo_placa || 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          categoria: p.categoria,
+          tipo: p.tipo,
+          medidas: p.medidas,
+          tiempoUnitario: p.tiempo_unitario || '00:00:30',
+          unidades: p.unidades || 1,
+          unidadesPorPlaca: unidadesPorPlaca,
+          usoPlacas: p.uso_placas || 0,
+          costoPlaca: costoPlaca,
+          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+          margenMaterial: p.margen_material || 0,
+          precioUnitario: p.precio_unitario || 0,
+          precioPromos: p.precio_promos || 0,
+          ensamble: p.ensamble || 'Sin ensamble',
+          material: p.material || '',
+          materialId: p.material_id || '',
+          active: p.active !== undefined ? p.active : true,
+          publicado: p.publicado !== undefined ? p.publicado : false,
+          hiddenInProductos: p.hidden_in_productos || false,
+          imagen: p.imagen_url || '',
+          fechaCreacion: p.created_at || new Date().toISOString()
+        }
+      })
+      
+      setProducts(mappedProducts)
     } catch (error) {
       console.error('Error loading products:', error)
       setProducts([])
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
-  // Cargar materiales del localStorage
+  // Cargar materiales (todavía en localStorage)
   const loadMaterials = useCallback(() => {
     if (typeof window === 'undefined') return
     
@@ -44,7 +88,8 @@ function Database() {
     }
   }, [])
 
-  // Guardar productos al localStorage
+  // Ya no guardamos en localStorage, se guarda directamente en Supabase
+  // Esta función ya no es necesaria pero la mantenemos para compatibilidad
   const saveProducts = useCallback((productList) => {
     try {
       localStorage.setItem('productosBase', JSON.stringify(productList))
@@ -131,29 +176,82 @@ function Database() {
   }
 
   // Cambiar visibilidad del producto
-  const toggleProductVisibility = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, active: !p.active } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductVisibility = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+    
+    const newActiveState = !product.active
+    
+    try {
+      const { error } = await updateProducto(id, { active: newActiveState })
+      
+      if (error) {
+        console.error('Error updating visibility:', error)
+        alert('Error al cambiar la visibilidad del producto')
+        return
+      }
+      
+      // Actualizar estado local
+      const updatedProducts = products.map(p => 
+        p.id === id ? { ...p, active: newActiveState } : p
+      )
+      setProducts(updatedProducts)
+    } catch (error) {
+      console.error('Error updating visibility:', error)
+      alert('Error al cambiar la visibilidad del producto')
+    }
   }
 
   // Cambiar estado de publicación
-  const toggleProductPublished = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, publicado: !p.publicado } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductPublished = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+    
+    const newPublishedState = !product.publicado
+    
+    try {
+      const { error } = await updateProducto(id, { publicado: newPublishedState })
+      
+      if (error) {
+        console.error('Error updating published state:', error)
+        alert('Error al cambiar el estado de publicación')
+        return
+      }
+      
+      // Actualizar estado local
+      const updatedProducts = products.map(p => 
+        p.id === id ? { ...p, publicado: newPublishedState } : p
+      )
+      setProducts(updatedProducts)
+    } catch (error) {
+      console.error('Error updating published state:', error)
+      alert('Error al cambiar el estado de publicación')
+    }
   }
 
   // Eliminar producto
-  const deleteProduct = (id) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+  const handleDeleteProduct = async (id) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      return
+    }
+    
+    try {
+      const { error } = await deleteProducto(id)
+      
+      if (error) {
+        console.error('Error deleting product:', error)
+        alert('Error al eliminar el producto')
+        return
+      }
+      
+      // Actualizar estado local
       const updatedProducts = products.filter(p => p.id !== id)
       setProducts(updatedProducts)
-      saveProducts(updatedProducts)
+      
+      alert('Producto eliminado exitosamente')
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      alert('Error al eliminar el producto')
     }
   }
 
@@ -473,7 +571,7 @@ function Database() {
                       isEven={index % 2 === 0}
                       onToggleVisibility={toggleProductVisibility}
                       onTogglePublished={toggleProductPublished}
-                      onDelete={deleteProduct}
+                      onDelete={handleDeleteProduct}
                     />
                   ))}
                 </tbody>

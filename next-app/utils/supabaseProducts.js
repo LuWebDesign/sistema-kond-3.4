@@ -105,7 +105,7 @@ export async function createProducto(producto) {
       unidades_por_placa: parseIntOrNull(producto.unidadesPorPlaca || producto.unidades_por_placa) || 1,
       uso_placas: parseIntOrNull(producto.usoPlacas || producto.uso_placas) || 0,
       costo_placa: parseFloatOrZero(producto.costoPlaca || producto.costo_placa),
-      costo_material: parseFloatOrZero(producto.costoMaterial || producto.costo_material),
+      // costo_material: NO se guarda, se calcula automáticamente como costoPlaca / unidadesPorPlaca
       imagen_url: producto.imagen || producto.imagen_url || '',
       material_id: parseMaterialId(producto.materialId || producto.material_id),
       material: producto.material || '',
@@ -167,8 +167,7 @@ export async function updateProducto(id, producto) {
     if (producto.uso_placas !== undefined) updateData.uso_placas = producto.uso_placas;
     if (producto.costoPlaca !== undefined) updateData.costo_placa = producto.costoPlaca;
     if (producto.costo_placa !== undefined) updateData.costo_placa = producto.costo_placa;
-    if (producto.costoMaterial !== undefined) updateData.costo_material = producto.costoMaterial;
-    if (producto.costo_material !== undefined) updateData.costo_material = producto.costo_material;
+    // costo_material: NO se actualiza, se calcula automáticamente como costoPlaca / unidadesPorPlaca
     if (producto.imagen !== undefined) updateData.imagen_url = producto.imagen;
     if (producto.imagen_url !== undefined) updateData.imagen_url = producto.imagen_url;
     
