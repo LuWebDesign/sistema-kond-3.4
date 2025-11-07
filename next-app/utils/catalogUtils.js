@@ -305,7 +305,7 @@ export const parseDateYMD = (s) => {
   return isNaN(d.getTime()) ? null : d
 }
 
-// Verificar si el usuario actual es administrador
+// Verificar si el usuario actual es administrador (versión síncrona para compatibilidad)
 export const isAdminLogged = () => {
   if (typeof window === 'undefined') return false
   
@@ -320,14 +320,31 @@ export const isAdminLogged = () => {
         const sessionAge = Date.now() - adminSession.timestamp
 
         if (sessionAge < sessionDuration) {
-          // Verificar que el usuario sea admin
+          // Verificar que el usuario sea admin (nueva estructura de Supabase Auth)
           if (adminSession.user && adminSession.user.rol === 'admin') {
+            return true
+          }
+          // Compatibilidad: si tiene rol directamente (estructura actualizada de /home)
+          if (adminSession.rol === 'admin') {
+            return true
+          }
+          // Compatibilidad: si es la sesión legacy (sin rol) pero tiene email/username
+          if (adminSession.email || adminSession.username) {
             return true
           }
         } else {
           // Sesión expirada, limpiarla
           localStorage.removeItem('adminSession')
         }
+      }
+    }
+
+    // Verificar si existe usuario de Supabase en localStorage (kond-user)
+    const kondUserStr = localStorage.getItem('kond-user')
+    if (kondUserStr) {
+      const kondUser = JSON.parse(kondUserStr)
+      if (kondUser.rol === 'admin') {
+        return true
       }
     }
 
