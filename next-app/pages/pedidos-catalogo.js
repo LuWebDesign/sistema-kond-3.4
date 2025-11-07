@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
+import { getAllPedidosCatalogo, deletePedidoCatalogo } from '../utils/supabasePedidos'
 import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
@@ -1226,10 +1226,52 @@ function PedidosCatalogo() {
       return
     }
 
+    // Optimistically update UI
     const updatedPedidos = pedidosCatalogo.filter(p => p.id !== selectedPedido.id)
     setPedidosCatalogo(updatedPedidos)
-    localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
-    
+    persistAndEmit(updatedPedidos, selectedPedido.id, 'delete')
+
+    // Remove associated internal orders (localStorage) if any
+    try {
+      const internalPedidos = JSON.parse(localStorage.getItem('pedidos') || '[]') || []
+      const filteredInternal = internalPedidos.filter(ip => ip.catalogOrderId !== selectedPedido.id)
+      if (filteredInternal.length !== internalPedidos.length) {
+        localStorage.setItem('pedidos', JSON.stringify(filteredInternal))
+      }
+    } catch (e) {
+      console.warn('No se pudo limpiar pedidos internos relacionados en localStorage:', e)
+    }
+
+    // Remove financial movements linked to this pedido
+    try {
+      const movementKeys = {
+        sena: `pedido:${selectedPedido.id}:sena`,
+        pagoTotal: `pedido:${selectedPedido.id}:pago_total`,
+        restante: `pedido:${selectedPedido.id}:restante`
+      }
+      eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
+      eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
+      eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+    } catch (e) {
+      console.warn('No se pudieron eliminar movimientos financieros asociados:', e)
+    }
+
+    // Try to delete from Supabase. If fails, keep local deletion but notify admin.
+    (async () => {
+      try {
+        const { error } = await deletePedidoCatalogo(selectedPedido.id)
+        if (error) {
+          console.error('Error eliminando pedido en Supabase:', error)
+          createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
+        } else {
+          createToast('Pedido eliminado correctamente.', 'success')
+        }
+      } catch (err) {
+        console.error('Excepción al eliminar pedido en Supabase:', err)
+        createToast('Error al eliminar pedido en servidor. Se eliminó localmente.', 'error')
+      }
+    })()
+
     handleCloseModal()
   }
 
