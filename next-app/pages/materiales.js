@@ -19,6 +19,7 @@ function Materiales() {
   const [showNewEspesor, setShowNewEspesor] = useState(false)
   const [newEspesor, setNewEspesor] = useState('')
   const [darkMode, setDarkMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '',
     tipo: '',
@@ -33,33 +34,87 @@ function Materiales() {
   const nombreRef = useRef(null)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setIsLoading(true)
+    
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setMateriales(JSON.parse(raw))
-    } catch (e) { console.error('load materiales', e) }
+      // 🆕 Intentar cargar desde Supabase primero
+      const { getAllMateriales } = await import('../utils/supabaseMateriales')
+      const { data: materialesSupabase, error } = await getAllMateriales()
+      
+      if (materialesSupabase && !error) {
+        // Mapear de snake_case a camelCase
+        const mappedMateriales = materialesSupabase.map(m => ({
+          id: m.id,
+          nombre: m.nombre,
+          tipo: m.tipo,
+          tamano: m.tamano,
+          espesor: m.espesor,
+          unidad: m.unidad,
+          costoUnitario: m.costo_unitario,
+          proveedor: m.proveedor,
+          stock: m.stock,
+          notas: m.notas
+        }))
+        
+        setMateriales(mappedMateriales)
+        console.log('✅ Materiales cargados desde Supabase:', mappedMateriales.length)
+      } else {
+        throw new Error('Supabase failed')
+      }
+    } catch (supabaseError) {
+      console.warn('⚠️ Fallback a localStorage para materiales')
+      
+      // Fallback: localStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (raw) setMateriales(JSON.parse(raw))
+      } catch (e) { 
+        console.error('load materiales', e) 
+      }
+    }
+    
+    // Cargar catálogos auxiliares (localStorage por ahora)
     try {
       const rawP = localStorage.getItem('proveedores')
       if (rawP) setProveedores(JSON.parse(rawP))
     } catch (e) { console.error('load proveedores', e) }
+    
     try {
       const rawT = localStorage.getItem('tamanos')
       if (rawT) setTamanos(JSON.parse(rawT))
     } catch (e) { console.error('load tamanos', e) }
+    
     try {
       const rawE = localStorage.getItem('espesores')
       if (rawE) setEspesores(JSON.parse(rawE))
     } catch (e) { console.error('load espesores', e) }
-    // load dark mode preference (shared key used in finanzas)
+    
+    // load dark mode preference
     try {
       const saved = JSON.parse(localStorage.getItem('finanzas_dark'))
       if (typeof saved === 'boolean') setDarkMode(saved)
     } catch (e) {}
-  }, [])
+    
+    setIsLoading(false)
+  }
 
-  const save = (items) => {
+  const save = async (items, skipReload = false) => {
+    // Esta función ahora es un wrapper de compatibilidad
     setMateriales(items)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch (e) { console.error('save materiales', e) }
+    try { 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) 
+    } catch (e) { 
+      console.error('save materiales to localStorage', e) 
+    }
+    
+    if (!skipReload) {
+      // Recargar desde Supabase para sincronizar
+      await loadData()
+    }
   }
 
   // reset form; if keepOpen === true the form remains visible (useful to create multiple items quickly)
@@ -69,19 +124,62 @@ function Materiales() {
     setShowForm(keepOpen)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    const payload = { ...form, id: editingId || Date.now() }
-    if (editingId) {
-      save(materiales.map(m => m.id === editingId ? payload : m))
-      // after editing we close the form
-      resetForm(false)
-    } else {
-      save([ ...materiales, payload ])
-      // keep the form open and ready to create another material
-      resetForm(true)
-      // focus the nombre input for quick entry
-      setTimeout(() => { try { nombreRef.current && nombreRef.current.focus(); nombreRef.current && nombreRef.current.select(); } catch (err) {} }, 50)
+    
+    try {
+      if (editingId) {
+        // 🆕 ACTUALIZAR en Supabase
+        const { updateMaterial } = await import('../utils/supabaseMateriales')
+        const { data, error } = await updateMaterial(editingId, form)
+        
+        if (data && !error) {
+          console.log('✅ Material actualizado en Supabase')
+          await loadData() // Recargar desde Supabase
+          resetForm(false)
+          alert('Material actualizado correctamente')
+        } else {
+          throw new Error('Supabase update failed')
+        }
+      } else {
+        // 🆕 CREAR en Supabase
+        const { createMaterial } = await import('../utils/supabaseMateriales')
+        const { data, error } = await createMaterial(form)
+        
+        if (data && !error) {
+          console.log('✅ Material creado en Supabase')
+          await loadData() // Recargar desde Supabase
+          resetForm(true) // Mantener form abierto para crear más
+          
+          // focus the nombre input for quick entry
+          setTimeout(() => { 
+            try { 
+              nombreRef.current && nombreRef.current.focus()
+              nombreRef.current && nombreRef.current.select()
+            } catch (err) {} 
+          }, 50)
+        } else {
+          throw new Error('Supabase create failed')
+        }
+      }
+    } catch (supabaseError) {
+      console.warn('⚠️ Fallback a localStorage:', supabaseError.message)
+      
+      // Fallback: localStorage (código original)
+      const payload = { ...form, id: editingId || Date.now() }
+      if (editingId) {
+        save(materiales.map(m => m.id === editingId ? payload : m))
+        resetForm(false)
+      } else {
+        save([ ...materiales, payload ])
+        resetForm(true)
+        setTimeout(() => { 
+          try { 
+            nombreRef.current && nombreRef.current.focus()
+            nombreRef.current && nombreRef.current.select()
+          } catch (err) {} 
+        }, 50)
+      }
     }
   }
 
@@ -91,9 +189,26 @@ function Materiales() {
     setShowForm(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!confirm('Eliminar material?')) return
-    save(materiales.filter(m => m.id !== id))
+    
+    try {
+      // 🆕 ELIMINAR de Supabase
+      const { deleteMaterial } = await import('../utils/supabaseMateriales')
+      const { error } = await deleteMaterial(id)
+      
+      if (!error) {
+        console.log('✅ Material eliminado de Supabase')
+        await loadData() // Recargar desde Supabase
+      } else {
+        throw new Error('Supabase delete failed')
+      }
+    } catch (supabaseError) {
+      console.warn('⚠️ Fallback a localStorage para eliminar')
+      
+      // Fallback: localStorage
+      save(materiales.filter(m => m.id !== id))
+    }
   }
 
   const formatCurrency = (v) => {
