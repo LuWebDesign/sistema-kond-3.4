@@ -53,11 +53,13 @@ export async function getPromocionesActivas() {
  */
 export async function createPromocion(promocion) {
   try {
+    console.log('📝 Datos recibidos en createPromocion:', promocion);
+    
     const promoData = {
       nombre: promocion.nombre,
       tipo: promocion.tipo,
       valor: promocion.valor ? parseFloat(promocion.valor) : null,
-      aplica_a: promocion.aplicaA || promocion.aplica_a,
+      aplica_a: promocion.aplicaA || promocion.aplica_a || 'todos',
       categoria: promocion.categoria || null,
       producto_id: promocion.productoId || promocion.producto_id || null,
       fecha_inicio: promocion.fechaInicio || promocion.fecha_inicio || null,
@@ -72,13 +74,20 @@ export async function createPromocion(promocion) {
       precio_especial: promocion.precioEspecial || promocion.precio_especial ? parseFloat(promocion.precioEspecial || promocion.precio_especial) : null
     };
 
+    console.log('💾 Datos a insertar en Supabase:', promoData);
+
     const { data, error } = await supabase
       .from('promociones')
       .insert([promoData])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error de Supabase:', error);
+      throw error;
+    }
+    
+    console.log('✅ Promoción creada exitosamente:', data);
     return { data, error: null };
   } catch (error) {
     console.error('Error al crear promoción:', error);
