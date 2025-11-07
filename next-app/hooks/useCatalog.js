@@ -324,21 +324,66 @@ export function useOrders() {
     loadOrders()
   }, [])
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
     if (typeof window === 'undefined') return []
     
     try {
+      // Intentar cargar desde Supabase primero (requiere autenticación)
+      const { getAllPedidosCatalogo } = await import('../utils/supabasePedidos')
+      const { data: pedidosSupabase, error } = await getAllPedidosCatalogo()
+      
+      if (pedidosSupabase && !error) {
+        // Mapear de snake_case a camelCase
+        const mappedPedidos = pedidosSupabase.map(p => ({
+          id: p.id,
+          cliente: {
+            nombre: p.cliente_nombre,
+            apellido: p.cliente_apellido,
+            telefono: p.cliente_telefono,
+            email: p.cliente_email,
+            direccion: p.cliente_direccion
+          },
+          items: (p.items || []).map(item => ({
+            idProducto: item.producto_id,
+            name: item.producto_nombre,
+            price: item.producto_precio,
+            quantity: item.cantidad,
+            measures: item.medidas
+          })),
+          metodoPago: p.metodo_pago,
+          estadoPago: p.estado_pago,
+          comprobante: p.comprobante_url,
+          _comprobanteOmitted: p.comprobante_omitido,
+          fechaCreacion: p.fecha_creacion,
+          fechaSolicitudEntrega: p.fecha_solicitud_entrega,
+          total: p.total
+        }))
+        
+        setOrders(mappedPedidos)
+        console.log('✅ Pedidos cargados desde Supabase:', mappedPedidos.length)
+        return mappedPedidos
+      }
+      
+      // Fallback a localStorage si falla Supabase o no hay auth
+      console.warn('⚠️ Fallback a localStorage para pedidos')
       const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
       setOrders(pedidosCatalogo)
       return pedidosCatalogo
     } catch (error) {
       console.error('Error loading orders:', error)
-      setOrders([])
-      return []
+      // Intentar localStorage como último recurso
+      try {
+        const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        setOrders(pedidosCatalogo)
+        return pedidosCatalogo
+      } catch (e) {
+        setOrders([])
+        return []
+      }
     }
   }
 
-  const saveOrder = (orderData) => {
+  const saveOrder = async (orderData) => {
     if (typeof window === 'undefined') return { success: false, error: 'No window object' }
 
     try {
@@ -397,153 +442,291 @@ export function useOrders() {
         order.montoRecibido = Number((order.total || 0) * 0.5)
       }
 
-      const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      
-      // Limitar a los últimos 200 pedidos para evitar exceder la cuota
-      if (existingOrders.length >= 200) {
-        existingOrders.splice(0, existingOrders.length - 199)
-      }
-      
-      // Intentar guardar con comprobante
-      existingOrders.push(order)
-      
+      // 🆕 INTENTAR GUARDAR EN SUPABASE PRIMERO
       try {
-        localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
-      } catch (err) {
-        console.warn('localStorage.setItem failed for pedidosCatalogo', err)
+        const { createPedidoCatalogo } = await import('../utils/supabasePedidos')
         
-        // Si falla por QuotaExceeded, intentar sin comprobante
-        if (order.comprobante) {
-          order._comprobanteOmitted = true
-          order.comprobante = null
+        const pedidoData = {
+          cliente: order.cliente,
+          metodoPago: order.metodoPago,
+          estadoPago: order.estadoPago,
+          comprobante: order.comprobante,
+          comprobanteOmitido: order._comprobanteOmitted || false,
+          fechaSolicitudEntrega: order.fechaSolicitudEntrega,
+          total: order.total
+        }
+        
+        // Convertir productos al formato items esperado por Supabase
+        const items = order.productos.map(p => ({
+          idProducto: p.productId,
+          name: p.nombre,
+          price: p.precioUnitario,
+          quantity: p.cantidad,
+          measures: p.medidas
+        }))
+        
+        const { data, error } = await createPedidoCatalogo(pedidoData, items)
+        
+        if (data && !error) {
+          console.log('✅ Pedido guardado en Supabase:', data.pedido.id)
           
+          // Actualizar ID local con el generado por Supabase
+          order.id = data.pedido.id
+          
+          // Actualizar estado local
+          const updatedOrders = [...(orders || []), order]
+          setOrders(updatedOrders)
+          
+          // Notificar listeners
           try {
-            localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
-            console.warn('Pedido guardado sin comprobante debido a limitaciones de espacio')
-          } catch (err2) {
-            console.error('Reintento de guardado sin comprobante falló', err2)
-            // Remover el pedido del array para evitar inconsistencias
-            existingOrders.pop()
+            window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+              detail: { type: 'create', order } 
+            }))
+          } catch (e) {}
+          
+          return { success: true, order }
+        } else {
+          console.warn('⚠️ Error en Supabase, fallback a localStorage:', error)
+          throw new Error('Supabase failed')
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage por error:', supabaseError.message)
+        
+        // FALLBACK: localStorage (código original)
+        const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        
+        // Limitar a los últimos 200 pedidos para evitar exceder la cuota
+        if (existingOrders.length >= 200) {
+          existingOrders.splice(0, existingOrders.length - 199)
+        }
+        
+        // Intentar guardar con comprobante
+        existingOrders.push(order)
+        
+        try {
+          localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
+        } catch (err) {
+          console.warn('localStorage.setItem failed for pedidosCatalogo', err)
+          
+          // Si falla por QuotaExceeded, intentar sin comprobante
+          if (order.comprobante) {
+            order._comprobanteOmitted = true
+            order.comprobante = null
             
-            // Si aún falla, reducir a los últimos 50 pedidos
+            try {
+              localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
+              console.warn('Pedido guardado sin comprobante debido a limitaciones de espacio')
+            } catch (err2) {
+              console.error('Reintento de guardado sin comprobante falló', err2)
+              // Remover el pedido del array para evitar inconsistencias
+              existingOrders.pop()
+              
+              // Si aún falla, reducir a los últimos 50 pedidos
+              if (existingOrders.length > 50) {
+                existingOrders.splice(0, existingOrders.length - 49)
+                try {
+                  existingOrders.push(order)
+                  localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
+                  console.warn('Pedido guardado después de reducir a 50 pedidos')
+                } catch (err3) {
+                  console.error('Falló incluso después de reducir a 50 pedidos', err3)
+                  throw err3
+                }
+              } else {
+                throw err2
+              }
+            }
+          } else {
+            // Si no hay comprobante y aún falla, reducir pedidos antiguos
+            existingOrders.pop()
             if (existingOrders.length > 50) {
               existingOrders.splice(0, existingOrders.length - 49)
               try {
                 existingOrders.push(order)
                 localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
-                console.warn('Pedido guardado después de reducir a 50 pedidos')
-              } catch (err3) {
-                console.error('Falló incluso después de reducir a 50 pedidos', err3)
-                throw err3
+                console.warn('Pedido guardado después de reducir a 50 pedidos (sin comprobante)')
+              } catch (err2) {
+                console.error('Falló incluso después de reducir a 50 pedidos (sin comprobante)', err2)
+                throw err2
               }
             } else {
-              throw err2
+              throw err
             }
-          }
-        } else {
-          // Si no hay comprobante y aún falla, reducir pedidos antiguos
-          existingOrders.pop()
-          if (existingOrders.length > 50) {
-            existingOrders.splice(0, existingOrders.length - 49)
-            try {
-              existingOrders.push(order)
-              localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
-              console.warn('Pedido guardado después de reducir a 50 pedidos (sin comprobante)')
-            } catch (err2) {
-              console.error('Falló incluso después de reducir a 50 pedidos (sin comprobante)', err2)
-              throw err2
-            }
-          } else {
-            throw err
           }
         }
-      }
-      
-      // Actualizar estado local
-      setOrders(existingOrders)
+        
+        // Actualizar estado local
+        setOrders(existingOrders)
 
-      // Notificar a listeners (admin, finanzas, etc.)
-      try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'create', order } }))
-      } catch (e) {}
-      
-      return { success: true, order }
+        // Notificar a listeners (admin, finanzas, etc.)
+        try {
+          window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'create', order } }))
+        } catch (e) {}
+        
+        return { success: true, order }
+      }
     } catch (error) {
       console.error('Error saving order:', error)
       return { success: false, error }
     }
   }
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    if (typeof window === 'undefined') return false
+  const updateOrderStatus = async (orderId, newStatus) => {
+    if (typeof window === 'undefined') return { success: false }
 
     try {
-      const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      const updatedOrders = existingOrders.map(order => 
-        order.id === orderId ? { ...order, estado: newStatus } : order
-      )
-      
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedOrders))
-      
-      // Actualizar estado local
-      setOrders(updatedOrders)
-
-      // Notificar actualización
+      // Intentar actualizar en Supabase primero
       try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'update-status', orderId, newStatus } }))
-      } catch (e) {}
-      
-      return { success: true }
+        const { updatePedidoCatalogo } = await import('../utils/supabasePedidos')
+        const { data, error } = await updatePedidoCatalogo(orderId, { estado: newStatus })
+        
+        if (data && !error) {
+          console.log('✅ Estado actualizado en Supabase')
+          
+          // Actualizar estado local
+          const updatedOrders = orders.map(order => 
+            order.id === orderId ? { ...order, estado: newStatus } : order
+          )
+          setOrders(updatedOrders)
+          
+          // Notificar actualización
+          try {
+            window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+              detail: { type: 'update-status', orderId, newStatus } 
+            }))
+          } catch (e) {}
+          
+          return { success: true }
+        } else {
+          throw new Error('Supabase update failed')
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage para actualizar estado')
+        
+        // Fallback: localStorage
+        const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        const updatedOrders = existingOrders.map(order => 
+          order.id === orderId ? { ...order, estado: newStatus } : order
+        )
+        
+        localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedOrders))
+        setOrders(updatedOrders)
+
+        try {
+          window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+            detail: { type: 'update-status', orderId, newStatus } 
+          }))
+        } catch (e) {}
+        
+        return { success: true }
+      }
     } catch (error) {
       console.error('Error updating order status:', error)
       return { success: false, error }
     }
   }
 
-  const updateOrderPaymentStatus = (orderId, newPaymentStatus) => {
-    if (typeof window === 'undefined') return false
+  const updateOrderPaymentStatus = async (orderId, newPaymentStatus) => {
+    if (typeof window === 'undefined') return { success: false }
 
     try {
-      const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      const updatedOrders = existingOrders.map(order => 
-        order.id === orderId ? { ...order, estadoPago: newPaymentStatus } : order
-      )
-      
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedOrders))
-      
-      // Actualizar estado local
-      setOrders(updatedOrders)
-
-      // Notificar actualización de pago
+      // Intentar actualizar en Supabase primero
       try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'update-payment', orderId, newPaymentStatus } }))
-      } catch (e) {}
-      
-      return { success: true }
+        const { updateEstadoPago } = await import('../utils/supabasePedidos')
+        const { data, error } = await updateEstadoPago(orderId, newPaymentStatus)
+        
+        if (data && !error) {
+          console.log('✅ Estado de pago actualizado en Supabase')
+          
+          // Actualizar estado local
+          const updatedOrders = orders.map(order => 
+            order.id === orderId ? { ...order, estadoPago: newPaymentStatus } : order
+          )
+          setOrders(updatedOrders)
+          
+          // Notificar actualización de pago
+          try {
+            window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+              detail: { type: 'update-payment', orderId, newPaymentStatus } 
+            }))
+          } catch (e) {}
+          
+          return { success: true }
+        } else {
+          throw new Error('Supabase update failed')
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage para actualizar estado de pago')
+        
+        // Fallback: localStorage
+        const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        const updatedOrders = existingOrders.map(order => 
+          order.id === orderId ? { ...order, estadoPago: newPaymentStatus } : order
+        )
+        
+        localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedOrders))
+        setOrders(updatedOrders)
+
+        try {
+          window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+            detail: { type: 'update-payment', orderId, newPaymentStatus } 
+          }))
+        } catch (e) {}
+        
+        return { success: true }
+      }
     } catch (error) {
       console.error('Error updating payment status:', error)
       return { success: false, error }
     }
   }
 
-  const deleteOrder = (orderId) => {
-    if (typeof window === 'undefined') return false
+  const deleteOrder = async (orderId) => {
+    if (typeof window === 'undefined') return { success: false }
 
     try {
-      const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      const filteredOrders = existingOrders.filter(order => order.id !== orderId)
-      
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(filteredOrders))
-      
-      // Actualizar estado local
-      setOrders(filteredOrders)
-
-      // Notificar eliminación
+      // Intentar eliminar de Supabase primero
       try {
-        window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'delete', orderId } }))
-      } catch (e) {}
-      
-      return { success: true }
+        const { deletePedidoCatalogo } = await import('../utils/supabasePedidos')
+        const { error } = await deletePedidoCatalogo(orderId)
+        
+        if (!error) {
+          console.log('✅ Pedido eliminado de Supabase')
+          
+          // Actualizar estado local
+          const filteredOrders = orders.filter(order => order.id !== orderId)
+          setOrders(filteredOrders)
+          
+          // Notificar eliminación
+          try {
+            window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+              detail: { type: 'delete', orderId } 
+            }))
+          } catch (e) {}
+          
+          return { success: true }
+        } else {
+          throw new Error('Supabase delete failed')
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage para eliminar')
+        
+        // Fallback: localStorage
+        const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
+        const filteredOrders = existingOrders.filter(order => order.id !== orderId)
+        
+        localStorage.setItem('pedidosCatalogo', JSON.stringify(filteredOrders))
+        setOrders(filteredOrders)
+
+        // Notificar eliminación
+        try {
+          window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { 
+            detail: { type: 'delete', orderId } 
+          }))
+        } catch (e) {}
+        
+        return { success: true }
+      }
     } catch (error) {
       console.error('Error deleting order:', error)
       return { success: false, error }
