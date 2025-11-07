@@ -41,11 +41,13 @@ function Materiales() {
     setIsLoading(true)
     
     try {
-      // 🆕 Intentar cargar desde Supabase primero
-      const { getAllMateriales } = await import('../utils/supabaseMateriales')
-      const { data: materialesSupabase, error } = await getAllMateriales()
+      // 🆕 Intentar cargar materiales desde Supabase primero
+      const { getAllMateriales, getAllProveedores, getAllTamanos, getAllEspesores } = await import('../utils/supabaseMateriales')
       
-      if (materialesSupabase && !error) {
+      // Cargar materiales
+      const { data: materialesSupabase, error: errorMateriales } = await getAllMateriales()
+      
+      if (materialesSupabase && !errorMateriales) {
         // Mapear de snake_case a camelCase
         const mappedMateriales = materialesSupabase.map(m => ({
           id: m.id,
@@ -63,10 +65,65 @@ function Materiales() {
         setMateriales(mappedMateriales)
         console.log('✅ Materiales cargados desde Supabase:', mappedMateriales.length)
       } else {
-        throw new Error('Supabase failed')
+        throw new Error('Supabase materiales failed')
       }
+      
+      // 🆕 Cargar proveedores desde Supabase
+      try {
+        const { data: proveedoresSupabase } = await getAllProveedores()
+        if (proveedoresSupabase && proveedoresSupabase.length > 0) {
+          const nombresProveedores = proveedoresSupabase.map(p => p.nombre)
+          setProveedores(nombresProveedores)
+          console.log('✅ Proveedores cargados desde Supabase:', nombresProveedores.length)
+        } else {
+          // Fallback a localStorage
+          const rawP = localStorage.getItem('proveedores')
+          if (rawP) setProveedores(JSON.parse(rawP))
+        }
+      } catch (e) {
+        console.warn('⚠️ Fallback a localStorage para proveedores')
+        const rawP = localStorage.getItem('proveedores')
+        if (rawP) setProveedores(JSON.parse(rawP))
+      }
+      
+      // 🆕 Cargar tamaños desde Supabase
+      try {
+        const { data: tamanosSupabase } = await getAllTamanos()
+        if (tamanosSupabase && tamanosSupabase.length > 0) {
+          const valoresTamanos = tamanosSupabase.map(t => t.valor)
+          setTamanos(valoresTamanos)
+          console.log('✅ Tamaños cargados desde Supabase:', valoresTamanos.length)
+        } else {
+          // Fallback a localStorage
+          const rawT = localStorage.getItem('tamanos')
+          if (rawT) setTamanos(JSON.parse(rawT))
+        }
+      } catch (e) {
+        console.warn('⚠️ Fallback a localStorage para tamaños')
+        const rawT = localStorage.getItem('tamanos')
+        if (rawT) setTamanos(JSON.parse(rawT))
+      }
+      
+      // 🆕 Cargar espesores desde Supabase
+      try {
+        const { data: espesoresSupabase } = await getAllEspesores()
+        if (espesoresSupabase && espesoresSupabase.length > 0) {
+          const valoresEspesores = espesoresSupabase.map(e => e.valor)
+          setEspesores(valoresEspesores)
+          console.log('✅ Espesores cargados desde Supabase:', valoresEspesores.length)
+        } else {
+          // Fallback a localStorage
+          const rawE = localStorage.getItem('espesores')
+          if (rawE) setEspesores(JSON.parse(rawE))
+        }
+      } catch (e) {
+        console.warn('⚠️ Fallback a localStorage para espesores')
+        const rawE = localStorage.getItem('espesores')
+        if (rawE) setEspesores(JSON.parse(rawE))
+      }
+      
     } catch (supabaseError) {
-      console.warn('⚠️ Fallback a localStorage para materiales')
+      console.warn('⚠️ Fallback completo a localStorage')
       
       // Fallback: localStorage
       try {
@@ -75,23 +132,22 @@ function Materiales() {
       } catch (e) { 
         console.error('load materiales', e) 
       }
+      
+      try {
+        const rawP = localStorage.getItem('proveedores')
+        if (rawP) setProveedores(JSON.parse(rawP))
+      } catch (e) { console.error('load proveedores', e) }
+      
+      try {
+        const rawT = localStorage.getItem('tamanos')
+        if (rawT) setTamanos(JSON.parse(rawT))
+      } catch (e) { console.error('load tamanos', e) }
+      
+      try {
+        const rawE = localStorage.getItem('espesores')
+        if (rawE) setEspesores(JSON.parse(rawE))
+      } catch (e) { console.error('load espesores', e) }
     }
-    
-    // Cargar catálogos auxiliares (localStorage por ahora)
-    try {
-      const rawP = localStorage.getItem('proveedores')
-      if (rawP) setProveedores(JSON.parse(rawP))
-    } catch (e) { console.error('load proveedores', e) }
-    
-    try {
-      const rawT = localStorage.getItem('tamanos')
-      if (rawT) setTamanos(JSON.parse(rawT))
-    } catch (e) { console.error('load tamanos', e) }
-    
-    try {
-      const rawE = localStorage.getItem('espesores')
-      if (rawE) setEspesores(JSON.parse(rawE))
-    } catch (e) { console.error('load espesores', e) }
     
     // load dark mode preference
     try {
@@ -318,15 +374,37 @@ function Materiales() {
                     <div className={styles.newProveedorRow}>
                       <input className={styles.field} placeholder="ej: 100x200" value={newTamano} onChange={(e) => setNewTamano(e.target.value)} />
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button type="button" className={styles.btnPrimary} onClick={() => {
+                        <button type="button" className={styles.btnPrimary} onClick={async () => {
                           const v = (newTamano || '').trim()
                           if (!v) return
-                          const next = Array.from(new Set([...(tamanos || []), v]))
-                          setTamanos(next)
-                          try { localStorage.setItem('tamanos', JSON.stringify(next)) } catch (err) { console.error('save tamanos', err) }
-                          setForm(prev => ({ ...prev, tamano: v }))
-                          setNewTamano('')
-                          setShowNewTamano(false)
+                          
+                          // 🆕 Intentar guardar en Supabase
+                          try {
+                            const { createTamano } = await import('../utils/supabaseMateriales')
+                            const { data, error } = await createTamano(v)
+                            
+                            if (data && !error) {
+                              console.log('✅ Tamaño creado en Supabase')
+                              // Recargar catálogos
+                              await loadData()
+                              setForm(prev => ({ ...prev, tamano: v }))
+                              setNewTamano('')
+                              setShowNewTamano(false)
+                              return
+                            } else {
+                              throw new Error('Supabase failed')
+                            }
+                          } catch (supabaseError) {
+                            console.warn('⚠️ Fallback a localStorage para tamaño')
+                            
+                            // Fallback: localStorage
+                            const next = Array.from(new Set([...(tamanos || []), v]))
+                            setTamanos(next)
+                            try { localStorage.setItem('tamanos', JSON.stringify(next)) } catch (err) { console.error('save tamanos', err) }
+                            setForm(prev => ({ ...prev, tamano: v }))
+                            setNewTamano('')
+                            setShowNewTamano(false)
+                          }
                         }}>Agregar</button>
                         <button type="button" className={styles.btnSecondary} onClick={() => { setNewTamano(''); setShowNewTamano(false) }}>Cancelar</button>
                       </div>
@@ -364,15 +442,37 @@ function Materiales() {
                     <div className={styles.newProveedorRow}>
                       <input className={styles.field} placeholder="ej: 2 mm" value={newEspesor} onChange={(e) => setNewEspesor(e.target.value)} />
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button type="button" className={styles.btnPrimary} onClick={() => {
+                        <button type="button" className={styles.btnPrimary} onClick={async () => {
                           const v = (newEspesor || '').trim()
                           if (!v) return
-                          const next = Array.from(new Set([...(espesores || []), v]))
-                          setEspesores(next)
-                          try { localStorage.setItem('espesores', JSON.stringify(next)) } catch (err) { console.error('save espesores', err) }
-                          setForm(prev => ({ ...prev, espesor: v }))
-                          setNewEspesor('')
-                          setShowNewEspesor(false)
+                          
+                          // 🆕 Intentar guardar en Supabase
+                          try {
+                            const { createEspesor } = await import('../utils/supabaseMateriales')
+                            const { data, error } = await createEspesor(v)
+                            
+                            if (data && !error) {
+                              console.log('✅ Espesor creado en Supabase')
+                              // Recargar catálogos
+                              await loadData()
+                              setForm(prev => ({ ...prev, espesor: v }))
+                              setNewEspesor('')
+                              setShowNewEspesor(false)
+                              return
+                            } else {
+                              throw new Error('Supabase failed')
+                            }
+                          } catch (supabaseError) {
+                            console.warn('⚠️ Fallback a localStorage para espesor')
+                            
+                            // Fallback: localStorage
+                            const next = Array.from(new Set([...(espesores || []), v]))
+                            setEspesores(next)
+                            try { localStorage.setItem('espesores', JSON.stringify(next)) } catch (err) { console.error('save espesores', err) }
+                            setForm(prev => ({ ...prev, espesor: v }))
+                            setNewEspesor('')
+                            setShowNewEspesor(false)
+                          }
                         }}>Agregar</button>
                         <button type="button" className={styles.btnSecondary} onClick={() => { setNewEspesor(''); setShowNewEspesor(false) }}>Cancelar</button>
                       </div>
@@ -405,15 +505,37 @@ function Materiales() {
                     <div className={styles.newProveedorRow}>
                       <input className={styles.field} placeholder="Nombre del proveedor" value={newProveedor} onChange={(e) => setNewProveedor(e.target.value)} />
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button type="button" className={styles.btnPrimary} onClick={() => {
+                        <button type="button" className={styles.btnPrimary} onClick={async () => {
                           const v = (newProveedor || '').trim()
                           if (!v) return
-                          const next = Array.from(new Set([...(proveedores || []), v]))
-                          setProveedores(next)
-                          try { localStorage.setItem('proveedores', JSON.stringify(next)) } catch (err) { console.error('save proveedores', err) }
-                          setForm(prev => ({ ...prev, proveedor: v }))
-                          setNewProveedor('')
-                          setShowNewProveedor(false)
+                          
+                          // 🆕 Intentar guardar en Supabase
+                          try {
+                            const { createProveedor } = await import('../utils/supabaseMateriales')
+                            const { data, error } = await createProveedor({ nombre: v })
+                            
+                            if (data && !error) {
+                              console.log('✅ Proveedor creado en Supabase')
+                              // Recargar catálogos
+                              await loadData()
+                              setForm(prev => ({ ...prev, proveedor: v }))
+                              setNewProveedor('')
+                              setShowNewProveedor(false)
+                              return
+                            } else {
+                              throw new Error('Supabase failed')
+                            }
+                          } catch (supabaseError) {
+                            console.warn('⚠️ Fallback a localStorage para proveedor')
+                            
+                            // Fallback: localStorage
+                            const next = Array.from(new Set([...(proveedores || []), v]))
+                            setProveedores(next)
+                            try { localStorage.setItem('proveedores', JSON.stringify(next)) } catch (err) { console.error('save proveedores', err) }
+                            setForm(prev => ({ ...prev, proveedor: v }))
+                            setNewProveedor('')
+                            setShowNewProveedor(false)
+                          }
                         }}>Agregar</button>
                         <button type="button" className={styles.btnSecondary} onClick={() => { setNewProveedor(''); setShowNewProveedor(false) }}>Cancelar</button>
                       </div>

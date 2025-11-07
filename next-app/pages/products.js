@@ -289,51 +289,119 @@ function Products() {
     })
   }
 
-  const saveMaterialChanges = () => {
+  const saveMaterialChanges = async () => {
     try {
-      const updatedMaterials = materials.map(m => 
-        String(m.id) === String(editingMaterial) 
-          ? { ...m, ...materialForm }
-          : m
-      )
-      
-      // Guardar en localStorage
-      localStorage.setItem('materiales', JSON.stringify(updatedMaterials))
-      setMaterials(updatedMaterials)
-      
-      // Actualizar el formData del producto si el material editado está seleccionado
-      if (formData.materialId === editingMaterial) {
-        const updatedMaterial = updatedMaterials.find(m => String(m.id) === String(editingMaterial))
-        if (updatedMaterial) {
-          setFormData(prev => ({ 
-            ...prev, 
-            costoMaterial: Number(updatedMaterial.costoUnitario || 0), 
-            costoPlaca: Number(updatedMaterial.costoUnitario || 0) 
-          }))
+      // 🆕 Intentar actualizar en Supabase
+      try {
+        const { updateMaterial } = await import('../utils/supabaseMateriales')
+        const { data, error } = await updateMaterial(editingMaterial, materialForm)
+        
+        if (data && !error) {
+          console.log('✅ Material actualizado en Supabase desde products')
+          
+          // Recargar materiales desde Supabase
+          await loadMaterials()
+          
+          // Actualizar el formData del producto si el material editado está seleccionado
+          if (formData.materialId === editingMaterial) {
+            const updatedMaterial = materials.find(m => String(m.id) === String(editingMaterial))
+            if (updatedMaterial) {
+              setFormData(prev => ({ 
+                ...prev, 
+                costoMaterial: Number(updatedMaterial.costoUnitario || 0), 
+                costoPlaca: Number(updatedMaterial.costoUnitario || 0) 
+              }))
+            }
+          }
+          
+          cancelEditingMaterial()
+          alert('Material actualizado correctamente')
+          return
+        } else {
+          throw new Error('Supabase update failed')
         }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage para actualizar material')
+        
+        // Fallback: localStorage
+        const updatedMaterials = materials.map(m => 
+          String(m.id) === String(editingMaterial) 
+            ? { ...m, ...materialForm }
+            : m
+        )
+        
+        // Guardar en localStorage
+        localStorage.setItem('materiales', JSON.stringify(updatedMaterials))
+        setMaterials(updatedMaterials)
+        
+        // Actualizar el formData del producto si el material editado está seleccionado
+        if (formData.materialId === editingMaterial) {
+          const updatedMaterial = updatedMaterials.find(m => String(m.id) === String(editingMaterial))
+          if (updatedMaterial) {
+            setFormData(prev => ({ 
+              ...prev, 
+              costoMaterial: Number(updatedMaterial.costoUnitario || 0), 
+              costoPlaca: Number(updatedMaterial.costoUnitario || 0) 
+            }))
+          }
+        }
+        
+        cancelEditingMaterial()
+        alert('Material actualizado correctamente')
       }
-      
-      cancelEditingMaterial()
-      
-      // Mostrar notificación de éxito
-      alert('Material actualizado correctamente')
     } catch (error) {
       console.error('Error al guardar material:', error)
       alert('Error al guardar el material')
     }
   }
 
-  // Cargar materiales desde localStorage
-  useEffect(() => {
+  // 🆕 Cargar materiales desde Supabase con fallback a localStorage
+  const loadMaterials = async () => {
     if (typeof window === 'undefined') return
+    
     try {
-      const raw = localStorage.getItem('materiales')
-      const list = raw ? JSON.parse(raw) : []
-      setMaterials(list)
-      checkMaterialsConnection()
-    } catch (e) { 
-      console.error('Error cargando materiales:', e) 
+      const { getAllMateriales } = await import('../utils/supabaseMateriales')
+      const { data: materialesSupabase, error } = await getAllMateriales()
+      
+      if (materialesSupabase && !error) {
+        // Mapear de snake_case a camelCase
+        const mappedMateriales = materialesSupabase.map(m => ({
+          id: m.id,
+          nombre: m.nombre,
+          tipo: m.tipo,
+          tamano: m.tamano,
+          espesor: m.espesor,
+          unidad: m.unidad,
+          costoUnitario: m.costo_unitario,
+          proveedor: m.proveedor,
+          stock: m.stock,
+          notas: m.notas
+        }))
+        
+        setMaterials(mappedMateriales)
+        console.log('✅ Materiales cargados desde Supabase en products:', mappedMateriales.length)
+        checkMaterialsConnection()
+        return
+      } else {
+        throw new Error('Supabase failed')
+      }
+    } catch (supabaseError) {
+      console.warn('⚠️ Fallback a localStorage para materiales en products')
+      
+      // Fallback: localStorage
+      try {
+        const raw = localStorage.getItem('materiales')
+        const list = raw ? JSON.parse(raw) : []
+        setMaterials(list)
+        checkMaterialsConnection()
+      } catch (e) { 
+        console.error('Error cargando materiales:', e) 
+      }
     }
+  }
+
+  useEffect(() => {
+    loadMaterials()
   }, [])
 
   // Guardar productos ya no necesita hacer nada (Supabase guarda automáticamente)
