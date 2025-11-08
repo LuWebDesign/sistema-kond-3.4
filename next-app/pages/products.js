@@ -12,6 +12,7 @@ import {
   uploadProductoImagen 
 } from '../utils/supabaseProducts'
 import { addProductTombstone, removeProductTombstone } from '../utils/supabaseProductos'
+import { cleanProductTombstones } from '../utils/tombstoneCleanup'
 
 function Products() {
   // Estados principales
@@ -206,6 +207,9 @@ function Products() {
     if (typeof window === 'undefined') return
     
     try {
+      // Limpiar tombstones antiguos al cargar
+      cleanProductTombstones().catch(e => console.warn('Error limpiando tombstones:', e))
+      
       const { data: productList, error } = await getAllProductos()
       
       if (error) {

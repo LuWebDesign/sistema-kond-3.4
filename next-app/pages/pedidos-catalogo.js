@@ -9,6 +9,7 @@ import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimi
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getAllPedidosCatalogo, deletePedidoCatalogo, addTombstone, removeTombstone } from '../utils/supabasePedidos'
 import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
+import { cleanPedidoTombstones } from '../utils/tombstoneCleanup'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
 const formatInputNumber = (n) => {
@@ -307,6 +308,8 @@ function PedidosCatalogo() {
 
   const loadData = async () => {
     try {
+      // Limpiar tombstones antiguos al cargar
+      cleanPedidoTombstones().catch(e => console.warn('Error limpiando tombstones:', e))
       
       // Cargar productos usando utilidad híbrida (Supabase + fallback a localStorage)
       const productosBase = await loadAllProductos()
