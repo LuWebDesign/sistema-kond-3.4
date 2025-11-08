@@ -312,10 +312,18 @@ export function getCurrentUser() {
   if (!userStr) return null;
   
   try {
-    return JSON.parse(userStr);
+    const user = JSON.parse(userStr);
+    // Si es admin, no exponerlo a capas públicas
+    if (user && user.rol === 'admin') return null;
+    return user;
   } catch {
     return null;
   }
+}
+
+// Versión explícita para uso público que ignora admins
+export function getPublicUser() {
+  return getCurrentUser();
 }
 
 /**

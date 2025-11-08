@@ -20,10 +20,13 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     } catch (e) {
       // ignore if document.body is not available yet
     }
-    // Cargar estado de usuario público (si existe)
+    // Cargar estado de usuario público (si existe) - ignorar admin
     try {
       const u = localStorage.getItem('currentUser')
-      if (u) setCurrentUser(JSON.parse(u))
+      if (u) {
+        const parsed = JSON.parse(u)
+        if (parsed?.rol !== 'admin') setCurrentUser(parsed)
+      }
     } catch (e) {
       // ignore
     }

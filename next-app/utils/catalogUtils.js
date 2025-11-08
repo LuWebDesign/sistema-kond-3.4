@@ -161,12 +161,17 @@ export const getCurrentUser = () => {
   try {
     // Intentar obtener usuario de diferentes fuentes
     if (window.KONDAuth && typeof window.KONDAuth.currentUser === 'function') {
-      return window.KONDAuth.currentUser()
+      const u = window.KONDAuth.currentUser()
+      if (u && u.rol === 'admin') return null
+      return u
     }
     
     // Fallback: buscar en localStorage
     const userData = localStorage.getItem('currentUser')
-    return userData ? JSON.parse(userData) : null
+    if (!userData) return null
+    const u2 = JSON.parse(userData)
+    if (u2 && u2.rol === 'admin') return null
+    return u2
   } catch (error) {
     console.warn('Error getting current user:', error)
     return null
