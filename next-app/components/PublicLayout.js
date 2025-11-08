@@ -34,8 +34,14 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       localStorage.removeItem('currentUser')
       setCurrentUser(null)
       createToast('Sesión cerrada correctamente', 'success')
-      // llevar al catálogo público
-      router.push('/catalog')
+      
+      // Si estamos en catalog, forzar recarga para actualizar UI
+      if (router.pathname === '/catalog') {
+        window.location.reload()
+      } else {
+        // Si estamos en otra página, ir al catálogo
+        router.push('/catalog')
+      }
     } catch (e) {
       console.error('Logout error', e)
       createToast('No se pudo cerrar sesión', 'error')

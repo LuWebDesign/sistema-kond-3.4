@@ -964,7 +964,16 @@ function CheckoutModal({
     const onUserUpdated = (e) => {
       try {
         const user = e && e.detail ? e.detail : getCurrentUser()
-        if (user) applyUser(user)
+        if (user) {
+          applyUser(user)
+        } else {
+          // Usuario cerró sesión, limpiar formulario
+          setFormData({
+            cliente: { nombre: '', apellido: '', telefono: '', email: '', direccion: '' },
+            metodoPago: 'transferencia',
+            fechaSolicitudEntrega: null
+          })
+        }
       } catch (err) { /* noop */ }
     }
 
@@ -972,7 +981,16 @@ function CheckoutModal({
       if (e.key === 'currentUser') {
         try {
           const user = e.newValue ? JSON.parse(e.newValue) : null
-          if (user) applyUser(user)
+          if (user) {
+            applyUser(user)
+          } else {
+            // Usuario cerró sesión, limpiar formulario
+            setFormData({
+              cliente: { nombre: '', apellido: '', telefono: '', email: '', direccion: '' },
+              metodoPago: 'transferencia',
+              fechaSolicitudEntrega: null
+            })
+          }
         } catch (err) {}
       }
     }
