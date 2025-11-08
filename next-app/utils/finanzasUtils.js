@@ -1,5 +1,4 @@
 // finanzasUtils.js - Utilidades para registrar movimientos financieros desde otros módulos
-import { createMovimiento, getMovimientos } from './supabaseFinanzas';
 
 /**
  * Registrar un movimiento financiero desde cualquier módulo
@@ -14,7 +13,7 @@ import { createMovimiento, getMovimientos } from './supabaseFinanzas';
  * @param {string} params.metodoPago - Método de pago: 'efectivo' | 'transferencia' (opcional)
  * @returns {Object} Movimiento creado
  */
-export async function registrarMovimiento({
+export function registrarMovimiento({
   tipo = 'ingreso',
   monto = 0,
   categoria = '',
@@ -28,92 +27,6 @@ export async function registrarMovimiento({
 }) {
   if (typeof window === 'undefined') return null;
 
-  const fechaFinal = fecha || new Date().toISOString().slice(0, 10);
-  const horaActual = new Date().toTimeString().slice(0, 8);
-
-  // Intentar guardar en Supabase primero
-  try {
-    const movimientoData = {
-      tipo,
-      monto: Number(monto),
-      categoria,
-      descripcion,
-      fecha: fechaFinal,
-      hora: horaActual,
-      metodo_pago: metodoPago,
-      cliente_nombre: clienteName || null,
-      pedido_id: pedidoId || null,
-      idempotency_key: idempotencyKey || null
-    };
-
-    // Si hay idempotencyKey y replaceIfExists, buscar y actualizar
-    if (idempotencyKey && replaceIfExists) {
-      const { data: existing } = await getMovimientos();
-      const existingMov = existing?.find(m => m.idempotency_key === idempotencyKey);
-      
-      if (existingMov) {
-        const { data, error } = await import('./supabaseFinanzas').then(m => 
-          m.updateMovimiento(existingMov.id, movimientoData)
-        );
-        
-        if (!error) {
-          // Actualizar también localStorage
-          updateLocalStorageFinanzas(data);
-          
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('finanzasUpdated', { 
-              detail: { ...data, action: 'updated' } 
-            }));
-          }
-          
-          return data;
-        }
-      }
-    }
-
-    // Crear nuevo movimiento
-    const { data, error } = await createMovimiento(movimientoData);
-    
-    if (!error && data) {
-      // Guardar también en localStorage como backup
-      saveToLocalStorage(data);
-      
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('finanzasUpdated', { 
-          detail: { ...data, action: 'created' } 
-        }));
-      }
-      
-      return data;
-    }
-    
-    // Si hay error de Supabase, usar fallback a localStorage
-    console.warn('Error en Supabase, usando localStorage:', error);
-    return registrarMovimientoLocalStorage({
-      tipo, monto, categoria, descripcion, fecha: fechaFinal, 
-      hora: horaActual, clienteName, pedidoId, metodoPago, 
-      idempotencyKey, replaceIfExists
-    });
-    
-  } catch (error) {
-    console.error('Error al registrar movimiento en Supabase:', error);
-    // Fallback a localStorage
-    return registrarMovimientoLocalStorage({
-      tipo, monto, categoria, descripcion, fecha: fechaFinal, 
-      hora: horaActual, clienteName, pedidoId, metodoPago, 
-      idempotencyKey, replaceIfExists
-    });
-  }
-}
-
-/**
- * Función fallback para guardar en localStorage
- * @private
- */
-function registrarMovimientoLocalStorage({
-  tipo, monto, categoria, descripcion, fecha, hora, 
-  clienteName, pedidoId, metodoPago, idempotencyKey, replaceIfExists
-}) {
   try {
     const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
     const fechaFinal = fecha || new Date().toISOString().slice(0, 10);
@@ -252,15 +165,13 @@ export function obtenerMovimientoPorIdempotencyKey(idempotencyKey) {
  * Obtener resumen financiero
  * @returns {Object} Resumen con ingresos, egresos, balance, etc.
  */
-export async function obtenerResumenFinanciero() {
+export function obtenerResumenFinanciero() {
   if (typeof window === 'undefined') {
     return { ingresosHoy: 0, egresosHoy: 0, equilibrioHoy: 0, balance: 0, porCobrar: 0 };
   }
 
   try {
-    // Intentar obtener de Supabase primero
-    const { data: movimientos } = await getMovimientos();
-    const finanzas = movimientos || JSON.parse(localStorage.getItem('finanzas') || '[]');
+    const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
     const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]');
     const hoy = new Date().toISOString().slice(0, 10);
     
@@ -356,72 +267,3 @@ export default {
   obtenerMovimientosPorPedido,
   formatCurrency
 };
-
-// ============================================
-// FUNCIONES HELPER PRIVADAS
-// ============================================
-
-/**
- * Guardar movimiento en localStorage como backup
- * @private
- */
-function saveToLocalStorage(movimiento) {
-  try {
-    const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
-    
-    // Convertir de snake_case a camelCase
-    const movimientoLocal = {
-      id: movimiento.id,
-      tipo: movimiento.tipo,
-      monto: movimiento.monto,
-      categoria: movimiento.categoria,
-      descripcion: movimiento.descripcion,
-      fecha: movimiento.fecha,
-      hora: movimiento.hora,
-      metodoPago: movimiento.metodo_pago,
-      clienteName: movimiento.cliente_nombre,
-      pedidoId: movimiento.pedido_id,
-      idempotencyKey: movimiento.idempotency_key,
-      registrado: true, // Marca que viene de Supabase
-      supabaseId: movimiento.id
-    };
-    
-    finanzas.push(movimientoLocal);
-    localStorage.setItem('finanzas', JSON.stringify(finanzas));
-  } catch (error) {
-    console.warn('Error guardando en localStorage:', error);
-  }
-}
-
-/**
- * Actualizar movimiento en localStorage
- * @private
- */
-function updateLocalStorageFinanzas(movimiento) {
-  try {
-    const finanzas = JSON.parse(localStorage.getItem('finanzas') || '[]');
-    const index = finanzas.findIndex(m => m.supabaseId === movimiento.id || m.id === movimiento.id);
-    
-    if (index !== -1) {
-      finanzas[index] = {
-        id: movimiento.id,
-        tipo: movimiento.tipo,
-        monto: movimiento.monto,
-        categoria: movimiento.categoria,
-        descripcion: movimiento.descripcion,
-        fecha: movimiento.fecha,
-        hora: movimiento.hora,
-        metodoPago: movimiento.metodo_pago,
-        clienteName: movimiento.cliente_nombre,
-        pedidoId: movimiento.pedido_id,
-        idempotencyKey: movimiento.idempotency_key,
-        registrado: true,
-        supabaseId: movimiento.id
-      };
-      
-      localStorage.setItem('finanzas', JSON.stringify(finanzas));
-    }
-  } catch (error) {
-    console.warn('Error actualizando localStorage:', error);
-  }
-}

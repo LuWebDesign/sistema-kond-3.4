@@ -11,8 +11,6 @@ import {
   toggleProductoPublicado,
   uploadProductoImagen 
 } from '../utils/supabaseProducts'
-import { addProductTombstone, removeProductTombstone } from '../utils/supabaseProductos'
-import { cleanProductTombstones } from '../utils/tombstoneCleanup'
 
 function Products() {
   // Estados principales
@@ -121,8 +119,7 @@ function Products() {
   })
 
   const pageSize = 10
-  // Obtener categorías dinámicamente desde los productos cargados (sin valores predefinidos)
-  const categories = Array.from(new Set(products.map(p => p.categoria).filter(cat => cat && String(cat).trim() !== '')))
+  const categories = ['Decoración', 'Herramientas', 'Regalos', 'Llaveros', 'Arte', 'Personalizada']
 
   // Función para actualizar campos calculados
   const updateCalculatedFields = useCallback(() => {
@@ -207,9 +204,6 @@ function Products() {
     if (typeof window === 'undefined') return
     
     try {
-      // Limpiar tombstones antiguos al cargar
-      cleanProductTombstones().catch(e => console.warn('Error limpiando tombstones:', e))
-      
       const { data: productList, error } = await getAllProductos()
       
       if (error) {
@@ -659,32 +653,16 @@ function Products() {
   // Eliminar producto
   const handleDeleteProduct = async (id) => {
     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      // Marcar como eliminado localmente antes de intentar eliminación en servidor
-      addProductTombstone(id)
-      
-      // Actualizar UI optimísticamente
-      const updatedProducts = products.filter(p => p.id !== id)
-      setProducts(updatedProducts)
-      setFilteredProducts(updatedProducts.filter(p => {
-        const matchesSearch = searchTerm === '' || 
-          p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (p.categoria && p.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
-        const matchesFilter = visibilityFilter === 'all' || 
-          (visibilityFilter === 'published' && p.publicado) ||
-          (visibilityFilter === 'hidden' && !p.publicado)
-        return matchesSearch && matchesFilter
-      }))
-      
-      // Intentar eliminar en Supabase
       const { error } = await deleteProducto(id)
       
       if (error) {
         console.error('Error deleting product:', error)
-        alert('Error al eliminar el producto del servidor. Se eliminó localmente.')
-      } else {
-        // Si la eliminación en servidor fue exitosa, limpiar tombstone
-        removeProductTombstone(id)
+        alert('Error al eliminar el producto')
+        return
       }
+
+      // Recargar productos
+      await loadProducts()
     }
   }
 

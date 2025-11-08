@@ -40,8 +40,10 @@ export default function Catalog() {
   const handleCategorySlug = (slug, attempt = 0) => {
     try {
       const maxAttempts = 20
+      console.log('🔍 setCategoryHandler called with slug:', slug, 'attempt:', attempt)
 
       if (!slug) {
+        console.log('🔄 Clearing selected category')
         setSelectedCategory('')
         return
       }
@@ -145,8 +147,12 @@ export default function Catalog() {
     const matchesCategory = !selectedCategory || 
       (product.categoria && product.categoria.trim() === selectedCategory.trim())
     
+    console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
+    
     return matchesSearch && matchesCategory
   })
+
+  console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
@@ -964,16 +970,7 @@ function CheckoutModal({
     const onUserUpdated = (e) => {
       try {
         const user = e && e.detail ? e.detail : getCurrentUser()
-        if (user) {
-          applyUser(user)
-        } else {
-          // Usuario cerró sesión, limpiar formulario
-          setFormData({
-            cliente: { nombre: '', apellido: '', telefono: '', email: '', direccion: '' },
-            metodoPago: 'transferencia',
-            fechaSolicitudEntrega: null
-          })
-        }
+        if (user) applyUser(user)
       } catch (err) { /* noop */ }
     }
 
@@ -981,16 +978,7 @@ function CheckoutModal({
       if (e.key === 'currentUser') {
         try {
           const user = e.newValue ? JSON.parse(e.newValue) : null
-          if (user) {
-            applyUser(user)
-          } else {
-            // Usuario cerró sesión, limpiar formulario
-            setFormData({
-              cliente: { nombre: '', apellido: '', telefono: '', email: '', direccion: '' },
-              metodoPago: 'transferencia',
-              fechaSolicitudEntrega: null
-            })
-          }
+          if (user) applyUser(user)
         } catch (err) {}
       }
     }

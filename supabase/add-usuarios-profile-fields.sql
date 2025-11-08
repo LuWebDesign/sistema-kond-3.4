@@ -1,7 +1,7 @@
 -- Migration: add-usuarios-profile-fields.sql
 -- Fecha: 2025-11-08
 -- Objetivo: Agregar columnas de perfil a la tabla `usuarios` para sincronizar datos de auth.users
--- Uso: Ejecutar en Supabase SQL Editor (o mediante supabase CLI). El script usa IF NOT EXISTS para ser idempotente.
+-- Uso: Ejecutar en Supabasesucces SQL Editor (o mediante supabase CLI). El script usa IF NOT EXISTS para ser idempotente.
 
 BEGIN;
 

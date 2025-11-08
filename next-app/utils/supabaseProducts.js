@@ -6,44 +6,17 @@
 import supabase from './supabaseClient';
 
 /**
- * Obtener tombstones locales (IDs de productos eliminados localmente)
- */
-function getTombstones() {
-  if (typeof window === 'undefined') return [];
-  try {
-    return JSON.parse(localStorage.getItem('productosDeleted') || '[]') || [];
-  } catch (e) {
-    return [];
-  }
-}
-
-/**
- * Filtrar productos aplicando tombstones locales
- */
-function applyTombstoneFilter(productos) {
-  if (!productos || !Array.isArray(productos)) return productos;
-  const tombstones = getTombstones();
-  if (tombstones.length === 0) return productos;
-  return productos.filter(p => !tombstones.includes(p.id));
-}
-
-/**
  * Obtener todos los productos (solo admins)
- * Automáticamente filtra productos eliminados localmente
  */
 export async function getAllProductos() {
   try {
     const { data, error } = await supabase
       .from('productos')
       .select('*')
-      .order('created_at', { ascending: false});
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error('Error al obtener productos:', error);
     return { data: null, error: error.message };
@@ -52,7 +25,6 @@ export async function getAllProductos() {
 
 /**
  * Obtener productos publicados (público)
- * Automáticamente filtra productos eliminados localmente
  */
 export async function getProductosPublicados() {
   try {
@@ -61,19 +33,17 @@ export async function getProductosPublicados() {
       .select('*')
       .eq('publicado', true)
       .eq('hidden_in_productos', false)
-      .order('created_at', { ascending: false});
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
-    console.error('Error al obtener productos publicados:', error);  
+    console.error('Error al obtener productos publicados:', error);
     return { data: null, error: error.message };
   }
-}/**
+}
+
+/**
  * Obtener un producto por ID
  */
 export async function getProductoById(id) {

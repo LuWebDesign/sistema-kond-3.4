@@ -2,8 +2,6 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import { loginWithEmail } from '../utils/supabaseAuthV2.js';
-import supabase from '../utils/supabaseClient.js';
 
 export default function Home() {
   const router = useRouter();
@@ -14,25 +12,16 @@ export default function Home() {
 
   // Verificar sesión activa al cargar la página
   useEffect(() => {
-    const checkSession = async () => {
+    const checkSession = () => {
       try {
-        // Verificar sesión de Supabase
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          // Sesión válida, redirigir automáticamente
-          router.push('/dashboard');
-          return;
-        }
-
-        // Fallback: verificar sesión localStorage (legacy)
         const sessionData = localStorage.getItem('adminSession');
         if (sessionData) {
-          const legacySession = JSON.parse(sessionData);
+          const session = JSON.parse(sessionData);
           const now = new Date().getTime();
-          const sessionDuration = legacySession.sessionDuration || (24 * 60 * 60 * 1000);
+          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000); // Usar duración guardada o 24 horas por defecto
 
-          if (now - legacySession.timestamp < sessionDuration) {
-            // Sesión legacy válida, redirigir
+          if (now - session.timestamp < sessionDuration) {
+            // Sesión válida, redirigir automáticamente
             router.push('/dashboard');
             return;
           } else {
@@ -55,22 +44,12 @@ export default function Home() {
     try {
       const { email, password } = loginData;
 
-      // Login usando Supabase Auth
-      const { user, session, error } = await loginWithEmail(email, password);
-
-      if (error) {
-        showCustomAlert('❌ Credenciales Incorrectas', error, 'error');
-        setIsLoading(false);
-        return;
-      }
-
-      if (user && session) {
-        // Crear sesión compatible con localStorage (para compatibilidad con código legacy)
-        const sessionDuration = rememberSession ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      // Validación de credenciales
+      if (email === 'admin1' && password === 'kond') {
+        // Crear sesión con duración basada en la opción "Recordar sesión"
+        const sessionDuration = rememberSession ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 días o 24 horas
         const sessionData = {
           email: email,
-          username: user.username,
-          rol: user.rol,
           timestamp: new Date().getTime(),
           isLoggedIn: true,
           rememberSession: rememberSession,
@@ -1003,7 +982,6 @@ export default function Home() {
                   id="adminEmail"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                  autoComplete="username"
                   required
                 />
               </div>
@@ -1014,7 +992,6 @@ export default function Home() {
                   id="adminPassword"
                   value={loginData.password}
                   onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                  autoComplete="current-password"
                   required
                 />
               </div>

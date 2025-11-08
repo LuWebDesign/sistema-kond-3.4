@@ -4,7 +4,6 @@ import PedidosModal from '../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
-import { loadAllProductos } from '../utils/productosUtils'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
 const timeToMinutes = (timeStr = '00:00:00') => {
@@ -59,18 +58,16 @@ function Calendar() {
   }, [])
 
   // Cargar datos del localStorage
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(() => {
     if (typeof window === 'undefined') return
     
     try {
       const storedPedidos = localStorage.getItem('pedidos')
+      const storedProducts = localStorage.getItem('productosBase')
       const storedCatalogo = localStorage.getItem('pedidosCatalogo')
       
-      // Cargar productos desde Supabase (con fallback a localStorage)
-      const productosBase = await loadAllProductos()
-      
       setPedidos(storedPedidos ? JSON.parse(storedPedidos) : [])
-      setProducts(productosBase)
+      setProducts(storedProducts ? JSON.parse(storedProducts) : [])
       setCatalogo(storedCatalogo ? JSON.parse(storedCatalogo) : [])
     } catch (error) {
       console.error('Error loading calendar data:', error)

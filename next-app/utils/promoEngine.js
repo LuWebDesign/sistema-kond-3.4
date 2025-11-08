@@ -57,9 +57,16 @@ export function applyPromotionsToProduct(product, allPromos = []) {
     return false;
   });
 
+  // Normalizar datos básicos del producto (soporta keys en ES/EN)
+  const normalizedProduct = {
+    id: product.id || product.idProducto || product.productId,
+    categoria: product.categoria || product.category,
+    precioUnitario: product.precioUnitario || product.price || product.unitPrice || 0
+  };
+
   let result = {
-    originalPrice: product.precioUnitario || 0,
-    discountedPrice: product.precioUnitario || 0,
+    originalPrice: normalizedProduct.precioUnitario,
+    discountedPrice: normalizedProduct.precioUnitario,
     hasPromotion: false,
     promotions: [],
     badge: null,
@@ -104,12 +111,17 @@ export function applyPromotionsToProduct(product, allPromos = []) {
     }
 
     // Aplicar descuentos según tipo
-    if (promo.tipo === 'percentage_discount' && promo.descuentoPorcentaje) {
-      currentPrice = currentPrice * (1 - promo.descuentoPorcentaje / 100);
-    } else if (promo.tipo === 'fixed_price' && promo.precioEspecial) {
+    // Soportar propiedades en español/inglés
+    const promoType = promo.type || promo.tipo;
+    const perc = promo.descuentoPorcentaje || promo.discountPercentage;
+    const fixed = promo.precioEspecial || promo.fixedPrice;
+
+    if (promoType === 'percentage_discount' && typeof perc === 'number') {
+      currentPrice = currentPrice * (1 - perc / 100);
+    } else if (promoType === 'fixed_price' && typeof fixed === 'number') {
       // Precio fijo: usar el más bajo encontrado
-      currentPrice = Math.min(currentPrice, promo.precioEspecial);
-    } else if (promo.tipo === 'badge_only') {
+      currentPrice = Math.min(currentPrice, fixed);
+    } else if (promoType === 'badge_only') {
       // Solo badge, no afecta el precio
     }
   });
@@ -132,7 +144,7 @@ export function getPromotionBadge(product, allPromos = []) {
 // Calcular precio con descuento
 export function calculateDiscountedPrice(product, quantity = 1, allPromos = []) {
   const promoResult = applyPromotionsToProduct(product, allPromos);
-  const activePromos = promoResult.promotions;
+  const activePromos = promoResult.promotions || [];
   
   if (activePromos.length === 0) {
     return {
@@ -149,10 +161,12 @@ export function calculateDiscountedPrice(product, quantity = 1, allPromos = []) 
 
   // Manejar promociones especiales de cantidad (buy_x_get_y)
   // Solo se aplica una promoción de este tipo (la primera encontrada)
-  const buyXgetYPromo = activePromos.find(p => p.type === 'buy_x_get_y');
+  // Soportar keys en ES/EN para tipo/config
+  const buyXgetYPromo = activePromos.find(p => (p.type || p.tipo) === 'buy_x_get_y');
   if (buyXgetYPromo) {
-    const buyQty = buyXgetYPromo.config?.buyQuantity || 2;
-    const payQty = buyXgetYPromo.config?.payQuantity || 1;
+    const cfg = buyXgetYPromo.config || buyXgetYPromo.configuracion || {};
+    const buyQty = cfg.buyQuantity || cfg.buy || cfg.buyQty || 2;
+    const payQty = cfg.payQuantity || cfg.pay || cfg.payQty || 1;
     
     if (quantity >= buyQty) {
       const groups = Math.floor(quantity / buyQty);
@@ -175,16 +189,21 @@ export function calculateDiscountedPrice(product, quantity = 1, allPromos = []) 
 }
 
 // Aplicar promociones a todo el carrito
-export function applyPromotionsToCart(cartItems) {
-  const activePromos = getActivePromotions();
+export function applyPromotionsToCart(cartItems, allPromos = []) {
+  // Obtener promos activas a partir de la lista completa pasada
+  const activePromos = getActivePromotions(allPromos);
   let cartTotal = 0;
   let totalDiscount = 0;
   let appliedPromotions = [];
   let freeShipping = false;
 
   const processedItems = cartItems.map(item => {
-    const product = { id: item.idProducto, precioUnitario: item.price };
-    const pricing = calculateDiscountedPrice(product, item.quantity);
+    const product = {
+      id: item.idProducto || item.productId || item.id,
+      categoria: item.categoria || item.category,
+      precioUnitario: item.price || item.precioUnitario || item.unitPrice || 0
+    };
+    const pricing = calculateDiscountedPrice(product, item.quantity, activePromos);
     
     cartTotal += pricing.totalPrice;
     totalDiscount += pricing.discount;
@@ -210,9 +229,10 @@ export function applyPromotionsToCart(cartItems) {
   });
 
   // Verificar envío gratis (pueden aplicarse múltiples promos de envío)
-  const shippingPromos = activePromos.filter(p => p.type === 'free_shipping');
+  const shippingPromos = activePromos.filter(p => (p.type || p.tipo) === 'free_shipping');
   for (const promo of shippingPromos) {
-    const minAmount = promo.config?.minAmount || 0;
+    const cfg = promo.config || promo.configuracion || {};
+    const minAmount = cfg.minAmount || cfg.min || 0;
     if (cartTotal >= minAmount) {
       freeShipping = true;
       if (!appliedPromotions.find(p => p.id === promo.id)) {

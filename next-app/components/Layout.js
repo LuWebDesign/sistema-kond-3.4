@@ -27,12 +27,10 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     try {
       const session = await getCurrentSession()
       if (session?.user) {
-        // Robust fallback en caso de que session.user esté pero sus campos aún no hayan sido propagados
-        const u = session.user || {}
         setUserInfo({
-          email: u.email || '',
-          username: u.username || u.name || '',
-          rol: u.rol || 'usuario',
+          email: session.user.email,
+          username: session.user.username,
+          rol: session.user.rol,
           loginTime: new Date().toLocaleString('es-AR')
         })
       } else {

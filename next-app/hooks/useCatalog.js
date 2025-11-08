@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
-import { loadProductosPublicados, mapProductoToFrontend } from '../utils/productosUtils'
+import { getProductosPublicados } from '../utils/supabaseProducts'
 import { getPromocionesActivas } from '../utils/supabaseMarketing'
 
 // Hook para gestionar productos
@@ -49,12 +49,51 @@ export function useProducts() {
       
       setPromociones(promocionesActivas)
       
-      // Obtener productos publicados usando utilidad híbrida
-      // NOTA: loadProductosPublicados() ya retorna productos mapeados a camelCase
-      const productosBase = await loadProductosPublicados()
+      // Obtener productos publicados desde Supabase
+      const { data: productosBase, error } = await getProductosPublicados()
       
-      // Filtrar solo productos activos de tipo Venta o Stock
-      const validProducts = (productosBase || []).filter(p => 
+      if (error) {
+        console.error('Error loading published products:', error)
+        setProducts([])
+        setCategories([])
+        setIsLoading(false)
+        return
+      }
+      
+      // Mapear campos de snake_case a camelCase
+      const mappedProducts = (productosBase || []).map(p => {
+        // Calcular costo material
+        const unidadesPorPlaca = p.unidades_por_placa || 1
+        const costoPlaca = p.costo_placa || 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          categoria: p.categoria,
+          tipo: p.tipo,
+          medidas: p.medidas,
+          tiempoUnitario: p.tiempo_unitario || '00:00:30',
+          active: p.active !== undefined ? p.active : true,
+          publicado: p.publicado !== undefined ? p.publicado : false,
+          hiddenInProductos: p.hidden_in_productos || false,
+          unidadesPorPlaca: unidadesPorPlaca,
+          usoPlacas: p.uso_placas || 0,
+          costoPlaca: costoPlaca,
+          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+          materialId: p.material_id || '',
+          material: p.material || '',
+          margenMaterial: p.margen_material || 0,
+          precioUnitario: p.precio_unitario || 0,
+          precioPromos: p.precio_promos || 0,
+          unidades: p.unidades || 1,
+          ensamble: p.ensamble || 'Sin ensamble',
+          imagen: p.imagen_url || '',
+          fechaCreacion: p.created_at || new Date().toISOString()
+        }
+      })
+      
+      const validProducts = mappedProducts.filter(p => 
         p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
       )
       
@@ -104,89 +143,56 @@ export function useCart() {
     loadCart()
   }, [])
 
-  const loadCart = () => {
+  const loadCart = async () => {
     if (typeof window === 'undefined') return
     
     try {
       const savedCart = JSON.parse(localStorage.getItem('cart')) || []
       // Normalizar items del carrito para aplicar precios promocionales actuales
       const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
-      // Obtener promociones activas (para recalcular precios con descuentos tras recarga)
-      // Si falla la carga, se continúa sin aplicar descuentos (fallback)
+
+      // Cargar promociones activas desde Supabase para aplicarlas al carrito
       let promocionesActivas = []
       try {
-        // Nota: reutilizamos getPromocionesActivas ya importado al inicio del archivo
-        // Solo intentamos si hay productos base; evita una llamada innecesaria en carritos vacíos
-        if (productosBase.length > 0) {
-          const fetchPromos = async () => {
-            const { data: promosData, error: promosError } = await getPromocionesActivas()
-            if (!promosError && Array.isArray(promosData)) {
-              promocionesActivas = promosData.map(p => ({
-                id: p.id,
-                nombre: p.nombre,
-                tipo: p.tipo,
-                valor: p.valor,
-                aplicaA: p.aplica_a,
-                categoria: p.categoria,
-                productoId: p.producto_id,
-                fechaInicio: p.fecha_inicio,
-                fechaFin: p.fecha_fin,
-                activo: p.activo,
-                prioridad: p.prioridad,
-                badgeTexto: p.badge_texto,
-                badgeColor: p.badge_color,
-                badgeTextColor: p.badge_text_color,
-                descuentoPorcentaje: p.descuento_porcentaje,
-                descuentoMonto: p.descuento_monto,
-                precioEspecial: p.precio_especial
-              }))
-            }
-          }
-          // Ejecutar la carga sin bloquear la normalización (sin await directo sobre map)
-          // Primero normalizamos con datos actuales; luego si las promos llegan, se recalcula.
-          fetchPromos().then(() => {
-            try {
-              if (promocionesActivas.length === 0) return // nada que recalcular
-              const recalculated = savedCart.map(item => {
-                try {
-                  const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
-                  if (!prod) return item
-                  const promo = applyPromotionsToProduct(prod, promocionesActivas)
-                  const discounted = promo && promo.hasPromotion ? promo.discountedPrice : prod.precioUnitario
-                  const unitPrice = discounted !== undefined && discounted !== null ? discounted : (prod.precioUnitario || item.price || 0)
-                  const originalBase = prod.precioUnitario || unitPrice
-                  return {
-                    ...item,
-                    price: unitPrice,
-                    originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : originalBase
-                  }
-                } catch (e) {
-                  return item
-                }
-              })
-              localStorage.setItem('cart', JSON.stringify(recalculated))
-              setCart(recalculated)
-            } catch (e) {
-              // silencioso
-            }
-          })
+        const { data: promosData, error: promosError } = await getPromocionesActivas()
+        if (!promosError && promosData) {
+          promocionesActivas = (promosData || []).map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            tipo: p.tipo,
+            valor: p.valor,
+            aplicaA: p.aplica_a,
+            categoria: p.categoria,
+            productoId: p.producto_id,
+            fechaInicio: p.fecha_inicio,
+            fechaFin: p.fecha_fin,
+            activo: p.activo,
+            prioridad: p.prioridad,
+            badgeTexto: p.badge_texto,
+            badgeColor: p.badge_color,
+            badgeTextColor: p.badge_text_color,
+            descuentoPorcentaje: p.descuento_porcentaje,
+            descuentoMonto: p.descuento_monto,
+            precioEspecial: p.precio_especial,
+            config: p.configuracion || p.config
+          }))
         }
-      } catch (e) {
-        // silencioso: no bloquear si promociones fallan
+      } catch (err) {
+        console.warn('No se pudieron cargar promociones para normalizar el carrito:', err)
       }
 
-      // Normalización inicial sin esperar a promociones (reduce latencia de pintado)
       const normalized = savedCart.map(item => {
         try {
           const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
           if (!prod) return item
-          // Usar precio guardado en el item si ya tenía descuento al momento de agregarse
-          // Mantener originalPrice si existe para mostrar ahorro
-          const originalBase = prod.precioUnitario || item.originalPrice || item.price || 0
+          // aplicar motor de promociones al producto cuando exista (pasando la lista de promos)
+          const promo = applyPromotionsToProduct(prod, promocionesActivas)
+          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : (prod.precioPromocional !== undefined ? prod.precioPromocional : prod.precioUnitario)
+          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (prod.precioUnitario || item.price || 0)
           return {
             ...item,
-            price: item.price !== undefined ? item.price : originalBase,
-            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : originalBase
+            price: unitPrice,
+            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (prod.precioUnitario || unitPrice)
           }
         } catch (e) {
           return item

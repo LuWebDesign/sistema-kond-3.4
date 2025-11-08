@@ -6,60 +6,7 @@
 import supabase from './supabaseClient';
 
 /**
- * Obtener tombstones locales (IDs de pedidos eliminados localmente)
- */
-function getTombstones() {
-  if (typeof window === 'undefined') return [];
-  try {
-    return JSON.parse(localStorage.getItem('pedidosCatalogoDeleted') || '[]') || [];
-  } catch (e) {
-    return [];
-  }
-}
-
-/**
- * Agregar un pedido al tombstone local
- */
-export function addTombstone(pedidoId) {
-  if (typeof window === 'undefined') return;
-  try {
-    const tomb = getTombstones();
-    if (!tomb.includes(pedidoId)) {
-      tomb.push(pedidoId);
-      localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(tomb));
-    }
-  } catch (e) {
-    console.warn('No se pudo guardar tombstone local:', e);
-  }
-}
-
-/**
- * Remover un pedido del tombstone local
- */
-export function removeTombstone(pedidoId) {
-  if (typeof window === 'undefined') return;
-  try {
-    const tomb = getTombstones();
-    const filtered = tomb.filter(id => id !== pedidoId);
-    localStorage.setItem('pedidosCatalogoDeleted', JSON.stringify(filtered));
-  } catch (e) {
-    console.warn('No se pudo limpiar tombstone local:', e);
-  }
-}
-
-/**
- * Filtrar pedidos aplicando tombstones locales
- */
-function applyTombstoneFilter(pedidos) {
-  if (!pedidos || !Array.isArray(pedidos)) return pedidos;
-  const tombstones = getTombstones();
-  if (tombstones.length === 0) return pedidos;
-  return pedidos.filter(p => !tombstones.includes(p.id));
-}
-
-/**
  * Obtener todos los pedidos catálogo (solo admins)
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getAllPedidosCatalogo() {
   try {
@@ -67,25 +14,12 @@ export async function getAllPedidosCatalogo() {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error('Error al obtener pedidos catálogo:', error);
     return { data: null, error: error.message };
@@ -94,30 +28,14 @@ export async function getAllPedidosCatalogo() {
 
 /**
  * Obtener un pedido catálogo por ID
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidoCatalogoById(id) {
   try {
-    // Verificar si está en tombstones antes de consultar
-    const tombstones = getTombstones();
-    if (tombstones.includes(id)) {
-      return { data: null, error: 'Pedido eliminado localmente' };
-    }
-
     const { data, error } = await supabase
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .eq('id', id)
       .single();
@@ -244,46 +162,18 @@ export async function updateEstadoPago(id, estadoPago) {
 /**
  * Eliminar un pedido catálogo (solo admins)
  * Nota: Los items se eliminan automáticamente por CASCADE
- * Usa API route con service_role para bypasear RLS
  */
 export async function deletePedidoCatalogo(id) {
   try {
-    console.log('🗑️  Intentando eliminar pedido ID:', id);
-    
-    // Construir URL absoluta o relativa según el ambiente
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const apiUrl = `${baseUrl}/api/pedidos-catalogo/${id}`;
-    
-    console.log('📍 URL del API:', apiUrl);
-    
-    // Llamar al API route que usa service_role
-    const response = await fetch(apiUrl, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const { error } = await supabase
+      .from('pedidos_catalogo')
+      .delete()
+      .eq('id', id);
 
-    console.log('📡 Status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      // Si es 404, el API route no existe o no está desplegado
-      if (response.status === 404) {
-        console.error('❌ API route no encontrado (404). Verifica que Vercel esté desplegando desde next-app/');
-        throw new Error('API route no disponible en producción. Contacta al administrador.');
-      }
-      
-      const result = await response.json().catch(() => ({ error: 'Error desconocido' }));
-      console.error('❌ Error del API:', result);
-      throw new Error(result.error || 'Error al eliminar pedido');
-    }
-    
-    const result = await response.json();
-    console.log('📊 Respuesta del API:', result);
-    console.log('✅ Pedido eliminado exitosamente');
+    if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('❌ Error al eliminar pedido catálogo:', error);
+    console.error('Error al eliminar pedido catálogo:', error);
     return { error: error.message };
   }
 }
@@ -337,7 +227,6 @@ export async function getComprobanteSignedUrl(filePath) {
 
 /**
  * Filtrar pedidos por estado de pago
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByEstadoPago(estadoPago) {
   try {
@@ -345,26 +234,13 @@ export async function getPedidosByEstadoPago(estadoPago) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .eq('estado_pago', estadoPago)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error('Error al filtrar pedidos:', error);
     return { data: null, error: error.message };
@@ -373,7 +249,6 @@ export async function getPedidosByEstadoPago(estadoPago) {
 
 /**
  * Filtrar pedidos por método de pago
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByMetodoPago(metodoPago) {
   try {
@@ -381,26 +256,13 @@ export async function getPedidosByMetodoPago(metodoPago) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .eq('metodo_pago', metodoPago)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error('Error al filtrar pedidos por método:', error);
     return { data: null, error: error.message };
@@ -409,7 +271,6 @@ export async function getPedidosByMetodoPago(metodoPago) {
 
 /**
  * Buscar pedidos por cliente (nombre, teléfono o email)
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function searchPedidosByCliente(searchTerm) {
   try {
@@ -417,26 +278,13 @@ export async function searchPedidosByCliente(searchTerm) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .or(`cliente_nombre.ilike.%${searchTerm}%,cliente_telefono.ilike.%${searchTerm}%,cliente_email.ilike.%${searchTerm}%`)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    return { data: filtered, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error('Error al buscar pedidos:', error);
     return { data: null, error: error.message };
@@ -445,7 +293,6 @@ export async function searchPedidosByCliente(searchTerm) {
 
 /**
  * Obtener pedidos de un cliente específico por email (vista pública)
- * Automáticamente filtra pedidos eliminados localmente
  */
 export async function getPedidosByEmail(email) {
   try {
@@ -453,27 +300,14 @@ export async function getPedidosByEmail(email) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(
-          id,
-          pedido_catalogo_id,
-          producto_id,
-          producto_nombre,
-          producto_precio,
-          cantidad,
-          medidas,
-          created_at
-        )
+        items:pedidos_catalogo_items(*)
       `)
       .eq('cliente_email', email)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    
-    // Aplicar filtro de tombstones
-    const filtered = applyTombstoneFilter(data);
-    
-    console.log('✅ Pedidos del usuario cargados desde Supabase:', filtered?.length || 0);
-    return { data: filtered, error: null };
+    console.log('✅ Pedidos del usuario cargados desde Supabase:', data?.length || 0);
+    return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener pedidos del usuario:', error);
     return { data: null, error: error.message };

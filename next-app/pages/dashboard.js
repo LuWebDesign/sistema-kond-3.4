@@ -3,7 +3,6 @@ import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '../utils/catalogUtils'
-import { loadAllProductos } from '../utils/productosUtils'
 
 function Dashboard() {
   const [products, setProducts] = useState([])
@@ -21,11 +20,11 @@ function Dashboard() {
     loadDashboardData()
   }, [])
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = () => {
     if (typeof window === 'undefined') return
 
-    // Cargar productos desde Supabase (con fallback a localStorage)
-    const productosBase = await loadAllProductos()
+    // Cargar productos
+    const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
     setProducts(productosBase)
 
     // Cargar pedidos administrativos

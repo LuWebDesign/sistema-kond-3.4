@@ -161,17 +161,12 @@ export const getCurrentUser = () => {
   try {
     // Intentar obtener usuario de diferentes fuentes
     if (window.KONDAuth && typeof window.KONDAuth.currentUser === 'function') {
-      const u = window.KONDAuth.currentUser()
-      if (u && u.rol === 'admin') return null
-      return u
+      return window.KONDAuth.currentUser()
     }
     
     // Fallback: buscar en localStorage
     const userData = localStorage.getItem('currentUser')
-    if (!userData) return null
-    const u2 = JSON.parse(userData)
-    if (u2 && u2.rol === 'admin') return null
-    return u2
+    return userData ? JSON.parse(userData) : null
   } catch (error) {
     console.warn('Error getting current user:', error)
     return null
@@ -310,7 +305,7 @@ export const parseDateYMD = (s) => {
   return isNaN(d.getTime()) ? null : d
 }
 
-// Verificar si el usuario actual es administrador (versión síncrona para compatibilidad)
+// Verificar si el usuario actual es administrador
 export const isAdminLogged = () => {
   if (typeof window === 'undefined') return false
   
@@ -325,31 +320,14 @@ export const isAdminLogged = () => {
         const sessionAge = Date.now() - adminSession.timestamp
 
         if (sessionAge < sessionDuration) {
-          // Verificar que el usuario sea admin (nueva estructura de Supabase Auth)
+          // Verificar que el usuario sea admin
           if (adminSession.user && adminSession.user.rol === 'admin') {
-            return true
-          }
-          // Compatibilidad: si tiene rol directamente (estructura actualizada de /home)
-          if (adminSession.rol === 'admin') {
-            return true
-          }
-          // Compatibilidad: si es la sesión legacy (sin rol) pero tiene email/username
-          if (adminSession.email || adminSession.username) {
             return true
           }
         } else {
           // Sesión expirada, limpiarla
           localStorage.removeItem('adminSession')
         }
-      }
-    }
-
-    // Verificar si existe usuario de Supabase en localStorage (kond-user)
-    const kondUserStr = localStorage.getItem('kond-user')
-    if (kondUserStr) {
-      const kondUser = JSON.parse(kondUserStr)
-      if (kondUser.rol === 'admin') {
-        return true
       }
     }
 

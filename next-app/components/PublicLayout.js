@@ -20,13 +20,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     } catch (e) {
       // ignore if document.body is not available yet
     }
-    // Cargar estado de usuario público (si existe) - ignorar admin
+    // Cargar estado de usuario público (si existe)
     try {
       const u = localStorage.getItem('currentUser')
-      if (u) {
-        const parsed = JSON.parse(u)
-        if (parsed?.rol !== 'admin') setCurrentUser(parsed)
-      }
+      if (u) setCurrentUser(JSON.parse(u))
     } catch (e) {
       // ignore
     }
@@ -37,14 +34,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       localStorage.removeItem('currentUser')
       setCurrentUser(null)
       createToast('Sesión cerrada correctamente', 'success')
-      
-      // Si estamos en catalog, forzar recarga para actualizar UI
-      if (router.pathname === '/catalog') {
-        window.location.reload()
-      } else {
-        // Si estamos en otra página, ir al catálogo
-        router.push('/catalog')
-      }
+      // llevar al catálogo público
+      router.push('/catalog')
     } catch (e) {
       console.error('Logout error', e)
       createToast('No se pudo cerrar sesión', 'error')
