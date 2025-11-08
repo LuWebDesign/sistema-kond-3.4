@@ -1,9 +1,10 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    }
+  "version": 2,
+  "builds": [
+    { "src": "next-app/package.json", "use": "@vercel/next" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "next-app/$1" }
   ],
   "headers": [
     {
