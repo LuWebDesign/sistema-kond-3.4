@@ -4,6 +4,23 @@
 -- ============================================
 
 -- ============================================
+-- LIMPIAR POLÍTICAS EXISTENTES (si las hay)
+-- ============================================
+
+-- Eliminar políticas antiguas de pedidos_catalogo
+DROP POLICY IF EXISTS "insert_pedidos_publico" ON pedidos_catalogo;
+DROP POLICY IF EXISTS "select_pedidos_authenticated" ON pedidos_catalogo;
+DROP POLICY IF EXISTS "update_pedidos_authenticated" ON pedidos_catalogo;
+
+-- Eliminar políticas antiguas de pedidos_catalogo_items
+DROP POLICY IF EXISTS "insert_items_publico" ON pedidos_catalogo_items;
+DROP POLICY IF EXISTS "select_items_publico" ON pedidos_catalogo_items;
+
+-- Eliminar política antigua de productos (si existe)
+DROP POLICY IF EXISTS "select_productos_publico" ON productos;
+
+
+-- ============================================
 -- TABLA: pedidos_catalogo
 -- ============================================
 
