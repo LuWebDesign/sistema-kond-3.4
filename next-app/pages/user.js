@@ -170,7 +170,8 @@ export default function User() {
 
   // Cerrar sesión
   const handleLogout = async () => {
-    const { error } = await supabaseLogout()
+    const logoutRes = await supabaseLogout()
+    const error = logoutRes && typeof logoutRes === 'object' ? logoutRes.error : null
     if (error) {
       createToast('Error al cerrar sesión', 'error')
       return

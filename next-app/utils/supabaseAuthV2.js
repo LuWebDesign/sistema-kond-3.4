@@ -76,20 +76,30 @@ export async function loginWithUsername(username, password) {
     // Guardar información del usuario en localStorage para acceso rápido
     if (typeof window !== 'undefined') {
       localStorage.setItem('kond-user', JSON.stringify({
-  id: usuario.id,
-  username: usuario.username,
-  rol: usuario.rol,
-  email: usuario.email || `${usuario.id}@kond.local`,
+        id: usuario.id,
+        username: usuario.username,
+        rol: usuario.rol,
+        email: usuario.email || `${usuario.id}@kond.local`,
+        telefono: usuario.telefono || '',
+        direccion: usuario.direccion || '',
+        localidad: usuario.localidad || '',
+        provincia: usuario.provincia || '',
+        apellido: usuario.apellido || '',
       }));
     }
 
     return {
       error: null,
       user: {
-  id: usuario.id,
-  username: usuario.username,
-  rol: usuario.rol,
-  email: usuario.email || `${usuario.id}@kond.local`,
+        id: usuario.id,
+        username: usuario.username,
+        rol: usuario.rol,
+        email: usuario.email || `${usuario.id}@kond.local`,
+        telefono: usuario.telefono || '',
+        direccion: usuario.direccion || '',
+        localidad: usuario.localidad || '',
+        provincia: usuario.provincia || '',
+        apellido: usuario.apellido || '',
       },
       session: authData.session,
     };
@@ -142,9 +152,14 @@ export async function loginWithEmail(email, password) {
 
     const user = {
       id: authData.user.id,
-  email: usuario?.email || authData.user.email,
-  username: usuario?.username || email.split('@')[0],
-  rol: usuario?.rol || 'usuario',
+      email: usuario?.email || authData.user.email,
+      username: usuario?.username || email.split('@')[0],
+      rol: usuario?.rol || 'usuario',
+      telefono: usuario?.telefono || '',
+      direccion: usuario?.direccion || '',
+      localidad: usuario?.localidad || '',
+      provincia: usuario?.provincia || '',
+      apellido: usuario?.apellido || '',
     };
 
     console.log('✅ Usuario final:', user);
@@ -238,7 +253,8 @@ export async function getCurrentSession() {
  */
 export async function logout() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const signOutResult = await supabase.auth.signOut();
+    const error = signOutResult && typeof signOutResult === 'object' ? signOutResult.error : null;
     
     // Limpiar localStorage incluso si hay error de signOut
     if (typeof window !== 'undefined') {
