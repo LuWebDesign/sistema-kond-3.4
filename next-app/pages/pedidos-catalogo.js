@@ -7,9 +7,8 @@ import { useState, useEffect } from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo, deletePedidoCatalogo, addTombstone, removeTombstone } from '../utils/supabasePedidos'
-import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
-import { cleanPedidoTombstones } from '../utils/tombstoneCleanup'
+import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
 const formatInputNumber = (n) => {
@@ -48,9 +47,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         name: item.producto_nombre,
         nombre: item.producto_nombre,
         price: item.producto_precio,
+        precioUnitario: item.producto_precio,
         precio: item.producto_precio,
         quantity: item.cantidad,
         cantidad: item.cantidad,
+        subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
         imagen: producto?.imagen || null
@@ -63,9 +64,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         name: item.producto_nombre,
         nombre: item.producto_nombre,
         price: item.producto_precio,
+        precioUnitario: item.producto_precio,
         precio: item.producto_precio,
         quantity: item.cantidad,
         cantidad: item.cantidad,
+        subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
         imagen: producto?.imagen || null
@@ -261,7 +264,6 @@ function PedidosCatalogo() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
   
   // Filtros pendientes
   const [filters, setFilters] = useState({
@@ -309,20 +311,27 @@ function PedidosCatalogo() {
 
   const loadData = async () => {
     try {
-      // Limpiar tombstones antiguos al cargar
-      cleanPedidoTombstones().catch(e => console.warn('Error limpiando tombstones:', e))
+      console.log('📦 Cargando pedidos catálogo...')
       
-      // Cargar productos usando utilidad híbrida (Supabase + fallback a localStorage)
-      const productosBase = await loadAllProductos()
+      // Cargar productos desde Supabase primero, fallback a localStorage
+      let productosBase = []
+      const { data: productosDB, error: productosError } = await getAllProductos()
       
-      // Cargar pedidos desde Supabase (ya incluye filtro de tombstones automático)
+      if (!productosError && productosDB && productosDB.length > 0) {
+        console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+        productosBase = productosDB.map(mapProductoToFrontend)
+      } else {
+        console.log('⚠️ Cargando productos desde localStorage como fallback')
+        productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
+      }
+      
+      // Cargar pedidos desde Supabase
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()
       
-      if (!error && pedidosDB && pedidosDB.length >= 0) {
+      if (!error && pedidosDB && pedidosDB.length > 0) {
         console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
-
         // Mapear de snake_case a camelCase con productos para imágenes
-        const pedidosMapped = (pedidosDB || []).map(pedidoDB => 
+        const pedidosMapped = pedidosDB.map(pedidoDB => 
           mapSupabasePedidoToFrontend(pedidoDB, productosBase)
         )
         // Normalizar pedidos
@@ -346,11 +355,11 @@ function PedidosCatalogo() {
       console.error('❌ Error cargando datos:', error)
       // Fallback final a localStorage
       const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
-      const productosBase = await loadAllProductos()
+      const productos = JSON.parse(localStorage.getItem('productosBase')) || []
       const mats = JSON.parse(localStorage.getItem('materiales')) || []
       const normalized = (pedidos || []).map(normalizePedido)
       setPedidosCatalogo(normalized)
-      setProductosBase(productosBase)
+      setProductosBase(productos)
       setMateriales(mats)
     }
   }
@@ -661,6 +670,55 @@ function PedidosCatalogo() {
       window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail }))
     } catch (err) {
       // noop
+    }
+    // Intentar sincronizar cambios al servidor en background
+    trySyncPedidoToServer(updatedPedidosArray, pedidoId)
+  }
+
+  // Intentar sincronizar cambios puntuales del pedido con el servidor (fire-and-forget)
+  function trySyncPedidoToServer(updatedPedidosArray, pedidoId) {
+    try {
+      const pedido = (updatedPedidosArray || []).find(p => p.id === pedidoId)
+      if (!pedido) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('⚠️ No se encontró pedido', pedidoId, 'para sincronizar')
+        }
+        return
+      }
+
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('🔄 Intentando sincronizar pedido', pedidoId, 'al servidor...')
+      }
+
+      // Fire-and-forget: no bloquea la UI
+      ;(async () => {
+        try {
+          const resp = await fetch(`/api/pedidos/catalogo/${pedidoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pedido)
+          })
+          if (!resp.ok) {
+            const body = await resp.json().catch(() => ({}))
+            if (typeof console !== 'undefined' && console.warn) {
+              console.warn('❌ No se pudo sincronizar pedido al servidor:', resp.status, body)
+            }
+          } else {
+            const data = await resp.json()
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('✅ Pedido sincronizado exitosamente en servidor:', data)
+            }
+          }
+        } catch (e) {
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('❌ Error sincronizando pedido con servidor (offline?):', e)
+          }
+        }
+      })()
+    } catch (e) {
+      if (typeof console !== 'undefined' && console.error) {
+        console.error('Error en trySyncPedidoToServer:', e)
+      }
     }
   }
 
@@ -1225,70 +1283,40 @@ function PedidosCatalogo() {
   }
 
   const handleDelete = async () => {
-    if (!selectedPedido || isDeleting) return
-    
+    if (!selectedPedido) return
+
     if (!confirm(`¿Estás seguro de eliminar el pedido #${selectedPedido.id}?`)) {
       return
     }
 
-    // Prevenir clics duplicados
-    setIsDeleting(true)
-    
-    // Cerrar modal inmediatamente para mejor UX
-    handleCloseModal()
+    const pedidoId = selectedPedido.id
 
-    // Optimistically update UI (instantáneo)
-    const updatedPedidos = pedidosCatalogo.filter(p => p.id !== selectedPedido.id)
-    setPedidosCatalogo(updatedPedidos)
-
-    // Operaciones asíncronas en background
     try {
-      // Mark tombstone ANTES de llamar al API
-      addTombstone(selectedPedido.id)
-      
-      // Llamar al API para eliminar en Supabase
-      const { error } = await deletePedidoCatalogo(selectedPedido.id)
-      
-      if (error) {
-        console.error('Error eliminando pedido en Supabase:', error)
-        createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
-      } else {
-        // Si la eliminación en servidor fue exitosa, limpiar tombstone
-        removeTombstone(selectedPedido.id)
-        createToast('Pedido eliminado correctamente.', 'success')
-        
-        // Guardar en localStorage y emitir evento (en background)
-        persistAndEmit(updatedPedidos, selectedPedido.id, 'delete')
-        
-        // Limpiar datos relacionados (en background, no bloquea UI)
-        setTimeout(() => {
-          try {
-            // Remove associated internal orders
-            const internalPedidos = JSON.parse(localStorage.getItem('pedidos') || '[]') || []
-            const filteredInternal = internalPedidos.filter(ip => ip.catalogOrderId !== selectedPedido.id)
-            if (filteredInternal.length !== internalPedidos.length) {
-              localStorage.setItem('pedidos', JSON.stringify(filteredInternal))
-            }
-            
-            // Remove financial movements
-            const movementKeys = {
-              sena: `pedido:${selectedPedido.id}:sena`,
-              pagoTotal: `pedido:${selectedPedido.id}:pago_total`,
-              restante: `pedido:${selectedPedido.id}:restante`
-            }
-            eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
-            eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
-            eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-          } catch (e) {
-            console.warn('Error limpiando datos relacionados:', e)
-          }
-        }, 100)
+      // Intentar eliminar en el servidor (Supabase) mediante API
+      const resp = await fetch(`/api/pedidos/catalogo/${pedidoId}`, { method: 'DELETE' })
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        throw new Error(err.error || 'Error eliminando en servidor')
       }
-    } catch (err) {
-      console.error('Excepción al eliminar pedido:', err)
-      createToast('Error al eliminar pedido en servidor. Se eliminó localmente.', 'error')
-    } finally {
-      setIsDeleting(false)
+
+      // Si todo bien en servidor, actualizar estado local
+      const updatedPedidos = pedidosCatalogo.filter(p => p.id !== pedidoId)
+      setPedidosCatalogo(updatedPedidos)
+      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
+
+      try { window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'delete', orderId: pedidoId } })) } catch (e) {}
+
+      createToast && createToast('Pedido eliminado correctamente', 'success')
+      handleCloseModal()
+    } catch (e) {
+      console.error('Error al eliminar pedido en servidor, aplicando fallback local:', e)
+      // Fallback: eliminar localmente para no mostrar el pedido hasta que se pueda sincronizar
+      const updatedPedidos = pedidosCatalogo.filter(p => p.id !== pedidoId)
+      setPedidosCatalogo(updatedPedidos)
+      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidos))
+      try { window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'delete_offline', orderId: pedidoId } })) } catch (e) {}
+      createToast && createToast('No se pudo eliminar en servidor. Eliminado localmente (sincroniza luego).', 'warning')
+      handleCloseModal()
     }
   }
 

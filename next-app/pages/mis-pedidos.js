@@ -3,7 +3,7 @@ import UserOrderCard from '../components/UserOrderCard'
 import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
 import { getPedidosByEmail } from '../utils/supabasePedidos'
-import { loadAllProductos, mapProductoToFrontend } from '../utils/productosUtils'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -29,9 +29,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         name: item.producto_nombre,
         nombre: item.producto_nombre,
         price: item.producto_precio,
+        precioUnitario: item.producto_precio,
         precio: item.producto_precio,
         quantity: item.cantidad,
         cantidad: item.cantidad,
+        subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
         imagen: producto?.imagen || null
@@ -44,9 +46,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         name: item.producto_nombre,
         nombre: item.producto_nombre,
         price: item.producto_precio,
+        precioUnitario: item.producto_precio,
         precio: item.producto_precio,
         quantity: item.cantidad,
         cantidad: item.cantidad,
+        subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
         imagen: producto?.imagen || null
@@ -90,8 +94,17 @@ export default function MisPedidos() {
       if (user && user.email) {
         console.log('📦 Cargando pedidos del usuario:', user.email)
         
-        // Cargar productos usando utilidad híbrida
-        const productosBase = await loadAllProductos()
+        // Cargar productos desde Supabase primero, fallback a localStorage
+        let productosBase = []
+        const { data: productosDB, error: productosError } = await getAllProductos()
+        
+        if (!productosError && productosDB && productosDB.length > 0) {
+          console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+          productosBase = productosDB.map(mapProductoToFrontend)
+        } else {
+          console.log('⚠️ Cargando productos desde localStorage como fallback')
+          productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
+        }
         
         // Intentar cargar pedidos desde Supabase
         const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
