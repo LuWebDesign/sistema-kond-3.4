@@ -11,6 +11,7 @@ import {
   toggleProductoPublicado,
   uploadProductoImagen 
 } from '../utils/supabaseProducts'
+import { addProductTombstone, removeProductTombstone } from '../utils/supabaseProductos'
 
 function Products() {
   // Estados principales
@@ -654,16 +655,32 @@ function Products() {
   // Eliminar producto
   const handleDeleteProduct = async (id) => {
     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      // Marcar como eliminado localmente antes de intentar eliminación en servidor
+      addProductTombstone(id)
+      
+      // Actualizar UI optimísticamente
+      const updatedProducts = products.filter(p => p.id !== id)
+      setProducts(updatedProducts)
+      setFilteredProducts(updatedProducts.filter(p => {
+        const matchesSearch = searchTerm === '' || 
+          p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (p.categoria && p.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+        const matchesFilter = visibilityFilter === 'all' || 
+          (visibilityFilter === 'published' && p.publicado) ||
+          (visibilityFilter === 'hidden' && !p.publicado)
+        return matchesSearch && matchesFilter
+      }))
+      
+      // Intentar eliminar en Supabase
       const { error } = await deleteProducto(id)
       
       if (error) {
         console.error('Error deleting product:', error)
-        alert('Error al eliminar el producto')
-        return
+        alert('Error al eliminar el producto del servidor. Se eliminó localmente.')
+      } else {
+        // Si la eliminación en servidor fue exitosa, limpiar tombstone
+        removeProductTombstone(id)
       }
-
-      // Recargar productos
-      await loadProducts()
     }
   }
 

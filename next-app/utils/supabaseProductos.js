@@ -6,17 +6,74 @@
 import supabase from './supabaseClient.js';
 
 /**
+ * Obtener tombstones locales (IDs de productos eliminados localmente)
+ */
+function getTombstones() {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem('productosDeleted') || '[]') || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Agregar un producto al tombstone local
+ */
+export function addProductTombstone(productoId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const tomb = getTombstones();
+    if (!tomb.includes(productoId)) {
+      tomb.push(productoId);
+      localStorage.setItem('productosDeleted', JSON.stringify(tomb));
+    }
+  } catch (e) {
+    console.warn('No se pudo guardar tombstone de producto:', e);
+  }
+}
+
+/**
+ * Remover un producto del tombstone local
+ */
+export function removeProductTombstone(productoId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const tomb = getTombstones();
+    const filtered = tomb.filter(id => id !== productoId);
+    localStorage.setItem('productosDeleted', JSON.stringify(filtered));
+  } catch (e) {
+    console.warn('No se pudo limpiar tombstone de producto:', e);
+  }
+}
+
+/**
+ * Filtrar productos aplicando tombstones locales
+ */
+function applyTombstoneFilter(productos) {
+  if (!productos || !Array.isArray(productos)) return productos;
+  const tombstones = getTombstones();
+  if (tombstones.length === 0) return productos;
+  return productos.filter(p => !tombstones.includes(p.id));
+}
+
+/**
  * Obtener todos los productos
+ * Automáticamente filtra productos eliminados localmente
  */
 export async function getAllProductos() {
   try {
     const { data, error } = await supabase
       .from('productos')
       .select('*')
-      .order('nombre', { ascending: true });
+      .order('nombre', { ascending: true});
 
     if (error) throw error;
-    return { data, error: null };
+    
+    // Aplicar filtro de tombstones
+    const filtered = applyTombstoneFilter(data);
+    
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos:', error);
     return { data: null, error: error.message };
@@ -25,9 +82,16 @@ export async function getAllProductos() {
 
 /**
  * Obtener un producto por ID
+ * Automáticamente filtra productos eliminados localmente
  */
 export async function getProductoById(id) {
   try {
+    // Verificar si está en tombstones antes de consultar
+    const tombstones = getTombstones();
+    if (tombstones.includes(id)) {
+      return { data: null, error: 'Producto eliminado localmente' };
+    }
+
     const { data, error } = await supabase
       .from('productos')
       .select('*')
