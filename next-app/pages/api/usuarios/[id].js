@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabaseAdmin
     .from('usuarios')
-    .select('id, username, rol, telefono, direccion, localidad, provincia, apellido, email')
+    .select('id, username, rol, email')
     .eq('id', id)
     .single()
 

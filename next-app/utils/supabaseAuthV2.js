@@ -76,30 +76,20 @@ export async function loginWithUsername(username, password) {
     // Guardar información del usuario en localStorage para acceso rápido
     if (typeof window !== 'undefined') {
       localStorage.setItem('kond-user', JSON.stringify({
-        id: usuario.id,
-        username: usuario.username,
-        rol: usuario.rol,
-        email: usuario.email || `${usuario.id}@kond.local`,
-        telefono: usuario.telefono || '',
-        direccion: usuario.direccion || '',
-        localidad: usuario.localidad || '',
-        provincia: usuario.provincia || '',
-        apellido: usuario.apellido || '',
+  id: usuario.id,
+  username: usuario.username,
+  rol: usuario.rol,
+  email: usuario.email || `${usuario.id}@kond.local`,
       }));
     }
 
     return {
       error: null,
       user: {
-        id: usuario.id,
-        username: usuario.username,
-        rol: usuario.rol,
-        email: usuario.email || `${usuario.id}@kond.local`,
-        telefono: usuario.telefono || '',
-        direccion: usuario.direccion || '',
-        localidad: usuario.localidad || '',
-        provincia: usuario.provincia || '',
-        apellido: usuario.apellido || '',
+  id: usuario.id,
+  username: usuario.username,
+  rol: usuario.rol,
+  email: usuario.email || `${usuario.id}@kond.local`,
       },
       session: authData.session,
     };
@@ -152,14 +142,9 @@ export async function loginWithEmail(email, password) {
 
     const user = {
       id: authData.user.id,
-      email: usuario?.email || authData.user.email,
-      username: usuario?.username || email.split('@')[0],
-      rol: usuario?.rol || 'usuario',
-      telefono: usuario?.telefono || '',
-      direccion: usuario?.direccion || '',
-      localidad: usuario?.localidad || '',
-      provincia: usuario?.provincia || '',
-      apellido: usuario?.apellido || '',
+  email: usuario?.email || authData.user.email,
+  username: usuario?.username || email.split('@')[0],
+  rol: usuario?.rol || 'usuario',
     };
 
     console.log('✅ Usuario final:', user);
