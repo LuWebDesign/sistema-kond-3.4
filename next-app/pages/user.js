@@ -27,13 +27,16 @@ export default function User() {
   useEffect(() => {
     const loadUser = async () => {
       const session = await getCurrentSession()
-      if (session) {
+      if (session && session.user) {
         setCurrentUser(session.user)
         setFormData(prev => ({
           ...prev,
-          email: session.user.email,
-          nombre: session.user.username
+          email: session.user.email || '',
+          nombre: session.user.username || ''
         }))
+      } else {
+        // Si no hay sesión, limpiar el usuario
+        setCurrentUser(null)
       }
     }
     loadUser()
@@ -302,7 +305,7 @@ export default function User() {
                 color: 'var(--text-primary)',
                 marginBottom: '8px'
               }}>
-                {currentUser.nombre} {currentUser.apellido || ''}
+                {(currentUser?.nombre || '') + ' ' + (currentUser?.apellido || '')}
               </h2>
               
               <p style={{
@@ -310,7 +313,7 @@ export default function User() {
                 fontSize: '0.9rem',
                 marginBottom: '20px'
               }}>
-                {currentUser.email}
+                {currentUser?.email || '—'}
               </p>
 
               {/* Avatar Actions */}
@@ -371,7 +374,7 @@ export default function User() {
                 {/** Each info block is a small card for clearer two-column layout */}
                 <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Email</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700, wordBreak: 'break-all' }}>{currentUser.email}</div>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 700, wordBreak: 'break-all' }}>{currentUser?.email || '—'}</div>
                 </div>
 
                 <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
@@ -1072,6 +1075,7 @@ export default function User() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                autoComplete="email"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -1100,6 +1104,7 @@ export default function User() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
+                autoComplete="current-password"
                 style={{
                   width: '100%',
                   padding: '12px',

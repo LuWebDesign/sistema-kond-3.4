@@ -12,18 +12,46 @@ import supabase from './supabaseClient';
  */
 export async function loginWithUsername(username, password) {
   try {
-    // Buscar usuario por username para obtener su email (usamos username como email temporalmente)
-    const { data: usuario, error: fetchError } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('username', username)
-      .single();
+    let usuario = null;
 
-    if (fetchError || !usuario) {
-      return { 
+    try {
+      const response = await fetch('/api/usuarios/find', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      if (response.status === 404) {
+        return {
+          error: 'Usuario no encontrado',
+          user: null,
+          session: null,
+        };
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || 'Error consultando usuario');
+      }
+
+      const payload = await response.json();
+      usuario = payload?.user || null;
+    } catch (error) {
+      console.error('Error consultando usuario (username):', error);
+      return {
+        error: 'No se pudo obtener información del usuario',
+        user: null,
+        session: null,
+      };
+    }
+
+    if (!usuario) {
+      return {
         error: 'Usuario no encontrado',
         user: null,
-        session: null
+        session: null,
       };
     }
 
@@ -51,6 +79,12 @@ export async function loginWithUsername(username, password) {
         id: usuario.id,
         username: usuario.username,
         rol: usuario.rol,
+        email: usuario.email || `${usuario.id}@kond.local`,
+        telefono: usuario.telefono || '',
+        direccion: usuario.direccion || '',
+        localidad: usuario.localidad || '',
+        provincia: usuario.provincia || '',
+        apellido: usuario.apellido || '',
       }));
     }
 
@@ -60,6 +94,12 @@ export async function loginWithUsername(username, password) {
         id: usuario.id,
         username: usuario.username,
         rol: usuario.rol,
+        email: usuario.email || `${usuario.id}@kond.local`,
+        telefono: usuario.telefono || '',
+        direccion: usuario.direccion || '',
+        localidad: usuario.localidad || '',
+        provincia: usuario.provincia || '',
+        apellido: usuario.apellido || '',
       },
       session: authData.session,
     };
@@ -94,22 +134,32 @@ export async function loginWithEmail(email, password) {
       };
     }
 
-    // Buscar usuario en la tabla usuarios por ID
-    const { data: usuario, error: fetchError } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', authData.user.id)
-      .single();
+    let usuario = null;
 
-    if (fetchError) {
-      console.warn('Usuario autenticado pero no encontrado en tabla usuarios:', fetchError);
+    try {
+      const response = await fetch(`/api/usuarios/${authData.user.id}`);
+
+      if (response.ok) {
+        const payload = await response.json();
+        usuario = payload?.user || null;
+      } else if (response.status !== 404) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || 'Error consultando usuario');
+      }
+    } catch (error) {
+      console.warn('No se pudo obtener usuario desde API interna:', error);
     }
 
     const user = {
       id: authData.user.id,
-      email: authData.user.email,
+      email: usuario?.email || authData.user.email,
       username: usuario?.username || email.split('@')[0],
       rol: usuario?.rol || 'usuario',
+      telefono: usuario?.telefono || '',
+      direccion: usuario?.direccion || '',
+      localidad: usuario?.localidad || '',
+      provincia: usuario?.provincia || '',
+      apellido: usuario?.apellido || '',
     };
 
     console.log('✅ Usuario final:', user);
@@ -175,15 +225,25 @@ export async function getCurrentSession() {
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('kond-user');
       if (userStr) {
-        return {
-          session,
-          user: JSON.parse(userStr),
-        };
+        try {
+          const user = JSON.parse(userStr);
+          return {
+            session,
+            user,
+          };
+        } catch (e) {
+          console.error('Error parseando usuario de localStorage:', e);
+          localStorage.removeItem('kond-user');
+        }
       }
     }
 
-    return { session, user: null };
-  } catch {
+    // Si no hay datos de usuario en localStorage, cerrar sesión
+    console.warn('⚠️  Sesión activa pero sin datos de usuario. Cerrando sesión...');
+    await supabase.auth.signOut();
+    return null;
+  } catch (error) {
+    console.error('Error en getCurrentSession:', error);
     return null;
   }
 }
@@ -193,13 +253,34 @@ export async function getCurrentSession() {
  */
 export async function logout() {
   try {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     
+    // Limpiar localStorage incluso si hay error de signOut
     if (typeof window !== 'undefined') {
       localStorage.removeItem('kond-user');
     }
+    
+    // Si el error es 403 (Forbidden), ignorarlo ya que la sesión se limpia localmente
+    if (error && error.status === 403) {
+      console.warn('⚠️  Error 403 al cerrar sesión en servidor, pero sesión local limpiada');
+      return { error: null };
+    }
+    
+    if (error) {
+      console.error('Error al cerrar sesión:', error);
+      return { error: error.message };
+    }
+    
+    return { error: null };
   } catch (error) {
     console.error('Error al cerrar sesión:', error);
+    
+    // Limpiar localStorage de todas formas
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kond-user');
+    }
+    
+    return { error: error.message };
   }
 }
 

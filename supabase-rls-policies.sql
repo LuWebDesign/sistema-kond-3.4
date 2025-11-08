@@ -19,6 +19,48 @@ DROP POLICY IF EXISTS "select_items_publico" ON pedidos_catalogo_items;
 -- Eliminar política antigua de productos (si existe)
 DROP POLICY IF EXISTS "select_productos_publico" ON productos;
 
+-- Eliminar políticas antiguas de usuarios (si existen)
+DROP POLICY IF EXISTS "select_usuarios_authenticated" ON usuarios;
+DROP POLICY IF EXISTS "select_usuarios_public" ON usuarios;
+DROP POLICY IF EXISTS "insert_usuarios_publico" ON usuarios;
+DROP POLICY IF EXISTS "update_usuarios_own" ON usuarios;
+
+
+-- ============================================
+-- TABLA: usuarios
+-- ============================================
+
+-- NOTA IMPORTANTE: Las consultas SELECT deben ser públicas porque durante el login
+-- se necesita consultar la tabla usuarios ANTES de tener un token JWT válido.
+-- El cliente usa anon key para verificar usuario/contraseña.
+
+-- 1. SELECT: Permitir lectura pública (necesario para login)
+CREATE POLICY "select_usuarios_public"
+ON usuarios
+FOR SELECT
+USING (true);
+
+-- 2. INSERT: Permitir crear nuevos usuarios (registro público)
+CREATE POLICY "insert_usuarios_publico"
+ON usuarios
+FOR INSERT
+WITH CHECK (true);
+
+-- 3. UPDATE: Los usuarios solo pueden actualizar su propia información
+-- Esto SÍ requiere autenticación porque UPDATE solo lo hacen usuarios logueados
+CREATE POLICY "update_usuarios_own"
+ON usuarios
+FOR UPDATE
+USING (
+  -- Permitir si el usuario está autenticado Y es su propio registro
+  auth.uid() IS NOT NULL AND id = auth.uid()
+)
+WITH CHECK (
+  auth.uid() IS NOT NULL AND id = auth.uid()
+);
+
+-- NOTA: DELETE debe manejarse por API route con service_role si es necesario
+
 
 -- ============================================
 -- TABLA: pedidos_catalogo

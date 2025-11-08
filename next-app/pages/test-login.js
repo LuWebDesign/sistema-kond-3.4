@@ -42,6 +42,7 @@ export default function TestLogin() {
           type="password" 
           value={password} 
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           style={{ width: '300px', padding: '5px' }}
         />
       </div>

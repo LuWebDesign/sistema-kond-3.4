@@ -1003,6 +1003,7 @@ export default function Home() {
                   id="adminEmail"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -1013,6 +1014,7 @@ export default function Home() {
                   id="adminPassword"
                   value={loginData.password}
                   onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                  autoComplete="current-password"
                   required
                 />
               </div>
