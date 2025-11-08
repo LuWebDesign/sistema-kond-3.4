@@ -244,18 +244,32 @@ export async function updateEstadoPago(id, estadoPago) {
 /**
  * Eliminar un pedido catálogo (solo admins)
  * Nota: Los items se eliminan automáticamente por CASCADE
+ * Usa API route con service_role para bypasear RLS
  */
 export async function deletePedidoCatalogo(id) {
   try {
-    const { error } = await supabase
-      .from('pedidos_catalogo')
-      .delete()
-      .eq('id', id);
+    console.log('🗑️  Intentando eliminar pedido ID:', id);
+    
+    // Llamar al API route que usa service_role
+    const response = await fetch(`/api/pedidos-catalogo/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (error) throw error;
+    const result = await response.json();
+    console.log('📊 Respuesta del API:', result);
+
+    if (!response.ok) {
+      console.error('❌ Error del API:', result);
+      throw new Error(result.error || 'Error al eliminar pedido');
+    }
+    
+    console.log('✅ Pedido eliminado exitosamente');
     return { error: null };
   } catch (error) {
-    console.error('Error al eliminar pedido catálogo:', error);
+    console.error('❌ Error al eliminar pedido catálogo:', error);
     return { error: error.message };
   }
 }
