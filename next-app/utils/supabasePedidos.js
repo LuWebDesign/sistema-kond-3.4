@@ -250,22 +250,36 @@ export async function deletePedidoCatalogo(id) {
   try {
     console.log('🗑️  Intentando eliminar pedido ID:', id);
     
+    // Construir URL absoluta o relativa según el ambiente
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const apiUrl = `${baseUrl}/api/pedidos-catalogo/${id}`;
+    
+    console.log('📍 URL del API:', apiUrl);
+    
     // Llamar al API route que usa service_role
-    const response = await fetch(`/api/pedidos-catalogo/${id}`, {
+    const response = await fetch(apiUrl, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const result = await response.json();
-    console.log('📊 Respuesta del API:', result);
+    console.log('📡 Status:', response.status, response.statusText);
 
     if (!response.ok) {
+      // Si es 404, el API route no existe o no está desplegado
+      if (response.status === 404) {
+        console.error('❌ API route no encontrado (404). Verifica que Vercel esté desplegando desde next-app/');
+        throw new Error('API route no disponible en producción. Contacta al administrador.');
+      }
+      
+      const result = await response.json().catch(() => ({ error: 'Error desconocido' }));
       console.error('❌ Error del API:', result);
       throw new Error(result.error || 'Error al eliminar pedido');
     }
     
+    const result = await response.json();
+    console.log('📊 Respuesta del API:', result);
     console.log('✅ Pedido eliminado exitosamente');
     return { error: null };
   } catch (error) {
