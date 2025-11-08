@@ -1,23 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
-}
-
-if (!serviceRoleKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
-}
-
-const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET'])
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) {
+    return res.status(500).json({ error: 'Server not configured: missing Supabase env vars' })
+  }
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
 
   const { id } = req.query
 
@@ -27,7 +21,7 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabaseAdmin
     .from('usuarios')
-    .select('id, username, rol, email')
+    .select('id, username, rol, telefono, direccion, localidad, provincia, apellido, email')
     .eq('id', id)
     .single()
 
