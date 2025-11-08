@@ -67,7 +67,16 @@ export async function getAllPedidosCatalogo() {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .order('fecha_creacion', { ascending: false });
 
@@ -99,7 +108,16 @@ export async function getPedidoCatalogoById(id) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .eq('id', id)
       .single();
@@ -299,7 +317,16 @@ export async function getPedidosByEstadoPago(estadoPago) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .eq('estado_pago', estadoPago)
       .order('fecha_creacion', { ascending: false });
@@ -326,7 +353,16 @@ export async function getPedidosByMetodoPago(metodoPago) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .eq('metodo_pago', metodoPago)
       .order('fecha_creacion', { ascending: false });
@@ -353,7 +389,16 @@ export async function searchPedidosByCliente(searchTerm) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .or(`cliente_nombre.ilike.%${searchTerm}%,cliente_telefono.ilike.%${searchTerm}%,cliente_email.ilike.%${searchTerm}%`)
       .order('fecha_creacion', { ascending: false });
@@ -380,7 +425,16 @@ export async function getPedidosByEmail(email) {
       .from('pedidos_catalogo')
       .select(`
         *,
-        items:pedidos_catalogo_items(*)
+        items:pedidos_catalogo_items(
+          id,
+          pedido_catalogo_id,
+          producto_id,
+          producto_nombre,
+          producto_precio,
+          cantidad,
+          medidas,
+          created_at
+        )
       `)
       .eq('cliente_email', email)
       .order('fecha_creacion', { ascending: false });
