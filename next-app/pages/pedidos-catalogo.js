@@ -261,6 +261,7 @@ function PedidosCatalogo() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // Filtros pendientes
   const [filters, setFilters] = useState({
@@ -1223,65 +1224,72 @@ function PedidosCatalogo() {
     }
   }
 
-  const handleDelete = () => {
-    if (!selectedPedido) return
+  const handleDelete = async () => {
+    if (!selectedPedido || isDeleting) return
     
     if (!confirm(`¿Estás seguro de eliminar el pedido #${selectedPedido.id}?`)) {
       return
     }
 
-    // Optimistically update UI
+    // Prevenir clics duplicados
+    setIsDeleting(true)
+    
+    // Cerrar modal inmediatamente para mejor UX
+    handleCloseModal()
+
+    // Optimistically update UI (instantáneo)
     const updatedPedidos = pedidosCatalogo.filter(p => p.id !== selectedPedido.id)
     setPedidosCatalogo(updatedPedidos)
-    persistAndEmit(updatedPedidos, selectedPedido.id, 'delete')
 
-    // Remove associated internal orders (localStorage) if any
+    // Operaciones asíncronas en background
     try {
-      const internalPedidos = JSON.parse(localStorage.getItem('pedidos') || '[]') || []
-      const filteredInternal = internalPedidos.filter(ip => ip.catalogOrderId !== selectedPedido.id)
-      if (filteredInternal.length !== internalPedidos.length) {
-        localStorage.setItem('pedidos', JSON.stringify(filteredInternal))
+      // Mark tombstone ANTES de llamar al API
+      addTombstone(selectedPedido.id)
+      
+      // Llamar al API para eliminar en Supabase
+      const { error } = await deletePedidoCatalogo(selectedPedido.id)
+      
+      if (error) {
+        console.error('Error eliminando pedido en Supabase:', error)
+        createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
+      } else {
+        // Si la eliminación en servidor fue exitosa, limpiar tombstone
+        removeTombstone(selectedPedido.id)
+        createToast('Pedido eliminado correctamente.', 'success')
+        
+        // Guardar en localStorage y emitir evento (en background)
+        persistAndEmit(updatedPedidos, selectedPedido.id, 'delete')
+        
+        // Limpiar datos relacionados (en background, no bloquea UI)
+        setTimeout(() => {
+          try {
+            // Remove associated internal orders
+            const internalPedidos = JSON.parse(localStorage.getItem('pedidos') || '[]') || []
+            const filteredInternal = internalPedidos.filter(ip => ip.catalogOrderId !== selectedPedido.id)
+            if (filteredInternal.length !== internalPedidos.length) {
+              localStorage.setItem('pedidos', JSON.stringify(filteredInternal))
+            }
+            
+            // Remove financial movements
+            const movementKeys = {
+              sena: `pedido:${selectedPedido.id}:sena`,
+              pagoTotal: `pedido:${selectedPedido.id}:pago_total`,
+              restante: `pedido:${selectedPedido.id}:restante`
+            }
+            eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
+            eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
+            eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
+          } catch (e) {
+            console.warn('Error limpiando datos relacionados:', e)
+          }
+        }, 100)
       }
-    } catch (e) {
-      console.warn('No se pudo limpiar pedidos internos relacionados en localStorage:', e)
+    } catch (err) {
+      console.error('Excepción al eliminar pedido:', err)
+      createToast('Error al eliminar pedido en servidor. Se eliminó localmente.', 'error')
+    } finally {
+      setIsDeleting(false)
     }
-
-    // Remove financial movements linked to this pedido
-    try {
-      const movementKeys = {
-        sena: `pedido:${selectedPedido.id}:sena`,
-        pagoTotal: `pedido:${selectedPedido.id}:pago_total`,
-        restante: `pedido:${selectedPedido.id}:restante`
-      }
-      eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
-      eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
-      eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-    } catch (e) {
-      console.warn('No se pudieron eliminar movimientos financieros asociados:', e)
-    }
-
-    // Try to delete from Supabase. If fails, keep local deletion but notify admin.
-    (async () => {
-      try {
-        // Mark tombstone locally so reloads don't show the pedido until server confirms
-        addTombstone(selectedPedido.id)
-
-        const { error } = await deletePedidoCatalogo(selectedPedido.id)
-        if (error) {
-          console.error('Error eliminando pedido en Supabase:', error)
-          createToast('No se pudo eliminar el pedido en servidor. Se eliminó localmente.', 'error')
-        } else {
-          // Si la eliminación en servidor fue exitosa, limpiar tombstone
-          removeTombstone(selectedPedido.id)
-          createToast('Pedido eliminado correctamente.', 'success')
-        }
-      } catch (err) {
-        console.error('Excepción al eliminar pedido en Supabase:', err)
-        createToast('Error al eliminar pedido en servidor. Se eliminó localmente.', 'error')
-      }
-    })()
-
-    handleCloseModal()
   }
 
 
