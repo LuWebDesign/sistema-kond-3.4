@@ -23,7 +23,9 @@ export default function withAdminAuth(WrappedComponent) {
             return
           }
 
-          if (session.user.rol !== 'admin') {
+          // Considerar también el email del usuario autenticado como fallback de admin
+          const isAdminByEmail = session?.session?.user?.email && session.session.user.email.toLowerCase() === 'admin@kond.local'
+          if (session.user.rol !== 'admin' && !isAdminByEmail) {
             // Usuario no es admin, redirigir al catálogo
             router.replace('/catalog')
             return

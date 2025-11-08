@@ -150,11 +150,14 @@ export async function loginWithEmail(email, password) {
       console.warn('No se pudo obtener usuario desde API interna:', error);
     }
 
+    // Resolver rol con fallback: si API interna falla pero el email es el del admin conocido
+    const resolvedRol = usuario?.rol || (email && email.toLowerCase() === 'admin@kond.local' ? 'admin' : 'usuario');
+
     const user = {
       id: authData.user.id,
       email: usuario?.email || authData.user.email,
       username: usuario?.username || email.split('@')[0],
-      rol: usuario?.rol || 'usuario',
+      rol: resolvedRol,
       telefono: usuario?.telefono || '',
       direccion: usuario?.direccion || '',
       localidad: usuario?.localidad || '',
@@ -227,6 +230,13 @@ export async function getCurrentSession() {
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
+
+          // Fallback de rol admin si coincide el email del auth y el rol está ausente o distinto
+          if (user && session?.user?.email && session.user.email.toLowerCase() === 'admin@kond.local' && user.rol !== 'admin') {
+            user.rol = 'admin';
+            localStorage.setItem('kond-user', JSON.stringify(user));
+          }
+
           return {
             session,
             user,
