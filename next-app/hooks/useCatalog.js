@@ -111,18 +111,82 @@ export function useCart() {
       const savedCart = JSON.parse(localStorage.getItem('cart')) || []
       // Normalizar items del carrito para aplicar precios promocionales actuales
       const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
+      // Obtener promociones activas (para recalcular precios con descuentos tras recarga)
+      // Si falla la carga, se continúa sin aplicar descuentos (fallback)
+      let promocionesActivas = []
+      try {
+        // Nota: reutilizamos getPromocionesActivas ya importado al inicio del archivo
+        // Solo intentamos si hay productos base; evita una llamada innecesaria en carritos vacíos
+        if (productosBase.length > 0) {
+          const fetchPromos = async () => {
+            const { data: promosData, error: promosError } = await getPromocionesActivas()
+            if (!promosError && Array.isArray(promosData)) {
+              promocionesActivas = promosData.map(p => ({
+                id: p.id,
+                nombre: p.nombre,
+                tipo: p.tipo,
+                valor: p.valor,
+                aplicaA: p.aplica_a,
+                categoria: p.categoria,
+                productoId: p.producto_id,
+                fechaInicio: p.fecha_inicio,
+                fechaFin: p.fecha_fin,
+                activo: p.activo,
+                prioridad: p.prioridad,
+                badgeTexto: p.badge_texto,
+                badgeColor: p.badge_color,
+                badgeTextColor: p.badge_text_color,
+                descuentoPorcentaje: p.descuento_porcentaje,
+                descuentoMonto: p.descuento_monto,
+                precioEspecial: p.precio_especial
+              }))
+            }
+          }
+          // Ejecutar la carga sin bloquear la normalización (sin await directo sobre map)
+          // Primero normalizamos con datos actuales; luego si las promos llegan, se recalcula.
+          fetchPromos().then(() => {
+            try {
+              if (promocionesActivas.length === 0) return // nada que recalcular
+              const recalculated = savedCart.map(item => {
+                try {
+                  const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
+                  if (!prod) return item
+                  const promo = applyPromotionsToProduct(prod, promocionesActivas)
+                  const discounted = promo && promo.hasPromotion ? promo.discountedPrice : prod.precioUnitario
+                  const unitPrice = discounted !== undefined && discounted !== null ? discounted : (prod.precioUnitario || item.price || 0)
+                  const originalBase = prod.precioUnitario || unitPrice
+                  return {
+                    ...item,
+                    price: unitPrice,
+                    originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : originalBase
+                  }
+                } catch (e) {
+                  return item
+                }
+              })
+              localStorage.setItem('cart', JSON.stringify(recalculated))
+              setCart(recalculated)
+            } catch (e) {
+              // silencioso
+            }
+          })
+        }
+      } catch (e) {
+        // silencioso: no bloquear si promociones fallan
+      }
+
+      // Normalización inicial sin esperar a promociones (reduce latencia de pintado)
       const normalized = savedCart.map(item => {
         try {
           const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
           if (!prod) return item
-          // aplicar motor de promociones al producto cuando exista
-          const promo = applyPromotionsToProduct(prod)
-          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : (prod.precioPromocional !== undefined ? prod.precioPromocional : prod.precioUnitario)
-          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (prod.precioUnitario || item.price || 0)
+          // Usar precio guardado en el item si ya tenía descuento al momento de agregarse
+          // Mantener originalPrice si existe para mostrar ahorro
+          const originalBase = prod.precioUnitario || item.originalPrice || item.price || 0
           return {
             ...item,
-            price: unitPrice,
-            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (prod.precioUnitario || unitPrice)
+            price: item.price !== undefined ? item.price : originalBase,
+            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : originalBase
           }
         } catch (e) {
           return item
