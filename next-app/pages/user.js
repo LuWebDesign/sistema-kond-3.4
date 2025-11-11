@@ -29,10 +29,18 @@ export default function User() {
       const session = await getCurrentSession()
       if (session) {
         setCurrentUser(session.user)
+        // Rellenar todo el formulario con los datos disponibles en la sesión (kond-user)
         setFormData(prev => ({
           ...prev,
-          email: session.user.email,
-          nombre: session.user.username
+          email: session.user.email || prev.email,
+          nombre: session.user.username || prev.nombre,
+          apellido: session.user.apellido || prev.apellido,
+          telefono: session.user.telefono || prev.telefono,
+          direccion: session.user.direccion || prev.direccion,
+          localidad: session.user.localidad || prev.localidad,
+          cp: session.user.cp || prev.cp,
+          provincia: session.user.provincia || prev.provincia,
+          observaciones: session.user.observaciones || prev.observaciones
         }))
       }
     }
