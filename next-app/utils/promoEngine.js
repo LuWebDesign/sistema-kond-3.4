@@ -22,15 +22,37 @@ export function getContrastColor(hexColor) {
 export function getActivePromotions(allPromos = []) {
   try {
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     return allPromos.filter(promo => {
-      if (!promo.activo) return false;
-      
-      // Validar rango de fechas si están definidas
-      if (promo.fechaInicio && promo.fechaInicio > today) return false;
-      if (promo.fechaFin && promo.fechaFin < today) return false;
-      
+      if (!promo || !promo.activo) return false;
+
+      // Normalizar y comparar fechas robustamente (acepta YYYY-MM-DD o ISO datetimes)
+      if (promo.fechaInicio) {
+        let start = new Date(promo.fechaInicio);
+        if (isNaN(start.getTime())) {
+          // Intentar tomar solo la parte YYYY-MM-DD si viene en otro formato
+          const s = String(promo.fechaInicio).split('T')[0];
+          start = new Date(s);
+        }
+        if (!isNaN(start.getTime())) {
+          // Si la fecha de inicio es en el futuro, no está activa
+          if (start > now) return false;
+        }
+      }
+
+      if (promo.fechaFin) {
+        let end = new Date(promo.fechaFin);
+        if (isNaN(end.getTime())) {
+          const e = String(promo.fechaFin).split('T')[0];
+          end = new Date(e);
+        }
+        if (!isNaN(end.getTime())) {
+          // Hacer la fecha de fin inclusiva (final del día)
+          end.setHours(23, 59, 59, 999);
+          if (end < now) return false;
+        }
+      }
+
       return true;
     });
   } catch (e) {

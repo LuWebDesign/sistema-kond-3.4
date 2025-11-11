@@ -74,17 +74,51 @@ function Database() {
     }
   }, [])
 
-  // Cargar materiales (todavía en localStorage)
-  const loadMaterials = useCallback(() => {
+  // Cargar materiales desde Supabase con fallback a localStorage
+  const loadMaterials = useCallback(async () => {
     if (typeof window === 'undefined') return
     
     try {
+      // Intentar cargar desde Supabase primero
+      const { getAllMateriales } = await import('../utils/supabaseMateriales')
+      const { data: materialesSupabase, error } = await getAllMateriales()
+      
+      if (materialesSupabase && !error && materialesSupabase.length > 0) {
+        // Mapear de snake_case a camelCase
+        const mappedMateriales = materialesSupabase.map(m => ({
+          id: m.id,
+          nombre: m.nombre,
+          tipo: m.tipo,
+          tamano: m.tamano,
+          espesor: m.espesor,
+          unidad: m.unidad || 'cm',
+          costoUnitario: m.costo_unitario || 0,
+          proveedor: m.proveedor,
+          stock: m.stock || 0,
+          notas: m.notas
+        }))
+        
+        setMaterials(mappedMateriales)
+        console.log('✅ Materiales cargados desde Supabase en database:', mappedMateriales.length)
+        return
+      }
+      
+      // Fallback: localStorage si Supabase está vacío o falla
+      console.warn('⚠️ Fallback a localStorage para materiales en database')
       const stored = localStorage.getItem('materiales')
       const materialList = stored ? JSON.parse(stored) : []
       setMaterials(materialList)
     } catch (error) {
       console.error('Error loading materials:', error)
-      setMaterials([])
+      // Último recurso: localStorage
+      try {
+        const stored = localStorage.getItem('materiales')
+        const materialList = stored ? JSON.parse(stored) : []
+        setMaterials(materialList)
+      } catch (e) {
+        console.error('Error loading materials from localStorage:', e)
+        setMaterials([])
+      }
     }
   }, [])
 
