@@ -148,8 +148,16 @@ export function useCart() {
     
     try {
       const savedCart = JSON.parse(localStorage.getItem('cart')) || []
-      // Normalizar items del carrito para aplicar precios promocionales actuales
-      const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
+      
+      // Cargar productos desde Supabase en lugar de localStorage
+      const { data: productosBase, error: productosError } = await getProductosPublicados()
+      
+      if (productosError || !productosBase) {
+        console.warn('Error cargando productos para normalizar el carrito:', productosError)
+        // Fallback: usar los datos del carrito tal como están
+        setCart(savedCart)
+        return
+      }
 
       // Cargar promociones activas desde Supabase para aplicarlas al carrito
       let promocionesActivas = []
@@ -183,18 +191,32 @@ export function useCart() {
 
       const normalized = savedCart.map(item => {
         try {
+          // Buscar producto en la data de Supabase
           const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
           if (!prod) return item
-          // aplicar motor de promociones al producto cuando exista (pasando la lista de promos)
-          const promo = applyPromotionsToProduct(prod, promocionesActivas)
-          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : (prod.precioPromocional !== undefined ? prod.precioPromocional : prod.precioUnitario)
-          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (prod.precioUnitario || item.price || 0)
+          
+          // Mapear producto a formato frontend
+          const productoMapeado = {
+            id: prod.id,
+            nombre: prod.nombre,
+            categoria: prod.categoria,
+            tipo: prod.tipo,
+            precioUnitario: prod.precio_unitario || 0,
+            medidas: prod.medidas
+          }
+          
+          // Aplicar motor de promociones al producto
+          const promo = applyPromotionsToProduct(productoMapeado, promocionesActivas)
+          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : productoMapeado.precioUnitario
+          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (productoMapeado.precioUnitario || item.price || 0)
+          
           return {
             ...item,
             price: unitPrice,
-            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (prod.precioUnitario || unitPrice)
+            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice)
           }
         } catch (e) {
+          console.warn('Error normalizando item del carrito:', e)
           return item
         }
       })
