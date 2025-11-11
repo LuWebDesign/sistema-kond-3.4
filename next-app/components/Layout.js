@@ -172,7 +172,11 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             </div>
             
             <Link href="/admin" style={linkStyle}>
-              👤 Panel Admin
+              � Panel Admin
+            </Link>
+            
+            <Link href="/mi-cuenta" style={linkStyle}>
+              👤 Mi Cuenta
             </Link>
           </nav>
 
