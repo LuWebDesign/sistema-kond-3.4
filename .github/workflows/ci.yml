@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          # El proyecto tiene el package.json y package-lock.json dentro de la carpeta `next-app`.
+          # Indicar explícitamente la ruta del lockfile para que el step de cache no busque en la raíz.
+          cache-dependency-path: next-app/package-lock.json
 
       - name: Install dependencies (next-app)
         working-directory: ./next-app
