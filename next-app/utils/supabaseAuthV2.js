@@ -113,6 +113,15 @@ export async function loginWithEmail(email, password) {
       email: authData.user.email,
       username: usuario?.username || email.split('@')[0],
       rol: usuario?.rol || 'usuario',
+      // Incluir TODOS los campos del perfil del usuario desde la BD
+      nombre: usuario?.nombre || usuario?.username || email.split('@')[0],
+      apellido: usuario?.apellido || '',
+      telefono: usuario?.telefono || '',
+      direccion: usuario?.direccion || '',
+      localidad: usuario?.localidad || '',
+      cp: usuario?.cp || '',
+      provincia: usuario?.provincia || '',
+      observaciones: usuario?.observaciones || ''
     };
 
     console.log('✅ Usuario final:', user);
@@ -245,4 +254,38 @@ export function getCurrentUser() {
 export async function hasActiveSession() {
   const session = await getCurrentSession();
   return session !== null && session.session !== null;
+}
+
+/**
+ * Actualizar perfil de usuario en la base de datos
+ */
+export async function updateUserProfile(userId, profileData) {
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .update({
+        nombre: profileData.nombre,
+        apellido: profileData.apellido,
+        telefono: profileData.telefono,
+        direccion: profileData.direccion,
+        localidad: profileData.localidad,
+        cp: profileData.cp,
+        provincia: profileData.provincia,
+        observaciones: profileData.observaciones,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error actualizando perfil en BD:', error);
+      return { data: null, error: error.message };
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error en updateUserProfile:', error);
+    return { data: null, error: error.message };
+  }
 }

@@ -1,7 +1,7 @@
 import PublicLayout from '../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { getCurrentUser, createToast, formatCurrency, formatDate } from '../utils/catalogUtils'
-import { loginWithEmail, logout as supabaseLogout, getCurrentSession } from '../utils/supabaseAuthV2'
+import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUserProfile } from '../utils/supabaseAuthV2'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -162,23 +162,33 @@ export default function User() {
         avatar
       }
       
-    // Guardar en las claves usadas por la app
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser))
-    // La app utiliza 'kond-user' para sesiones/lectura; mantener ambas claves sincronizadas
-    try { localStorage.setItem('kond-user', JSON.stringify(updatedUser)) } catch (e) { /* noop */ }
-    setCurrentUser(updatedUser)
-    try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
-    createToast('Perfil actualizado correctamente', 'success')
-    // Cerrar el desplegable después de guardar exitosamente
-    setIsProfileExpanded(false)
+      // 1. Guardar en Supabase (base de datos)
+      if (currentUser?.id) {
+        const { error: dbError } = await updateUserProfile(currentUser.id, formData)
+        if (dbError) {
+          console.error('Error guardando en BD:', dbError)
+          createToast('Error al guardar en el servidor: ' + dbError, 'error')
+          setIsLoading(false)
+          return
+        }
+      }
+      
+      // 2. Guardar en las claves usadas por la app (localStorage)
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+      // La app utiliza 'kond-user' para sesiones/lectura; mantener ambas claves sincronizadas
+      try { localStorage.setItem('kond-user', JSON.stringify(updatedUser)) } catch (e) { /* noop */ }
+      setCurrentUser(updatedUser)
+      try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
+      createToast('Perfil actualizado correctamente', 'success')
+      // Cerrar el desplegable después de guardar exitosamente
+      setIsProfileExpanded(false)
     } catch (error) {
+      console.error('Error al actualizar perfil:', error)
       createToast('Error al actualizar perfil', 'error')
     } finally {
       setIsLoading(false)
     }
-  }
-
-  // Cerrar sesión
+  }  // Cerrar sesión
   const handleLogout = async () => {
     const { error } = await supabaseLogout()
     if (error) {
