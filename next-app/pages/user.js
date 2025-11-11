@@ -158,6 +158,8 @@ export default function User() {
       setCurrentUser(updatedUser)
   try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
       createToast('Perfil actualizado correctamente', 'success')
+      // Cerrar el desplegable después de guardar exitosamente
+      setIsProfileExpanded(false)
     } catch (error) {
       createToast('Error al actualizar perfil', 'error')
     } finally {
