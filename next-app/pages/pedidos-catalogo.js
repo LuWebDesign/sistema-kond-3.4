@@ -4,10 +4,11 @@ import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import PedidoCard from '../components/PedidoCard'
 import ConfirmModal from '../components/ConfirmModal'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
+import { getAllPedidosCatalogo, getPedidoCatalogoById } from '../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
@@ -258,6 +259,7 @@ function PedidosCatalogo() {
   const [materiales, setMateriales] = useState([])
   const [activeSubtab, setActiveSubtab] = useState('pendientes')
   const [selectedPedido, setSelectedPedido] = useState(null)
+  const router = useRouter()
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedAssignDate, setSelectedAssignDate] = useState(null)
@@ -1133,6 +1135,13 @@ function PedidosCatalogo() {
   }
 
   const handleCardClick = (pedido) => {
+    // Abrir modal y actualizar la URL (shallow) para que quede /pedidos-catalogo/detalle-pedido/:id
+    try {
+      const asPath = `/pedidos-catalogo/detalle-pedido/${pedido.id}`
+      router.push({ pathname: router.pathname, query: { modal: 'detalle', id: pedido.id } }, asPath, { shallow: true })
+    } catch (e) {
+      // Si router falla por algún motivo, seguir mostrando el modal sin cambiar la URL
+    }
     setSelectedPedido(pedido)
     setShowDetailModal(true)
   }
@@ -1140,6 +1149,10 @@ function PedidosCatalogo() {
   const handleCloseModal = () => {
     setShowDetailModal(false)
     setSelectedPedido(null)
+    try {
+      // Restaurar URL base sin historial (shallow)
+      router.replace({ pathname: router.pathname, query: {} }, '/pedidos-catalogo', { shallow: true })
+    } catch (e) {}
   }
 
   const handleSaveChanges = () => {
@@ -1181,6 +1194,34 @@ function PedidosCatalogo() {
     setShowConfirmModal(true)
     handleCloseModal()
   }
+
+  // Si la URL contiene ?modal=detalle&id=..., abrir el modal al cargar la página
+  useEffect(() => {
+    if (!router || !router.isReady) return
+    const { modal, id } = router.query || {}
+    if (modal === 'detalle' && id) {
+      // Intentar encontrar el pedido en la lista cargada
+      const found = (pedidosCatalogo || []).find(p => String(p.id) === String(id))
+      if (found) {
+        setSelectedPedido(found)
+        setShowDetailModal(true)
+      } else {
+        // Si no está en memoria, pedirlo al servidor
+        (async () => {
+          try {
+            const { data, error } = await getPedidoCatalogoById(id)
+            if (!error && data) {
+              // mapear desde supabase si hace falta (la función mapSupabasePedidoToFrontend existe arriba)
+              const pedidoFront = mapSupabasePedidoToFrontend(data, productosBase || [])
+              const normalized = normalizePedido(pedidoFront)
+              setSelectedPedido(normalized)
+              setShowDetailModal(true)
+            }
+          } catch (e) {}
+        })()
+      }
+    }
+  }, [router && router.isReady, router && router.query, pedidosCatalogo])
 
   const openAssignModal = (pedido) => {
     setSelectedPedido(pedido)
@@ -1994,7 +2035,8 @@ function PedidosCatalogo() {
                   </div>
                 )}
 
-                {selectedPedido.cliente.direccion && selectedPedido.cliente.direccion !== 'No proporcionada' && (
+                {/* Mostrar dirección SOLO para pedidos con envío (evita mostrar dirección por defecto en pedidos catálogo) */}
+                {selectedPedido.metodoPago === 'envio' && selectedPedido.cliente?.direccion && selectedPedido.cliente.direccion !== 'No proporcionada' && (
                   <div className={styles.direccionSection}>
                     <label>Dirección de Entrega</label>
                     <p>{selectedPedido.cliente.direccion}</p>
