@@ -154,12 +154,15 @@ export default function User() {
         avatar
       }
       
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
-      setCurrentUser(updatedUser)
-  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
-      createToast('Perfil actualizado correctamente', 'success')
-      // Cerrar el desplegable después de guardar exitosamente
-      setIsProfileExpanded(false)
+    // Guardar en las claves usadas por la app
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+    // La app utiliza 'kond-user' para sesiones/lectura; mantener ambas claves sincronizadas
+    try { localStorage.setItem('kond-user', JSON.stringify(updatedUser)) } catch (e) { /* noop */ }
+    setCurrentUser(updatedUser)
+    try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
+    createToast('Perfil actualizado correctamente', 'success')
+    // Cerrar el desplegable después de guardar exitosamente
+    setIsProfileExpanded(false)
     } catch (error) {
       createToast('Error al actualizar perfil', 'error')
     } finally {
