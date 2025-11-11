@@ -86,12 +86,8 @@ function MiCuenta() {
       createToast('✅ Perfil actualizado correctamente', 'success')
       
       // Cerrar el desplegable después de guardar (colapsar la sección)
+      // NOTA: no reabrir automáticamente — el admin debe abrirlo manualmente si lo desea
       setIsProfileExpanded(false)
-      
-      // Reabrirlo después de 2 segundos para que el usuario vea el cambio guardado
-      setTimeout(() => {
-        setIsProfileExpanded(true)
-      }, 2000)
     } catch (error) {
       console.error('Error al actualizar perfil:', error)
       createToast('Error al actualizar perfil', 'error')
