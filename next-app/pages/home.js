@@ -6,9 +6,6 @@ import Link from 'next/link';
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [rememberSession, setRememberSession] = useState(false);
 
   // Verificar sesión activa al cargar la página
   useEffect(() => {
@@ -37,114 +34,7 @@ export default function Home() {
     checkSession();
   }, [router]);
 
-  const handleAdminLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { email, password } = loginData;
-
-      // Validación de credenciales
-      if (email === 'admin1' && password === 'kond') {
-        // Crear sesión con duración basada en la opción "Recordar sesión"
-        const sessionDuration = rememberSession ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 días o 24 horas
-        const sessionData = {
-          email: email,
-          timestamp: new Date().getTime(),
-          isLoggedIn: true,
-          rememberSession: rememberSession,
-          sessionDuration: sessionDuration
-        };
-
-        localStorage.setItem('adminSession', JSON.stringify(sessionData));
-
-        showCustomAlert('✅ Acceso Concedido', 'Redirigiendo al panel administrativo...', 'success', () => {
-          router.push('/dashboard');
-        });
-      } else {
-        showCustomAlert('❌ Credenciales Incorrectas', 'Usuario o contraseña inválidos. Verifica e intenta de nuevo.', 'error');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      showCustomAlert('❌ Error', 'Ocurrió un error durante el inicio de sesión.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const showCustomAlert = (title, message, type = 'info', callback = null) => {
-    // Crear modal de alerta personalizado
-    const alertModal = document.createElement('div');
-    alertModal.className = 'custom-alert-modal';
-    alertModal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      animation: fadeIn 0.3s ease;
-    `;
-
-    const alertContent = document.createElement('div');
-    alertContent.style.cssText = `
-      background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
-      padding: 32px;
-      border-radius: 16px;
-      max-width: 400px;
-      width: 90%;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-      text-align: center;
-      position: relative;
-      animation: slideIn 0.3s ease;
-    `;
-
-    const colorMap = {
-      success: '#10b981',
-      error: '#ef4444',
-      warning: '#f59e0b',
-      info: '#3b82f6'
-    };
-
-    alertContent.innerHTML = `
-      <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: ${colorMap[type]}; border-radius: 16px 16px 0 0;"></div>
-      <div style="font-size: 2rem; margin-bottom: 16px;">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
-      <h3 style="color: #f8fafc; margin: 0 0 12px 0; font-size: 1.4rem; font-weight: 700;">${title}</h3>
-      <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
-      <button onclick="this.parentElement.parentElement.remove(); ${callback ? `(${callback.toString()})()` : ''}" style="
-        background: ${colorMap[type]};
-        color: white;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        min-width: 100px;
-        transition: all 0.2s ease;
-      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        Aceptar
-      </button>
-    `;
-
-    alertModal.appendChild(alertContent);
-    document.body.appendChild(alertModal);
-
-    // Auto close for success messages
-    if (type === 'success' && callback) {
-      setTimeout(() => {
-        if (alertModal.parentElement) {
-          alertModal.remove();
-          callback();
-        }
-      }, 2000);
-    }
-  };
+  // Admin login modal removed: redirecciones ahora apuntan a /admin-login
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -541,192 +431,7 @@ export default function Home() {
           margin-bottom: 8px;
         }
 
-        /* Modal Mejorado */
-        .modal {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.85);
-          backdrop-filter: blur(4px);
-          z-index: 1000;
-          animation: fadeIn 0.3s ease;
-        }
-        .modal.show {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .modal-content {
-          background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
-          padding: 40px;
-          border-radius: 16px;
-          width: 90%;
-          max-width: 420px;
-          border: 1px solid rgba(148, 163, 184, 0.3);
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-          position: relative;
-          animation: slideIn 0.3s ease;
-        }
-        .modal-content::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-          border-radius: 16px 16px 0 0;
-        }
-        .modal h3 {
-          color: #f8fafc;
-          margin: 0 0 8px 0;
-          text-align: center;
-          font-size: 1.8rem;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-        }
-        .modal h3::before {
-          content: '🔐';
-          font-size: 1.5rem;
-        }
-        .modal-subtitle {
-          text-align: center;
-          color: #94a3b8;
-          margin-bottom: 32px;
-          font-size: 0.9rem;
-        }
-        .form-group-modal {
-          margin-bottom: 24px;
-          position: relative;
-        }
-        .form-group-modal label {
-          display: block;
-          margin-bottom: 8px;
-          color: #cbd5e1;
-          font-weight: 600;
-          font-size: 0.9rem;
-        }
-        .form-group-modal input {
-          width: 100%;
-          padding: 16px 20px;
-          border: 2px solid #475569;
-          border-radius: 10px;
-          background: rgba(51, 65, 85, 0.8);
-          color: #e2e8f0;
-          font-size: 16px;
-          transition: all 0.3s ease;
-          box-sizing: border-box;
-        }
-        .form-group-modal input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          background: rgba(59, 130, 246, 0.1);
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-        .modal-actions {
-          display: flex;
-          gap: 16px;
-          justify-content: center;
-          margin-top: 32px;
-        }
-
-        .btn-cancel {
-          background: linear-gradient(145deg, #374151 0%, #4b5563 100%);
-          color: white;
-          padding: 14px 28px;
-          border: 1px solid rgba(156, 163, 175, 0.3);
-          border-radius: 12px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 15px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          min-width: 120px;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .btn-cancel::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          transition: left 0.5s;
-        }
-
-        .btn-cancel:hover::before {
-          left: 100%;
-        }
-
-        .btn-cancel:hover {
-          background: linear-gradient(145deg, #4b5563 0%, #6b7280 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-          border-color: rgba(156, 163, 175, 0.5);
-        }
-
-        .btn-cancel:active {
-          transform: translateY(0);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-actions .btn-primary {
-          background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
-          color: white;
-          padding: 14px 28px;
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          border-radius: 12px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 15px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          min-width: 120px;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .modal-actions .btn-primary::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-          transition: left 0.5s;
-        }
-
-        .modal-actions .btn-primary:hover::before {
-          left: 100%;
-        }
-
-        .modal-actions .btn-primary:hover {
-          background: linear-gradient(145deg, #2563eb 0%, #1e40af 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
-          border-color: rgba(59, 130, 246, 0.6);
-        }
-
-        .modal-actions .btn-primary:active {
-          transform: translateY(0);
-          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-        }
+        /* Admin modal removed: styles deleted to simplify the page */
 
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -771,7 +476,7 @@ export default function Home() {
               <a href="#precios" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('precios'); }}>Precios</a>
               <a href="#contacto" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('contacto'); }}>Contacto</a>
               <Link href="/catalog" className="nav-link">Catálogo</Link>
-              <button className="btn-admin" onClick={() => setShowLoginModal(true)}>Acceso Admin</button>
+              <button className="btn-admin" onClick={() => router.push('/admin-login')}>Acceso Admin</button>
             </nav>
           </div>
         </div>
@@ -898,7 +603,7 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte por email</div>
                 <div className="feature-item">✅ 1 usuario administrador</div>
               </div>
-              <button className="pricing-btn" onClick={() => setShowLoginModal(true)}>
+              <button className="pricing-btn" onClick={() => router.push('/admin-login')}>
                 Comenzar Gratis
               </button>
             </div>
@@ -923,7 +628,7 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte prioritario</div>
                 <div className="feature-item">✅ API para integraciones</div>
               </div>
-              <button className="pricing-btn featured-btn" onClick={() => setShowLoginModal(true)}>
+              <button className="pricing-btn featured-btn" onClick={() => router.push('/admin-login')}>
                 Comenzar Ahora
               </button>
             </div>
@@ -947,7 +652,7 @@ export default function Home() {
                 <div className="feature-item">✅ Consultoría personalizada</div>
                 <div className="feature-item">✅ Backup y recuperación garantizada</div>
               </div>
-              <button className="pricing-btn" onClick={() => setShowLoginModal(true)}>
+              <button className="pricing-btn" onClick={() => router.push('/admin-login')}>
                 Contactar Ventas
               </button>
             </div>
@@ -968,59 +673,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Admin Login Modal */}
-      {showLoginModal && (
-        <div className="modal show" onClick={() => setShowLoginModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Acceso Administrativo</h3>
-            <div className="modal-subtitle">Ingresa tus credenciales para acceder al panel de administración</div>
-            <form onSubmit={handleAdminLogin}>
-              <div className="form-group-modal">
-                <label htmlFor="adminEmail">Usuario</label>
-                <input
-                  type="text"
-                  id="adminEmail"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group-modal">
-                <label htmlFor="adminPassword">Contraseña</label>
-                <input
-                  type="password"
-                  id="adminPassword"
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group-modal" style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px'}}>
-                <input
-                  type="checkbox"
-                  id="rememberSession"
-                  checked={rememberSession}
-                  onChange={(e) => setRememberSession(e.target.checked)}
-                  style={{width: '16px', height: '16px'}}
-                />
-                <label htmlFor="rememberSession" style={{margin: 0, fontSize: '0.9rem', color: '#cbd5e1', cursor: 'pointer'}}>
-                  Recordar sesión (7 días)
-                </label>
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowLoginModal(false)}>
-                  <span>❌</span>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" disabled={isLoading}>
-                  <span>🔑</span>
-                  {isLoading ? 'Ingresando...' : 'Ingresar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Admin login removed — se usa la ruta /admin-login */}
     </>
   );
 }

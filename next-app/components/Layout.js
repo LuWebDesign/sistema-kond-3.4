@@ -113,9 +113,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {/* Dashboard */}
-            <Link href="/" style={linkStyle}>
-              🏠 Inicio
+            {/* Home - Redirige a la sección inicio de la página pública */}
+            <Link href="/home#inicio" style={linkStyle}>
+              🏠 Home
             </Link>
             
             {/* Sección: Gestión Interna */}
@@ -265,30 +265,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      padding: '6px 12px',
-                      background: 'white',
-                      color: '#1f2937',
-                      border: '2px solid var(--accent-red)',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = '#f9fafb'
-                      e.target.style.borderColor = '#dc2626'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'white'
-                      e.target.style.borderColor = 'var(--accent-red)'
-                    }}
-                  >
-                    🚪 Cerrar Sesión
-                  </button>
                 </>
               ) : (
                 <div style={{
@@ -299,6 +275,35 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                 </div>
               )}
             </div>
+
+            {/* Botón de cerrar sesión */}
+            {userInfo && (
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '8px 16px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = '#dc2626'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = '#ef4444'
+                }}
+              >
+                🚪 Cerrar Sesión
+              </button>
+            )}
 
             {/* Notificaciones */}
             <NotificationsButton target="admin" />

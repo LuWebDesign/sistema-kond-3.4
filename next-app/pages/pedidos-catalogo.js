@@ -1191,7 +1191,7 @@ function PedidosCatalogo() {
 
     actualizarMovimientosPedido(pedidoActualizado, pedidoAnterior)
 
-    setShowConfirmModal(true)
+    // Cerrar el modal directamente sin mostrar confirmación adicional
     handleCloseModal()
   }
 
@@ -1199,7 +1199,8 @@ function PedidosCatalogo() {
   useEffect(() => {
     if (!router || !router.isReady) return
     const { modal, id } = router.query || {}
-    if (modal === 'detalle' && id) {
+    // Solo abrir si hay parámetros y el modal NO está ya abierto
+    if (modal === 'detalle' && id && !showDetailModal) {
       // Intentar encontrar el pedido en la lista cargada
       const found = (pedidosCatalogo || []).find(p => String(p.id) === String(id))
       if (found) {
@@ -1221,7 +1222,7 @@ function PedidosCatalogo() {
         })()
       }
     }
-  }, [router && router.isReady, router && router.query, pedidosCatalogo])
+  }, [router?.isReady, router?.query, pedidosCatalogo, showDetailModal])
 
   const openAssignModal = (pedido) => {
     setSelectedPedido(pedido)

@@ -145,25 +145,6 @@ function Admin() {
               🏭 Sistema Principal
               <span style={{ fontSize: '0.7rem' }}>↗</span>
             </button>
-            
-            <button
-              onClick={handleLogout}
-              style={{
-                background: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.9rem',
-                fontWeight: 600
-              }}
-            >
-              🚪 Cerrar Sesión
-            </button>
           </div>
         </div>
 
