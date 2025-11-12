@@ -272,6 +272,16 @@ export default function AvailabilityCalendar({
           border: 1px solid rgba(0,0,0,0.06);
           box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
+
+        /* En el checkout queremos que los días disponibles se muestren en azul */
+        .availability-calendar.checkout-calendar .calendar-day.available,
+        .calendar-day-grid.checkout-calendar .calendar-day.available,
+        .calendar-day-grid .availability-calendar.checkout-calendar .calendar-day.available {
+          background: var(--accent-blue, #3b82f6) !important;
+          color: white;
+          border: 1px solid rgba(59,130,246,0.9);
+          box-shadow: 0 6px 18px rgba(59,130,246,0.12);
+        }
         
         .calendar-day.available:hover,
         .calendar-day-grid .calendar-day.available:hover {
