@@ -606,17 +606,17 @@ a:hover {
     position: static !important;
     top: auto !important;
     right: auto !important;
-    margin-left: 0 !important;
+    margin-left: auto !important; /* empuja la fecha hacia la derecha */
     transform: none !important;
     z-index: 1 !important;
-    order: 0 !important; /* colocar fecha al inicio */
-    margin-right: 8px !important;
+    order: 1 !important; /* colocar fecha al final (derecha) */
+    margin-right: 0 !important;
   }
 
   /* Quitar el padding-right agregado para versiones antiguas donde la fecha estaba absoluta */
   .uoc-mobile-header .uoc-order-id {
     padding-right: 0 !important;
-    order: 1 !important; /* número de pedido después de la fecha */
+    order: 0 !important; /* número de pedido antes de la fecha (izquierda) */
   }
 }
 
