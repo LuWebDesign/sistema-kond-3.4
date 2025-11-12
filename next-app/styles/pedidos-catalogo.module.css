@@ -400,15 +400,6 @@
   color: white;
 }
 
-/* Ajustes específicos para modo oscuro: mejorar contraste del texto sobre fondo amarillo */
-@media (prefers-color-scheme: dark) {
-  .paymentBadge.seña-pagada {
-    /* mantener fondo amarillo pero usar texto oscuro para mejor legibilidad */
-    color: #101010;
-    background-color: #ffcf4b; /* tono ligeramente más suave en dark */
-  }
-}
-
 .methodBadge {
   background-color: var(--bg-tertiary);
   color: var(--text-secondary);

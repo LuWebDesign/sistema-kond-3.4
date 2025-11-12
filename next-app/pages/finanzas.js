@@ -6,10 +6,12 @@ import {
   getCategorias, 
   createCategoria, 
   deleteCategoria,
+  updateCategoria,
   getMovimientos,
   createMovimiento,
   updateMovimiento,
   deleteMovimiento,
+  bulkUpdateMovimientosCategoria,
   getRegistrosCierre,
   upsertRegistroCierre
 } from '../utils/supabaseFinanzas';
@@ -117,8 +119,10 @@ function Finanzas() {
           categoria: m.categoria,
           descripcion: m.descripcion,
           metodoPago: m.metodo_pago || 'efectivo',
+          pedidoCatalogoId: m.pedido_catalogo_id || null,
           createdAt: m.created_at
         }));
+        console.log('✅ Movimientos cargados:', mappedMovs.length);
         setMovimientos(mappedMovs);
       }
 
@@ -167,6 +171,8 @@ function Finanzas() {
           },
           metodoPago: p.metodo_pago,
           estadoPago: p.estado_pago,
+          // Monto recibido (seña o pagos parciales) desde Supabase
+          montoRecibido: Number(p.monto_recibido || 0),
           comprobanteUrl: p.comprobante_url,
           comprobanteOmitido: p.comprobante_omitido,
           fechaCreacion: p.fecha_creacion,
@@ -184,22 +190,17 @@ function Finanzas() {
   };
 
   // Ya no usamos localStorage, los datos se guardan directamente en Supabase
-  const saveMovimientos = (movs) => {
-    setMovimientos(movs);
-  };
-
-  const saveCategorias = (cats) => {
-    setCategorias(cats);
-  };
-
-  // Ya no usamos localStorage para registros
-  const saveRegistros = (regs) => {
-    setRegistros(regs);
-  };
+  // Persistencia centralizada en Supabase
 
   // Calculations
   const calcularResumen = () => {
     const hoy = new Date().toISOString().slice(0, 10);
+    
+    console.log('📊 Calculando resumen con:', {
+      totalMovimientos: movimientos.length,
+      fecha: hoy,
+      movimientos: movimientos.slice(0, 3)
+    });
     
     const ingresosHoy = movimientos.reduce((sum, m) => {
       return sum + ((m.tipo === 'ingreso' && m.fecha?.startsWith(hoy)) ? Number(m.monto || 0) : 0);
@@ -217,15 +218,37 @@ function Finanzas() {
       return acc;
     }, 0);
     
+    console.log('💰 Resumen calculado:', {
+      ingresosHoy,
+      egresosHoy,
+      equilibrioHoy,
+      balance
+    });
+    
     let porCobrar = 0;
     pedidosCatalogo.forEach(p => {
       const total = Number(p.total || 0);
       const estadoPago = p.estadoPago || '';
+      const recibidoBase = Number(
+        // Preferimos el campo mapeado; fallback por compatibilidad
+        p.montoRecibido != null ? p.montoRecibido : (p.monto_recibido || 0)
+      );
+
+      // Totalmente pago, no suma a por cobrar
       if (estadoPago === 'pagado' || estadoPago === 'pagado_total') return;
+
       if (estadoPago === 'seña_pagada') {
-        const sena = Number(p.senaMonto || p.señaMonto || (total * 0.5));
-        porCobrar += Math.max(0, total - sena);
+        // Si es seña_pagada pero no hay monto registrado, asumir 50% (compatibilidad)
+        const recibido = recibidoBase > 0 ? recibidoBase : (total * 0.5);
+        porCobrar += Math.max(0, total - recibido);
+        return;
+      }
+
+      // Si hay algún monto recibido (pago parcial), restarlo del total
+      if (recibidoBase > 0) {
+        porCobrar += Math.max(0, total - recibidoBase);
       } else {
+        // Sin seña/pago registrado
         porCobrar += total;
       }
     });
@@ -424,23 +447,46 @@ function Finanzas() {
     await loadData();
   };
 
-  const handleRenameCategory = (oldName) => {
+  const handleRenameCategory = async (oldName) => {
     const newName = prompt('Renombrar categoría', oldName);
     if (!newName || newName === oldName) return;
-    
+
     const trimmed = newName.trim();
-    if (!trimmed || categorias.includes(trimmed)) {
-      alert('Nombre inválido o ya existe');
+    if (!trimmed) {
+      alert('Nombre inválido');
       return;
     }
-    
-    const updatedCats = categorias.map(c => c === oldName ? trimmed : c);
-    const updatedMovs = movimientos.map(m => 
-      m.categoria === oldName ? { ...m, categoria: trimmed } : m
-    );
-    
-    saveCategorias(updatedCats);
-    saveMovimientos(updatedMovs);
+
+    // Evitar duplicados
+    if (categorias.includes(trimmed)) {
+      alert('La categoría ya existe');
+      return;
+    }
+
+    // Obtener ID de la categoría a renombrar
+    const { data: catsRes } = await getCategorias();
+    const cat = (catsRes || []).find(c => c.nombre === oldName);
+    if (!cat) {
+      alert('Categoría no encontrada');
+      return;
+    }
+
+    // Actualizar nombre en tabla de categorías
+    const { error: catErr } = await updateCategoria(cat.id, trimmed);
+    if (catErr) {
+      console.error('Error renombrando categoría:', catErr);
+      alert('No se pudo renombrar la categoría');
+      return;
+    }
+
+    // Actualizar todos los movimientos que usan la categoría anterior
+    const { error: bulkErr } = await bulkUpdateMovimientosCategoria(oldName, trimmed);
+    if (bulkErr) {
+      console.error('Error actualizando movimientos:', bulkErr);
+      // Continuamos, pero avisamos.
+    }
+
+    await loadData();
   };
 
   // Registros
@@ -957,6 +1003,22 @@ function Finanzas() {
                                 {mov.tipo === 'ingreso' ? 'Ingreso' : mov.tipo === 'egreso' ? 'Egreso' : 'Inversión'}
                               </span>
                               <span>{mov.categoria || 'Sin categoría'}</span>
+                              {mov.pedidoCatalogoId && (
+                                <span 
+                                  style={{
+                                    marginLeft: '8px',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                    color: 'white',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600'
+                                  }}
+                                  title={`Vinculado al pedido #${mov.pedidoCatalogoId}`}
+                                >
+                                  🛍️ Pedido #{mov.pedidoCatalogoId}
+                                </span>
+                              )}
                             </strong>
                             {mov.metodoPago && <span> - {mov.metodoPago}</span>}
                             <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
@@ -1010,7 +1072,7 @@ function Finanzas() {
             </button>
           </div>
           
-          {registrosDelDia.length === 0 ? (
+                  {registrosDelDia.length === 0 ? (
             <div className={styles.empty}>
               <span className={styles.emptyIcon}>🗂️</span>
               <h4>No hay registros para la fecha seleccionada</h4>
@@ -1026,29 +1088,27 @@ function Finanzas() {
                     <div>
                       <strong>{reg.fecha}</strong> - Total: {formatCurrency(reg.total)}
                     </div>
-                    <small>Cerrado: {new Date(reg.cerradoAt).toLocaleString()}</small>
+                            <small>Cerrado: {reg.createdAt ? new Date(reg.createdAt).toLocaleString() : '-'}</small>
                   </div>
                   
-                  {expandedRegistro === reg.id && (
-                    <div className={styles.registroDetalle}>
-                      {reg.movimientos.map(movId => {
-                        const mov = movimientos.find(m => m.id === movId);
-                        if (!mov) return null;
-                        return (
-                          <div key={movId} className={styles.registroMov}>
-                            <div>
-                              <strong>{mov.categoria || 'Sin categoría'}</strong>
-                              <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
-                              <div>{mov.descripcion}</div>
+                          {expandedRegistro === reg.id && (
+                            <div className={styles.registroDetalle}>
+                              {movimientos
+                                .filter(m => m.fecha === reg.fecha)
+                                .map(mov => (
+                                  <div key={mov.id} className={styles.registroMov}>
+                                    <div>
+                                      <strong>{mov.categoria || 'Sin categoría'}</strong>
+                                      <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
+                                      <div>{mov.descripcion}</div>
+                                    </div>
+                                    <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
+                                      {formatCurrency(mov.monto)}
+                                    </div>
+                                  </div>
+                                ))}
                             </div>
-                            <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
-                              {formatCurrency(mov.monto)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          )}
                 </div>
               ))}
             </div>

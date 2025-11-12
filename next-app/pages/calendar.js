@@ -1225,18 +1225,8 @@ function Calendar() {
                 {/* Indicadores de pedidos */}
                 {pedidosInternos.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                    <div style={{
-                      fontSize: '0.65rem',
-                      padding: '1px 4px',
-                      backgroundColor: 'var(--accent-blue)',
-                      color: 'white',
-                      borderRadius: '10px',
-                      textAlign: 'center'
-                    }}>
-                      🏭 {pedidosInternos.length} Interno{pedidosInternos.length > 1 ? 's' : ''}
-                    </div>
                     {/* mostrar chips por pedidos internos con fecha de entrega/ asignada y su estado */}
-                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).map(pi => {
+                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).slice(0, 3).map(pi => {
                       const pedDate = pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha
                       const pedDateStr = pedDate ? String(pedDate) : ''
                       const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
@@ -1276,6 +1266,23 @@ function Calendar() {
                         </div>
                       )
                     })}
+                    {/* Indicador de más pedidos internos */}
+                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).length > 3 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem',
+                        padding: '4px 6px',
+                        backgroundColor: 'var(--accent-blue)',
+                        color: 'white',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        opacity: 0.85
+                      }}>
+                        +{pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).length - 3}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1288,7 +1295,7 @@ function Calendar() {
                     <>
                       {pedidosProduccion.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                          {pedidosProduccion.map(ped => {
+                          {pedidosProduccion.slice(0, 3).map(ped => {
                             // determinar la fecha relevante del pedido (producción o entrega)
                             const pedDate = ped.fechaProduccionCalendario || ped.fechaEntregaCalendario || ped.fechaSolicitudEntrega || ped.fechaCreacion || ped.fecha
                             const pedDateStr = pedDate ? String(pedDate) : ''
@@ -1345,12 +1352,29 @@ function Calendar() {
                               </div>
                             )
                           })}
+                          {/* Indicador de más pedidos de producción */}
+                          {pedidosProduccion.length > 3 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.65rem',
+                              padding: '4px 6px',
+                              backgroundColor: '#FF6B35',
+                              color: 'white',
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                              opacity: 0.85
+                            }}>
+                              +{pedidosProduccion.length - 3}
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {pedidosEntrega.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                          {pedidosEntrega.map(pe => {
+                          {pedidosEntrega.slice(0, 3).map(pe => {
                             const pedDate = pe.fechaEntregaCalendario || pe.fechaSolicitudEntrega || pe.fechaCreacion || pe.fecha
                             const pedDateStr = pedDate ? String(pedDate) : ''
                             const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
@@ -1400,11 +1424,28 @@ function Calendar() {
                                     backgroundColor: isOverdueUndeliveredPed ? '#ef4444' : '#10b981',
                                     color: 'white',
                                     fontSize: 12
-                                  }} aria-label={isOverdueUndeliveredPed ? 'Vencido y no entregado' : 'Listo para entrega'}>{symbol}</span>
+                                  }}>{symbol}</span>
                                 )}
                               </div>
                             )
                           })}
+                          {/* Indicador de más pedidos de entrega */}
+                          {pedidosEntrega.length > 3 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.65rem',
+                              padding: '4px 6px',
+                              backgroundColor: '#28A745',
+                              color: 'white',
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                              opacity: 0.85
+                            }}>
+                              +{pedidosEntrega.length - 3}
+                            </div>
+                          )}
                         </div>
                       )}
                     </>

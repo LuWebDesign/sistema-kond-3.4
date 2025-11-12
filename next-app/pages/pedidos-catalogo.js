@@ -6,9 +6,8 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import styles from '../styles/pedidos-catalogo.module.css'
-import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo, getPedidoCatalogoById } from '../utils/supabasePedidos'
+import { getAllPedidosCatalogo, getPedidoCatalogoById, updateMontoRecibido } from '../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
 
 // Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
@@ -555,117 +554,11 @@ function PedidosCatalogo() {
     setSelectedPedido(updatedPedido)
   }
 
+  // NOTA: Función de movimientos financieros deshabilitada temporalmente
+  // Se reactivará cuando se reconstruya el módulo de finanzas
   const actualizarMovimientosPedido = (pedidoActualizado, pedidoAnterior = null) => {
-    try {
-      if (!pedidoActualizado || !pedidoActualizado.id) return
-
-      const estadoActualPago = normalizeEstadoPago(pedidoActualizado.estadoPago)
-      const montoActual = Number(pedidoActualizado.montoRecibido || 0)
-      const estadoPrevioPago = pedidoAnterior ? normalizeEstadoPago(pedidoAnterior.estadoPago) : null
-      const montoPrevio = Number(pedidoAnterior?.montoRecibido || 0)
-      const totalPedido = Number(pedidoActualizado.total || 0)
-
-      const clienteName = `${pedidoActualizado.cliente?.nombre || ''} ${pedidoActualizado.cliente?.apellido || ''}`.trim()
-      const metodoPagoMovimiento = pedidoActualizado.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo'
-      const fechaMovimiento = new Date().toISOString().slice(0, 10)
-
-      const movementKeys = {
-        sena: `pedido:${pedidoActualizado.id}:sena`,
-        pagoTotal: `pedido:${pedidoActualizado.id}:pago_total`,
-        restante: `pedido:${pedidoActualizado.id}:restante`
-      }
-
-      const upsertMovimiento = ({ monto, categoria, descripcion, key }) => {
-        if (!key) return
-        if (!monto || Number(monto) <= 0) {
-          eliminarMovimientoPorIdempotencyKey(key)
-          return
-        }
-
-        registrarMovimiento({
-          tipo: 'ingreso',
-          monto: Number(monto),
-          categoria,
-          descripcion,
-          fecha: fechaMovimiento,
-          clienteName,
-          pedidoId: pedidoActualizado.id,
-          metodoPago: metodoPagoMovimiento,
-          idempotencyKey: key,
-          replaceIfExists: true
-        })
-      }
-
-      switch (estadoActualPago) {
-        case 'sin_seña':
-          eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
-          eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
-          eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-          break
-        case 'seña_pagada':
-          upsertMovimiento({
-            monto: montoActual,
-            categoria: 'Seña',
-            descripcion: `Seña pedido #${pedidoActualizado.id}`,
-            key: movementKeys.sena
-          })
-          eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
-          eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-          break
-        case 'pagado_total': {
-          const senaAnterior = (() => {
-            if (estadoPrevioPago === 'seña_pagada') return Math.max(0, montoPrevio)
-            if (estadoPrevioPago === 'pagado_total') {
-              const existing = obtenerMovimientoPorIdempotencyKey(movementKeys.sena)
-              return existing ? Number(existing.monto || 0) : 0
-            }
-            const existing = obtenerMovimientoPorIdempotencyKey(movementKeys.sena)
-            return existing ? Number(existing.monto || 0) : 0
-          })()
-
-          if (senaAnterior > 0) {
-            upsertMovimiento({
-              monto: senaAnterior,
-              categoria: 'Seña',
-              descripcion: `Seña pedido #${pedidoActualizado.id}`,
-              key: movementKeys.sena
-            })
-          } else if (estadoPrevioPago !== 'pagado_total') {
-            eliminarMovimientoPorIdempotencyKey(movementKeys.sena)
-          }
-
-          const restante = senaAnterior > 0 ? Math.max(0, montoActual - senaAnterior) : 0
-
-          if (senaAnterior > 0) {
-            if (restante > 0) {
-              upsertMovimiento({
-                monto: restante,
-                categoria: 'Pago restante',
-                descripcion: `Pago restante pedido #${pedidoActualizado.id}`,
-                key: movementKeys.restante
-              })
-            } else {
-              eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-            }
-            eliminarMovimientoPorIdempotencyKey(movementKeys.pagoTotal)
-          } else {
-            const montoFinal = montoActual > 0 ? montoActual : totalPedido
-            upsertMovimiento({
-              monto: montoFinal,
-              categoria: 'Pago total',
-              descripcion: `Pago total pedido #${pedidoActualizado.id}`,
-              key: movementKeys.pagoTotal
-            })
-            eliminarMovimientoPorIdempotencyKey(movementKeys.restante)
-          }
-          break
-        }
-        default:
-          break
-      }
-    } catch (finErr) {
-      console.error('Error actualizando movimientos financieros del pedido catálogo:', finErr)
-    }
+    // Función deshabilitada - módulo finanzas eliminado
+    console.log('⚠️ Función actualizarMovimientosPedido deshabilitada temporalmente');
   }
 
   // Helper para persistir pedidosCatalogo y emitir un evento homogéneo

@@ -63,6 +63,36 @@ export async function getProductoById(id) {
 }
 
 /**
+ * Generar ID aleatorio de 4 dígitos único
+ */
+async function generateRandomId() {
+  let attempts = 0;
+  const maxAttempts = 100;
+  
+  while (attempts < maxAttempts) {
+    // Generar número aleatorio entre 1000 y 9999
+    const randomId = Math.floor(Math.random() * 9000) + 1000;
+    
+    // Verificar si el ID ya existe
+    const { data, error } = await supabase
+      .from('productos')
+      .select('id')
+      .eq('id', randomId)
+      .single();
+    
+    // Si no existe (error porque no se encontró), usamos este ID
+    if (error && error.code === 'PGRST116') {
+      return randomId;
+    }
+    
+    attempts++;
+  }
+  
+  // Si después de 100 intentos no encontramos un ID único, lanzar error
+  throw new Error('No se pudo generar un ID único después de múltiples intentos');
+}
+
+/**
  * Crear un nuevo producto
  */
 export async function createProducto(producto) {
@@ -94,7 +124,11 @@ export async function createProducto(producto) {
       return isNaN(parsed) ? null : parsed;
     };
 
+    // Generar ID aleatorio de 4 dígitos
+    const randomId = await generateRandomId();
+
     const productData = {
+      id: randomId,
       nombre: producto.nombre,
       categoria: producto.categoria,
       tipo: producto.tipo || 'Stock',

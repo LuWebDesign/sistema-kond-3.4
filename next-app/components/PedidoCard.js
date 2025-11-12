@@ -177,7 +177,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
           <div className={styles.pedidoHeaderMain}>
           <div className={styles.pedidoIdLine}>
-            <strong>N°{pedido.id}</strong>
+            <strong>{pedido.nroPedido ? pedido.nroPedido : `N°${pedido.id}`}</strong>
             <div className={styles.clienteNombreHead}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
           </div>
           {/* tarjeta de estado: estado del pedido + estado de pago (reemplaza badge 'Asignado al calendario') */}

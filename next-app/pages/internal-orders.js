@@ -183,14 +183,21 @@ function InternalOrders() {
   const PAGE_SIZE = 10
 
   useEffect(() => {
-    // Cargar datos del localStorage
-    const loadedPedidos = JSON.parse(localStorage.getItem('pedidos') || '[]')
-    const loadedProductos = JSON.parse(localStorage.getItem('productosBase') || '[]')
-    const loadedCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
-    
-    setPedidos(loadedPedidos)
-    setProductosBase(loadedProductos)
-    setPedidosCatalogo(loadedCatalogo)
+    ;(async () => {
+      try {
+        const { getAllPedidosInternos } = await import('../utils/supabasePedidosInternos')
+        const { data, error } = await getAllPedidosInternos()
+        if (!error && Array.isArray(data)) {
+          setPedidos(data)
+        } else {
+          setPedidos(JSON.parse(localStorage.getItem('pedidos') || '[]'))
+        }
+      } catch (e) {
+        setPedidos(JSON.parse(localStorage.getItem('pedidos') || '[]'))
+      }
+      setProductosBase(JSON.parse(localStorage.getItem('productosBase') || '[]'))
+      setPedidosCatalogo(JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]'))
+    })()
   }, [])
 
   const formatCurrency = (amount) => {
@@ -1151,6 +1158,7 @@ function normalizeInternalPedidoForCard(p) {
 
   return {
     id: p.id,
+    nroPedido: p.nroPedido || null,
     fechaCreacion: p.fechaCreacion || p.creadoEn || new Date().toISOString(),
     cliente,
     productos,

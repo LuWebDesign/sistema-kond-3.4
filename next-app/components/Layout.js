@@ -162,9 +162,10 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               🎯 Marketing
             </Link>
             
-            <Link href="/finanzas" style={linkStyle}>
+            {/* FINANZAS TEMPORALMENTE DESHABILITADO - EN RECONSTRUCCIÓN */}
+            {/* <Link href="/finanzas" style={linkStyle}>
               💰 Finanzas
-            </Link>
+            </Link> */}
             
             {/* Sección: Administración */}
             <div style={sectionDividerStyle}>

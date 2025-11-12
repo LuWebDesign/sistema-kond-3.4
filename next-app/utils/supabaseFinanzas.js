@@ -64,6 +64,26 @@ export async function deleteCategoria(id) {
   }
 }
 
+/**
+ * Actualizar una categoría (renombrar)
+ */
+export async function updateCategoria(id, nombre) {
+  try {
+    const { data, error } = await supabase
+      .from('categorias_financieras')
+      .update({ nombre })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error al actualizar categoría:', error);
+    return { data: null, error: error.message };
+  }
+}
+
 // ============================================
 // MOVIMIENTOS FINANCIEROS
 // ============================================
@@ -120,7 +140,8 @@ export async function createMovimiento(movimiento) {
       hora: movimiento.hora || null,
       categoria: movimiento.categoria || null,
       descripcion: movimiento.descripcion || null,
-      metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo'
+      metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo',
+      pedido_catalogo_id: movimiento.pedidoCatalogoId || movimiento.pedido_catalogo_id || null
     };
 
     const { data, error } = await supabase
@@ -183,6 +204,25 @@ export async function deleteMovimiento(id) {
   } catch (error) {
     console.error('Error al eliminar movimiento:', error);
     return { error: error.message };
+  }
+}
+
+/**
+ * Actualiza en bloque la categoría de movimientos que coincidan por nombre
+ */
+export async function bulkUpdateMovimientosCategoria(oldName, newName) {
+  try {
+    const { data, error } = await supabase
+      .from('movimientos_financieros')
+      .update({ categoria: newName })
+      .eq('categoria', oldName)
+      .select();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error al actualizar categoría en movimientos:', error);
+    return { data: null, error: error.message };
   }
 }
 

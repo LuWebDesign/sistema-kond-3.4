@@ -355,6 +355,24 @@ function Database() {
     loadMaterials()
   }, [loadProducts, loadMaterials])
 
+  // Escuchar actualizaciones desde la página de Productos
+  useEffect(() => {
+    const handleProductsUpdated = () => {
+      loadProducts()
+    }
+    window.addEventListener('productos:updated', handleProductsUpdated)
+    const storageListener = (e) => {
+      if (e.key === 'productos_updated') {
+        loadProducts()
+      }
+    }
+    window.addEventListener('storage', storageListener)
+    return () => {
+      window.removeEventListener('productos:updated', handleProductsUpdated)
+      window.removeEventListener('storage', storageListener)
+    }
+  }, [loadProducts])
+
   useEffect(() => {
     applyFiltersAndSort()
   }, [products, filters, sortConfig, applyFiltersAndSort])
@@ -677,7 +695,7 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
       background: isEven ? 'var(--bg-tertiary)' : 'transparent',
       opacity: isHidden ? 0.6 : 1
     }}>
-      <td style={tdStyle}>{product.id}</td>
+  <td style={tdStyle}>{product.id}</td>
       <td style={{ ...tdStyle, fontWeight: '600', color: 'var(--text-primary)' }}>
         {product.nombre}
       </td>

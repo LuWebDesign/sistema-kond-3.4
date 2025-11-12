@@ -6,6 +6,36 @@
 import supabase from './supabaseClient';
 
 /**
+ * Generar ID aleatorio de 4 dígitos único para pedidos catálogo
+ */
+async function generateRandomPedidoId() {
+  let attempts = 0;
+  const maxAttempts = 100;
+  
+  while (attempts < maxAttempts) {
+    // Generar número aleatorio entre 1000 y 9999
+    const randomId = Math.floor(Math.random() * 9000) + 1000;
+    
+    // Verificar si el ID ya existe
+    const { data, error } = await supabase
+      .from('pedidos_catalogo')
+      .select('id')
+      .eq('id', randomId)
+      .single();
+    
+    // Si no existe (error porque no se encontró), usamos este ID
+    if (error && error.code === 'PGRST116') {
+      return randomId;
+    }
+    
+    attempts++;
+  }
+  
+  // Si después de 100 intentos no encontramos un ID único, lanzar error
+  throw new Error('No se pudo generar un ID único para el pedido después de múltiples intentos');
+}
+
+/**
  * Obtener todos los pedidos catálogo (solo admins)
  */
 export async function getAllPedidosCatalogo() {
@@ -117,10 +147,14 @@ export async function getPedidoCatalogoById(id) {
  */
 export async function createPedidoCatalogo(pedido, items) {
   try {
+    // Generar ID aleatorio de 4 dígitos
+    const randomId = await generateRandomPedidoId();
+    
     // 1. Crear el pedido principal
     const { data: pedidoData, error: pedidoError } = await supabase
       .from('pedidos_catalogo')
       .insert([{
+        id: randomId,
         cliente_nombre: pedido.cliente.nombre,
         cliente_apellido: pedido.cliente.apellido,
         cliente_telefono: pedido.cliente.telefono,
@@ -154,6 +188,10 @@ export async function createPedidoCatalogo(pedido, items) {
       .select();
 
     if (itemsError) throw itemsError;
+
+    // NOTA: Registro automático de movimientos financieros deshabilitado temporalmente
+    // Se reactivará cuando se reconstruya el módulo de finanzas
+    console.log('💰 Pedido creado sin registro financiero automático (módulo deshabilitado)');
 
     return { 
       data: { 
@@ -219,6 +257,44 @@ export async function updateEstadoPago(id, estadoPago) {
     return { data, error: null };
   } catch (error) {
     console.error('Error al actualizar estado de pago:', error);
+    return { data: null, error: error.message };
+  }
+}
+
+/**
+ * Actualizar monto recibido de un pedido y registrar movimiento financiero
+ */
+export async function updateMontoRecibido(id, montoRecibido, nuevoEstadoPago) {
+  try {
+    // 1. Obtener datos actuales del pedido
+    const { data: pedidoActual, error: errorGet } = await supabase
+      .from('pedidos_catalogo')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (errorGet) throw errorGet;
+
+    // 2. Actualizar monto_recibido y estado_pago en el pedido
+    const { data: pedidoActualizado, error: errorUpdate } = await supabase
+      .from('pedidos_catalogo')
+      .update({ 
+        monto_recibido: montoRecibido,
+        estado_pago: nuevoEstadoPago 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (errorUpdate) throw errorUpdate;
+
+    // NOTA: Registro automático de movimientos financieros deshabilitado temporalmente
+    // Se reactivará cuando se reconstruya el módulo de finanzas
+    console.log('💰 Monto recibido actualizado sin registro financiero automático (módulo deshabilitado)');
+
+    return { data: pedidoActualizado, error: null };
+  } catch (error) {
+    console.error('Error al actualizar monto recibido:', error);
     return { data: null, error: error.message };
   }
 }

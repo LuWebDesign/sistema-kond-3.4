@@ -119,7 +119,9 @@ function Products() {
   })
 
   const pageSize = 10
-  const categories = ['Decoración', 'Herramientas', 'Regalos', 'Llaveros', 'Arte', 'Personalizada']
+  
+  // Obtener categorías únicas de los productos existentes
+  const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort()
 
   // Función para actualizar campos calculados
   const updateCalculatedFields = useCallback(() => {
@@ -606,6 +608,16 @@ function Products() {
 
       // Recargar productos desde Supabase
       await loadProducts()
+      // Notificar a otras vistas (como /database) que hay nuevos productos
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('productos:updated'))
+          // También usar localStorage para disparar evento 'storage' en otras pestañas
+          localStorage.setItem('productos_updated', Date.now().toString())
+        }
+      } catch (e) {
+        console.warn('No se pudo despachar evento de productos actualizados:', e)
+      }
       
       // Resetear formulario
         setFormData({
@@ -663,6 +675,12 @@ function Products() {
 
       // Recargar productos
       await loadProducts()
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('productos:updated'))
+        localStorage.setItem('productos_updated', Date.now().toString())
+      }
+    } catch (e) {}
     }
   }
 

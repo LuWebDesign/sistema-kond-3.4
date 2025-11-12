@@ -20,6 +20,7 @@ export async function getAllPedidosInternos() {
     // Mapear campos de snake_case a camelCase para compatibilidad con código existente
     const mappedData = (data || []).map(pedido => ({
       id: pedido.id,
+      nroPedido: pedido.nro_pedido || null,
       cliente: pedido.cliente,
       producto: pedido.producto,
       cantidad: pedido.cantidad,
@@ -109,10 +110,22 @@ export async function createPedidoInterno(pedido) {
       .single();
 
     if (error) throw error;
+    // Generar folio humano si la columna existe: PI-YYYY-#####
+    try {
+      const year = new Date(data.fecha_creacion || Date.now()).getFullYear();
+      const padded = String(data.id).padStart(5, '0');
+      const folio = `PI-${year}-${padded}`;
+      await supabase
+        .from('pedidos_internos')
+        .update({ nro_pedido: folio })
+        .eq('id', data.id);
+      data.nro_pedido = folio;
+    } catch (_) {}
     
     // Mapear respuesta
     const mappedData = {
       id: data.id,
+      nroPedido: data.nro_pedido || null,
       cliente: data.cliente,
       producto: data.producto,
       cantidad: data.cantidad,
@@ -168,6 +181,7 @@ export async function updatePedidoInterno(id, updates) {
     // Mapear respuesta
     const mappedData = {
       id: data.id,
+      nroPedido: data.nro_pedido || null,
       cliente: data.cliente,
       producto: data.producto,
       cantidad: data.cantidad,
@@ -226,6 +240,7 @@ export async function getPedidosInternosByDateRange(startDate, endDate) {
     // Mapear campos
     const mappedData = (data || []).map(pedido => ({
       id: pedido.id,
+      nroPedido: pedido.nro_pedido || null,
       cliente: pedido.cliente,
       producto: pedido.producto,
       cantidad: pedido.cantidad,
