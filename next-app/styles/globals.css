@@ -366,7 +366,6 @@ a:hover {
     padding-right: 12px; 
   }
 
-  /* Evitar distorsión de tarjetas: una columna */
   /* Mostrar 2 columnas en pantallas pequeñas, pero asegurar un ancho mínimo por columna
      para evitar que el contenido quede demasiado apretado en dispositivos muy estrechos. */
   .products-grid {

@@ -427,6 +427,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [materials, setMaterials] = useState([])
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
 
   // ProductCard will use the shared slugify helper imported above
 
@@ -443,6 +444,39 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       }
     }
     loadMaterials()
+  }, [])
+
+  // Detectar tema (dark vs light) para ajustar estilos de badge de categoría
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
+      
+      // Función para detectar el tema actual desde data-theme del body
+      const getTheme = () => {
+        const theme = document.body.getAttribute('data-theme')
+        return theme === 'dark'
+      }
+      
+      setIsDarkTheme(getTheme())
+
+      // Observar cambios en el atributo data-theme del body
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            setIsDarkTheme(getTheme())
+          }
+        })
+      })
+
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      })
+
+      return () => observer.disconnect()
+    } catch (e) {
+      // ignore
+    }
   }, [])
 
   // Obtener información del material
@@ -478,10 +512,39 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       borderRadius: '12px',
       overflow: 'hidden'
     }}>
+      {/* Título arriba de la imagen */}
+      <div style={{ padding: '12px 20px 16px 20px' }}>
+        <h3 style={{
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          margin: 0,
+          marginBottom: '12px',
+          lineHeight: 1.2
+        }}>
+          <span
+            onClick={() => {
+              try {
+                const catSlug = slugifyPreserveCase(product.categoria)
+                const prodSlug = slugifyPreserveCase(product.nombre)
+                // Navegar a la nueva ruta /catalog/{category}/{product}
+                router.push(`/catalog/${catSlug}/${prodSlug}`)
+              } catch (e) {
+                // fallback a catálogo
+                router.push('/catalog')
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {product.nombre}
+          </span>
+        </h3>
+      </div>
+
       {/* Imagen del producto */}
       <div style={{
         position: 'relative',
-        paddingTop: '60%',
+        paddingTop: '100%',
         background: 'var(--bg-tertiary)'
       }}>
         {product.imagen ? (
@@ -518,79 +581,66 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       </div>
 
       {/* Info del producto */}
-      <div style={{ padding: '20px' }}>
-          {product.categoria && (() => {
+      <div style={{ padding: '16px 20px 20px 20px' }}>
+          {(() => {
+            const secondaryTextColor = isDarkTheme ? '#d1d5db' : 'var(--text-secondary)'
             const categoryStyle = getCategoryStyle(product.categoria)
-            // Mostrar la categoría como elemento visual, sin comportamiento de navegación
+            // Ajustar estilo según tema: en versión light usar fondo gris claro y texto gris oscuro
+            const badgeBackground = isDarkTheme ? 'transparent' : '#f3f4f6' // gray-100
+            // En dark: texto blanco con borde; en light: texto gris oscuro sobre fondo gris claro
+            const badgeTextColor = isDarkTheme ? '#ffffff' : '#374151' // gray-700
+            const badgeBorder = isDarkTheme ? `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}` : 'none'
+            
+            // Debug: ver qué tema está detectando
+            if (product.id === 1) console.log('🎨 Theme detected:', { isDarkTheme, badgeTextColor, badgeBackground })
+            
             return (
-              <div
-                className="category-badge"
-                // no role/button, no tabIndex, no handlers: accesible como texto decorativo
-                aria-hidden={false}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: categoryStyle.color,
-                  background: 'transparent',
-                  border: `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}`,
-                  marginBottom: '8px',
-                  cursor: 'default'
-                }}
-              >
-                <span>{product.categoria}</span>
-              </div>
+              <>
+                {product.categoria && (
+                  <div
+                    className="category-badge"
+                    aria-hidden={false}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 10px',
+                      borderRadius: '12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      color: badgeTextColor,
+                      background: badgeBackground,
+                      border: badgeBorder,
+                      marginBottom: '10px',
+                      cursor: 'default'
+                    }}
+                  >
+                    <span style={{ color: badgeTextColor }}>{product.categoria}</span>
+                  </div>
+                )}
+                
+                {product.medidas && (
+                  <p style={{
+                    color: secondaryTextColor,
+                    fontSize: '0.9rem',
+                    marginBottom: '8px'
+                  }}>
+                    📏 {product.medidas}
+                  </p>
+                )}
+
+                {materialInfo && (
+                  <p style={{
+                    color: secondaryTextColor,
+                    fontSize: '0.9rem',
+                    marginBottom: '8px'
+                  }}>
+                    Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
+                  </p>
+                )}
+              </>
             )
           })()}
-
-          <h3 style={{
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            marginBottom: '8px',
-            lineHeight: 1.4
-          }}>
-            <span
-              onClick={() => {
-                try {
-                  const catSlug = slugifyPreserveCase(product.categoria)
-                  const prodSlug = slugifyPreserveCase(product.nombre)
-                  // Navegar a la nueva ruta /catalog/{category}/{product}
-                  router.push(`/catalog/${catSlug}/${prodSlug}`)
-                } catch (e) {
-                  // fallback a catálogo
-                  router.push('/catalog')
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {product.nombre}
-            </span>
-          </h3>
-
-          {product.medidas && (
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem',
-            marginBottom: '8px'
-          }}>
-            📏 {product.medidas}
-          </p>
-        )}
-
-        {materialInfo && (
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem',
-            marginBottom: '8px'
-          }}>
-            Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
-          </p>
-        )}
 
         {/* category badge moved above title; duplicate removed */}
 
