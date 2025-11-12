@@ -273,10 +273,16 @@ export default function AvailabilityCalendar({
           box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
 
-        /* En el checkout queremos que los días disponibles se muestren en azul */
+        /* En el checkout queremos que los días disponibles se muestren en azul.
+           Hay varias variantes del nombre del grid en el código (.calendar-days-grid,
+           .calendar-day-grid) así que incluimos todas para evitar fallback a verde. */
         .availability-calendar.checkout-calendar .calendar-day.available,
         .calendar-day-grid.checkout-calendar .calendar-day.available,
-        .calendar-day-grid .availability-calendar.checkout-calendar .calendar-day.available {
+        .calendar-days-grid.checkout-calendar .calendar-day.available,
+        .calendar-day-grid .availability-calendar.checkout-calendar .calendar-day.available,
+        .calendar-days-grid .availability-calendar.checkout-calendar .calendar-day.available,
+        .calendar-day-grid .checkout-calendar .calendar-day.available,
+        .calendar-days-grid .checkout-calendar .calendar-day.available {
           background: var(--accent-blue, #3b82f6) !important;
           color: white;
           border: 1px solid rgba(59,130,246,0.9);
