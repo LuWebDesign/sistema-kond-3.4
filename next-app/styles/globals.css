@@ -913,8 +913,11 @@ a:hover {
 /* Forzar que el icono SVG use currentColor (ya suele estar) y tenga el mismo tamaño visual que el texto */
 .transfer-payment-info .btn-copy svg {
   stroke: currentColor !important;
+  fill: currentColor !important;
   width: 18px !important;
   height: 18px !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 
 /* Forzar borde celeste claro al botón de comprobante (asegurar prioridad) */
@@ -943,9 +946,10 @@ a:hover {
   cursor: pointer;
   color: var(--text-primary);
   font-size: 0.95rem;
+  gap: 6px; /* espacio entre icono y texto */
 }
 
-.btn-copy svg { width: 18px; height: 18px; stroke: currentColor }
+.btn-copy svg { width: 18px; height: 18px; stroke: currentColor; fill: currentColor }
 
 /* Dark mode override to make copy buttons light gray */
 [data-theme="dark"] .btn-copy {
@@ -953,6 +957,8 @@ a:hover {
   color: var(--text-primary) !important;
   border-color: rgba(255,255,255,0.06) !important;
 }
+
+[data-theme="dark"] .btn-copy svg { stroke: currentColor !important; fill: currentColor !important }
 
 [data-theme="dark"] .btn-copy:hover { filter: brightness(0.98) !important }
 
