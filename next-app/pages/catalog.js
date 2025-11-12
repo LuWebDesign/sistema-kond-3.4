@@ -150,6 +150,17 @@ export default function Catalog() {
     console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
     
     return matchesSearch && matchesCategory
+  }).sort((a, b) => {
+    // Si estamos en "Todas las categorías" (sin categoría seleccionada),
+    // mostrar productos con promoción primero
+    if (!selectedCategory) {
+      const aHasPromo = a.hasPromotion ? 1 : 0
+      const bHasPromo = b.hasPromotion ? 1 : 0
+      // Ordenar descendente: productos con promo (1) van antes que sin promo (0)
+      return bHasPromo - aHasPromo
+    }
+    // Si hay categoría seleccionada, mantener orden original
+    return 0
   })
 
   console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
@@ -695,7 +706,8 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
               gap: '6px'
             }}
           >
-            🛒 Agregar
+            <span className="btn-icon" aria-hidden="true">🛒</span>
+            Agregar
           </button>
         </div>
       </div>

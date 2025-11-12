@@ -27,6 +27,70 @@ export async function getAllPedidosCatalogo() {
 }
 
 /**
+ * Obtener pedidos catálogo mapeados para el calendario
+ * (convierte snake_case a camelCase)
+ */
+export async function getPedidosCatalogoParaCalendario() {
+  try {
+    const { data, error } = await getAllPedidosCatalogo();
+    if (error) throw error;
+    
+    // Mapear campos de snake_case a camelCase para compatibilidad con calendario
+    const mappedData = (data || []).map(pedido => ({
+      id: pedido.id,
+      cliente: {
+        nombre: pedido.cliente_nombre,
+        apellido: pedido.cliente_apellido,
+        telefono: pedido.cliente_telefono,
+        email: pedido.cliente_email,
+        direccion: pedido.cliente_direccion,
+      },
+      items: (pedido.items || []).map(item => ({
+        id: item.id,
+        pedidoCatalogoId: item.pedido_catalogo_id,
+        idProducto: item.producto_id,
+        name: item.producto_nombre,
+        price: item.producto_precio,
+        quantity: item.cantidad,
+        measures: item.medidas,
+      })),
+      productos: (pedido.items || []).map(item => ({
+        id: item.id,
+        pedidoCatalogoId: item.pedido_catalogo_id,
+        productId: item.producto_id,
+        idProducto: item.producto_id,
+        name: item.producto_nombre,
+        nombre: item.producto_nombre,
+        price: item.producto_precio,
+        quantity: item.cantidad,
+        cantidad: item.cantidad,
+        measures: item.medidas,
+      })),
+      metodoPago: pedido.metodo_pago,
+      estadoPago: pedido.estado_pago,
+      estado: pedido.estado || 'pendiente',
+      comprobante: pedido.comprobante_url,
+      comprobanteOmitido: pedido.comprobante_omitido || false,
+      fechaSolicitudEntrega: pedido.fecha_solicitud_entrega,
+      fechaCreacion: pedido.fecha_creacion,
+      fechaEntregaCalendario: pedido.fecha_entrega_calendario,
+      fechaProduccionCalendario: pedido.fecha_produccion_calendario,
+      asignadoAlCalendario: pedido.asignado_al_calendario || false,
+      total: pedido.total,
+      createdAt: pedido.created_at,
+      updatedAt: pedido.updated_at,
+      // Compatibilidad con código antiguo
+      fecha: pedido.fecha_creacion,
+    }));
+    
+    return { data: mappedData, error: null };
+  } catch (error) {
+    console.error('Error al obtener pedidos catálogo para calendario:', error);
+    return { data: null, error: error.message };
+  }
+}
+
+/**
  * Obtener un pedido catálogo por ID
  */
 export async function getPedidoCatalogoById(id) {

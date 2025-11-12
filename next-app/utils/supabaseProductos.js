@@ -25,6 +25,32 @@ export async function getAllProductos() {
 }
 
 /**
+ * Mapear producto de snake_case a camelCase
+ */
+export function mapProductoToFrontend(p) {
+  if (!p) return null;
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    categoria: p.categoria,
+    tipo: p.tipo,
+    medidas: p.medidas,
+    tiempoUnitario: p.tiempo_unitario || '00:00:30',
+    publicado: p.publicado,
+    hiddenInProductos: p.hidden_in_productos,
+    unidadesPorPlaca: p.unidades_por_placa,
+    usoPlacas: p.uso_placas,
+    costoPlaca: p.costo_placa,
+    costoMaterial: p.costo_material,
+    imagen: p.imagen_url,
+    materialId: p.material_id,
+    material: p.material,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+  };
+}
+
+/**
  * Obtener un producto por ID
  */
 export async function getProductoById(id) {
@@ -59,6 +85,25 @@ export async function getProductosPublicados() {
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos publicados:', error);
+    return { data: null, error: error.message };
+  }
+}
+
+/**
+ * Obtener productos publicados mapeados para el calendario
+ */
+export async function getProductosPublicadosParaCalendario() {
+  try {
+    const { data, error } = await getProductosPublicados();
+    if (error) throw error;
+    
+    // Mapear campos de snake_case a camelCase
+    const mappedData = (data || []).map(p => mapProductoToFrontend(p));
+    
+    console.log('✅ Productos mapeados para calendario:', mappedData?.length || 0);
+    return { data: mappedData, error: null };
+  } catch (error) {
+    console.error('❌ Error al obtener productos para calendario:', error);
     return { data: null, error: error.message };
   }
 }
@@ -169,29 +214,4 @@ export async function searchProductos(searchTerm) {
     console.error('❌ Error al buscar productos:', error);
     return { data: null, error: error.message };
   }
-}
-
-/**
- * Mapear producto de Supabase (snake_case) a frontend (camelCase)
- */
-export function mapProductoToFrontend(productoDB) {
-  if (!productoDB) return null;
-  
-  return {
-    id: productoDB.id,
-    nombre: productoDB.nombre,
-    categoria: productoDB.categoria,
-    tipo: productoDB.tipo,
-    medidas: productoDB.medidas,
-    tiempoUnitario: productoDB.tiempo_unitario,
-    publicado: productoDB.publicado,
-    hiddenInProductos: productoDB.hidden_in_productos,
-    unidadesPorPlaca: productoDB.unidades_por_placa,
-    usoPlacas: productoDB.uso_placas,
-    costoPlaca: productoDB.costo_placa,
-    costoMaterial: productoDB.costo_material,
-    imagen: productoDB.imagen_url,
-    createdAt: productoDB.created_at,
-    updatedAt: productoDB.updated_at
-  };
 }

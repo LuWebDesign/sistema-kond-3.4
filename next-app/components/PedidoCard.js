@@ -63,15 +63,18 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
   // Función para obtener datos del producto desde productosBase
   const getProductData = (prod) => {
-    // Si el producto ya tiene los datos, usarlos
-    if (prod.tiempoUnitario && prod.precioPorMinuto) {
+    // Si el producto ya tiene los datos, usarlos directamente (vienen de Supabase)
+    if (prod.tiempoUnitario) {
       return {
         tiempoUnitario: prod.tiempoUnitario,
-        precioPorMinuto: prod.precioPorMinuto
+        precioPorMinuto: prod.precioPorMinuto || 0,
+        material: prod.material || null,
+        materialId: prod.materialId || null,
+        espesor: prod.espesor || null
       }
     }
 
-    // Buscar en productosBase por productId o nombre
+    // Solo si no tiene datos, buscar en productosBase (fallback)
     const productoBase = productosBase.find(p => 
       p.id === prod.productId || 
       p.id === prod.idProducto ||
@@ -125,6 +128,12 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
     return sum + (tiempoSeg * (prod.cantidad || 1))
   }, 0)
   const tiempoTotalFormatted = secondsToHHMMSS(tiempoTotalSegundos)
+  
+  // Log para depuración (solo primero para no saturar consola)
+  if (pedido.id && pedido.productos.length > 0) {
+    console.log(`📊 Pedido #${pedido.id} - Tiempo total: ${tiempoTotalFormatted}`, 
+      pedido.productos.map(p => ({ nombre: p.nombre, tiempo: p.tiempoUnitario })))
+  }
 
   // Handler para abrir el modal (centralizado) y accesibilidad por teclado
   const openModal = (e) => {

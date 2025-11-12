@@ -3,7 +3,7 @@ import withAdminAuth from '../components/withAdminAuth'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import PedidoCard from '../components/PedidoCard'
 import ConfirmModal from '../components/ConfirmModal'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { registrarMovimiento, eliminarMovimientoPorIdempotencyKey, obtenerMovimientoPorIdempotencyKey } from '../utils/finanzasUtils'
@@ -55,7 +55,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
-        imagen: producto?.imagen || null
+        imagen: producto?.imagen || null,
+        tiempoUnitario: producto?.tiempoUnitario || '00:00:00',
+        material: producto?.material || null,
+        materialId: producto?.materialId || null,
+        espesor: producto?.espesor || null
       }
     }),
     productos: (pedidoDB.items || []).map(item => {
@@ -72,7 +76,11 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
         measures: item.medidas,
         medidas: item.medidas,
-        imagen: producto?.imagen || null
+        imagen: producto?.imagen || null,
+        tiempoUnitario: producto?.tiempoUnitario || '00:00:00',
+        material: producto?.material || null,
+        materialId: producto?.materialId || null,
+        espesor: producto?.espesor || null
       }
     }),
     metodoPago: pedidoDB.metodo_pago,
@@ -266,6 +274,9 @@ function PedidosCatalogo() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  
+  // Ref para prevenir re-apertura del modal al cerrar
+  const isClosingModalRef = useRef(false)
   
   // Filtros pendientes
   const [filters, setFilters] = useState({
@@ -894,7 +905,7 @@ function PedidosCatalogo() {
     if (showDetailModal) {
       const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
-          setShowDetailModal(false)
+          handleCloseModal()
         }
       }
       document.addEventListener('keydown', handleKeyDown)
@@ -1147,12 +1158,20 @@ function PedidosCatalogo() {
   }
 
   const handleCloseModal = () => {
+    isClosingModalRef.current = true
     setShowDetailModal(false)
     setSelectedPedido(null)
-    try {
-      // Restaurar URL base sin historial (shallow)
-      router.replace({ pathname: router.pathname, query: {} }, '/pedidos-catalogo', { shallow: true })
-    } catch (e) {}
+    // Usar setTimeout para asegurar que el estado se actualice antes de cambiar la URL
+    setTimeout(() => {
+      try {
+        // Restaurar URL base sin historial (shallow)
+        router.replace({ pathname: router.pathname, query: {} }, '/pedidos-catalogo', { shallow: true })
+      } catch (e) {}
+      // Resetear la bandera después de un breve delay
+      setTimeout(() => {
+        isClosingModalRef.current = false
+      }, 100)
+    }, 0)
   }
 
   const handleSaveChanges = () => {
@@ -1198,6 +1217,8 @@ function PedidosCatalogo() {
   // Si la URL contiene ?modal=detalle&id=..., abrir el modal al cargar la página
   useEffect(() => {
     if (!router || !router.isReady) return
+    if (isClosingModalRef.current) return // No reabrir si estamos cerrando
+    
     const { modal, id } = router.query || {}
     // Solo abrir si hay parámetros y el modal NO está ya abierto
     if (modal === 'detalle' && id && !showDetailModal) {

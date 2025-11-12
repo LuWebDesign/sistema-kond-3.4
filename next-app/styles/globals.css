@@ -110,8 +110,9 @@
   }
 
   .products-grid {
-    grid-template-columns: 1fr !important;
-    gap: 18px;
+    /* Mostrar 2 columnas en mobile para mejor densidad visual */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
   }
 
   .products-grid > * {
@@ -122,6 +123,33 @@
 
   .products-grid .product-card > div:last-child {
     padding: 12px !important;
+  }
+
+  /* Afinar la altura del botón 'Agregar' dentro de la tarjeta de producto.
+     Muchas instancias usan estilos inline con padding:12px; para forzar
+     este cambio sobreescribimos con !important y apuntamos al último
+     botón dentro de la tarjeta, que corresponde al botón '🛒 Agregar'. */
+  .product-card button:last-of-type {
+    padding: 8px 10px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    min-height: 36px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  /* Ocultar el icono del botón 'Agregar' en pantallas pequeñas */
+  .product-card .btn-icon {
+    display: inline-block;
+  }
+
+  @media (max-width: 600px) {
+    .product-card .btn-icon {
+      display: none !important;
+    }
   }
 }
 
@@ -339,9 +367,11 @@ a:hover {
   }
 
   /* Evitar distorsión de tarjetas: una columna */
+  /* Mostrar 2 columnas en pantallas pequeñas, pero asegurar un ancho mínimo por columna
+     para evitar que el contenido quede demasiado apretado en dispositivos muy estrechos. */
   .products-grid {
-    grid-template-columns: 1fr !important;
-    gap: 18px;
+    grid-template-columns: repeat(2, minmax(140px, 1fr)) !important;
+    gap: 12px;
   }
 
   .products-grid > * {

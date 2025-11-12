@@ -4,6 +4,10 @@ import PedidosModal from '../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
+import { getAllPedidosInternos, createPedidoInterno, updatePedidoInterno } from '../utils/supabasePedidosInternos'
+import { getPedidosCatalogoParaCalendario } from '../utils/supabasePedidos'
+import { getProductosPublicadosParaCalendario } from '../utils/supabaseProductos'
+import { getAllMateriales } from '../utils/supabaseMateriales'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
 const timeToMinutes = (timeStr = '00:00:00') => {
@@ -25,6 +29,7 @@ function Calendar() {
   const [pedidos, setPedidos] = useState([])
   const [products, setProducts] = useState([])
   const [catalogo, setCatalogo] = useState([])
+  const [materiales, setMateriales] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
   const [showPedidosModal, setShowPedidosModal] = useState(false)
   const [pedidosForModal, setPedidosForModal] = useState([])
@@ -57,23 +62,89 @@ function Calendar() {
     checkAdminAccess()
   }, [])
 
-  // Cargar datos del localStorage
-  const loadData = useCallback(() => {
+  // Efecto para manejar URL con parámetro date
+  useEffect(() => {
+    const { date } = router.query
+    if (date && pedidos.length > 0 && catalogo.length > 0) {
+      try {
+        const [year, month, day] = date.split('-').map(Number)
+        const targetDate = new Date(year, month - 1, day)
+        
+        // Función para obtener pedidos del día (definida inline para usar en este useEffect)
+        const getPedidosDelDia = (dateObj) => {
+          const dateStr = dateObj.toISOString().split('T')[0]
+          const internos = pedidos.filter(p => {
+            if (!p.asignadoAlCalendario) return false
+            const pedidoDate = p.fechaAsignadaCalendario ? 
+              new Date(p.fechaAsignadaCalendario).toISOString().split('T')[0] : 
+              (p.fechaEntrega ? new Date(p.fechaEntrega).toISOString().split('T')[0] : null)
+            return pedidoDate === dateStr
+          })
+          
+          const catalogoDia = catalogo.filter(ped => {
+            if (!ped.asignadoAlCalendario) return false
+            const prodDate = ped.fechaProduccionCalendario ? 
+              new Date(ped.fechaProduccionCalendario).toISOString().split('T')[0] : null
+            const entregaDate = ped.fechaEntregaCalendario ? 
+              new Date(ped.fechaEntregaCalendario).toISOString().split('T')[0] : null
+            return prodDate === dateStr || entregaDate === dateStr
+          })
+          
+          return [...internos, ...catalogoDia]
+        }
+        
+        const combinedPedidos = getPedidosDelDia(targetDate)
+        if (combinedPedidos.length > 0) {
+          setSelectedDate(targetDate)
+          setPedidosForModal(combinedPedidos)
+          setPedidosModalTitle(`Pedidos del ${targetDate.toLocaleDateString('es-ES')}`)
+          setShowPedidosModal(true)
+        }
+      } catch (error) {
+        console.error('Error parsing date from URL:', error)
+      }
+    }
+  }, [router.query, pedidos, catalogo])
+
+  // Cargar datos desde Supabase
+  const loadData = useCallback(async () => {
     if (typeof window === 'undefined') return
     
     try {
-      const storedPedidos = localStorage.getItem('pedidos')
-      const storedProducts = localStorage.getItem('productosBase')
-      const storedCatalogo = localStorage.getItem('pedidosCatalogo')
+      // Cargar pedidos internos desde Supabase
+      const { data: pedidosData, error: pedidosError } = await getAllPedidosInternos()
+      if (pedidosError) {
+        console.error('Error al cargar pedidos internos:', pedidosError)
+      }
       
-      setPedidos(storedPedidos ? JSON.parse(storedPedidos) : [])
-      setProducts(storedProducts ? JSON.parse(storedProducts) : [])
-      setCatalogo(storedCatalogo ? JSON.parse(storedCatalogo) : [])
+      // Cargar productos desde Supabase (versión mapeada para calendario)
+      const { data: productsData, error: productsError } = await getProductosPublicadosParaCalendario()
+      if (productsError) {
+        console.error('Error al cargar productos:', productsError)
+      }
+      
+      // Cargar pedidos de catálogo desde Supabase (versión mapeada para calendario)
+      const { data: catalogoData, error: catalogoError } = await getPedidosCatalogoParaCalendario()
+      if (catalogoError) {
+        console.error('Error al cargar pedidos catálogo:', catalogoError)
+      }
+      
+      // Cargar materiales desde Supabase
+      const { data: materialesData, error: materialesError } = await getAllMateriales()
+      if (materialesError) {
+        console.error('Error al cargar materiales:', materialesError)
+      }
+      
+      setPedidos(pedidosData || [])
+      setProducts(productsData || [])
+      setCatalogo(catalogoData || [])
+      setMateriales(materialesData || [])
     } catch (error) {
       console.error('Error loading calendar data:', error)
       setPedidos([])
       setProducts([])
       setCatalogo([])
+      setMateriales([])
     }
   }, [])
 
@@ -273,6 +344,8 @@ function Calendar() {
       if (event.key === 'Escape') {
         if (showPedidosModal) {
           setShowPedidosModal(false)
+          // Limpiar parámetro date de la URL
+          router.push('/calendar', undefined, { shallow: true })
         } else if (showCreateInternalModal) {
           setShowCreateInternalModal(false)
         }
@@ -286,7 +359,7 @@ function Calendar() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showPedidosModal, showCreateInternalModal])
+  }, [showPedidosModal, showCreateInternalModal, router])
 
   // Navegación del calendario
   const navigateMonth = (direction) => {
@@ -309,7 +382,6 @@ function Calendar() {
   const createInternalOrder = async (orderData) => {
     try {
       const newOrder = {
-        id: Date.now(),
         ...orderData,
         fecha: new Date().toISOString(),
         estado: 'pendiente',
@@ -317,9 +389,18 @@ function Calendar() {
         fechaAsignadaCalendario: orderData.fechaEntrega
       }
 
-      const updatedPedidos = [...pedidos, newOrder]
+      // Guardar en Supabase
+      const { data: createdOrder, error } = await createPedidoInterno(newOrder)
+      
+      if (error) {
+        console.error('Error al crear pedido interno:', error)
+        alert('Error al crear el pedido: ' + error)
+        return
+      }
+
+      // Actualizar estado local
+      const updatedPedidos = [...pedidos, createdOrder]
       setPedidos(updatedPedidos)
-      localStorage.setItem('pedidos', JSON.stringify(updatedPedidos))
       
       setShowCreateInternalModal(false)
       loadData()
@@ -659,13 +740,11 @@ function Calendar() {
                 
                 let materialInfo = 'Sin material'
                 if (prod?.materialId) {
-                  const allMaterials = JSON.parse(localStorage.getItem('materiales') || '[]')
-                  const materialData = allMaterials.find(m => String(m.id) === String(prod.materialId))
+                  const materialData = materiales.find(m => String(m.id) === String(prod.materialId))
                   materialInfo = materialData ? `Material: ${materialData.nombre} • ${materialData.tipo} • ${materialData.espesor || 'N/A'}mm` : 'Material no encontrado'
                 } else if (prod?.material) {
                   // Para compatibilidad con productos antiguos que tienen material por nombre
-                  const allMaterials = JSON.parse(localStorage.getItem('materiales') || '[]')
-                  const materialData = allMaterials.find(m => m.nombre === prod.material)
+                  const materialData = materiales.find(m => m.nombre === prod.material)
                   materialInfo = materialData ? `Material: ${materialData.nombre} • ${materialData.tipo} • ${materialData.espesor || 'N/A'}mm` : `Material: ${prod.material}`
                 }
 
@@ -923,6 +1002,8 @@ function Calendar() {
                 setPedidosForModal(catalogo || [])
                 setPedidosModalTitle('Todos los pedidos de catálogo')
                 setShowPedidosModal(true)
+                // No agregar parámetro date ya que es vista general
+                router.push('/calendar', undefined, { shallow: true })
               }}
               style={{
                 padding: '10px 16px',
@@ -1110,10 +1191,13 @@ function Calendar() {
                           const internos = getPedidosInternosDelDia(dayObj.date) || []
                           const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
                           const combined = [...internos, ...catalogoDia]
+                          const dateStr = dayObj.date.toISOString().split('T')[0]
                           setSelectedDate(dayObj.date)
                           setPedidosForModal(combined)
                           setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
                           setShowPedidosModal(true)
+                          // Actualizar URL con el parámetro date
+                          router.push(`/calendar?date=${dateStr}`, undefined, { shallow: true })
                         }
                       }}
                 style={{
@@ -1182,7 +1266,11 @@ function Calendar() {
                           display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', padding: '4px 6px', backgroundColor: 'var(--accent-blue)', color: 'white', borderRadius: '8px'
                         }}>
                           <span style={{marginRight:6}}>🏭</span>
-                          <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{pi.cliente?.nombre || pi.cliente || `Interno ${pi.id || ''}`}</span>
+                          <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            {typeof pi.cliente === 'object' && pi.cliente?.nombre 
+                              ? `${pi.cliente.nombre}${pi.cliente.apellido ? ' ' + pi.cliente.apellido : ''}` 
+                              : typeof pi.cliente === 'string' ? pi.cliente : `Interno ${pi.id || ''}`}
+                          </span>
                           <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{tipoLabel}</span>
                           {symbol && <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:18,height:18,borderRadius:9,backgroundColor:isOverdue?'#ef4444':'#10b981',color:'white',fontSize:12}}>{symbol}</span>}
                         </div>
@@ -1235,7 +1323,11 @@ function Calendar() {
                                 textAlign: 'left'
                               }}>
                                 <span style={{marginRight:6}}>🏭</span>
-                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{ped.cliente?.nombre || ped.cliente || `Pedido ${ped.id}`}</span>
+                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                                  {typeof ped.cliente === 'object' && ped.cliente?.nombre 
+                                    ? `${ped.cliente.nombre}${ped.cliente.apellido ? ' ' + ped.cliente.apellido : ''}` 
+                                    : typeof ped.cliente === 'string' ? ped.cliente : `Pedido ${ped.id}`}
+                                </span>
                                 <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{prodLabel}</span>
                                 {symbol && (
                                   <span style={{
@@ -1291,7 +1383,11 @@ function Calendar() {
                                 textAlign: 'left'
                               }}>
                                 <span style={{marginRight:6}}>📦</span>
-                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{pe.cliente?.nombre || pe.cliente || `Pedido ${pe.id}`}</span>
+                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                                  {typeof pe.cliente === 'object' && pe.cliente?.nombre 
+                                    ? `${pe.cliente.nombre}${pe.cliente.apellido ? ' ' + pe.cliente.apellido : ''}` 
+                                    : typeof pe.cliente === 'string' ? pe.cliente : `Pedido ${pe.id}`}
+                                </span>
                                 <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{entregaLabel}</span>
                                 {symbol && (
                                   <span style={{
@@ -1397,34 +1493,37 @@ function Calendar() {
 
               // Crear el pedido interno
               const nuevoPedido = {
-                id: Date.now(),
                 cliente: cliente,
                 fecha: fecha,
                 fechaEntrega: fecha,
                 estado: estado,
-                productos: [{
-                  id: productoSeleccionado.id,
-                  nombre: productoSeleccionado.nombre,
-                  cantidad: cantidad,
-                  precioUnitario: productoSeleccionado.precioUnitario || 0
-                }],
+                producto: productoSeleccionado.nombre,
+                cantidad: cantidad,
+                precioUnitario: productoSeleccionado.precioUnitario || 0,
+                precioTotal: (productoSeleccionado.precioUnitario || 0) * cantidad,
+                tiempoEstimado: productoSeleccionado.tiempoUnitario || null,
+                asignadoAlCalendario: true,
+                fechaAsignadaCalendario: fecha,
                 tipo: 'interno'
               }
 
-              try {
-                const pedidosActuales = JSON.parse(localStorage.getItem('pedidos') || '[]')
-                pedidosActuales.push(nuevoPedido)
-                localStorage.setItem('pedidos', JSON.stringify(pedidosActuales))
+              // Guardar en Supabase
+              createPedidoInterno(nuevoPedido).then(({ data, error }) => {
+                if (error) {
+                  console.error('Error al crear pedido interno:', error)
+                  alert('Error al crear el pedido: ' + error)
+                  return
+                }
 
-                // Actualizar estado
-                setPedidos(pedidosActuales)
+                // Actualizar estado local
+                setPedidos([...pedidos, data])
                 setShowCreateInternalModal(false)
 
                 alert('Pedido interno creado exitosamente')
-              } catch (error) {
+              }).catch(error => {
                 console.error('Error al crear pedido interno:', error)
                 alert('Error al crear el pedido interno')
-              }
+              })
             }}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{
@@ -1603,7 +1702,11 @@ function Calendar() {
 
       <PedidosModal
         open={showPedidosModal}
-        onClose={() => setShowPedidosModal(false)}
+        onClose={() => {
+          setShowPedidosModal(false)
+          // Limpiar parámetro date de la URL
+          router.push('/calendar', undefined, { shallow: true })
+        }}
         orders={pedidosForModal.length ? pedidosForModal : catalogo}
         title={pedidosModalTitle || '📦 Pedidos del Catálogo'}
       />
