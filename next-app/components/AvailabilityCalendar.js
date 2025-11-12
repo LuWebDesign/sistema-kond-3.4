@@ -322,13 +322,15 @@ export default function AvailabilityCalendar({
           font-weight: 700;
         }
 
-        /* Si el calendario se usa desde el modal de checkout, mostrar la fecha seleccionada en azul (consistente con días disponibles) */
+        /* Si el calendario se usa desde el modal de checkout, mostrar la fecha seleccionada en verde */
         .availability-calendar.checkout-calendar .calendar-day.selected,
         .calendar-day-grid.checkout-calendar .calendar-day.selected,
         .calendar-day-grid .availability-calendar.checkout-calendar .calendar-day.selected {
-          background: var(--accent-blue, #3b82f6) !important; /* azul */
+          background: #10b981 !important; /* verde */
           color: white !important;
-          border: 2px solid var(--accent-blue, #3b82f6) !important;
+          border: 2px solid #10b981 !important;
+          /* contorno naranja externo (sutil) */
+          box-shadow: 0 0 0 4px rgba(249,115,22,0.16) !important;
         }
         /* Variante mini: fecha seleccionada en azul (para mini-calendar) */
         .availability-calendar.mini-calendar .calendar-day.selected,

@@ -1229,20 +1229,39 @@ function CheckoutModal({
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
 
-            {paymentMethod === 'retiro' && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>📍 Retiro en local</div>
-                <div style={{ marginBottom: 8 }}>Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro.</div>
-                <div>Dirección y ubicación: <a href="https://share.google/J7AX4ApHAaXLJ5Pib" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)' }}>Ver ubicación del local</a></div>
-                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-light)' }}>Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.</div>
-              </div>
-            )}
+            {/* Retiro info removed as requested */}
 
             {paymentMethod === 'whatsapp' && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
+              </div>
+            )}
+
+            {/* Bloque independiente de información sobre Transferencia (solo visible si el usuario selecciona Transferencia) */}
+            {(paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>ℹ️ Información sobre Transferencia</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
                   Nota: si elegís el método <strong>Transferencia</strong> y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.
+                </div>
+              </div>
+            )}
+
+            {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
+            {paymentMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>🚚 Información de retiro</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro. Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.
                 </div>
               </div>
             )}
@@ -1257,12 +1276,10 @@ function CheckoutModal({
                 </div>
 
                 <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Subir comprobante</label>
-
                   {/* input escondido y botón visible para mejor UX en mobile */}
                   <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
+                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #7dd3fc', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
                     {comprobante && (
                       <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
                     )}
@@ -1276,7 +1293,7 @@ function CheckoutModal({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div><strong>CBU:</strong> 0000003100010123456789</div>
                   <div>
-                    <button onClick={() => { navigator.clipboard?.writeText('0000003100010123456789'); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
+                    <button className="btn-copy" onClick={() => { navigator.clipboard?.writeText('0000003100010123456789'); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
                   </div>
                 </div>
 
@@ -1284,10 +1301,11 @@ function CheckoutModal({
                   <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>KOND.LASER.MP</span></div>
                   <div>
                     <button
+                      className="btn-copy"
                       onClick={() => { navigator.clipboard?.writeText('KOND.LASER.MP'); createToast('Alias copiado', 'success') }}
                       aria-label="Copiar alias"
                       title="Copiar alias"
-                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, padding: 6, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}
+                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       {/* clipboard icon */}
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

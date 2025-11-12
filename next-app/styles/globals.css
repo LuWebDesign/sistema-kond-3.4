@@ -455,9 +455,9 @@ a:hover {
 
 .availability-calendar.checkout-calendar .calendar-day.selected,
 .checkout-calendar .calendar-day.selected {
-  background: var(--accent-blue, #3b82f6) !important;
+  background: #10b981 !important; /* verde */
   color: #fff !important;
-  border: 2px solid var(--accent-blue, #3b82f6) !important;
+  border: 2px solid #10b981 !important;
 }
 
 /* En checkout, marcar domingos (weekend) en rojo para indicar no seleccionables */
@@ -880,6 +880,81 @@ a:hover {
 }
 
 [data-theme="dark"] .transfer-payment-info button svg { stroke: currentColor !important }
+
+/* Hacer el fondo del calendario en el checkout un poco más claro (sutil) */
+.availability-calendar.checkout-calendar,
+.checkout-calendar {
+  background: rgba(255,255,255,0.03) !important; /* sutil aclarado sobre --bg-card en dark */
+  border: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Contorno/outline para la sección de datos de transferencia (CBU / Alias / Titular / Seña) */
+.transfer-payment-info {
+  border: 1px solid var(--border-color);
+  padding: 12px !important; /* respetar el padding actual pero asegurar espacio */
+  border-radius: 10px !important;
+  background: var(--bg-card) !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  display: block;
+}
+
+/* Asegurar que los botones de copia dentro del contorno compartan apariencia */
+.transfer-payment-info .btn-copy {
+  padding: 6px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-hover) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Forzar que el icono SVG use currentColor (ya suele estar) y tenga el mismo tamaño visual que el texto */
+.transfer-payment-info .btn-copy svg {
+  stroke: currentColor !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Forzar borde celeste claro al botón de comprobante (asegurar prioridad) */
+.comprobante-btn,
+.transfer-section .comprobante-btn {
+  border: 1px solid #7dd3fc !important; /* celeste claro */
+  background: var(--bg-hover) !important;
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  color: var(--text-primary) !important;
+}
+
+
+
+
+/* Botón reutilizable de copiar (texto y icono) */
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.btn-copy svg { width: 18px; height: 18px; stroke: currentColor }
+
+/* Dark mode override to make copy buttons light gray */
+[data-theme="dark"] .btn-copy {
+  background: rgba(255,255,255,0.02) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+[data-theme="dark"] .btn-copy:hover { filter: brightness(0.98) !important }
 
 
 /* Mobile overrides for comprobante area: stack and sizing */
