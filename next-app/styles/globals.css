@@ -460,6 +460,17 @@ a:hover {
   border: 2px solid var(--accent-blue, #3b82f6) !important;
 }
 
+/* En checkout, marcar domingos (weekend) en rojo para indicar no seleccionables */
+.availability-calendar.checkout-calendar .calendar-day.weekend,
+.checkout-calendar .calendar-day.weekend {
+  background: rgba(239,68,68,0.12) !important; /* fondo rojo suave */
+  color: #ef4444 !important; /* texto rojo */
+  border: 1px solid rgba(239,68,68,0.25) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+
 
 /* Estilos para tarjetas de 'Mis Pedidos' */
 /* Aplicar diseño mobile a todas las pantallas (PC y mobile) */
