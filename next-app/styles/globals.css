@@ -856,6 +856,21 @@ a:hover {
   filter: brightness(0.95) !important;
 }
 
+/* Dark theme: botones 'Copiar' y el icono clipboard en la sección de transferencia deben ser gris claro */
+[data-theme="dark"] .transfer-section button,
+[data-theme="dark"] .transfer-section button svg,
+[data-theme="dark"] .comprobante-upload button,
+[data-theme="dark"] .comprobante-upload button svg {
+  color: var(--text-primary) !important; /* texto/icono gris claro */
+  background: rgba(255,255,255,0.02) !important; /* fondo sutil */
+  border-color: rgba(255,255,255,0.06) !important;
+  box-shadow: none !important;
+}
+
+/* Asegurar que el svg use currentColor para stroke cuando sea posible */
+[data-theme="dark"] .transfer-section button svg { stroke: currentColor !important }
+
+
 /* Mobile overrides for comprobante area: stack and sizing */
 @media (max-width: 600px) {
   .transfer-section { flex-direction: column; }
