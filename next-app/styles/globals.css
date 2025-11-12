@@ -438,6 +438,29 @@ a:hover {
   }
 }
 
+/* Forzar color azul en el calendario del checkout a nivel global
+   Esto asegura que, independientemente del orden de carga de styled-jsx,
+   los días disponibles y la fecha seleccionada en el calendario de "checkout"
+   se muestren con el color definido en --accent-blue. Usamos !important
+   para garantizar la prioridad frente a otras reglas locales. */
+.availability-calendar.checkout-calendar .calendar-day.available,
+.checkout-calendar .calendar-day.available,
+.availability-calendar.checkout-calendar .calendar-day.available:hover,
+.checkout-calendar .calendar-day.available:hover {
+  background: var(--accent-blue, #3b82f6) !important;
+  color: #fff !important;
+  border: 1px solid rgba(59,130,246,0.9) !important;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.12) !important;
+}
+
+.availability-calendar.checkout-calendar .calendar-day.selected,
+.checkout-calendar .calendar-day.selected {
+  background: var(--accent-blue, #3b82f6) !important;
+  color: #fff !important;
+  border: 2px solid var(--accent-blue, #3b82f6) !important;
+}
+
+
 /* Estilos para tarjetas de 'Mis Pedidos' */
 /* Aplicar diseño mobile a todas las pantallas (PC y mobile) */
 .user-order-card {
