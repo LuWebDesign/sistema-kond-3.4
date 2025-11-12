@@ -1272,7 +1272,7 @@ function CheckoutModal({
                 </div>
               </div>
 
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
+              <div className="transfer-payment-info" style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div><strong>CBU:</strong> 0000003100010123456789</div>
                   <div>

@@ -870,6 +870,17 @@ a:hover {
 /* Asegurar que el svg use currentColor para stroke cuando sea posible */
 [data-theme="dark"] .transfer-section button svg { stroke: currentColor !important }
 
+/* Botones que copian CBU / Alias dentro del bloque de transferencia */
+[data-theme="dark"] .transfer-payment-info button,
+[data-theme="dark"] .transfer-payment-info button svg {
+  color: var(--text-primary) !important;
+  background: rgba(255,255,255,0.02) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .transfer-payment-info button svg { stroke: currentColor !important }
+
 
 /* Mobile overrides for comprobante area: stack and sizing */
 @media (max-width: 600px) {
