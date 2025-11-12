@@ -585,24 +585,38 @@ a:hover {
 /* En mobile, situar la fecha de pedido en la esquina superior derecha */
 @media (max-width: 600px) {
   .uoc-card {
-    /* necesario para posicionar la fecha en absoluto dentro de la tarjeta */
+    /* mantener posición estática para que elementos fluyan correctamente en mobile */
     position: relative;
-    /* dejar espacio superior para los badges absolutos (ID y fecha) y evitar solapamientos) */
-    padding-top: 56px;
+    /* menor padding-top ya que la fecha estará en el flujo de la cabecera */
+    padding-top: 16px !important;
   }
 
-  /* colocar la fecha en la esquina superior derecha sin afectar el flujo del header */
+  /* En mobile la cabecera debe mostrarse en fila para alinear número y fecha correctamente */
+  .uoc-mobile-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  /* Colocar la fecha dentro del flujo, al final de la fila, sin posicionamiento absoluto */
   .uoc-date-pill {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 5;
-    transform: none;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    transform: none !important;
+    z-index: 1 !important;
+    order: 0 !important; /* colocar fecha al inicio */
+    margin-right: 8px !important;
   }
 
-  /* evitar que el ID y otros elementos del header colisionen con la fecha */
+  /* Quitar el padding-right agregado para versiones antiguas donde la fecha estaba absoluta */
   .uoc-mobile-header .uoc-order-id {
-    padding-right: 72px; /* espacio para la fecha */
+    padding-right: 0 !important;
+    order: 1 !important; /* número de pedido después de la fecha */
   }
 }
 
