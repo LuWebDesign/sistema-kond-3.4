@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import styles from '../styles/materiales.module.css'
@@ -18,7 +18,20 @@ function Materiales() {
   const [espesores, setEspesores] = useState([])
   const [showNewEspesor, setShowNewEspesor] = useState(false)
   const [newEspesor, setNewEspesor] = useState('')
-  const [darkMode, setDarkMode] = useState(false)
+  
+  // Inicializar darkMode desde localStorage inmediatamente para evitar flash
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('finanzas_dark')
+        return saved ? JSON.parse(saved) : false
+      } catch {
+        return false
+      }
+    }
+    return false
+  })
+  
   const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '',
@@ -33,11 +46,8 @@ function Materiales() {
   })
   const nombreRef = useRef(null)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  // Memoizar loadData con useCallback
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     
     try {
@@ -63,7 +73,7 @@ function Materiales() {
         }))
         
         setMateriales(mappedMateriales)
-        console.log('✅ Materiales cargados desde Supabase:', mappedMateriales.length)
+        // console.log('✅ Materiales cargados desde Supabase:', mappedMateriales.length)
       } else {
         throw new Error('Supabase materiales failed')
       }
@@ -74,7 +84,7 @@ function Materiales() {
         if (proveedoresSupabase && proveedoresSupabase.length > 0) {
           const nombresProveedores = proveedoresSupabase.map(p => p.nombre)
           setProveedores(nombresProveedores)
-          console.log('✅ Proveedores cargados desde Supabase:', nombresProveedores.length)
+          // console.log('✅ Proveedores cargados desde Supabase:', nombresProveedores.length)
         } else {
           // Fallback a localStorage
           const rawP = localStorage.getItem('proveedores')
@@ -92,7 +102,7 @@ function Materiales() {
         if (tamanosSupabase && tamanosSupabase.length > 0) {
           const valoresTamanos = tamanosSupabase.map(t => t.valor)
           setTamanos(valoresTamanos)
-          console.log('✅ Tamaños cargados desde Supabase:', valoresTamanos.length)
+          // console.log('✅ Tamaños cargados desde Supabase:', valoresTamanos.length)
         } else {
           // Fallback a localStorage
           const rawT = localStorage.getItem('tamanos')
@@ -110,7 +120,7 @@ function Materiales() {
         if (espesoresSupabase && espesoresSupabase.length > 0) {
           const valoresEspesores = espesoresSupabase.map(e => e.valor)
           setEspesores(valoresEspesores)
-          console.log('✅ Espesores cargados desde Supabase:', valoresEspesores.length)
+          // console.log('✅ Espesores cargados desde Supabase:', valoresEspesores.length)
         } else {
           // Fallback a localStorage
           const rawE = localStorage.getItem('espesores')
@@ -149,16 +159,16 @@ function Materiales() {
       } catch (e) { console.error('load espesores', e) }
     }
     
-    // load dark mode preference
-    try {
-      const saved = JSON.parse(localStorage.getItem('finanzas_dark'))
-      if (typeof saved === 'boolean') setDarkMode(saved)
-    } catch (e) {}
+    // Ya no necesitamos cargar darkMode aquí porque se inicializa en useState
     
     setIsLoading(false)
-  }
+  }, [])
 
-  const save = async (items, skipReload = false) => {
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const save = useCallback(async (items, skipReload = false) => {
     // Esta función ahora es un wrapper de compatibilidad
     setMateriales(items)
     try { 
@@ -171,7 +181,7 @@ function Materiales() {
       // Recargar desde Supabase para sincronizar
       await loadData()
     }
-  }
+  }, [loadData])
 
   // reset form; if keepOpen === true the form remains visible (useful to create multiple items quickly)
   const resetForm = (keepOpen = false) => {
@@ -190,7 +200,7 @@ function Materiales() {
         const { data, error } = await updateMaterial(editingId, form)
         
         if (data && !error) {
-          console.log('✅ Material actualizado en Supabase')
+          // console.log('✅ Material actualizado en Supabase')
           await loadData() // Recargar desde Supabase
           resetForm(false)
           alert('Material actualizado correctamente')
@@ -203,7 +213,7 @@ function Materiales() {
         const { data, error } = await createMaterial(form)
         
         if (data && !error) {
-          console.log('✅ Material creado en Supabase')
+          // console.log('✅ Material creado en Supabase')
           await loadData() // Recargar desde Supabase
           resetForm(true) // Mantener form abierto para crear más
           
@@ -254,7 +264,7 @@ function Materiales() {
       const { error } = await deleteMaterial(id)
       
       if (!error) {
-        console.log('✅ Material eliminado de Supabase')
+        // console.log('✅ Material eliminado de Supabase')
         await loadData() // Recargar desde Supabase
       } else {
         throw new Error('Supabase delete failed')
@@ -384,7 +394,7 @@ function Materiales() {
                             const { data, error } = await createTamano(v)
                             
                             if (data && !error) {
-                              console.log('✅ Tamaño creado en Supabase')
+                              // console.log('✅ Tamaño creado en Supabase')
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, tamano: v }))
@@ -452,7 +462,7 @@ function Materiales() {
                             const { data, error } = await createEspesor(v)
                             
                             if (data && !error) {
-                              console.log('✅ Espesor creado en Supabase')
+                              // console.log('✅ Espesor creado en Supabase')
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, espesor: v }))
@@ -515,7 +525,7 @@ function Materiales() {
                             const { data, error } = await createProveedor({ nombre: v })
                             
                             if (data && !error) {
-                              console.log('✅ Proveedor creado en Supabase')
+                              // console.log('✅ Proveedor creado en Supabase')
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, proveedor: v }))

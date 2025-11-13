@@ -1,7 +1,7 @@
 import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency, timeToMinutes, minutesToTime, compressImage } from '../utils/catalogUtils'
 import { 
   getAllProductos, 
@@ -15,7 +15,6 @@ import {
 function Products() {
   // Estados principales
   const [products, setProducts] = useState([])
-  const [filteredProducts, setFilteredProducts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -259,7 +258,7 @@ function Products() {
     try {
       const raw = localStorage.getItem('materiales')
       const list = raw ? JSON.parse(raw) : []
-      console.log('Conexión con base de datos materiales:', list.length > 0 ? 'OK' : 'Sin materiales', 'Total materiales:', list.length)
+      // console.log('Conexión con base de datos materiales:', list.length > 0 ? 'OK' : 'Sin materiales', 'Total materiales:', list.length)
       return list.length > 0
     } catch (e) {
       console.error('Error conectando con base de datos materiales:', e)
@@ -299,7 +298,7 @@ function Products() {
         const { data, error } = await updateMaterial(editingMaterial, materialForm)
         
         if (data && !error) {
-          console.log('✅ Material actualizado en Supabase desde products')
+          // console.log('✅ Material actualizado en Supabase desde products')
           
           // Recargar materiales desde Supabase
           await loadMaterials()
@@ -381,7 +380,7 @@ function Products() {
         }))
         
         setMaterials(mappedMateriales)
-        console.log('✅ Materiales cargados desde Supabase en products:', mappedMateriales.length)
+        // console.log('✅ Materiales cargados desde Supabase en products:', mappedMateriales.length)
         checkMaterialsConnection()
         return
       } else {
@@ -410,11 +409,11 @@ function Products() {
   // Mantenemos la función por compatibilidad pero vacía
   const saveProducts = useCallback((productList) => {
     // No-op: Supabase guarda automáticamente en cada operación
-    console.log('saveProducts called (no-op with Supabase)')
+    // console.log('saveProducts called (no-op with Supabase)')
   }, [])
 
-  // Aplicar filtros
-  const applyFilters = useCallback(() => {
+  // Calcular productos filtrados con useMemo (optimización)
+  const filteredProducts = useMemo(() => {
     let filtered = [...products]
 
     // Filtro de búsqueda
@@ -435,8 +434,7 @@ function Products() {
     // Solo productos activos
     filtered = filtered.filter(p => p.active !== false)
 
-    setFilteredProducts(filtered)
-    setCurrentPage(1)
+    return filtered
   }, [products, filters])
 
   // Calcular métricas
@@ -480,10 +478,8 @@ function Products() {
     loadProducts()
   }, [loadProducts])
 
-  useEffect(() => {
-    applyFilters()
-  }, [products, filters, applyFilters])
-
+  // Ya no necesitamos applyFilters como efecto porque usamos useMemo
+  
   useEffect(() => {
     calculateMetrics()
   }, [filteredProducts, calculateMetrics])
@@ -2145,12 +2141,7 @@ function ProductCard({
               <span>•</span>
               {/* Precio por unidad */}
               <span>
-                <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/ud
-              </span>
-              <span>•</span>
-              {/* Total */}
-              <span>
-                Total: <strong style={{ color: '#10b981' }}>{formatCurrency(totalValue)}</strong>
+                <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/unit
               </span>
               {precioPorMinuto > 0 && (
                 <>
@@ -2484,6 +2475,7 @@ function ViewMode({ product }) {
             <img 
               src={product.imagen} 
               alt={product.nombre}
+              loading="lazy"
               style={{
                 width: '100%',
                 height: '100%',
@@ -3034,6 +3026,7 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
               <img 
                 src={imagePreview} 
                 alt="Preview"
+                loading="lazy"
                 style={{
                   width: '100%',
                   height: '100%',

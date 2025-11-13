@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,41 +7,47 @@ export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Verificar sesión activa al cargar la página
-  useEffect(() => {
-    const checkSession = () => {
-      try {
-        const sessionData = localStorage.getItem('adminSession');
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
-          const now = new Date().getTime();
-          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000); // Usar duración guardada o 24 horas por defecto
+  // Verificar sesión activa al cargar la página con useCallback
+  const checkSession = useCallback(() => {
+    try {
+      const sessionData = localStorage.getItem('adminSession');
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        const now = new Date().getTime();
+        const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
 
-          if (now - session.timestamp < sessionDuration) {
-            // Sesión válida, redirigir automáticamente
-            router.push('/dashboard');
-            return;
-          } else {
-            // Sesión expirada, limpiar
-            localStorage.removeItem('adminSession');
-          }
+        if (now - session.timestamp < sessionDuration) {
+          router.push('/dashboard');
+          return;
+        } else {
+          localStorage.removeItem('adminSession');
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
       }
-    };
-
-    checkSession();
+    } catch (error) {
+      console.error('Error checking session:', error);
+    }
   }, [router]);
 
-  // Admin login modal removed: redirecciones ahora apuntan a /admin-login
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
-  const scrollToSection = (sectionId) => {
+  // Scroll suavizado memoizado
+  const scrollToSection = useCallback((sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
+
+  // Handler del formulario memoizado
+  const handleContactSubmit = useCallback((e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
+    e.target.reset();
+  }, []);
 
   return (
     <>
@@ -554,15 +560,7 @@ export default function Home() {
       <section id="contacto" className="contact">
         <div className="container">
           <h2>Contacto</h2>
-          <form className="contact-form" onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const name = formData.get('name');
-            const email = formData.get('email');
-            const message = formData.get('message');
-            alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
-            e.target.reset();
-          }}>
+          <form className="contact-form" onSubmit={handleContactSubmit}>
             <div className="form-group">
               <label htmlFor="name">Nombre</label>
               <input type="text" id="name" name="name" required />

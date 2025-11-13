@@ -92,14 +92,14 @@ export default function MisPedidos() {
       setCurrentUserState(user)
 
       if (user && user.email) {
-        console.log('📦 Cargando pedidos del usuario:', user.email)
+        // console.log('📦 Cargando pedidos del usuario:', user.email)
         
         // Cargar productos desde Supabase primero, fallback a localStorage
         let productosBase = []
         const { data: productosDB, error: productosError } = await getAllProductos()
         
         if (!productosError && productosDB && productosDB.length > 0) {
-          console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+          // console.log('✅ Productos cargados desde Supabase:', productosDB.length)
           productosBase = productosDB.map(mapProductoToFrontend)
         } else {
           console.log('⚠️ Cargando productos desde localStorage como fallback')
@@ -110,7 +110,7 @@ export default function MisPedidos() {
         const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
         
         if (!error && pedidosDB && pedidosDB.length > 0) {
-          console.log('✅ Pedidos del usuario cargados desde Supabase:', pedidosDB.length)
+          // console.log('✅ Pedidos del usuario cargados desde Supabase:', pedidosDB.length)
           // Mapear de snake_case a camelCase con productos para imágenes
           const pedidosMapped = pedidosDB.map(pedidoDB => 
             mapSupabasePedidoToFrontend(pedidoDB, productosBase)

@@ -413,7 +413,7 @@ export function useOrders() {
         }))
         
         setOrders(mappedPedidos)
-        console.log('✅ Pedidos cargados desde Supabase:', mappedPedidos.length)
+        // console.log('✅ Pedidos cargados desde Supabase:', mappedPedidos.length)
         return mappedPedidos
       }
       

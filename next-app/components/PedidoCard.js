@@ -130,10 +130,10 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
   const tiempoTotalFormatted = secondsToHHMMSS(tiempoTotalSegundos)
   
   // Log para depuración (solo primero para no saturar consola)
-  if (pedido.id && pedido.productos.length > 0) {
-    console.log(`📊 Pedido #${pedido.id} - Tiempo total: ${tiempoTotalFormatted}`, 
-      pedido.productos.map(p => ({ nombre: p.nombre, tiempo: p.tiempoUnitario })))
-  }
+  // if (pedido.id && pedido.productos.length > 0) {
+  //   console.log(`📊 Pedido #${pedido.id} - Tiempo total: ${tiempoTotalFormatted}`, 
+  //     pedido.productos.map(p => ({ nombre: p.nombre, tiempo: p.tiempoUnitario })))
+  // }
 
   // Handler para abrir el modal (centralizado) y accesibilidad por teclado
   const openModal = (e) => {

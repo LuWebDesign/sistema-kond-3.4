@@ -9,7 +9,7 @@ import {
   createToast,
   compressImage
 } from '../utils/catalogUtils'
-import { useState, useEffect, useMemo, useCallback, memo } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
@@ -42,56 +42,26 @@ export default function Catalog() {
 
   // Función para manejar la selección de categoría desde URLs
   const setCategoryHandler = (e) => {
-    // Extraer slug lo antes posible y delegar en una función con contador de reintentos
+    // Extraer slug y setear directamente sin reintentos - el useEffect de sincronización lo manejará
     const slug = e && e.detail && e.detail.slug ? e.detail.slug : ''
-    handleCategorySlug(slug, 0)
-  }
-
-  const handleCategorySlug = (slug, attempt = 0) => {
-    try {
-      const maxAttempts = 20
-      console.log('🔍 setCategoryHandler called with slug:', slug, 'attempt:', attempt)
-
-      if (!slug) {
-        console.log('🔄 Clearing selected category')
-        setSelectedCategory('')
-        return
-      }
-
-      // Si las categorías aún no se han cargado, reintentar un número limitado de veces
-      if (!categories || categories.length === 0) {
-        if (attempt >= maxAttempts) {
-          console.warn('⚠️ Categories not loaded after max retries, clearing selection')
-          setSelectedCategory('')
-          return
-        }
-        console.log('⏳ Categories not loaded yet, retrying in 100ms...')
-        setTimeout(() => handleCategorySlug(slug, attempt + 1), 100)
-        return
-      }
-
-      console.log('📋 Available categories:', categories)
-
-      // Buscar la categoría que corresponde al slug
+    if (!slug) {
+      setSelectedCategory('')
+      return
+    }
+    
+    // Buscar la categoría si ya está cargada, sino el useEffect lo hará
+    if (categories && categories.length > 0) {
       const foundCategory = categories.find(category => {
         if (!category) return false
         const categorySlug = slugifyPreserveCase(category)
-        console.log(`🔎 Checking category "${category}" -> slug "${categorySlug}" vs received slug "${slug}"`)
         return categorySlug === slug
       })
-
-      console.log('✅ Found category:', foundCategory)
+      
       if (foundCategory) {
-        console.log('🎯 Setting selectedCategory to:', foundCategory)
         setSelectedCategory(foundCategory)
-      } else {
-        console.log('❌ Category not found, clearing selection')
-        setSelectedCategory('')
       }
-    } catch (error) {
-      console.error('❌ Error setting category from URL:', error)
-      setSelectedCategory('')
     }
+    // Si categories no está listo, el useEffect de sincronización con router.asPath lo manejará
   }
 
   // Cerrar lightbox con Esc
@@ -158,8 +128,6 @@ export default function Catalog() {
       const matchesCategory = !selectedCategory || 
         (product.categoria && product.categoria.trim() === selectedCategory.trim())
       
-      console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
-      
       return matchesSearch && matchesCategory
     }).sort((a, b) => {
       // Si estamos en "Todas las categorías" (sin categoría seleccionada),
@@ -174,8 +142,6 @@ export default function Catalog() {
       return 0
     })
   }, [products, debouncedSearchTerm, selectedCategory])
-
-  console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
@@ -249,7 +215,6 @@ export default function Catalog() {
           // No limpiar la selección si la categoría aún no está cargada;
           // esto evita que la UI vuelva a 'Todas' en transiciones asíncronas.
           // Mantener el estado actual hasta que categories se actualice.
-          console.log('📌 slug no encontrado aún, manteniendo selectedCategory actual')
         }
       }
     } catch (e) {
@@ -742,7 +707,8 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px'
+          justifyContent: 'center',
+          gap: '32px'
         }}>
           <div style={{
             display: 'flex',
@@ -798,12 +764,14 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           <button
             onClick={handleAddToCart}
             style={{
-              flex: 1,
+              flex: 'none',
+              width: 'auto',
+              minWidth: '120px',
               background: 'var(--accent-secondary)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              padding: '12px',
+              padding: '12px 16px',
               fontSize: '0.9rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -1061,6 +1029,9 @@ function CheckoutModal({
   })
   const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Ref para la sección de método de pago
+  const paymentSectionRef = useRef(null)
 
   // Cerrar con Esc
   useEffect(() => {
@@ -1070,6 +1041,26 @@ function CheckoutModal({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+  
+  // Auto-scroll a método de pago en mobile si el perfil está completo
+  useEffect(() => {
+    // Verificar si estamos en mobile (ancho < 768px)
+    const isMobile = window.innerWidth < 768
+    if (!isMobile) return
+    
+    // Verificar si el perfil está completo
+    const isProfileComplete = customerData.name && customerData.phone
+    
+    if (isProfileComplete && paymentSectionRef.current) {
+      // Esperar un tick para asegurar que el DOM esté renderizado
+      setTimeout(() => {
+        paymentSectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+      }, 100)
+    }
+  }, [customerData.name, customerData.phone])
 
   // Prefill datos del usuario si está logueado
   useEffect(() => {
@@ -1277,7 +1268,7 @@ function CheckoutModal({
             <input value={customerData.address} onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))} placeholder="Dirección" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="street-address" />
           </section>
 
-          <section style={{ marginBottom: 18 }}>
+          <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>

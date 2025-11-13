@@ -14,8 +14,8 @@
 .subtitle { color: #6b7280; margin: 4px 0 0 0 }
 .grid { display: grid; grid-template-columns: 1fr 360px; gap: 1rem }
 .list { min-height: 200px }
-.empty { padding: 2rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; color: #6b7280 }
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px }
+.empty { padding: 2rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted) }
+.card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 10px }
 .cardHeader { display:flex; justify-content:space-between; align-items:flex-start; gap: 8px }
 .name { font-size: 1rem; display:block; color: #333333 }
 .meta { color:#6b7280; font-size:0.85rem; margin-top: 4px }
@@ -23,9 +23,9 @@
 .cardBody { margin-top:8px; display:flex; flex-direction:column; gap:6px; color:#374151 }
 .notas { color:#6b7280; font-size:0.9rem }
 
-.formContainer { background:#fff; border:1px solid #e5e7eb; padding:12px; border-radius:8px }
-.formContainer h3 { margin-top:0 }
-.formContainer label { display:block; margin-top:8px; color:#6b7280; font-size:0.85rem }
+.formContainer { background: var(--bg-secondary); border: 1px solid var(--border-color); padding:12px; border-radius:8px }
+.formContainer h3 { margin-top:0; color: var(--text-primary) }
+.formContainer label { display:block; margin-top:8px; color: var(--text-muted); font-size:0.85rem }
 .formContainer input, .formContainer textarea, .formContainer select { width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:6px; margin-top:6px }
 .formActions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
 
@@ -39,7 +39,7 @@
 .formRowFull { grid-column: 1 / -1; display:flex; flex-direction:column }
 .label { color:#374151; font-size:0.9rem; margin-bottom:6px }
 .required { color:#ef4444; margin-left:4px }
-.field { width:100%; padding:10px 12px; border:1px solid #e6e6f0; border-radius:8px; background:#fff; transition: box-shadow .12s ease, border-color .12s ease; box-sizing: border-box; min-width: 0 }
+.field { width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; background: var(--bg-input); color: var(--text-primary); transition: box-shadow .12s ease, border-color .12s ease; box-sizing: border-box; min-width: 0 }
 .field:focus { outline:none; box-shadow:0 2px 8px rgba(37,99,235,0.12); border-color:#2563eb }
 
 .inputGroup { display:flex; gap:8px; align-items:center }
@@ -54,7 +54,7 @@
 
 /* Button tweaks */
 .btnPrimary { background: linear-gradient(135deg,#2563eb,#1d4ed8); color:white; border:none; padding:10px 14px; border-radius:10px; cursor:pointer }
-.btnSecondary { background:#fff; border:1px solid #e5e7eb; padding:10px 14px; border-radius:10px; cursor:pointer }
+.btnSecondary { background: var(--bg-secondary); color: var(--text-primary); border:1px solid var(--border-color); padding:10px 14px; border-radius:10px; cursor:pointer }
 
 /* Responsive */
 @media (max-width: 900px) {
@@ -69,8 +69,8 @@
 .formContainer { overflow-x: hidden }
 
 .btnPrimary { background: linear-gradient(135deg,#2563eb,#1d4ed8); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer }
-.btnSecondary { background:#fff; border:1px solid #e5e7eb; padding:8px 12px; border-radius:8px; cursor:pointer }
-.btnSmall { background:#fff; border:1px solid #e5e7eb; padding:6px 8px; border-radius:6px; cursor:pointer }
+.btnSecondary { background: var(--bg-secondary); color: var(--text-primary); border:1px solid var(--border-color); padding:8px 12px; border-radius:8px; cursor:pointer }
+.btnSmall { background: var(--bg-secondary); color: var(--text-primary); border:1px solid var(--border-color); padding:6px 8px; border-radius:6px; cursor:pointer }
 .btnSmallDanger { background:#fff; border:1px solid #ef4444; color:#ef4444; padding:6px 8px; border-radius:6px; cursor:pointer }
 
 @media (max-width: 900px) {

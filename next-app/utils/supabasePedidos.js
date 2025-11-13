@@ -446,7 +446,7 @@ export async function getPedidosByEmail(email) {
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
-    console.log('✅ Pedidos del usuario cargados desde Supabase:', data?.length || 0);
+    // console.log('✅ Pedidos del usuario cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener pedidos del usuario:', error);

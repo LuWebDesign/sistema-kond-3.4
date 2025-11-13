@@ -16,7 +16,7 @@ export async function getAllProductos() {
       .order('nombre', { ascending: true });
 
     if (error) throw error;
-    console.log('✅ Productos cargados desde Supabase:', data?.length || 0);
+    // console.log('✅ Productos cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos:', error);
@@ -81,7 +81,7 @@ export async function getProductosPublicados() {
       .order('nombre', { ascending: true });
 
     if (error) throw error;
-    console.log('✅ Productos publicados cargados desde Supabase:', data?.length || 0);
+    // console.log('✅ Productos publicados cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos publicados:', error);
@@ -100,7 +100,7 @@ export async function getProductosPublicadosParaCalendario() {
     // Mapear campos de snake_case a camelCase
     const mappedData = (data || []).map(p => mapProductoToFrontend(p));
     
-    console.log('✅ Productos mapeados para calendario:', mappedData?.length || 0);
+    // console.log('✅ Productos mapeados para calendario:', mappedData?.length || 0);
     return { data: mappedData, error: null };
   } catch (error) {
     console.error('❌ Error al obtener productos para calendario:', error);

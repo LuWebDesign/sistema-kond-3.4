@@ -3,7 +3,7 @@ import withAdminAuth from '../components/withAdminAuth'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import PedidoCard from '../components/PedidoCard'
 import ConfirmModal from '../components/ConfirmModal'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import styles from '../styles/pedidos-catalogo.module.css'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
@@ -302,35 +302,51 @@ function PedidosCatalogo() {
   const [currentPageEntregados, setCurrentPageEntregados] = useState(1)
   const itemsPerPage = 6
   
-  // Estadísticas
-  const [stats, setStats] = useState({
-    totalPendientes: 0,
-    pendientesEsteMes: 0,
-    totalEntregados: 0,
-    entregadosEsteMes: 0,
-    totalEntregado: 0
-  })
+  // Calcular estadísticas con useMemo (optimización)
+  const stats = useMemo(() => {
+    const now = new Date()
+    const thisMonth = now.getMonth()
+    const thisYear = now.getFullYear()
+
+    const pendientes = pedidosCatalogo.filter(p => p.estado !== 'entregado')
+    const entregados = pedidosCatalogo.filter(p => p.estado === 'entregado')
+
+    const pendientesEsteMes = pendientes.filter(p => {
+      const date = new Date(p.fechaCreacion)
+      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
+    })
+
+    const entregadosEsteMes = entregados.filter(p => {
+      const date = new Date(p.fechaCreacion)
+      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
+    })
+
+    const totalEntregado = entregados.reduce((sum, p) => sum + (p.total || 0), 0)
+
+    return {
+      totalPendientes: pendientes.length,
+      pendientesEsteMes: pendientesEsteMes.length,
+      totalEntregados: entregados.length,
+      entregadosEsteMes: entregadosEsteMes.length,
+      totalEntregado
+    }
+  }, [pedidosCatalogo])
 
   // Cargar datos desde Supabase (y fallback a localStorage)
   useEffect(() => {
     loadData()
   }, [])
 
-  // Recalcular estadísticas cuando cambien los pedidos
-  useEffect(() => {
-    calculateStats()
-  }, [pedidosCatalogo])
-
   const loadData = async () => {
     try {
-      console.log('📦 Cargando pedidos catálogo...')
+      // console.log('📦 Cargando pedidos catálogo...')
       
       // Cargar productos desde Supabase primero, fallback a localStorage
       let productosBase = []
       const { data: productosDB, error: productosError } = await getAllProductos()
       
       if (!productosError && productosDB && productosDB.length > 0) {
-        console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+        // console.log('✅ Productos cargados desde Supabase:', productosDB.length)
         productosBase = productosDB.map(mapProductoToFrontend)
       } else {
         console.log('⚠️ Cargando productos desde localStorage como fallback')
@@ -341,7 +357,7 @@ function PedidosCatalogo() {
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()
       
       if (!error && pedidosDB && pedidosDB.length > 0) {
-        console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
+        // console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
         // Mapear de snake_case a camelCase con productos para imágenes
         const pedidosMapped = pedidosDB.map(pedidoDB => 
           mapSupabasePedidoToFrontend(pedidoDB, productosBase)
@@ -355,7 +371,7 @@ function PedidosCatalogo() {
         const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
         const normalized = (pedidos || []).map(normalizePedido)
         setPedidosCatalogo(normalized)
-        console.log('📂 Pedidos cargados desde localStorage:', normalized.length)
+        // console.log('📂 Pedidos cargados desde localStorage:', normalized.length)
       }
       
       // Guardar productos en estado y cargar materiales (aún desde localStorage)
@@ -628,35 +644,6 @@ function PedidosCatalogo() {
     }
   }
 
-  const calculateStats = () => {
-    const now = new Date()
-    const thisMonth = now.getMonth()
-    const thisYear = now.getFullYear()
-
-    const pendientes = pedidosCatalogo.filter(p => p.estado !== 'entregado')
-    const entregados = pedidosCatalogo.filter(p => p.estado === 'entregado')
-
-    const pendientesEsteMes = pendientes.filter(p => {
-      const date = new Date(p.fechaCreacion)
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
-    })
-
-    const entregadosEsteMes = entregados.filter(p => {
-      const date = new Date(p.fechaCreacion)
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
-    })
-
-    const totalEntregado = entregados.reduce((sum, p) => sum + (p.total || 0), 0)
-
-    setStats({
-      totalPendientes: pendientes.length,
-      pendientesEsteMes: pendientesEsteMes.length,
-      totalEntregados: entregados.length,
-      entregadosEsteMes: entregadosEsteMes.length,
-      totalEntregado
-    })
-  }
-
   // Normalizar estado de pago a valores canónicos
   function normalizeEstadoPago(val) {
     if (!val && val !== 0) return 'sin_seña'
@@ -693,55 +680,58 @@ function PedidosCatalogo() {
     return clone
   }
 
-  // Filtrar pedidos pendientes
-  const filteredPendientes = pedidosCatalogo
-    .filter(p => p.estado !== 'entregado')
-    .filter(p => {
-      let matches = true
+  // Filtrar pedidos pendientes con useMemo (optimización)
+  const filteredPendientes = useMemo(() => {
+    return pedidosCatalogo
+      .filter(p => p.estado !== 'entregado')
+      .filter(p => {
+        let matches = true
 
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase()
-        matches = matches && (
-          p.id.toString().includes(searchTerm) ||
-          (p.cliente?.nombre && p.cliente.nombre.toLowerCase().includes(searchTerm)) ||
-          (p.cliente?.apellido && p.cliente.apellido.toLowerCase().includes(searchTerm)) ||
-          (p.cliente?.telefono && p.cliente.telefono.includes(searchTerm))
-        )
-      }
+        if (filters.search) {
+          const searchTerm = filters.search.toLowerCase()
+          matches = matches && (
+            p.id.toString().includes(searchTerm) ||
+            (p.cliente?.nombre && p.cliente.nombre.toLowerCase().includes(searchTerm)) ||
+            (p.cliente?.apellido && p.cliente.apellido.toLowerCase().includes(searchTerm)) ||
+            (p.cliente?.telefono && p.cliente.telefono.includes(searchTerm))
+          )
+        }
 
-      if (filters.estado !== 'all') {
-        matches = matches && p.estado === filters.estado
-      }
+        if (filters.estado !== 'all') {
+          matches = matches && p.estado === filters.estado
+        }
 
-      if (filters.estadoPago !== 'all') {
-        matches = matches && p.estadoPago === filters.estadoPago
-      }
+        if (filters.estadoPago !== 'all') {
+          matches = matches && p.estadoPago === filters.estadoPago
+        }
 
-      if (filters.metodoPago !== 'all') {
-        matches = matches && p.metodoPago === filters.metodoPago
-      }
+        if (filters.metodoPago !== 'all') {
+          matches = matches && p.metodoPago === filters.metodoPago
+        }
 
-      if (filters.dateFrom) {
-        matches = matches && new Date(p.fechaCreacion) >= new Date(filters.dateFrom)
-      }
+        if (filters.dateFrom) {
+          matches = matches && new Date(p.fechaCreacion) >= new Date(filters.dateFrom)
+        }
 
-      if (filters.dateTo) {
-        matches = matches && new Date(p.fechaCreacion) <= new Date(filters.dateTo + 'T23:59:59')
-      }
+        if (filters.dateTo) {
+          matches = matches && new Date(p.fechaCreacion) <= new Date(filters.dateTo + 'T23:59:59')
+        }
 
-      return matches
-    })
+        return matches
+      })
       // ordenar por fecha de creación descendente (últimos primero)
       .sort((a, b) => {
         const ta = new Date(a.fechaCreacion || 0).getTime()
         const tb = new Date(b.fechaCreacion || 0).getTime()
         return tb - ta
       })
+  }, [pedidosCatalogo, filters])
 
-  // Filtrar pedidos entregados
-  const filteredEntregados = pedidosCatalogo
-    .filter(p => p.estado === 'entregado')
-    .filter(p => {
+  // Filtrar pedidos entregados con useMemo (optimización)
+  const filteredEntregados = useMemo(() => {
+    return pedidosCatalogo
+      .filter(p => p.estado === 'entregado')
+      .filter(p => {
       let matches = true
 
       if (deliveredFilters.search) {
@@ -783,6 +773,7 @@ function PedidosCatalogo() {
         const tb = new Date(b.fechaCreacion || 0).getTime()
         return tb - ta
       })
+  }, [pedidosCatalogo, deliveredFilters])
 
   // Resetear paginación cuando cambien filtros
   useEffect(() => {

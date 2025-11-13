@@ -1,12 +1,11 @@
 import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
 import { getAllProductos, updateProducto, deleteProducto } from '../utils/supabaseProducts'
 
 function Database() {
   const [products, setProducts] = useState([])
-  const [filteredProducts, setFilteredProducts] = useState([])
   const [filters, setFilters] = useState({
     search: '',
     visibility: 'visible', // 'visible', 'hidden', 'all'
@@ -54,6 +53,7 @@ function Database() {
           margenMaterial: p.margen_material || 0,
           precioUnitario: p.precio_unitario || 0,
           precioPromos: p.precio_promos || 0,
+          stock: p.stock || 0,
           ensamble: p.ensamble || 'Sin ensamble',
           material: p.material || '',
           materialId: p.material_id || '',
@@ -99,7 +99,7 @@ function Database() {
         }))
         
         setMaterials(mappedMateriales)
-        console.log('✅ Materiales cargados desde Supabase en database:', mappedMateriales.length)
+        // console.log('✅ Materiales cargados desde Supabase en database:', mappedMateriales.length)
         return
       }
       
@@ -132,8 +132,8 @@ function Database() {
     }
   }, [])
 
-  // Aplicar filtros y ordenamiento
-  const applyFiltersAndSort = useCallback(() => {
+  // Calcular productos filtrados y ordenados con useMemo (optimización)
+  const filteredProducts = useMemo(() => {
     let filtered = [...products]
 
     // Filtro de visibilidad
@@ -197,7 +197,7 @@ function Database() {
       })
     }
 
-    setFilteredProducts(filtered)
+    return filtered
   }, [products, filters, sortConfig])
 
   // Manejar ordenamiento
@@ -292,10 +292,10 @@ function Database() {
   // Exportar a CSV
   const exportToCSV = () => {
     const headers = [
-      'ID', 'Nombre', 'Categoría', 'Tipo', 'Medidas', 'Tiempo Unitario', 
-      'Unidades', 'Unidades por Placa', 'Uso Placas', 'Costo Placa', 
-      'Costo Material', 'Margen Material (%)', 'Precio Unitario', 
-      'Precio Promos',
+      'ID', 'Nombre', 'Categoría', 'Material', 'Tipo', 'Medidas',
+      'Costo Placa', 'Unidades por Placa', 'Stock',
+      'Precio Unitario', 'Precio Promos', 'Tiempo Unitario',
+      'Uso Placas', 'Costo Material', 'Margen Material (%)',
       'Ensamble', 'Activo', 'Publicado'
     ]
     
@@ -303,18 +303,18 @@ function Database() {
       p.id,
       p.nombre,
       p.categoria,
+      p.material || '',
       p.tipo,
       p.medidas,
-      p.tiempoUnitario,
-      p.unidades,
-      p.unidadesPorPlaca,
-      p.usoPlacas,
       p.costoPlaca,
+      p.unidadesPorPlaca,
+      p.stock || 0,
+      p.precioUnitario,
+      (p.precioPromos !== undefined && p.precioPromos !== null) ? p.precioPromos : p.precioUnitario,
+      p.tiempoUnitario,
+      p.usoPlacas,
       p.costoMaterial,
       p.margenMaterial,
-      p.precioUnitario,
-      // precioPromos: si no existe, fallback a precioUnitario
-      (p.precioPromos !== undefined && p.precioPromos !== null) ? p.precioPromos : p.precioUnitario,
       p.ensamble,
       p.active !== false ? 'Sí' : 'No',
       p.publicado ? 'Sí' : 'No'
@@ -373,9 +373,7 @@ function Database() {
     }
   }, [loadProducts])
 
-  useEffect(() => {
-    applyFiltersAndSort()
-  }, [products, filters, sortConfig, applyFiltersAndSort])
+  // Ya no necesitamos useEffect para applyFiltersAndSort porque usamos useMemo
 
   // Obtener icono de ordenamiento
   const getSortIcon = (key) => {
@@ -400,6 +398,31 @@ function Database() {
             Vista completa de todos los productos con filtros avanzados
           </p>
         </div>
+
+        {/* Indicador de carga */}
+        {isLoading && (
+          <div style={{
+            background: 'var(--accent-blue)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '0.9rem'
+          }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid white',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }} />
+            Cargando productos desde Supabase...
+          </div>
+        )}
 
         {/* Controles y Filtros */}
         <div style={{
@@ -601,8 +624,14 @@ function Database() {
                       Tipo {getSortIcon('tipo')}
                     </th>
                     <th style={thStyle}>Medidas</th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('unidades')}>
-                      Unidades {getSortIcon('unidades')}
+                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('costoPlaca')}>
+                      Costo Placa {getSortIcon('costoPlaca')}
+                    </th>
+                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('unidadesPorPlaca')}>
+                      Unid/Placa {getSortIcon('unidadesPorPlaca')}
+                    </th>
+                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('stock')}>
+                      Stock {getSortIcon('stock')}
                     </th>
                     <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioUnitario')}>
                       Precio {getSortIcon('precioUnitario')}
@@ -668,6 +697,10 @@ const thStyle = {
 
 // Componente de fila de producto
 function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, onDelete }) {
+  const [editingStock, setEditingStock] = useState(false)
+  const [stockValue, setStockValue] = useState(product.stock || 0)
+  const [isSaving, setIsSaving] = useState(false)
+
   const getTypeColor = (type) => {
     switch (type) {
       case 'Venta': return '#10b981'
@@ -683,6 +716,35 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
     // Acceder a materials desde el contexto del componente padre
     const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
     return materials.find(m => m.nombre === materialName)
+  }
+
+  // Guardar cambios de stock
+  const handleSaveStock = async () => {
+    setIsSaving(true)
+    try {
+      const { data, error } = await updateProducto(product.id, { stock: parseInt(stockValue) || 0 })
+      
+      if (error) {
+        console.error('Error al actualizar stock:', error)
+        alert('Error al actualizar el stock')
+        return
+      }
+      
+      // Disparar evento para actualizar la lista
+      window.dispatchEvent(new CustomEvent('productos:updated'))
+      setEditingStock(false)
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al actualizar el stock')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Cancelar edición
+  const handleCancelStock = () => {
+    setStockValue(product.stock || 0)
+    setEditingStock(false)
   }
 
   const materialInfo = getMaterialInfo(product.material)
@@ -737,7 +799,84 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
         </span>
       </td>
       <td style={tdStyle}>{product.medidas || '-'}</td>
-      <td style={tdStyle}>{product.unidades || 0}</td>
+      <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
+        {formatCurrency(product.costoPlaca || 0)}
+      </td>
+      <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
+        {product.unidadesPorPlaca || 0}
+      </td>
+      <td style={tdStyle}>
+        {editingStock ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input
+              type="number"
+              value={stockValue}
+              onChange={(e) => setStockValue(e.target.value)}
+              disabled={isSaving}
+              style={{
+                width: '60px',
+                padding: '4px 6px',
+                border: '1px solid var(--accent-blue)',
+                borderRadius: '4px',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveStock()
+                if (e.key === 'Escape') handleCancelStock()
+              }}
+              autoFocus
+            />
+            <button
+              onClick={handleSaveStock}
+              disabled={isSaving}
+              style={{
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                fontSize: '0.75rem'
+              }}
+            >
+              ✓
+            </button>
+            <button
+              onClick={handleCancelStock}
+              disabled={isSaving}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                fontSize: '0.75rem'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              color: product.stock > 0 ? '#10b981' : '#ef4444'
+            }}
+            onClick={() => setEditingStock(true)}
+            title="Clic para editar"
+          >
+            <span>{product.stock || 0}</span>
+            <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>✏️</span>
+          </div>
+        )}
+      </td>
       <td style={{ ...tdStyle, fontWeight: '600', color: 'var(--accent-blue)' }}>
         {formatCurrency(product.precioUnitario || 0)}
       </td>
@@ -835,3 +974,18 @@ const tdStyle = {
 }
 
 export default withAdminAuth(Database)
+
+// Agregar estilos de animación
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style')
+  style.textContent = `
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  `
+  if (!document.querySelector('style[data-database-animations]')) {
+    style.setAttribute('data-database-animations', 'true')
+    document.head.appendChild(style)
+  }
+}

@@ -147,6 +147,7 @@ export async function createProducto(producto) {
       precio_unitario: parseFloatOrZero(producto.precioUnitario || producto.precio_unitario),
       precio_promos: parseFloatOrZero(producto.precioPromos || producto.precio_promos),
       unidades: parseIntOrNull(producto.unidades) || 1,
+      stock: parseIntOrNull(producto.stock) || 0,
       ensamble: producto.ensamble || 'Sin ensamble',
       active: producto.active !== undefined ? producto.active : true
     };
@@ -216,6 +217,7 @@ export async function updateProducto(id, producto) {
     if (producto.precioPromos !== undefined) updateData.precio_promos = producto.precioPromos;
     if (producto.precio_promos !== undefined) updateData.precio_promos = producto.precio_promos;
     if (producto.unidades !== undefined) updateData.unidades = producto.unidades;
+    if (producto.stock !== undefined) updateData.stock = producto.stock;
     if (producto.ensamble !== undefined) updateData.ensamble = producto.ensamble;
     if (producto.active !== undefined) updateData.active = producto.active;
 
