@@ -150,6 +150,11 @@
     .product-card .btn-icon {
       display: none !important;
     }
+    
+    /* Ocultar categoría en mobile */
+    .product-card .category-badge {
+      display: none !important;
+    }
   }
 }
 

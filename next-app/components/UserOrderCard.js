@@ -1,7 +1,7 @@
 import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 
-export default function UserOrderCard({ pedido, onClick }) {
+const UserOrderCard = memo(function UserOrderCard({ pedido, onClick }) {
   const [expanded, setExpanded] = useState(false)
 
   const totalUnits = pedido.productos.reduce((sum, prod) => sum + (prod.cantidad || 0), 0)
@@ -247,4 +247,6 @@ export default function UserOrderCard({ pedido, onClick }) {
 
     </div>
   )
-}
+})
+
+export default UserOrderCard

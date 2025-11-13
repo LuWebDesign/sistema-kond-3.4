@@ -9,7 +9,7 @@ import {
   createToast,
   compressImage
 } from '../utils/catalogUtils'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
@@ -22,6 +22,7 @@ export default function Catalog() {
   const { saveOrder } = useOrders()
   
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [showCart, setShowCart] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
@@ -29,6 +30,15 @@ export default function Catalog() {
   const [currentUserState, setCurrentUserState] = useState(getCurrentUser())
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [imageModalSrc, setImageModalSrc] = useState(null)
+
+  // Debounce para la búsqueda (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   // Función para manejar la selección de categoría desde URLs
   const setCategoryHandler = (e) => {
@@ -138,30 +148,32 @@ export default function Catalog() {
     }
   }
 
-  // Filtrar productos
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.medidas && product.medidas.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (product.categoria && product.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesCategory = !selectedCategory || 
-      (product.categoria && product.categoria.trim() === selectedCategory.trim())
-    
-    console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
-    
-    return matchesSearch && matchesCategory
-  }).sort((a, b) => {
-    // Si estamos en "Todas las categorías" (sin categoría seleccionada),
-    // mostrar productos con promoción primero
-    if (!selectedCategory) {
-      const aHasPromo = a.hasPromotion ? 1 : 0
-      const bHasPromo = b.hasPromotion ? 1 : 0
-      // Ordenar descendente: productos con promo (1) van antes que sin promo (0)
-      return bHasPromo - aHasPromo
-    }
-    // Si hay categoría seleccionada, mantener orden original
-    return 0
-  })
+  // Filtrar productos (memoizado para evitar recalcular en cada render)
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = product.nombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                           (product.medidas && product.medidas.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
+                           (product.categoria && product.categoria.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+      
+      const matchesCategory = !selectedCategory || 
+        (product.categoria && product.categoria.trim() === selectedCategory.trim())
+      
+      console.log(`🔍 Filtering product "${product.nombre}": categoria="${product.categoria}", selectedCategory="${selectedCategory}", matchesCategory=${matchesCategory}`)
+      
+      return matchesSearch && matchesCategory
+    }).sort((a, b) => {
+      // Si estamos en "Todas las categorías" (sin categoría seleccionada),
+      // mostrar productos con promoción primero
+      if (!selectedCategory) {
+        const aHasPromo = a.hasPromotion ? 1 : 0
+        const bHasPromo = b.hasPromotion ? 1 : 0
+        // Ordenar descendente: productos con promo (1) van antes que sin promo (0)
+        return bHasPromo - aHasPromo
+      }
+      // Si hay categoría seleccionada, mantener orden original
+      return 0
+    })
+  }, [products, debouncedSearchTerm, selectedCategory])
 
   console.log(`📊 Total filtered products: ${filteredProducts.length} of ${products.length}`)
 
@@ -210,6 +222,53 @@ export default function Catalog() {
     
     return categoryStyles[categoria] || categoryStyles.default
   }
+
+  // Sincronizar selectedCategory con la ruta actual para evitar que la selección
+  // se pierda cuando se navega a /catalog/:slug y hay re-mounts o eventos asíncronos.
+  // Esto toma la parte de la URL después de /catalog/ y busca la categoría correspondiente.
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
+      const path = router.asPath || ''
+      // Extraer primer segmento después de /catalog/
+      const match = path.match(/^\/catalog\/(?:categoria\/)?([^\/\?]+)/)
+      const slug = match && match[1] ? match[1] : ''
+
+      if (!slug) {
+        // Si la URL es /catalog o no tiene slug, limpiar la selección
+        setSelectedCategory('')
+        return
+      }
+
+      // Buscar la categoría que corresponda al slug
+      if (categories && categories.length) {
+        const found = categories.find(c => slugifyPreserveCase(c) === slug)
+        if (found) {
+          setSelectedCategory(found)
+        } else {
+          // No limpiar la selección si la categoría aún no está cargada;
+          // esto evita que la UI vuelva a 'Todas' en transiciones asíncronas.
+          // Mantener el estado actual hasta que categories se actualice.
+          console.log('📌 slug no encontrado aún, manteniendo selectedCategory actual')
+        }
+      }
+    } catch (e) {
+      console.error('Error sincronizando categoría con ruta:', e)
+    }
+  }, [router.asPath, categories])
+
+  // Memoizar handlers para evitar recrear funciones en cada render
+  const handleImageClick = useCallback((src) => {
+    setImageModalSrc(src)
+  }, [])
+
+  const handleAddToCart = useCallback((productId, quantity) => {
+    const productToAdd = products.find(p => p.id === productId)
+    if (productToAdd) {
+      addToCart(productToAdd, quantity)
+      createToast(`${productToAdd.nombre} agregado al carrito`, 'success')
+    }
+  }, [products, addToCart])
 
   // Using shared slugify helper from ../utils/slugify
 
@@ -341,14 +400,8 @@ export default function Catalog() {
               key={product.id} 
               product={product} 
               getCategoryStyle={getCategoryStyle}
-              onImageClick={(src) => setImageModalSrc(src)}
-              onAddToCart={(productId, quantity) => {
-                const productToAdd = products.find(p => p.id === productId)
-                if (productToAdd) {
-                  addToCart(productToAdd, quantity)
-                  createToast(`${productToAdd.nombre} agregado al carrito`, 'success')
-                }
-              }}
+              onImageClick={handleImageClick}
+              onAddToCart={handleAddToCart}
             />
           ))}
         </div>
@@ -422,8 +475,8 @@ export default function Catalog() {
   )
 }
 
-// Componente de tarjeta de producto
-function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
+// Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [materials, setMaterials] = useState([])
@@ -515,7 +568,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       {/* Título arriba de la imagen */}
       <div style={{ padding: '12px 20px 16px 20px' }}>
         <h3 style={{
-          fontSize: '1.1rem',
+          fontSize: '0.85rem',
           fontWeight: 600,
           color: 'var(--text-primary)',
           margin: 0,
@@ -551,6 +604,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
           <img
             src={product.imagen}
             alt={product.nombre}
+            loading="lazy"
             onClick={() => onImageClick && onImageClick(product.imagen)}
             style={{
               position: 'absolute',
@@ -558,7 +612,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
               left: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
               cursor: 'zoom-in'
             }}
           />
@@ -653,12 +707,12 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
           {/* Mostrar precio con promoción si corresponde */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>{formatCurrency(product.precioPromocional)}</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
               </div>
             ) : (
-              <div>{formatCurrency(product.precioUnitario || 0)}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{formatCurrency(product.precioUnitario || 0)}</div>
             )}
 
             {/* Mostrar badges de promoción al lado del precio */}
@@ -670,9 +724,9 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
                     style={{
                       backgroundColor: badge.color || '#ef4444',
                       color: badge.textColor || '#ffffff',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.8rem',
+                      padding: '3px 6px',
+                      borderRadius: '10px',
+                      fontSize: '0.7rem',
                       fontWeight: 600
                     }}
                   >
@@ -702,9 +756,10 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
               style={{
                 background: 'var(--bg-hover)',
                 border: 'none',
-                padding: '8px 12px',
+                padding: '6px 10px',
                 color: 'var(--text-primary)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '0.9rem'
               }}
             >
               −
@@ -717,9 +772,10 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
                 border: 'none',
                 background: 'transparent',
                 color: 'var(--text-primary)',
-                width: '50px',
+                width: '40px',
                 textAlign: 'center',
-                padding: '8px 4px'
+                padding: '6px 4px',
+                fontSize: '0.9rem'
               }}
               min="1"
               max="999"
@@ -729,9 +785,10 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
               style={{
                 background: 'var(--bg-hover)',
                 border: 'none',
-                padding: '8px 12px',
+                padding: '6px 10px',
                 color: 'var(--text-primary)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '0.9rem'
               }}
             >
               +
@@ -763,7 +820,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       </div>
     </div>
   )
-}
+})
 
 // Modal del carrito
 function CartModal({ 

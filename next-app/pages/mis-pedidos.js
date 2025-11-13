@@ -4,7 +4,7 @@ import { useOrders } from '../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../utils/catalogUtils'
 import { getPedidosByEmail } from '../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 
@@ -83,7 +83,7 @@ export default function MisPedidos() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [ordersPage, setOrdersPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
-  const itemsPerPage = 6
+  const itemsPerPage = 4
 
   // Cargar pedidos del usuario actual y suscribirse a actualizaciones globales
   const loadUserOrders = async () => {
@@ -169,13 +169,13 @@ export default function MisPedidos() {
     }
   }, [])
 
-  // Paginación
-  const totalPages = Math.ceil(userOrders.length / itemsPerPage)
-  const startIndex = (ordersPage - 1) * itemsPerPage
-  const paginatedOrders = userOrders.slice(startIndex, startIndex + itemsPerPage)
+  // Paginación (memoizada para evitar recalcular en cada render)
+  const totalPages = useMemo(() => Math.ceil(userOrders.length / itemsPerPage), [userOrders.length, itemsPerPage])
+  const startIndex = useMemo(() => (ordersPage - 1) * itemsPerPage, [ordersPage, itemsPerPage])
+  const paginatedOrders = useMemo(() => userOrders.slice(startIndex, startIndex + itemsPerPage), [userOrders, startIndex, itemsPerPage])
 
-  // Función de paginación inteligente
-  const getVisiblePages = () => {
+  // Función de paginación inteligente (memoizada)
+  const getVisiblePages = useCallback(() => {
     const delta = 2
     const range = []
     const rangeWithDots = []
@@ -199,7 +199,12 @@ export default function MisPedidos() {
     }
 
     return rangeWithDots
-  }
+  }, [ordersPage, totalPages])
+
+  // Memoizar handler de click en pedido
+  const handleOrderClick = useCallback((order) => {
+    setSelectedOrder(order)
+  }, [])
 
   if (isLoading) {
     return (
@@ -494,7 +499,7 @@ export default function MisPedidos() {
                 <UserOrderCard
                   key={order.id}
                   pedido={order}
-                  onClick={() => setSelectedOrder(order)}
+                  onClick={() => handleOrderClick(order)}
                 />
               ))}
             </div>
