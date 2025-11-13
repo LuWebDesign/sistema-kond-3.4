@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { applyPromotionsToProduct } from '../utils/promoEngine'
 import Layout from '../components/Layout';
 import withAdminAuth from '../components/withAdminAuth';
@@ -21,6 +22,7 @@ import {
 } from '../utils/supabaseMarketing';
 
 function Marketing() {
+  const router = useRouter();
   const [currentTab, setCurrentTab] = useState('promotions'); // 'promotions' | 'coupons'
   const [promotions, setPromotions] = useState([]);
   const [coupons, setCoupons] = useState([]);
@@ -36,6 +38,50 @@ function Marketing() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Sincronizar modal con query params de la URL
+  useEffect(() => {
+    const { modal, id } = router.query;
+    
+    // Lista de tipos válidos de promoción
+    const tiposPromo = ['promo-descuento', 'promo-combo', 'promo-2x1', 'promo-porcentaje', 'promo-regalo'];
+    
+    if (tiposPromo.includes(modal)) {
+      // Abrir modal de nueva promoción con tipo específico
+      const tipo = modal.replace('promo-', '');
+      setEditingPromo({ tipo });
+      setShowPromoModal(true);
+    } else if (modal === 'nueva-promocion') {
+      setEditingPromo(null);
+      setShowPromoModal(true);
+    } else if (modal === 'editar-promocion' && id) {
+      // Buscar la promoción por ID cuando estén cargadas
+      if (promotions.length > 0) {
+        const promo = promotions.find(p => p.id === parseInt(id));
+        if (promo) {
+          setEditingPromo(promo);
+          setShowPromoModal(true);
+        }
+      }
+    } else if (modal === 'nuevo-cupon') {
+      setEditingCoupon(null);
+      setShowCouponModal(true);
+    } else if (modal === 'editar-cupon' && id) {
+      if (coupons.length > 0) {
+        const coupon = coupons.find(c => c.id === parseInt(id));
+        if (coupon) {
+          setEditingCoupon(coupon);
+          setShowCouponModal(true);
+        }
+      }
+    } else if (!modal) {
+      // Si no hay modal en la URL, cerrar modales
+      setShowPromoModal(false);
+      setShowCouponModal(false);
+      setEditingPromo(null);
+      setEditingCoupon(null);
+    }
+  }, [router.query.modal, router.query.id, promotions, coupons]);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -144,14 +190,33 @@ function Marketing() {
     setCoupons(list);
   };
 
-  const openPromoModal = (promo = null) => {
-    setEditingPromo(promo);
-    setShowPromoModal(true);
+  const openPromoModal = (promo = null, tipoEspecifico = null) => {
+    if (promo && typeof promo === 'object' && promo.id) {
+      // Editar promoción existente
+      router.push(`/marketing?modal=editar-promocion&id=${promo.id}`);
+    } else if (tipoEspecifico) {
+      // Nueva promoción con tipo específico
+      router.push(`/marketing?modal=promo-${tipoEspecifico}`);
+    } else {
+      // Nueva promoción sin tipo predefinido
+      router.push('/marketing?modal=nueva-promocion');
+    }
   };
 
   const openCouponModal = (coupon = null) => {
-    setEditingCoupon(coupon);
-    setShowCouponModal(true);
+    if (coupon) {
+      router.push(`/marketing?modal=editar-cupon&id=${coupon.id}`);
+    } else {
+      router.push('/marketing?modal=nuevo-cupon');
+    }
+  };
+
+  const closePromoModal = () => {
+    router.push('/marketing');
+  };
+
+  const closeCouponModal = () => {
+    router.push('/marketing');
   };
 
   const handlePromoSubmit = async (promoData) => {
@@ -186,8 +251,7 @@ function Marketing() {
       // Recargar datos
       await loadData();
       console.log('✅ Datos recargados, cerrando modal');
-      setShowPromoModal(false);
-      setEditingPromo(null);
+      closePromoModal();
     } catch (e) {
       console.error('💥 Error in handlePromoSubmit:', e);
       alert('Error al guardar la promoción: ' + e.message);
@@ -216,8 +280,7 @@ function Marketing() {
       
       // Recargar datos
       await loadData();
-      setShowCouponModal(false);
-      setEditingCoupon(null);
+      closeCouponModal();
     } catch (e) {
       console.error('Error in handleCouponSubmit:', e);
       alert('Error al guardar el cupón');
@@ -415,10 +478,7 @@ function Marketing() {
             promo={editingPromo}
             products={products}
             onSubmit={handlePromoSubmit}
-            onClose={() => {
-              setShowPromoModal(false);
-              setEditingPromo(null);
-            }}
+            onClose={closePromoModal}
             isLight={isLight}
           />
         )}
@@ -427,10 +487,7 @@ function Marketing() {
           <CouponModal
             coupon={editingCoupon}
             onSubmit={handleCouponSubmit}
-            onClose={() => {
-              setShowCouponModal(false);
-              setEditingCoupon(null);
-            }}
+            onClose={closeCouponModal}
             isLight={isLight}
           />
         )}

@@ -11,6 +11,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [userInfo, setUserInfo] = useState(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -91,17 +92,37 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
       </Head>
 
       <div style={{ display: 'flex', minHeight: '100vh' }}>
+        {/* Overlay para cerrar sidebar en mobile */}
+        {sidebarOpen && (
+          <div 
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 998,
+              display: 'none'
+            }}
+            className="mobile-overlay"
+          />
+        )}
+
         {/* Sidebar */}
-        <aside style={{
-          width: 260,
-          background: 'var(--bg-secondary)',
-          borderRight: '1px solid var(--border-color)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          overflowY: 'auto'
-        }}>
+        <aside 
+          className={`sidebar ${sidebarOpen ? 'open' : ''}`}
+          style={{
+            width: 260,
+            background: 'var(--bg-secondary)',
+            borderRight: '1px solid var(--border-color)',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            overflowY: 'auto',
+            transition: 'transform 0.3s ease',
+            zIndex: 999
+          }}
+        >
           <div style={{
             fontSize: '1.5rem',
             fontWeight: 700,
@@ -112,7 +133,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             🏭 Sistema KOND
           </div>
 
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onClick={() => setSidebarOpen(false)}>
             {/* Home - Redirige a la sección inicio de la página pública */}
             <Link href="/home#inicio" style={linkStyle}>
               🏠 Home
@@ -234,13 +255,34 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             background: 'var(--bg-primary)',
             borderBottom: '1px solid var(--border-color)'
           }}>
+            {/* Botón hamburguesa para mobile */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{
+                display: 'none',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '8px',
+                color: 'var(--text-primary)'
+              }}
+              className="hamburger-btn"
+              aria-label="Toggle menu"
+            >
+              ☰
+            </button>
+
             {/* Información del usuario */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              fontSize: '0.9rem'
-            }}>
+            <div 
+              className="user-info"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '0.9rem'
+              }}
+            >
               {userInfo ? (
                 <>
                   <div style={{
@@ -405,20 +447,48 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
         /* Responsive */
         @media (max-width: 768px) {
-          aside {
+          .sidebar {
             width: 200px !important;
           }
         }
 
         @media (max-width: 600px) {
-          aside {
+          /* Mostrar botón hamburguesa en mobile */
+          .hamburger-btn {
+            display: block !important;
+          }
+
+          /* Sidebar como overlay deslizable */
+          .sidebar {
             position: fixed !important;
             top: 0;
-            left: -260px;
-            width: 260px !important;
+            left: 0;
+            width: 280px !important;
             height: 100vh;
-            z-index: 1000;
-            transition: left 0.3s ease;
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+          }
+
+          /* Sidebar abierto */
+          .sidebar.open {
+            transform: translateX(0);
+          }
+
+          /* Overlay visible en mobile */
+          .mobile-overlay {
+            display: block !important;
+          }
+
+          /* Ajustar main content en mobile */
+          main {
+            width: 100%;
+          }
+
+          /* Ocultar información de usuario en mobile */
+          .user-info {
+            display: none !important;
           }
         }
       `}</style>
