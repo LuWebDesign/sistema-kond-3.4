@@ -138,6 +138,10 @@ export default function PromoModal({ promo, products, onSubmit, onClose, isLight
       descuentoPorcentaje: formData.tipo === 'percentage_discount' ? parseFloat(formData.descuentoPorcentaje) : null,
       descuentoMonto: formData.tipo === 'free_shipping' ? parseFloat(formData.descuentoMonto || 0) : null,
       precioEspecial: formData.tipo === 'fixed_price' ? parseFloat(formData.precioEspecial) : null,
+      config: formData.tipo === 'buy_x_get_y' ? {
+        buyQuantity: parseInt(formData.config.buyQuantity || 0, 10),
+        payQuantity: parseInt(formData.config.payQuantity || 0, 10)
+      } : null,
       valor: null // Este campo lo mantenemos por compatibilidad pero no lo usamos
     };
 

@@ -1220,73 +1220,25 @@ function Calendar() {
                   {dayObj.date.getDate()}
                 </div>
 
-                {/* Los checks se muestran dentro de la tarjeta específica de cada pedido producido */}
-
-                {/* Indicadores de pedidos */}
+                {/* Resumen compacto de pedidos internos */}
                 {pedidosInternos.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                    {/* mostrar chips por pedidos internos con fecha de entrega/ asignada y su estado */}
-                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).slice(0, 3).map(pi => {
-                      const pedDate = pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha
-                      const pedDateStr = pedDate ? String(pedDate) : ''
-                      const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
-                      const isPedPast = pedIso && (pedIso < todayStr)
-                      const estadoPi = ((pi.estado || pi.estadoPago || '')).toString().toLowerCase()
-                      const isDelivered = estadoPi === 'entregado'
-                      const isOverdue = isPedPast && !isDelivered
-                      const symbol = isOverdue ? '❌' : (estadoPi === 'listo' ? '✅' : null)
-
-                      // Determinar si este interno corresponde a una entrega (fechaEntrega) o producción (fecha)
-                      const isDeliveryInterno = !!pi.fechaEntrega
-                      // Etiqueta legible según estado y fecha
-                      let tipoLabel = ''
-                      if (estadoPi === 'entregado') {
-                        tipoLabel = 'Entregado'
-                      } else if (estadoPi === 'listo') {
-                        // consideramos 'listo' como producido cuando aplica
-                        tipoLabel = isDeliveryInterno ? 'Listo' : 'Producido'
-                      } else if (isPedPast) {
-                        tipoLabel = isDeliveryInterno ? 'Sin entregar' : 'Sin producir'
-                      } else {
-                        tipoLabel = isDeliveryInterno ? 'A entregar' : 'A producir'
-                      }
-
-                      return (
-                        <div key={pi.id || pi.cliente?.telefono || Math.random()} style={{
-                          display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', padding: '4px 6px', backgroundColor: 'var(--accent-blue)', color: 'white', borderRadius: '8px'
-                        }}>
-                          <span style={{marginRight:6}}>🏭</span>
-                          <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                            {typeof pi.cliente === 'object' && pi.cliente?.nombre 
-                              ? `${pi.cliente.nombre}${pi.cliente.apellido ? ' ' + pi.cliente.apellido : ''}` 
-                              : typeof pi.cliente === 'string' ? pi.cliente : `Interno ${pi.id || ''}`}
-                          </span>
-                          <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{tipoLabel}</span>
-                          {symbol && <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:18,height:18,borderRadius:9,backgroundColor:isOverdue?'#ef4444':'#10b981',color:'white',fontSize:12}}>{symbol}</span>}
-                        </div>
-                      )
-                    })}
-                    {/* Indicador de más pedidos internos */}
-                    {pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).length > 3 && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.65rem',
-                        padding: '4px 6px',
-                        backgroundColor: 'var(--accent-blue)',
-                        color: 'white',
-                        borderRadius: '8px',
-                        fontWeight: 600,
-                        opacity: 0.85
-                      }}>
-                        +{pedidosInternos.filter(pi => pi.fechaEntrega || pi.fechaAsignadaCalendario || pi.fecha).length - 3}
-                      </div>
-                    )}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.7rem',
+                    padding: '6px 8px',
+                    backgroundColor: 'var(--accent-blue)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontWeight: 600
+                  }}>
+                    <span>🏭</span>
+                    <span>Producir: {pedidosInternos.length}</span>
                   </div>
                 )}
 
-                {/* Separar pedidos de catálogo por tipo */}
+                {/* Resumen compacto de pedidos de catálogo */}
                 {(() => {
                   const pedidosProduccion = pedidosCatalogo.filter(p => p.tipo === 'produccion')
                   const pedidosEntrega = pedidosCatalogo.filter(p => p.tipo === 'entrega')
@@ -1294,158 +1246,36 @@ function Calendar() {
                   return (
                     <>
                       {pedidosProduccion.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                          {pedidosProduccion.slice(0, 3).map(ped => {
-                            // determinar la fecha relevante del pedido (producción o entrega)
-                            const pedDate = ped.fechaProduccionCalendario || ped.fechaEntregaCalendario || ped.fechaSolicitudEntrega || ped.fechaCreacion || ped.fecha
-                            const pedDateStr = pedDate ? String(pedDate) : ''
-                            // normalizar a YYYY-MM-DD si viene en ISO (se mantiene por compatibilidad)
-                            const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
-                            const estadoPed = ((ped.estado || '')).toString().toLowerCase()
-                            const isPedPast = pedIso && (pedIso < todayStr)
-
-                            // Símbolo solo si está listo
-                            const symbol = estadoPed === 'listo' ? '✅' : null
-
-                            // Etiqueta para pedidos de producción: A producir / Sin producir / Producido
-                            let prodLabel = ''
-                            if (estadoPed === 'listo') {
-                              prodLabel = 'Producido'
-                            } else if (isPedPast) {
-                              prodLabel = 'Sin producir'
-                            } else {
-                              prodLabel = 'A producir'
-                            }
-
-                            return (
-                              <div key={ped.id} title={`Pedido ${ped.id}`} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                fontSize: '0.65rem',
-                                padding: '4px 6px',
-                                backgroundColor: '#FF6B35',
-                                color: 'white',
-                                borderRadius: '8px',
-                                textAlign: 'left'
-                              }}>
-                                <span style={{marginRight:6}}>🏭</span>
-                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                                  {typeof ped.cliente === 'object' && ped.cliente?.nombre 
-                                    ? `${ped.cliente.nombre}${ped.cliente.apellido ? ' ' + ped.cliente.apellido : ''}` 
-                                    : typeof ped.cliente === 'string' ? ped.cliente : `Pedido ${ped.id}`}
-                                </span>
-                                <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{prodLabel}</span>
-                                {symbol && (
-                                  <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 9,
-                                    backgroundColor: '#10b981',
-                                    color: 'white',
-                                    fontSize: 12
-                                  }} aria-label={'Producido y listo'}>{symbol}</span>
-                                )}
-                              </div>
-                            )
-                          })}
-                          {/* Indicador de más pedidos de producción */}
-                          {pedidosProduccion.length > 3 && (
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.65rem',
-                              padding: '4px 6px',
-                              backgroundColor: '#FF6B35',
-                              color: 'white',
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                              opacity: 0.85
-                            }}>
-                              +{pedidosProduccion.length - 3}
-                            </div>
-                          )}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.7rem',
+                          padding: '6px 8px',
+                          backgroundColor: '#FF6B35',
+                          color: 'white',
+                          borderRadius: '8px',
+                          fontWeight: 600
+                        }}>
+                          <span>🏭</span>
+                          <span>Producir: {pedidosProduccion.length}</span>
                         </div>
                       )}
 
                       {pedidosEntrega.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-                          {pedidosEntrega.slice(0, 3).map(pe => {
-                            const pedDate = pe.fechaEntregaCalendario || pe.fechaSolicitudEntrega || pe.fechaCreacion || pe.fecha
-                            const pedDateStr = pedDate ? String(pedDate) : ''
-                            const pedIso = pedDateStr && pedDateStr.indexOf('T') !== -1 ? pedDateStr.split('T')[0] : (pedDateStr.length === 10 ? pedDateStr : (new Date(pedDateStr)).toISOString().split('T')[0])
-                            const isPedPast = pedIso && (pedIso < todayStr)
-                            const estadoPe = ((pe.estado || '')).toString().toLowerCase()
-                            const isDelivered = estadoPe === 'entregado'
-                            const isOverdueUndeliveredPed = isPedPast && !isDelivered
-                            const symbol = isOverdueUndeliveredPed ? '❌' : (estadoPe === 'listo' ? '✅' : null)
-
-                            // Etiqueta para pedidos de entrega: A entregar / Sin entregar / Entregado
-                            let entregaLabel = ''
-                            if (estadoPe === 'entregado') {
-                              entregaLabel = 'Entregado'
-                            } else if (isPedPast) {
-                              entregaLabel = 'Sin entregar'
-                            } else {
-                              entregaLabel = 'A entregar'
-                            }
-
-                            return (
-                              <div key={pe.id} title={`Pedido ${pe.id}`} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                fontSize: '0.65rem',
-                                padding: '4px 6px',
-                                backgroundColor: '#28A745',
-                                color: 'white',
-                                borderRadius: '8px',
-                                textAlign: 'left'
-                              }}>
-                                <span style={{marginRight:6}}>📦</span>
-                                <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                                  {typeof pe.cliente === 'object' && pe.cliente?.nombre 
-                                    ? `${pe.cliente.nombre}${pe.cliente.apellido ? ' ' + pe.cliente.apellido : ''}` 
-                                    : typeof pe.cliente === 'string' ? pe.cliente : `Pedido ${pe.id}`}
-                                </span>
-                                <span style={{fontSize:10, opacity:0.95, marginLeft:6, background:'rgba(255,255,255,0.12)', padding:'2px 6px', borderRadius:8}} aria-hidden={true}>{entregaLabel}</span>
-                                {symbol && (
-                                  <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 9,
-                                    backgroundColor: isOverdueUndeliveredPed ? '#ef4444' : '#10b981',
-                                    color: 'white',
-                                    fontSize: 12
-                                  }}>{symbol}</span>
-                                )}
-                              </div>
-                            )
-                          })}
-                          {/* Indicador de más pedidos de entrega */}
-                          {pedidosEntrega.length > 3 && (
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.65rem',
-                              padding: '4px 6px',
-                              backgroundColor: '#28A745',
-                              color: 'white',
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                              opacity: 0.85
-                            }}>
-                              +{pedidosEntrega.length - 3}
-                            </div>
-                          )}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.7rem',
+                          padding: '6px 8px',
+                          backgroundColor: '#28A745',
+                          color: 'white',
+                          borderRadius: '8px',
+                          fontWeight: 600
+                        }}>
+                          <span>📦</span>
+                          <span>Entregar: {pedidosEntrega.length}</span>
                         </div>
                       )}
                     </>

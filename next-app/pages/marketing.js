@@ -81,6 +81,7 @@ function Marketing() {
           descuentoPorcentaje: p.descuento_porcentaje,
           descuentoMonto: p.descuento_monto,
           precioEspecial: p.precio_especial,
+          config: p.config,
           createdAt: p.created_at
         }));
         setPromotions(mappedPromos);
@@ -154,32 +155,42 @@ function Marketing() {
   };
 
   const handlePromoSubmit = async (promoData) => {
+    console.log('🚀 handlePromoSubmit iniciado');
+    console.log('📦 Datos recibidos:', promoData);
+    console.log('✏️ Es edición?', !!editingPromo);
+    
     try {
       if (editingPromo) {
         // Actualizar promoción existente
-        const { error } = await updatePromocion(editingPromo.id, promoData);
+        console.log('🔄 Actualizando promoción ID:', editingPromo.id);
+        const { data, error } = await updatePromocion(editingPromo.id, promoData);
+        console.log('📊 Resultado update:', { data, error });
         if (error) {
-          console.error('Error updating promocion:', error);
-          alert('Error al actualizar la promoción');
+          console.error('❌ Error updating promocion:', error);
+          alert('Error al actualizar la promoción: ' + error);
           return;
         }
       } else {
         // Crear nueva promoción
-        const { error } = await createPromocion(promoData);
+        console.log('➕ Creando nueva promoción');
+        const { data, error } = await createPromocion(promoData);
+        console.log('📊 Resultado create:', { data, error });
         if (error) {
-          console.error('Error creating promocion:', error);
-          alert('Error al crear la promoción');
+          console.error('❌ Error creating promocion:', error);
+          alert('Error al crear la promoción: ' + error);
           return;
         }
       }
       
+      console.log('✅ Promoción guardada, recargando datos...');
       // Recargar datos
       await loadData();
+      console.log('✅ Datos recargados, cerrando modal');
       setShowPromoModal(false);
       setEditingPromo(null);
     } catch (e) {
-      console.error('Error in handlePromoSubmit:', e);
-      alert('Error al guardar la promoción');
+      console.error('💥 Error in handlePromoSubmit:', e);
+      alert('Error al guardar la promoción: ' + e.message);
     }
   };
 

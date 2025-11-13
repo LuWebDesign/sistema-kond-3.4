@@ -71,7 +71,8 @@ export async function createPromocion(promocion) {
       badge_text_color: promocion.badgeTextColor || promocion.badge_text_color || null,
       descuento_porcentaje: promocion.descuentoPorcentaje || promocion.descuento_porcentaje ? parseFloat(promocion.descuentoPorcentaje || promocion.descuento_porcentaje) : null,
       descuento_monto: promocion.descuentoMonto || promocion.descuento_monto ? parseFloat(promocion.descuentoMonto || promocion.descuento_monto) : null,
-      precio_especial: promocion.precioEspecial || promocion.precio_especial ? parseFloat(promocion.precioEspecial || promocion.precio_especial) : null
+      precio_especial: promocion.precioEspecial || promocion.precio_especial ? parseFloat(promocion.precioEspecial || promocion.precio_especial) : null,
+      config: promocion.config || null
     };
 
     console.log('💾 Datos a insertar en Supabase:', promoData);
@@ -128,6 +129,7 @@ export async function updatePromocion(id, promocion) {
     if (promocion.descuento_monto !== undefined) updateData.descuento_monto = parseFloat(promocion.descuento_monto);
     if (promocion.precioEspecial !== undefined) updateData.precio_especial = parseFloat(promocion.precioEspecial);
     if (promocion.precio_especial !== undefined) updateData.precio_especial = parseFloat(promocion.precio_especial);
+    if (promocion.config !== undefined) updateData.config = promocion.config;
 
     const { data, error } = await supabase
       .from('promociones')

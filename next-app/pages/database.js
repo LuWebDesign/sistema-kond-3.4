@@ -650,6 +650,7 @@ function Database() {
                       key={product.id}
                       product={product}
                       isEven={index % 2 === 0}
+                      materials={materials}
                       onToggleVisibility={toggleProductVisibility}
                       onTogglePublished={toggleProductPublished}
                       onDelete={handleDeleteProduct}
@@ -696,7 +697,7 @@ const thStyle = {
 }
 
 // Componente de fila de producto
-function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, onDelete }) {
+function ProductRow({ product, isEven, materials, onToggleVisibility, onTogglePublished, onDelete }) {
   const [editingStock, setEditingStock] = useState(false)
   const [stockValue, setStockValue] = useState(product.stock || 0)
   const [isSaving, setIsSaving] = useState(false)
@@ -713,8 +714,7 @@ function ProductRow({ product, isEven, onToggleVisibility, onTogglePublished, on
   // Obtener información completa del material
   const getMaterialInfo = (materialName) => {
     if (!materialName) return null
-    // Acceder a materials desde el contexto del componente padre
-    const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
+    // Usar materials desde props (cargados desde Supabase)
     return materials.find(m => m.nombre === materialName)
   }
 

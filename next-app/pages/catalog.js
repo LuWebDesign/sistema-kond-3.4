@@ -9,6 +9,7 @@ import {
   createToast,
   compressImage
 } from '../utils/catalogUtils'
+import { getPaymentConfig } from '../utils/supabasePaymentConfig'
 import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
@@ -30,6 +31,7 @@ export default function Catalog() {
   const [currentUserState, setCurrentUserState] = useState(getCurrentUser())
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [imageModalSrc, setImageModalSrc] = useState(null)
+  const [paymentConfig, setPaymentConfig] = useState(null)
 
   // Debounce para la búsqueda (300ms)
   useEffect(() => {
@@ -71,6 +73,30 @@ export default function Catalog() {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [imageModalSrc])
+
+  // Cargar configuración de métodos de pago desde Supabase
+  useEffect(() => {
+    const loadPaymentConfig = async () => {
+      try {
+        const config = await getPaymentConfig()
+        if (config) {
+          setPaymentConfig(config)
+        }
+      } catch (error) {
+        console.error('Error al cargar configuración de pago:', error)
+        // Fallback a localStorage si falla Supabase
+        try {
+          const localConfig = localStorage.getItem('paymentConfig')
+          if (localConfig) {
+            setPaymentConfig(JSON.parse(localConfig))
+          }
+        } catch (e) {
+          console.error('Error al cargar configuración local:', e)
+        }
+      }
+    }
+    loadPaymentConfig()
+  }, [])
 
   // Permitir abrir el carrito o el checkout desde otras rutas/links
   useEffect(() => {
@@ -422,6 +448,8 @@ export default function Catalog() {
             }}
             saveOrder={saveOrder}
             mode={checkoutMode}
+            currentUser={currentUserState}
+            paymentConfig={paymentConfig}
             onProfileUpdate={handleProfileUpdated}
           />
         )}
@@ -1013,11 +1041,13 @@ function CheckoutModal({
   onOrderComplete,
   saveOrder,
   mode = 'order', // 'order' or 'edit'
+  currentUser,
+  paymentConfig,
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
   const [customerData, setCustomerData] = useState(() => {
-    const u = getCurrentUser()
+    const u = currentUser || getCurrentUser()
     if (!u) return { name: '', apellido: '', phone: '', email: '', address: '' }
     return {
       name: u.nombre || u.name || u.email || '',
@@ -1029,6 +1059,7 @@ function CheckoutModal({
   })
   const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   
   // Ref para la sección de método de pago
   const paymentSectionRef = useRef(null)
@@ -1060,6 +1091,25 @@ function CheckoutModal({
         })
       }, 100)
     }
+  }, [customerData.name, customerData.phone])
+
+  // Sincronizar datos cuando cambia currentUser prop
+  useEffect(() => {
+    if (currentUser) {
+      setCustomerData({
+        name: currentUser.nombre || currentUser.name || currentUser.email || '',
+        apellido: currentUser.apellido || currentUser.lastName || '',
+        phone: currentUser.telefono || currentUser.phone || currentUser.telefonoMovil || '',
+        email: currentUser.email || currentUser.correo || '',
+        address: [currentUser.direccion || currentUser.address || '', currentUser.localidad || currentUser.city || '', currentUser.cp || currentUser.zip || '', currentUser.provincia || currentUser.state || ''].filter(Boolean).join(', ')
+      })
+    }
+  }, [currentUser])
+
+  // Auto-colapsar formulario si los datos están completos
+  useEffect(() => {
+    const isProfileComplete = customerData.name && customerData.phone
+    setIsProfileCollapsed(isProfileComplete)
   }, [customerData.name, customerData.phone])
 
   // Prefill datos del usuario si está logueado
@@ -1241,32 +1291,67 @@ function CheckoutModal({
             <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>✕</button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Nombre *</label>
-              <input value={customerData.name} onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))} placeholder="Nombre" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="given-name" />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Apellido</label>
-              <input value={customerData.apellido} onChange={(e) => setCustomerData(prev => ({ ...prev, apellido: e.target.value }))} placeholder="Apellido" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="family-name" />
-            </div>
-          </div>
+          {/* Sección colapsable de datos del usuario */}
+          <div style={{ marginBottom: 18, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
+            <button 
+              onClick={() => setIsProfileCollapsed(!isProfileCollapsed)}
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '14px 16px', 
+                background: isProfileCollapsed ? 'var(--bg-secondary)' : 'var(--bg-hover)', 
+                border: 'none', 
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1.2rem' }}>👤</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Tus datos</div>
+                  {isProfileCollapsed && customerData.name && (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      {customerData.name} {customerData.apellido} • {customerData.phone}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', transform: isProfileCollapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s ease' }}>▼</span>
+            </button>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Teléfono *</label>
-              <input value={customerData.phone} onChange={(e) => setCustomerData(prev => ({ ...prev, phone: e.target.value }))} placeholder="Teléfono" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="tel" />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Email</label>
-              <input value={customerData.email} onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))} placeholder="Email (opcional)" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="email" />
-            </div>
-          </div>
+            {!isProfileCollapsed && (
+              <div style={{ padding: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Nombre *</label>
+                    <input value={customerData.name} onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))} placeholder="Nombre" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="given-name" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Apellido</label>
+                    <input value={customerData.apellido} onChange={(e) => setCustomerData(prev => ({ ...prev, apellido: e.target.value }))} placeholder="Apellido" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="family-name" />
+                  </div>
+                </div>
 
-          <section style={{ marginTop: 12, marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Dirección</label>
-            <input value={customerData.address} onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))} placeholder="Dirección" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="street-address" />
-          </section>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Teléfono *</label>
+                    <input value={customerData.phone} onChange={(e) => setCustomerData(prev => ({ ...prev, phone: e.target.value }))} placeholder="Teléfono" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="tel" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Email</label>
+                    <input value={customerData.email} onChange={(e) => setCustomerData(prev => ({ ...prev, email: e.target.value }))} placeholder="Email (opcional)" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="email" />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Dirección</label>
+                  <input value={customerData.address} onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))} placeholder="Dirección" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)' }} readOnly={false} disabled={false} tabIndex={0} autoComplete="street-address" />
+                </div>
+              </div>
+            )}
+          </div>
 
           <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
@@ -1283,7 +1368,7 @@ function CheckoutModal({
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.
+                  {paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
                 </div>
               </div>
             )}
@@ -1291,6 +1376,16 @@ function CheckoutModal({
             {paymentMethod === 'retiro' && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
+                {(paymentConfig?.retiro?.direccion || paymentConfig?.retiro?.horarios) && (
+                  <div style={{ marginTop: 8, fontSize: 13 }}>
+                    {paymentConfig.retiro.direccion && (
+                      <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>
+                    )}
+                    {paymentConfig.retiro.horarios && (
+                      <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1305,11 +1400,11 @@ function CheckoutModal({
             )}
 
             {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
-            {paymentMethod === 'retiro' && (
+            {paymentMethod === 'retiro' && paymentConfig?.retiro?.direccion && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>🚚 Información de retiro</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro. Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.
+                  Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro. {paymentConfig.retiro.horarios && `Horario de retiro: ${paymentConfig.retiro.horarios}.`} Avisanos por WhatsApp si llegás fuera de ese horario.
                 </div>
               </div>
             )}
@@ -1338,35 +1433,47 @@ function CheckoutModal({
               </div>
 
               <div className="transfer-payment-info" style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div><strong>CBU:</strong> 0000003100010123456789</div>
-                  <div>
-                    <button className="btn-copy" onClick={() => { navigator.clipboard?.writeText('0000003100010123456789'); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
+                {paymentConfig?.transferencia?.cbu && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div><strong>CBU:</strong> {paymentConfig.transferencia.cbu}</div>
+                    <div>
+                      <button className="btn-copy" onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 }}>
-                  <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>KOND.LASER.MP</span></div>
-                  <div>
-                    <button
-                      className="btn-copy"
-                      onClick={() => { navigator.clipboard?.writeText('KOND.LASER.MP'); createToast('Alias copiado', 'success') }}
-                      aria-label="Copiar alias"
-                      title="Copiar alias"
-                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {/* clipboard icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                      </svg>
-                    </button>
+                {paymentConfig?.transferencia?.alias && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 }}>
+                    <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>{paymentConfig.transferencia.alias}</span></div>
+                    <div>
+                      <button
+                        className="btn-copy"
+                        onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }}
+                        aria-label="Copiar alias"
+                        title="Copiar alias"
+                        style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        {/* clipboard icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div style={{ marginTop: 8 }}>
-                  <div><strong>Titular:</strong> Sistema KOND</div>
-                </div>
+                {paymentConfig?.transferencia?.titular && (
+                  <div style={{ marginTop: 8 }}>
+                    <div><strong>Titular:</strong> {paymentConfig.transferencia.titular}</div>
+                  </div>
+                )}
+
+                {paymentConfig?.transferencia?.banco && (
+                  <div style={{ marginTop: 8 }}>
+                    <div><strong>Banco:</strong> {paymentConfig.transferencia.banco}</div>
+                  </div>
+                )}
 
                 <div style={{ marginTop: 10 }}>
                   <div><strong>Seña (50%):</strong> {formatCurrency(total * 0.5)}</div>

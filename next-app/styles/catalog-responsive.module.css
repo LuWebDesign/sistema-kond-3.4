@@ -47,7 +47,8 @@
   .cartModalDialog,
   .checkoutModalDialog {
     max-width: 100% !important;
-    height: 100vh !important;
+    height: 90vh !important;
+    max-height: calc(100vh - 40px) !important;
     border-radius: 0 !important;
     grid-template-columns: 1fr !important;
     overflow: visible !important;
@@ -67,9 +68,10 @@
     /* ensure the left column scrolls and doesn't overlap the right section */
     overflow: auto !important;
     padding-bottom: 96px !important; /* leave space for actions */
+    padding-top: 24px !important;
   }
   .modalRight {
-    padding-bottom: 24px !important;
+    padding-bottom: 32px !important;
   }
   .myOrdersList {
     gap: 12px;
