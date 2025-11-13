@@ -429,9 +429,9 @@ export default function Catalog() {
         {/* Lightbox para imagen de producto */}
         {imageModalSrc && (
           <div onClick={() => setImageModalSrc(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '95vw', maxHeight: '95vh', position: 'relative' }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: '90vw', height: '90vh', maxWidth: '800px', maxHeight: '800px', position: 'relative', background: '#ffffff', borderRadius: 8, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <button aria-label="Cerrar" onClick={() => setImageModalSrc(null)} style={{ position: 'absolute', right: -8, top: -8, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', zIndex: 2010 }}>✕</button>
-              <img src={imageModalSrc} alt="Preview" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', display: 'block', borderRadius: 8 }} />
+              <img src={imageModalSrc} alt="Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
             </div>
           </div>
         )}
@@ -563,7 +563,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       <div style={{
         position: 'relative',
         paddingTop: '100%',
-        background: 'var(--bg-tertiary)'
+        background: '#ffffff'
       }}>
         {product.imagen ? (
           <img
