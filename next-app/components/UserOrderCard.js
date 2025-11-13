@@ -98,19 +98,15 @@ export default function UserOrderCard({ pedido, onClick }) {
       onClick={() => { if (!onClick) setExpanded(s => !s) }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!onClick) setExpanded(s => !s) } }}>
 
-      {/* Order ID badge top-left */}
-      <div style={{position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '6px 8px', borderRadius: 8, zIndex: 5}}>
-        <span style={{fontWeight: 700}}>#{pedido.id}</span>
-        <button onClick={(e) => { e.stopPropagation(); copyOrderId(e) }} title="Copiar número de pedido" aria-label={`Copiar número de pedido ${pedido.id}`} style={{background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, fontSize: '0.9rem'}}>
-          📋
-        </button>
-      </div>
-
-      {/* Header Mobile */}
-      <div className="uoc-mobile-header" style={{display: 'flex', alignItems: 'center', gap: 12}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
-          <div className="uoc-date-pill">Fecha de Pedido: {formatDate(pedido.fechaCreacion)}</div>
+      {/* Header Mobile - incluye número de pedido y fecha */}
+      <div className="uoc-mobile-header" style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}}>
+        <div className="uoc-order-id" style={{display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '6px 8px', borderRadius: 8}}>
+          <span style={{fontWeight: 700}}>#{pedido.id}</span>
+          <button onClick={(e) => { e.stopPropagation(); copyOrderId(e) }} title="Copiar número de pedido" aria-label={`Copiar número de pedido ${pedido.id}`} style={{background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, fontSize: '0.9rem'}}>
+            📋
+          </button>
         </div>
+        <div className="uoc-date-pill">Fecha de Pedido: {formatDate(pedido.fechaCreacion)}</div>
       </div>
 
       {/* Badges Mobile */}

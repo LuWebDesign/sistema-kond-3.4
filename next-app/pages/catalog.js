@@ -427,6 +427,7 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [materials, setMaterials] = useState([])
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
 
   // ProductCard will use the shared slugify helper imported above
 
@@ -443,6 +444,39 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       }
     }
     loadMaterials()
+  }, [])
+
+  // Detectar tema (dark vs light) para ajustar estilos de badge de categoría
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
+      
+      // Función para detectar el tema actual desde data-theme del body
+      const getTheme = () => {
+        const theme = document.body.getAttribute('data-theme')
+        return theme === 'dark'
+      }
+      
+      setIsDarkTheme(getTheme())
+
+      // Observar cambios en el atributo data-theme del body
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            setIsDarkTheme(getTheme())
+          }
+        })
+      })
+
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      })
+
+      return () => observer.disconnect()
+    } catch (e) {
+      // ignore
+    }
   }, [])
 
   // Obtener información del material
@@ -478,10 +512,39 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       borderRadius: '12px',
       overflow: 'hidden'
     }}>
+      {/* Título arriba de la imagen */}
+      <div style={{ padding: '12px 20px 16px 20px' }}>
+        <h3 style={{
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          margin: 0,
+          marginBottom: '12px',
+          lineHeight: 1.2
+        }}>
+          <span
+            onClick={() => {
+              try {
+                const catSlug = slugifyPreserveCase(product.categoria)
+                const prodSlug = slugifyPreserveCase(product.nombre)
+                // Navegar a la nueva ruta /catalog/{category}/{product}
+                router.push(`/catalog/${catSlug}/${prodSlug}`)
+              } catch (e) {
+                // fallback a catálogo
+                router.push('/catalog')
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {product.nombre}
+          </span>
+        </h3>
+      </div>
+
       {/* Imagen del producto */}
       <div style={{
         position: 'relative',
-        paddingTop: '60%',
+        paddingTop: '100%',
         background: 'var(--bg-tertiary)'
       }}>
         {product.imagen ? (
@@ -518,79 +581,66 @@ function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
       </div>
 
       {/* Info del producto */}
-      <div style={{ padding: '20px' }}>
-          {product.categoria && (() => {
+      <div style={{ padding: '16px 20px 20px 20px' }}>
+          {(() => {
+            const secondaryTextColor = isDarkTheme ? '#d1d5db' : 'var(--text-secondary)'
             const categoryStyle = getCategoryStyle(product.categoria)
-            // Mostrar la categoría como elemento visual, sin comportamiento de navegación
+            // Ajustar estilo según tema: en versión light usar fondo gris claro y texto gris oscuro
+            const badgeBackground = isDarkTheme ? 'transparent' : '#f3f4f6' // gray-100
+            // En dark: texto blanco con borde; en light: texto gris oscuro sobre fondo gris claro
+            const badgeTextColor = isDarkTheme ? '#ffffff' : '#374151' // gray-700
+            const badgeBorder = isDarkTheme ? `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}` : 'none'
+            
+            // Debug: ver qué tema está detectando
+            if (product.id === 1) console.log('🎨 Theme detected:', { isDarkTheme, badgeTextColor, badgeBackground })
+            
             return (
-              <div
-                className="category-badge"
-                // no role/button, no tabIndex, no handlers: accesible como texto decorativo
-                aria-hidden={false}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: categoryStyle.color,
-                  background: 'transparent',
-                  border: `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}`,
-                  marginBottom: '8px',
-                  cursor: 'default'
-                }}
-              >
-                <span>{product.categoria}</span>
-              </div>
+              <>
+                {product.categoria && (
+                  <div
+                    className="category-badge"
+                    aria-hidden={false}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 10px',
+                      borderRadius: '12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      color: badgeTextColor,
+                      background: badgeBackground,
+                      border: badgeBorder,
+                      marginBottom: '10px',
+                      cursor: 'default'
+                    }}
+                  >
+                    <span style={{ color: badgeTextColor }}>{product.categoria}</span>
+                  </div>
+                )}
+                
+                {product.medidas && (
+                  <p style={{
+                    color: secondaryTextColor,
+                    fontSize: '0.9rem',
+                    marginBottom: '8px'
+                  }}>
+                    📏 {product.medidas}
+                  </p>
+                )}
+
+                {materialInfo && (
+                  <p style={{
+                    color: secondaryTextColor,
+                    fontSize: '0.9rem',
+                    marginBottom: '8px'
+                  }}>
+                    Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
+                  </p>
+                )}
+              </>
             )
           })()}
-
-          <h3 style={{
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            marginBottom: '8px',
-            lineHeight: 1.4
-          }}>
-            <span
-              onClick={() => {
-                try {
-                  const catSlug = slugifyPreserveCase(product.categoria)
-                  const prodSlug = slugifyPreserveCase(product.nombre)
-                  // Navegar a la nueva ruta /catalog/{category}/{product}
-                  router.push(`/catalog/${catSlug}/${prodSlug}`)
-                } catch (e) {
-                  // fallback a catálogo
-                  router.push('/catalog')
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {product.nombre}
-            </span>
-          </h3>
-
-          {product.medidas && (
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem',
-            marginBottom: '8px'
-          }}>
-            📏 {product.medidas}
-          </p>
-        )}
-
-        {materialInfo && (
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.9rem',
-            marginBottom: '8px'
-          }}>
-            Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
-          </p>
-        )}
 
         {/* category badge moved above title; duplicate removed */}
 
@@ -1179,18 +1229,40 @@ function CheckoutModal({
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
 
-            {paymentMethod === 'retiro' && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>📍 Retiro en local</div>
-                <div style={{ marginBottom: 8 }}>Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro.</div>
-                <div>Dirección y ubicación: <a href="https://share.google/J7AX4ApHAaXLJ5Pib" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)' }}>Ver ubicación del local</a></div>
-                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-light)' }}>Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.</div>
-              </div>
-            )}
+            {/* Retiro info removed as requested */}
 
             {paymentMethod === 'whatsapp' && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
+              </div>
+            )}
+
+            {/* Bloque independiente de información sobre Transferencia (solo visible si el usuario selecciona Transferencia) */}
+            {(paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>ℹ️ Información sobre Transferencia</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Nota: si elegís el método <strong>Transferencia</strong> y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.
+                </div>
+              </div>
+            )}
+
+            {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
+            {paymentMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>🚚 Información de retiro</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro. Horario de retiro: Lun a Vie 10:00–18:00. Avisanos por WhatsApp si llegás fuera de ese horario.
+                </div>
               </div>
             )}
           </section>
@@ -1204,12 +1276,10 @@ function CheckoutModal({
                 </div>
 
                 <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Subir comprobante</label>
-
                   {/* input escondido y botón visible para mejor UX en mobile */}
                   <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
+                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #7dd3fc', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
                     {comprobante && (
                       <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
                     )}
@@ -1219,11 +1289,11 @@ function CheckoutModal({
                 </div>
               </div>
 
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
+              <div className="transfer-payment-info" style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div><strong>CBU:</strong> 0000003100010123456789</div>
                   <div>
-                    <button onClick={() => { navigator.clipboard?.writeText('0000003100010123456789'); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
+                    <button className="btn-copy" onClick={() => { navigator.clipboard?.writeText('0000003100010123456789'); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
                   </div>
                 </div>
 
@@ -1231,10 +1301,11 @@ function CheckoutModal({
                   <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>KOND.LASER.MP</span></div>
                   <div>
                     <button
+                      className="btn-copy"
                       onClick={() => { navigator.clipboard?.writeText('KOND.LASER.MP'); createToast('Alias copiado', 'success') }}
                       aria-label="Copiar alias"
                       title="Copiar alias"
-                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, padding: 6, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}
+                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       {/* clipboard icon */}
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
