@@ -382,8 +382,32 @@ function Marketing() {
         </header>
 
         <main className={styles.main}>
+          {/* Toolbar arriba */}
+          <div className={styles.toolbar}>
+            <div className={styles.search}>
+              <input
+                type="search"
+                className={styles.input}
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className={styles.actions}>
+              {currentTab === 'promotions' ? (
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openPromoModal()}>
+                  + Nueva promoción
+                </button>
+              ) : (
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openCouponModal()}>
+                  + Nuevo cupón
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Tabs */}
           <div className={styles.sectionHead}>
-            {/* Tabs */}
             <div className={styles.tabs}>
               <button
                 className={`${styles.tabBtn} ${currentTab === 'promotions' ? styles.active : ''}`}
@@ -397,29 +421,6 @@ function Marketing() {
               >
                 🎫 Cupones
               </button>
-            </div>
-
-            <div className={styles.toolbar}>
-              <div className={styles.search}>
-                <input
-                  type="search"
-                  className={styles.input}
-                  placeholder="Buscar..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className={styles.actions}>
-                {currentTab === 'promotions' ? (
-                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openPromoModal()}>
-                    + Nueva promoción
-                  </button>
-                ) : (
-                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openCouponModal()}>
-                    + Nuevo cupón
-                  </button>
-                )}
-              </div>
             </div>
           </div>
 

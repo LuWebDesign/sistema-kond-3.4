@@ -243,18 +243,22 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           position: 'relative'
         }}>
           {/* Header con notificaciones y usuario */}
-          <div style={{
-            position: 'sticky',
-            top: 0,
-            right: 0,
-            zIndex: 100,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '12px 20px',
-            background: 'var(--bg-primary)',
-            borderBottom: '1px solid var(--border-color)'
-          }}>
+          <div 
+            className="admin-header"
+            style={{
+              position: 'sticky',
+              top: 0,
+              right: 0,
+              zIndex: 100,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '12px 20px',
+              background: 'var(--bg-primary)',
+              borderBottom: '1px solid var(--border-color)',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
             {/* Botón hamburguesa para mobile */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -448,7 +452,17 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
         /* Responsive */
         @media (max-width: 768px) {
           .sidebar {
-            width: 200px !important;
+            width: 240px !important;
+            padding: 16px !important;
+          }
+
+          .admin-header {
+            padding: 10px 12px !important;
+            gap: 8px !important;
+          }
+
+          .user-info div:last-child {
+            display: none !important;
           }
         }
 
@@ -456,6 +470,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           /* Mostrar botón hamburguesa en mobile */
           .hamburger-btn {
             display: block !important;
+            margin-right: auto;
           }
 
           /* Sidebar como overlay deslizable */
@@ -486,7 +501,22 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             width: 100%;
           }
 
+          /* Header más compacto */
+          .admin-header {
+            padding: 8px !important;
+          }
+
           /* Ocultar información de usuario en mobile */
+          .user-info {
+            font-size: 0.75rem !important;
+          }
+
+          .user-info > div:first-child > span:not(:first-child):not(:last-child) {
+            display: none !important;
+          }
+        }
+
+        @media (max-width: 400px) {
           .user-info {
             display: none !important;
           }

@@ -3,6 +3,7 @@ import withAdminAuth from '../components/withAdminAuth'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
 import { getAllProductos, updateProducto, deleteProducto } from '../utils/supabaseProducts'
+import styles from '../styles/pedidos-catalogo.module.css'
 
 function Database() {
   const [products, setProducts] = useState([])
@@ -16,6 +17,7 @@ function Database() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [materials, setMaterials] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
   // Cargar productos desde Supabase
   const loadProducts = useCallback(async () => {
@@ -425,14 +427,18 @@ function Database() {
         )}
 
         {/* Controles y Filtros */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '24px'
-        }}>
-          <div style={{
+        <div className={styles.filtersSection}>
+          <button 
+            className={styles.filtersToggle}
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            aria-expanded={isFiltersOpen}
+          >
+            <span className={styles.filtersTitle}>🔍 Búsqueda y Filtros</span>
+            <span className={styles.filtersToggleIcon}>{isFiltersOpen ? '▼' : '▶'}</span>
+          </button>
+          
+          <div className={`${styles.filtersContent} ${isFiltersOpen ? styles.filtersContentOpen : ''}`}>
+            <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px',
@@ -591,6 +597,7 @@ function Database() {
             >
               📊 Exportar CSV
             </button>
+          </div>
           </div>
         </div>
 

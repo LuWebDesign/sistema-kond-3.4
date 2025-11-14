@@ -80,13 +80,14 @@ function Admin() {
 
   return (
     <Layout title="Panel Administrativo - Sistema KOND">
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{
+        <div className="admin-header-section" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          marginBottom: '32px'
+          marginBottom: '32px',
+          gap: '16px'
         }}>
           <div>
             <h1 style={{
@@ -105,7 +106,7 @@ function Admin() {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="admin-header-buttons" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <button
               onClick={openHomePage}
               style={{
@@ -149,14 +150,14 @@ function Admin() {
         </div>
 
         {/* Grid principal */}
-        <div style={{
+        <div className="admin-grid-main" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '24px',
           marginBottom: '32px'
         }}>
           {/* Información del Usuario */}
-          <div style={{
+          <div className="admin-card" style={{
             background: 'var(--bg-card)',
             padding: '24px',
             borderRadius: '12px',
@@ -209,7 +210,7 @@ function Admin() {
               </div>
             </div>
             
-            <div style={{
+            <div className="admin-user-details" style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '16px'
@@ -283,7 +284,7 @@ function Admin() {
           </div>
 
           {/* Estadísticas del Sistema */}
-          <div style={{
+          <div className="admin-card" style={{
             background: 'var(--bg-card)',
             padding: '24px',
             borderRadius: '12px',
@@ -297,7 +298,7 @@ function Admin() {
               📊 Resumen del Sistema
             </h3>
             
-            <div style={{
+            <div className="admin-stats-grid" style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '16px'
@@ -367,13 +368,13 @@ function Admin() {
         </div>
 
         {/* Información del Sistema y Credenciales */}
-        <div style={{
+        <div className="admin-grid-secondary" style={{
           display: 'grid',
           gridTemplateColumns: '2fr 1fr',
           gap: '24px'
         }}>
           {/* Información del Sistema */}
-          <div style={{
+          <div className="admin-card" style={{
             background: 'var(--bg-card)',
             padding: '24px',
             borderRadius: '12px',
@@ -586,9 +587,9 @@ function Admin() {
             🚀 Accesos Rápidos
           </h3>
           
-          <div style={{
+          <div className="quick-access-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: '1fr 1fr',
             gap: '16px'
           }}>
             <button
@@ -681,6 +682,82 @@ function Admin() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .admin-container {
+            padding: 12px !important;
+          }
+
+          .admin-header-section {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+
+          .admin-header-section h1 {
+            font-size: 1.5rem !important;
+          }
+
+          .admin-header-section p {
+            font-size: 0.9rem !important;
+          }
+
+          .admin-header-buttons {
+            justify-content: stretch;
+          }
+
+          .admin-header-buttons button {
+            flex: 1;
+            padding: 10px 16px !important;
+            font-size: 0.85rem !important;
+          }
+
+          .admin-grid-main,
+          .admin-grid-secondary {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+
+          .admin-card {
+            padding: 16px !important;
+          }
+
+          .admin-user-details {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+
+          .admin-stats-grid {
+            gap: 12px !important;
+          }
+
+          .admin-stats-grid > div > div:first-child {
+            font-size: 1.5rem !important;
+          }
+
+          .quick-access-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .admin-container {
+            padding: 8px !important;
+          }
+
+          .admin-header-section h1 {
+            font-size: 1.3rem !important;
+          }
+
+          .admin-header-buttons button span:last-child {
+            display: none;
+          }
+
+          .admin-stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+          }
+        }
+      `}</style>
     </Layout>
   )
 }

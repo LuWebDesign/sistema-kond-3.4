@@ -102,6 +102,8 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
 }
 
 function OrdersStats({ orders, filteredOrders }) {
+  const [isOpen, setIsOpen] = useState(false)
+  
   // Calcular estadísticas
   const totalOrders = filteredOrders.length
   const pendingOrders = filteredOrders.filter(o => o.estado === 'pendiente').length
@@ -127,23 +129,20 @@ function OrdersStats({ orders, filteredOrders }) {
   }).length
 
   return (
-    <div style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: '24px'
-    }}>
-      <h3 style={{
-        fontSize: '1.1rem',
-        fontWeight: 600,
-        color: 'var(--text-primary)',
-        marginBottom: '16px'
-      }}>
-        📊 Estadísticas de Pedidos
-      </h3>
+    <div className={styles.statsSection}>
+      <button 
+        className={styles.statsToggle}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <h3 className={styles.statsTitle}>
+          📊 Estadísticas de Pedidos
+        </h3>
+        <span className={styles.statsToggleIcon}>{isOpen ? '▼' : '▶'}</span>
+      </button>
 
-      <div style={{
+      <div className={`${styles.statsContent} ${isOpen ? styles.statsContentOpen : ''}`}>
+        <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '16px'
@@ -255,6 +254,7 @@ function OrdersStats({ orders, filteredOrders }) {
           </div>
         </div>
       </div>
+      </div>
     </div>
   )
 }
@@ -273,6 +273,8 @@ function PedidosCatalogo() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isDeliveredFiltersOpen, setIsDeliveredFiltersOpen] = useState(false)
   
   // Ref para prevenir re-apertura del modal al cerrar
   const isClosingModalRef = useRef(false)
@@ -1468,67 +1470,80 @@ function PedidosCatalogo() {
         {/* Contenido Pendientes */}
         {activeSubtab === 'pendientes' && (
           <div className={styles.content}>
-            {/* Filtros */}
-            <div className={styles.filters}>
-              <input
-                type="text"
-                placeholder="🔍 Buscar por ID, cliente o teléfono..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className={styles.searchInput}
-              />
+            {/* Filtros colapsables */}
+            <div className={styles.filtersSection}>
+              <button 
+                className={styles.filtersToggle}
+                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                aria-expanded={isFiltersOpen}
+              >
+                <span className={styles.filtersTitle}>🔍 Búsqueda y Filtros</span>
+                <span className={styles.filtersToggleIcon}>{isFiltersOpen ? '▼' : '▶'}</span>
+              </button>
               
-              <select
-                value={filters.estado}
-                onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-                className={styles.select}
-              >
-                <option value="all">Todos los estados</option>
-                <option value="pendiente">⏳ Pendiente</option>
-                <option value="confirmado">✅ Confirmado</option>
-                <option value="en_preparacion">🔧 En Preparación</option>
-                <option value="listo">📦 Listo</option>
-                <option value="entregado">🎉 Entregado</option>
-                <option value="cancelado">❌ Cancelado</option>
-              </select>
-              
-              <select
-                value={filters.estadoPago}
-                onChange={(e) => setFilters({ ...filters, estadoPago: e.target.value })}
-                className={styles.select}
-              >
-                <option value="all">Todos los pagos</option>
-                <option value="sin_seña">Sin Seña</option>
-                <option value="seña_pagada">Seña Pagada</option>
-                <option value="pagado_total">Pagado Total</option>
-              </select>
+              <div className={`${styles.filtersContent} ${isFiltersOpen ? styles.filtersContentOpen : ''}`}>
+                <div className={styles.filters}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Buscar por ID, cliente o teléfono..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className={styles.searchInput}
+                  />
+                  
+                  <select
+                    value={filters.estado}
+                    onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+                    className={styles.select}
+                  >
+                    <option value="all">Todos los estados</option>
+                    <option value="pendiente">⏳ Pendiente</option>
+                    <option value="confirmado">✅ Confirmado</option>
+                    <option value="en_preparacion">🔧 En Preparación</option>
+                    <option value="listo">📦 Listo</option>
+                    <option value="entregado">🎉 Entregado</option>
+                    <option value="cancelado">❌ Cancelado</option>
+                  </select>
+                  
+                  <select
+                    value={filters.estadoPago}
+                    onChange={(e) => setFilters({ ...filters, estadoPago: e.target.value })}
+                    className={styles.select}
+                  >
+                    <option value="all">Todos los pagos</option>
+                    <option value="sin_seña">Sin Seña</option>
+                    <option value="seña_pagada">Seña Pagada</option>
+                    <option value="pagado_total">Pagado Total</option>
+                  </select>
 
-              <select
-                value={filters.metodoPago}
-                onChange={(e) => setFilters({ ...filters, metodoPago: e.target.value })}
-                className={styles.select}
-              >
-                <option value="all">Todos los métodos</option>
-                <option value="transferencia">💳 Transferencia</option>
-                <option value="whatsapp">💬 WhatsApp</option>
-                <option value="retiro">🏪 Retiro</option>
-              </select>
+                  <select
+                    value={filters.metodoPago}
+                    onChange={(e) => setFilters({ ...filters, metodoPago: e.target.value })}
+                    className={styles.select}
+                  >
+                    <option value="all">Todos los métodos</option>
+                    <option value="transferencia">💳 Transferencia</option>
+                    <option value="whatsapp">💬 WhatsApp</option>
+                    <option value="retiro">🏪 Retiro</option>
+                  </select>
 
-              <input
-                type="date"
-                placeholder="Fecha desde"
-                value={filters.dateFrom}
-                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                className={styles.dateInput}
-              />
+                  <input
+                    type="date"
+                    placeholder="Fecha desde"
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    className={styles.dateInput}
+                  />
 
-              <input
-                type="date"
-                placeholder="Fecha hasta"
-                value={filters.dateTo}
-                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                className={styles.dateInput}
-              />
+                  <input
+                    type="date"
+                    placeholder="Fecha hasta"
+                    value={filters.dateTo}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    className={styles.dateInput}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Lista de pedidos */}
@@ -1604,61 +1619,74 @@ function PedidosCatalogo() {
         {/* Contenido Entregados */}
         {activeSubtab === 'entregados' && (
           <div className={styles.content}>
-            {/* Filtros */}
-            <div className={styles.filters}>
-              <input
-                type="text"
-                placeholder="🔍 Buscar por ID, cliente o teléfono..."
-                value={deliveredFilters.search}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, search: e.target.value })}
-                className={styles.searchInput}
-              />
+            {/* Filtros colapsables */}
+            <div className={styles.filtersSection}>
+              <button 
+                className={styles.filtersToggle}
+                onClick={() => setIsDeliveredFiltersOpen(!isDeliveredFiltersOpen)}
+                aria-expanded={isDeliveredFiltersOpen}
+              >
+                <span className={styles.filtersTitle}>🔍 Búsqueda y Filtros</span>
+                <span className={styles.filtersToggleIcon}>{isDeliveredFiltersOpen ? '▼' : '▶'}</span>
+              </button>
               
-              <select
-                value={deliveredFilters.estadoPago}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, estadoPago: e.target.value })}
-                className={styles.select}
-              >
-                <option value="all">Todos los pagos</option>
-                <option value="sin_seña">Sin Seña</option>
-                <option value="seña_pagada">Seña Pagada</option>
-                <option value="pagado_total">Pagado Total</option>
-              </select>
+              <div className={`${styles.filtersContent} ${isDeliveredFiltersOpen ? styles.filtersContentOpen : ''}`}>
+                <div className={styles.filters}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Buscar por ID, cliente o teléfono..."
+                    value={deliveredFilters.search}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, search: e.target.value })}
+                    className={styles.searchInput}
+                  />
+                  
+                  <select
+                    value={deliveredFilters.estadoPago}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, estadoPago: e.target.value })}
+                    className={styles.select}
+                  >
+                    <option value="all">Todos los pagos</option>
+                    <option value="sin_seña">Sin Seña</option>
+                    <option value="seña_pagada">Seña Pagada</option>
+                    <option value="pagado_total">Pagado Total</option>
+                  </select>
 
-              <select
-                value={deliveredFilters.metodoPago}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, metodoPago: e.target.value })}
-                className={styles.select}
-              >
-                <option value="all">Todos los métodos</option>
-                <option value="transferencia">💳 Transferencia</option>
-                <option value="whatsapp">💬 WhatsApp</option>
-                <option value="retiro">🏪 Retiro</option>
-              </select>
+                  <select
+                    value={deliveredFilters.metodoPago}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, metodoPago: e.target.value })}
+                    className={styles.select}
+                  >
+                    <option value="all">Todos los métodos</option>
+                    <option value="transferencia">💳 Transferencia</option>
+                    <option value="whatsapp">💬 WhatsApp</option>
+                    <option value="retiro">🏪 Retiro</option>
+                  </select>
 
-              <input
-                type="date"
-                value={deliveredFilters.fecha}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, fecha: e.target.value })}
-                className={styles.dateInput}
-                placeholder="Fecha específica"
-              />
+                  <input
+                    type="date"
+                    value={deliveredFilters.fecha}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, fecha: e.target.value })}
+                    className={styles.dateInput}
+                    placeholder="Fecha específica"
+                  />
 
-              <input
-                type="date"
-                placeholder="Fecha desde"
-                value={deliveredFilters.dateFrom}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateFrom: e.target.value })}
-                className={styles.dateInput}
-              />
+                  <input
+                    type="date"
+                    placeholder="Fecha desde"
+                    value={deliveredFilters.dateFrom}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateFrom: e.target.value })}
+                    className={styles.dateInput}
+                  />
 
-              <input
-                type="date"
-                placeholder="Fecha hasta"
-                value={deliveredFilters.dateTo}
-                onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateTo: e.target.value })}
-                className={styles.dateInput}
-              />
+                  <input
+                    type="date"
+                    placeholder="Fecha hasta"
+                    value={deliveredFilters.dateTo}
+                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateTo: e.target.value })}
+                    className={styles.dateInput}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Lista de pedidos */}

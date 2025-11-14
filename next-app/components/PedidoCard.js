@@ -189,18 +189,6 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
         <div className={styles.pedidoHeaderRight}>
           <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
-
-          <div className={styles.headerDates}>
-            <div className={styles.fechaInfo}>
-              <small className={styles.metaLabel}>Producción:</small>
-              <div>{produccionDate ? formatDate(produccionDate) : 'Sin asignar'}</div>
-            </div>
-
-            <div className={styles.fechaInfo}>
-              <small className={styles.metaLabel}>Entrega:</small>
-              <div>{entregaDate ? formatDate(entregaDate) : 'Sin confirmar'}</div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -215,23 +203,21 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                   const materialInfo = productData?.material ? getMaterialInfo(productData.material, productData.materialId) : null
                   return (
                     <div key={index} className={styles.productoItemCompact}>
-                      <div className={styles.productoLine}>
-                        <div className={styles.productoLineLeft}>
-                          <span className={styles.productoNombreCompact}>{prod.nombre}</span>
-                          <span className={styles.productoUnidades}>×{prod.cantidad || 1}</span>
-                          {prod.medidas && <span className={styles.productoMedidas}>· {prod.medidas}</span>}
-                          {materialInfo ? (
-                            <span className={styles.productoMaterialCompact}>· Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm</span>
-                          ) : (productData?.material && (
-                            <span className={styles.productoMaterialCompact}>· {productData.material}{productData.espesor ? ` (${productData.espesor}mm)` : ''}</span>
-                          ))}
+                      <div className={styles.productoNombreWrapper}>
+                        <div className={styles.productoNombreCompact}>
+                          {prod.nombre}
+                          {prod.medidas && <span className={styles.productoMedidas}> • {prod.medidas}</span>}
                         </div>
-
-                        <div className={styles.productoLineRight}>
-                          <div className={styles.precioUnitWrap}>
-                            <div className={styles.precioUnitSmallLabel}>Precio unitario</div>
-                            <div className={styles.precioUnitSmall}>{formatCurrency(prod.precioUnitario)}</div>
+                        <div className={styles.productoInfoSecondary}>
+                          <div className={styles.productoUnidadesMaterialCol}>
+                            <span className={styles.productoUnidades}>Unidades: {prod.cantidad || 1}</span>
+                            {materialInfo ? (
+                              <span className={styles.productoMaterialCompact}>Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm</span>
+                            ) : (productData?.material && (
+                              <span className={styles.productoMaterialCompact}>{productData.material}{productData.espesor ? ` (${productData.espesor}mm)` : ''}</span>
+                            ))}
                           </div>
+                          <span className={styles.productoPrecioInline}>Precio unit: {formatCurrency(prod.precioUnitario)}</span>
                         </div>
                       </div>
                       {/* ocultamos el tiempo por producto aquí para evitar duplicados con el tiempo total; si se quiere mostrar, usar tooltip o detalle */}
@@ -258,12 +244,27 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
         <div className={styles.pedidoRightSummary}>
           {/* información financiera compacta: Total, Seña, Restante */}
-          <div className={`${styles.totalFloatingRight} ${styles.restanteSmall}`} aria-hidden="false">
-            <span className={styles.totalLabel}>Total</span>
-            <span className={styles.totalAmount}>{formatCurrency(pedido.total)}</span>
+          <div className={styles.totalRestanteColumn}>
+            <div className={`${styles.totalFloatingRight} ${styles.restanteSmall}`} aria-hidden="false">
+              <span className={styles.totalLabel}>Total</span>
+              <span className={styles.totalAmount}>{formatCurrency(pedido.total)}</span>
+            </div>
+            <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>
+            
+            {/* Fechas de producción y entrega */}
+            <div className={styles.headerDates}>
+              <div className={styles.fechaInfo}>
+                <small className={styles.metaLabel}>Producción:</small>
+                <div>{produccionDate ? formatDate(produccionDate) : 'Sin asignar'}</div>
+              </div>
+
+              <div className={styles.fechaInfo}>
+                <small className={styles.metaLabel}>Entrega:</small>
+                <div>{entregaDate ? formatDate(entregaDate) : 'Sin confirmar'}</div>
+              </div>
+            </div>
           </div>
           <div className={`${styles.señaInfoSmall} ${styles.restanteSmall}`}><span>Seña: {formatCurrency(seña || 0)}</span></div>
-          <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>
         </div>
       </div>
 

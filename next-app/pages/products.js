@@ -2058,7 +2058,9 @@ function ProductCard({
   const materialData = getMaterialData()
 
   return (
-    <div style={{
+    <div 
+      className="product-card-admin"
+      style={{
       background: 'var(--bg-secondary)',
       border: '1px solid var(--border-color)',
       borderRadius: '8px',
@@ -2068,105 +2070,14 @@ function ProductCard({
       borderColor: isEditing ? '#3b82f6' : 'var(--border-color)'
     }}>
       {/* Header con información resumida */}
-      <div style={{
+      <div className="product-card-header" style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        flexDirection: 'column',
+        gap: '12px',
         marginBottom: isExpanded ? '16px' : '0'
       }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)'
-            }}>
-              {product.nombre}
-            </h3>
-            <span style={{
-              background: getTypeColor(product.tipo) + '20',
-              color: getTypeColor(product.tipo),
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontSize: '0.7rem',
-              fontWeight: 500
-            }}>
-              {product.tipo}
-            </span>
-            {product.publicado && (
-              <span style={{
-                background: '#10b98120',
-                color: '#10b981',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 500
-              }}>
-                Público
-              </span>
-            )}
-            {isEditing && (
-              <span style={{
-                background: '#3b82f620',
-                color: '#3b82f6',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 500
-              }}>
-                ✏️ Editando
-              </span>
-            )}
-          </div>
-          
-          {/* Información resumida cuando está colapsada (versión compacta) */}
-          {!isExpanded && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: 'var(--text-secondary)',
-              fontSize: '0.95rem',
-              marginTop: '8px',
-              flexWrap: 'wrap'
-            }}>
-              {/* Material, Tipo y Espesor */}
-              <span>
-                <strong style={{ color: 'var(--text-primary)' }}>
-                  {materialData ? materialData.nombre : 'Sin material'}
-                </strong> • {materialData ? (materialData.tipo || 'Sin tipo') : 'Sin tipo'} 
-                {materialData && materialData.espesor && ` • ${materialData.espesor}`}
-              </span>
-              <span>•</span>
-              {/* Precio por unidad */}
-              <span>
-                <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/unit
-              </span>
-              {precioPorMinuto > 0 && (
-                <>
-                  <span>•</span>
-                  <span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(precioPorMinuto)}</strong>/min
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-          
-          {isExpanded && !isEditing && (
-            <p style={{
-              margin: '0 0 8px 0',
-              color: 'var(--text-secondary)',
-              fontSize: '0.9rem'
-            }}>
-              ID: {product.id} • {product.categoria} • {product.medidas} • Creado: {product.fechaCreacion ? new Date(product.fechaCreacion).toLocaleDateString() : '—'}
-              {product.publicado ? ' • Público' : ''}
-            </p>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {/* Botones de acción arriba */}
+        <div className="product-card-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {isEditing ? (
             <>
               <button
@@ -2257,15 +2168,113 @@ function ProductCard({
                   padding: '6px',
                   cursor: 'pointer',
                   color: 'var(--text-primary)',
-                  fontSize: '1.2rem',
-                  fontWeight: 'bold',
-                  minWidth: '28px'
+                  marginLeft: 'auto'
                 }}
-                title={isExpanded ? 'Colapsar tarjeta' : 'Expandir tarjeta'}
+                title={isExpanded ? 'Colapsar' : 'Expandir'}
               >
-                {isExpanded ? '−' : '+'}
+                {isExpanded ? '▲' : '▼'}
               </button>
             </>
+          )}
+        </div>
+
+        {/* Nombre y badges */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="product-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)'
+            }}>
+              {product.nombre}
+            </h3>
+            {isEditing && (
+              <span style={{
+                background: '#3b82f620',
+                color: '#3b82f6',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                fontWeight: 500
+              }}>
+                ✏️ Editando
+              </span>
+            )}
+          </div>
+          
+          {/* Información resumida cuando está colapsada (versión compacta) */}
+          {!isExpanded && (
+            <>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                marginTop: '8px',
+                color: 'var(--text-secondary)',
+                fontSize: '0.95rem'
+              }}>
+                {/* Material, Tipo y Espesor */}
+                <div>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {materialData ? materialData.nombre : 'Sin material'}
+                  </strong> • {materialData ? (materialData.tipo || 'Sin tipo') : 'Sin tipo'} 
+                  {materialData && materialData.espesor && ` • ${materialData.espesor}`}
+                </div>
+                
+                {/* Precios */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span>
+                    <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(product.precioUnitario || 0)}</strong>/unit
+                  </span>
+                  {precioPorMinuto > 0 && (
+                    <>
+                      <span>•</span>
+                      <span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(precioPorMinuto)}</strong>/min
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {/* Badges de estado debajo de los precios */}
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px' }}>
+                <span style={{
+                  background: getTypeColor(product.tipo) + '20',
+                  color: getTypeColor(product.tipo),
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 500
+                }}>
+                  {product.tipo}
+                </span>
+                {product.publicado && (
+                  <span style={{
+                    background: '#10b98120',
+                    color: '#10b981',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
+                    fontWeight: 500
+                  }}>
+                    Público
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+          
+          {isExpanded && !isEditing && (
+            <p style={{
+              margin: '0 0 8px 0',
+              color: 'var(--text-secondary)',
+              fontSize: '0.9rem'
+            }}>
+              ID: {product.id} • {product.categoria} • {product.medidas} • Creado: {product.fechaCreacion ? new Date(product.fechaCreacion).toLocaleDateString() : '—'}
+              {product.publicado ? ' • Público' : ''}
+            </p>
           )}
         </div>
       </div>
@@ -3051,3 +3060,68 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
 
 // Exportar componente protegido con autenticación de admin
 export default withAdminAuth(Products)
+
+// Estilos CSS para responsive
+const styles = `
+<style jsx global>{\`
+  @media (max-width: 768px) {
+    .product-card-admin {
+      padding: 12px !important;
+    }
+
+    .product-card-header {
+      gap: 10px !important;
+    }
+
+    .product-card-title h3 {
+      font-size: 1rem !important;
+    }
+
+    .product-card-title span {
+      font-size: 0.65rem !important;
+      padding: 2px 4px !important;
+    }
+
+    .product-card-actions button {
+      padding: 8px 10px !important;
+      font-size: 0.75rem !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .product-card-admin {
+      padding: 10px !important;
+    }
+
+    .product-card-header {
+      gap: 8px !important;
+    }
+
+    .product-card-title {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px !important;
+    }
+
+    .product-card-title h3 {
+      font-size: 0.95rem !important;
+      line-height: 1.3 !important;
+    }
+
+    .product-card-actions {
+      gap: 6px !important;
+    }
+
+    .product-card-actions button {
+      flex: 1;
+      min-width: 40px;
+      padding: 6px 8px !important;
+    }
+
+    .product-card-actions button:first-child,
+    .product-card-actions button:nth-child(2) {
+      min-width: 80px;
+    }
+  }
+\`}</style>
+`
