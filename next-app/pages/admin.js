@@ -491,9 +491,12 @@ function Admin() {
             <h3 style={{
               color: 'var(--text-primary)',
               margin: '0 0 20px 0',
-              fontSize: '1.1rem'
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
-              🔑 Credenciales de Acceso
+              🔐 Credenciales de Acceso
             </h3>
             
             <div style={{
@@ -506,67 +509,144 @@ function Admin() {
               <h4 style={{
                 color: 'var(--text-primary)',
                 margin: '0 0 12px 0',
-                fontSize: '0.95rem'
+                fontSize: '0.95rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                👤 Administrador
+                👑 Administrador Principal
               </h4>
               <div style={{
                 fontFamily: 'monospace',
                 background: 'var(--bg-input)',
                 padding: '12px',
                 borderRadius: '6px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid var(--border-color)',
+                marginBottom: '12px'
               }}>
                 <div style={{
                   color: 'var(--text-secondary)',
                   fontSize: '0.8rem',
-                  marginBottom: '4px'
+                  marginBottom: '4px',
+                  fontFamily: 'inherit'
                 }}>
                   Usuario:
                 </div>
                 <div style={{
                   color: 'var(--accent-blue)',
                   fontWeight: 600,
-                  marginBottom: '8px'
+                  marginBottom: '8px',
+                  fontSize: '0.9rem'
                 }}>
-                  admin1
+                  admin
                 </div>
                 <div style={{
                   color: 'var(--text-secondary)',
                   fontSize: '0.8rem',
-                  marginBottom: '4px'
+                  marginBottom: '4px',
+                  fontFamily: 'inherit'
                 }}>
                   Contraseña:
                 </div>
                 <div style={{
                   color: 'var(--accent-blue)',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  fontSize: '0.9rem'
                 }}>
-                  kond
+                  kond2025
                 </div>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '12px'
+              }}>
+                <button
+                  onClick={() => navigator.clipboard.writeText('admin')}
+                  style={{
+                    flex: 1,
+                    background: 'var(--accent-blue)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.target.style.opacity = '1'}
+                >
+                  📋 Copiar Usuario
+                </button>
+                <button
+                  onClick={() => navigator.clipboard.writeText('kond2025')}
+                  style={{
+                    flex: 1,
+                    background: 'var(--accent-secondary)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.target.style.opacity = '1'}
+                >
+                  📋 Copiar Contraseña
+                </button>
               </div>
             </div>
             
             <div style={{
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid var(--accent-blue)',
-              borderRadius: '6px',
-              padding: '12px'
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05))',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '8px',
+              padding: '16px'
             }}>
               <div style={{
                 color: 'var(--accent-blue)',
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                marginBottom: '4px'
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                💡 Información
+                🔒 Información de Seguridad
               </div>
               <div style={{
                 color: 'var(--text-secondary)',
-                fontSize: '0.8rem',
-                lineHeight: 1.4
+                fontSize: '0.85rem',
+                lineHeight: 1.5,
+                marginBottom: '12px'
               }}>
-                Estas credenciales se utilizan en el modal de login de <code>/home</code> para acceder al sistema administrativo.
+                Estas credenciales se utilizan para acceder al sistema administrativo desde la página de inicio (<code>/home</code>). 
+                Se recomienda cambiar la contraseña periódicamente por seguridad.
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#10b981' }}>✓</span>
+                  <span>Acceso completo a todas las funciones administrativas</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#10b981' }}>✓</span>
+                  <span>Gestión de productos, pedidos y usuarios</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#f59e0b' }}>⚠</span>
+                  <span>No compartir estas credenciales</span>
+                </div>
               </div>
             </div>
           </div>
