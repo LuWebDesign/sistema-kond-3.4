@@ -538,7 +538,7 @@ function Admin() {
                   marginBottom: '8px',
                   fontSize: '0.9rem'
                 }}>
-                  admin
+                  admin@kond.local
                 </div>
                 <div style={{
                   color: 'var(--text-secondary)',
@@ -553,7 +553,7 @@ function Admin() {
                   fontWeight: 600,
                   fontSize: '0.9rem'
                 }}>
-                  kond2025
+                  KondAdmin!2025
                 </div>
               </div>
               
@@ -563,7 +563,7 @@ function Admin() {
                 marginBottom: '12px'
               }}>
                 <button
-                  onClick={() => navigator.clipboard.writeText('admin')}
+                  onClick={() => navigator.clipboard.writeText('admin@kond.local')}
                   style={{
                     flex: 1,
                     background: 'var(--accent-blue)',
@@ -581,7 +581,7 @@ function Admin() {
                   📋 Copiar Usuario
                 </button>
                 <button
-                  onClick={() => navigator.clipboard.writeText('kond2025')}
+                  onClick={() => navigator.clipboard.writeText('KondAdmin!2025')}
                   style={{
                     flex: 1,
                     background: 'var(--accent-secondary)',
