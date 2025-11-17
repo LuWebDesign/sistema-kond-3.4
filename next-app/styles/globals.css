@@ -231,6 +231,37 @@ body[data-theme="light"] {
   color: var(--text-primary);
 }
 
+/* Variables del tema oscuro */
+body[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-input: #475569;
+  
+  --accent-primary: #e2e8f0;
+  --person-color: #f1f5f9;
+  --accent-secondary: #4ade80;
+  --accent-blue: #3b82f6;
+  --accent-purple: #a78bfa;
+  
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.5);
+
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
