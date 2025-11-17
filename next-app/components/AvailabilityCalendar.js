@@ -20,7 +20,7 @@ export default function AvailabilityCalendar({
   const [pendingDate, setPendingDate] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
   
-  const maxDailyCapacity = 480 // 8 horas en minutos
+  const maxDailyCapacity = 480 * 60 // 8 horas en segundos
   const cartTime = calculateTotalProductionTime(cart)
   
   useEffect(() => {
@@ -267,15 +267,13 @@ export default function AvailabilityCalendar({
         
         .calendar-day.available,
         .calendar-day-grid .calendar-day.available {
-          background: var(--accent-available, #059669); /* fallback verde */
+          background: var(--accent-blue, #3b82f6);
           color: white;
-          border: 1px solid rgba(0,0,0,0.06);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+          border: 1px solid rgba(59,130,246,0.9);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.12);
         }
 
-        /* En el checkout queremos que los días disponibles se muestren en azul.
-           Hay varias variantes del nombre del grid en el código (.calendar-days-grid,
-           .calendar-day-grid) así que incluimos todas para evitar fallback a verde. */
+        /* En el checkout queremos que los días disponibles se muestren en azul con más intensidad */
         .availability-calendar.checkout-calendar .calendar-day.available,
         .calendar-day-grid.checkout-calendar .calendar-day.available,
         .calendar-days-grid.checkout-calendar .calendar-day.available,
@@ -284,9 +282,9 @@ export default function AvailabilityCalendar({
         .calendar-day-grid .checkout-calendar .calendar-day.available,
         .calendar-days-grid .checkout-calendar .calendar-day.available {
           background: var(--accent-blue, #3b82f6) !important;
-          color: white;
-          border: 1px solid rgba(59,130,246,0.9);
-          box-shadow: 0 6px 18px rgba(59,130,246,0.12);
+          color: white !important;
+          border: 1px solid rgba(59,130,246,0.9) !important;
+          box-shadow: 0 6px 18px rgba(59,130,246,0.12) !important;
         }
         
         .calendar-day.available:hover,

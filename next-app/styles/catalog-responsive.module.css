@@ -24,7 +24,7 @@
 .modalRight {
   padding: 20px;
   border-left: 1px solid var(--border-color);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  background: var(--bg-tertiary);
 }
 .myOrdersList {
   display: flex;

@@ -289,3 +289,130 @@ export async function updateUserProfile(userId, profileData) {
     return { data: null, error: error.message };
   }
 }
+
+// ============================================
+// GOOGLE OAUTH AUTHENTICATION
+// ============================================
+
+/**
+ * Login con Google OAuth
+ */
+export async function loginWithGoogle() {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/user` : undefined,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+
+    if (error) {
+      console.error('Error en login con Google:', error);
+      return { error: error.message, user: null, session: null };
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error en loginWithGoogle:', error);
+    return { error: error.message, user: null, session: null };
+  }
+}
+
+/**
+ * Manejar callback de OAuth después del login
+ */
+export async function handleOAuthCallback() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error('Error obteniendo sesión OAuth:', error);
+      return { error: error.message, user: null, session: null };
+    }
+
+    if (data.session) {
+      const user = data.session.user;
+
+      // Verificar si el usuario ya existe en nuestra tabla usuarios
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('email', user.email)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error verificando usuario existente:', fetchError);
+        return { error: fetchError.message, user: null, session: null };
+      }
+
+      if (!existingUser) {
+        // Crear nuevo usuario en nuestra tabla
+        const { data: newUser, error: insertError } = await supabase
+          .from('usuarios')
+          .insert({
+            email: user.email,
+            username: user.user_metadata?.full_name || user.email.split('@')[0],
+            nombre: user.user_metadata?.full_name?.split(' ')[0] || '',
+            apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: '',
+            direccion: '',
+            localidad: '',
+            cp: '',
+            provincia: '',
+            observaciones: 'Usuario registrado con Google OAuth',
+            rol: 'cliente',
+            activo: true,
+            fecha_creacion: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creando usuario OAuth:', insertError);
+          return { error: insertError.message, user: null, session: null };
+        }
+
+        // Guardar información del usuario en localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('kond-user', JSON.stringify({
+            id: newUser.id,
+            email: newUser.email,
+            username: newUser.username,
+            nombre: newUser.nombre,
+            apellido: newUser.apellido,
+            telefono: newUser.telefono,
+            rol: newUser.rol,
+            avatar_url: user.user_metadata?.avatar_url,
+          }));
+        }
+
+        return { data: { user: newUser, session: data.session }, error: null };
+      } else {
+        // Usuario ya existe, actualizar localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('kond-user', JSON.stringify({
+            id: existingUser.id,
+            email: existingUser.email,
+            username: existingUser.username,
+            nombre: existingUser.nombre,
+            apellido: existingUser.apellido,
+            telefono: existingUser.telefono,
+            rol: existingUser.rol,
+            avatar_url: user.user_metadata?.avatar_url,
+          }));
+        }
+
+        return { data: { user: existingUser, session: data.session }, error: null };
+      }
+    }
+
+    return { data: null, error: 'No se pudo obtener la sesión' };
+  } catch (error) {
+    console.error('Error en handleOAuthCallback:', error);
+    return { error: error.message, user: null, session: null };
+  }
+}

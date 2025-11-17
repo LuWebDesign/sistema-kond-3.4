@@ -2161,21 +2161,35 @@ function ProductCard({
                 🗑️
               </button>
 
-              <button
-                onClick={() => onToggleExpansion(product.id)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  padding: '6px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  marginLeft: 'auto'
-                }}
-                title={isExpanded ? 'Colapsar' : 'Expandir'}
-              >
-                {isExpanded ? '▲' : '▼'}
-              </button>
+              <div style={{
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-secondary)',
+                  fontWeight: 500
+                }}>
+                  ID: {product.id}
+                </span>
+                
+                <button
+                  onClick={() => onToggleExpansion(product.id)}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    padding: '6px',
+                    cursor: 'pointer',
+                    color: 'var(--text-primary)'
+                  }}
+                  title={isExpanded ? 'Colapsar' : 'Expandir'}
+                >
+                  {isExpanded ? '▲' : '▼'}
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -2207,12 +2221,13 @@ function ProductCard({
           
           {/* Información resumida cuando está colapsada (versión compacta) */}
           {!isExpanded && (
-            <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* Información del producto a la izquierda */}
               <div style={{
+                flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '6px',
-                marginTop: '8px',
                 color: 'var(--text-secondary)',
                 fontSize: '0.95rem'
               }}>
@@ -2240,8 +2255,50 @@ function ProductCard({
                 </div>
               </div>
               
-              {/* Badges de estado debajo de los precios */}
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px' }}>
+              {/* Imagen de previsualización a la derecha */}
+              <div style={{
+                flexShrink: 0,
+                width: '80px',
+                height: '80px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-tertiary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {product.imagen ? (
+                  <img
+                    src={product.imagen}
+                    alt={product.nombre}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.7rem',
+                    textAlign: 'center'
+                  }}>
+                    Sin imagen
+                  </div>
+                )}
+              </div>
+              
+              {/* Badges de estado debajo */}
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '12px', 
+                left: '16px', 
+                right: '16px',
+                display: 'flex', 
+                gap: '6px', 
+                alignItems: 'center' 
+              }}>
                 <span style={{
                   background: getTypeColor(product.tipo) + '20',
                   color: getTypeColor(product.tipo),
@@ -2265,7 +2322,7 @@ function ProductCard({
                   </span>
                 )}
               </div>
-            </>
+            </div>
           )}
           
           {isExpanded && !isEditing && (
@@ -2274,7 +2331,7 @@ function ProductCard({
               color: 'var(--text-secondary)',
               fontSize: '0.9rem'
             }}>
-              ID: {product.id} • {product.categoria} • {product.medidas} • Creado: {product.fechaCreacion ? new Date(product.fechaCreacion).toLocaleDateString() : '—'}
+              {product.categoria} • {product.medidas} • Creado: {product.fechaCreacion ? new Date(product.fechaCreacion).toLocaleDateString() : '—'}
               {product.publicado ? ' • Público' : ''}
             </p>
           )}
@@ -2462,38 +2519,6 @@ function ViewMode({ product }) {
                 </span>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {product.imagen && (
-        <div>
-          <h4 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '0.85rem', 
-            color: 'var(--text-secondary)',
-            textTransform: 'uppercase',
-            fontWeight: 600 
-          }}>
-            Imagen
-          </h4>
-          <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            border: '1px solid var(--border-color)'
-          }}>
-            <img 
-              src={product.imagen} 
-              alt={product.nombre}
-              loading="lazy"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
           </div>
         </div>
       )}
