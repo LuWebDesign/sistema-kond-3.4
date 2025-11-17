@@ -8,21 +8,22 @@ export const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Convertir tiempo HH:MM:SS a minutos
-export const timeToMinutes = (timeStr) => {
+// Convertir tiempo HH:MM:SS a segundos totales
+export const timeToSeconds = (timeStr) => {
   if (!timeStr) return 0
   const parts = timeStr.split(':')
   const hours = parseInt(parts[0]) || 0
   const minutes = parseInt(parts[1]) || 0
   const seconds = parseInt(parts[2]) || 0
-  return hours * 60 + minutes + Math.ceil(seconds / 60)
+  return hours * 3600 + minutes * 60 + seconds
 }
 
-// Convertir minutos a tiempo HH:MM
-export const minutesToTime = (minutes) => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+// Convertir segundos totales a tiempo HH:MM:SS
+export const secondsToTime = (totalSeconds) => {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
 // Escapar HTML para prevenir XSS
@@ -39,15 +40,15 @@ export const escapeHtml = (text) => {
 
 // Calcular tiempo total de producción del carrito
 export const calculateTotalProductionTime = (cart) => {
-  let totalMinutes = 0
+  let totalSeconds = 0
   
   cart.forEach(item => {
     const time = item.tiempoUnitario || '00:00:00'
-    const minutes = timeToMinutes(time)
-    totalMinutes += minutes * item.quantity
+    const seconds = timeToSeconds(time)
+    totalSeconds += seconds * item.quantity
   })
   
-  return totalMinutes
+  return totalSeconds
 }
 
 // Obtener capacidad disponible por día
@@ -56,7 +57,7 @@ export const getAvailableCapacityPerDay = () => {
   
   const pedidos = JSON.parse(localStorage.getItem('pedidos')) || []
   const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
-  const capacityPerDay = {} // { 'YYYY-MM-DD': minutosUsados }
+  const capacityPerDay = {} // { 'YYYY-MM-DD': segundosUsados }
 
   // Calcular tiempo usado por día
   pedidos.forEach(pedido => {
@@ -65,8 +66,8 @@ export const getAvailableCapacityPerDay = () => {
     const producto = productosBase.find(p => p.id === pedido.productoId)
     if (!producto) return
     
-    const minutes = timeToMinutes(producto.tiempoUnitario) * pedido.cantidad
-    capacityPerDay[pedido.fecha] = (capacityPerDay[pedido.fecha] || 0) + minutes
+    const seconds = timeToSeconds(producto.tiempoUnitario) * pedido.cantidad
+    capacityPerDay[pedido.fecha] = (capacityPerDay[pedido.fecha] || 0) + seconds
   })
 
   return capacityPerDay

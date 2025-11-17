@@ -2,7 +2,7 @@ import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { formatCurrency, timeToMinutes, minutesToTime, compressImage } from '../utils/catalogUtils'
+import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../utils/catalogUtils'
 import { 
   getAllProductos, 
   createProducto, 
@@ -168,11 +168,12 @@ function Products() {
     }
 
     // Calcular tiempo total
-    const tiempoMinutos = timeToMinutes(tiempoUnitario || '00:00:30')
-    const tiempoTotalMinutos = tiempoMinutos * unidades
-    newFields.tiempoTotal = minutesToTime(tiempoTotalMinutos)
+    const tiempoSegundos = timeToSeconds(tiempoUnitario || '00:00:30')
+    const tiempoTotalSegundos = tiempoSegundos * unidades
+    newFields.tiempoTotal = secondsToTime(tiempoTotalSegundos)
 
   // Calcular precio por minuto (siempre coherente con el precio actual)
+  const tiempoMinutos = tiempoSegundos / 60
   newFields.precioPorMinuto = tiempoMinutos > 0 ? precioUnitario / tiempoMinutos : 0
 
     setCalculatedFields(newFields)
@@ -1162,7 +1163,7 @@ function Products() {
                       name="usoPlacas"
                       value={formData.usoPlacas}
                       onChange={handleInputChange}
-                      onKeyDown={(e) => handleKeyDown(e, 'ensamble')}
+                      onKeyDown={(e) => handleKeyDown(e, 'materialId')}
                       readOnly={!calculatedFields.isUsoPlacasManual}
                       min="0"
                       style={{
@@ -1193,58 +1194,6 @@ function Products() {
                   </div>
                 </div>
 
-                {/* Ensamble */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Ensamble
-                  </label>
-                  <select
-                    name="ensamble"
-                    value={formData.ensamble}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'costoPlaca')}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="Sin ensamble">Sin ensamble</option>
-                    <option value="Manual">Manual</option>
-                    <option value="Automático">Automático</option>
-                  </select>
-                </div>
-
-                {/* Costo Placa */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Costo Placa ($)
-                  </label>
-                  <input
-                    type="number"
-                    name="costoPlaca"
-                    value={formData.costoPlaca}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'costoMaterial')}
-                    min="0"
-                    step="0.01"
-                    readOnly
-                    title="Este valor se extrae del material seleccionado"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-primary)',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
-
                 {/* Material (selección desde Materiales) */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
@@ -1263,7 +1212,7 @@ function Products() {
                           setFormData(prev => ({ ...prev, materialId: '', costoMaterial: 0, costoPlaca: 0 }))
                         }
                       }}
-                      onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
+                      onKeyDown={(e) => handleKeyDown(e, 'ensamble')}
                       style={{
                         flex: 1,
                         padding: '8px 12px',
@@ -1286,13 +1235,13 @@ function Products() {
                         type="button"
                         onClick={() => startEditingMaterial(formData.materialId)}
                         style={{
-                          padding: '8px 12px',
+                          padding: '2px 6px',
                           borderRadius: '6px',
                           border: '1px solid var(--border-color)',
                           background: 'var(--accent-blue)',
                           color: 'white',
                           cursor: 'pointer',
-                          fontSize: '0.9rem'
+                          fontSize: '0.7rem'
                         }}
                       >
                         ✏️ Editar
@@ -1418,11 +1367,63 @@ function Products() {
                             cursor: 'pointer'
                           }}
                         >
-                          Guardar Cambios
+                          Guardar
                         </button>
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Ensamble */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    Ensamble
+                  </label>
+                  <select
+                    name="ensamble"
+                    value={formData.ensamble}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'costoPlaca')}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <option value="Sin ensamble">Sin ensamble</option>
+                    <option value="Manual">Manual</option>
+                    <option value="Automático">Automático</option>
+                  </select>
+                </div>
+
+                {/* Costo Placa */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    Costo Placa ($)
+                  </label>
+                  <input
+                    type="number"
+                    name="costoPlaca"
+                    value={formData.costoPlaca}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
+                    min="0"
+                    step="0.01"
+                    readOnly
+                    title="Este valor se extrae del material seleccionado"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-primary)',
+                      cursor: 'not-allowed'
+                    }}
+                  />
                 </div>
 
                 {/* Margen Material */}
@@ -2042,9 +2043,10 @@ function ProductCard({
 
   // Calcular valores para vista resumida y expandida
   const totalValue = (product.precioUnitario || 0) * (product.unidades || 0)
-  const tiempoMinutos = product.tiempoUnitario ? timeToMinutes(product.tiempoUnitario) : 0
-  const tiempoTotal = tiempoMinutos * (product.unidades || 0)
-  const precioPorMinuto = tiempoMinutos > 0 ? (product.precioUnitario || 0) / tiempoMinutos : 0
+  const tiempoSegundos = product.tiempoUnitario ? timeToSeconds(product.tiempoUnitario) : 0
+  const tiempoTotalSegundos = tiempoSegundos * (product.unidades || 0)
+  const tiempoTotal = secondsToTime(tiempoTotalSegundos)
+  const precioPorMinuto = tiempoSegundos > 0 ? (product.precioUnitario || 0) / (tiempoSegundos / 60) : 0
 
   // Obtener datos del material
   const getMaterialData = () => {
@@ -2311,10 +2313,11 @@ function ProductCard({
 
 // Componente para el modo de vista
 function ViewMode({ product }) {
-  const tiempoMinutos = product.tiempoUnitario ? timeToMinutes(product.tiempoUnitario) : 0
-  const tiempoTotal = tiempoMinutos * (product.unidades || 0)
+  const tiempoSegundos = product.tiempoUnitario ? timeToSeconds(product.tiempoUnitario) : 0
+  const tiempoTotalSegundos = tiempoSegundos * (product.unidades || 0)
+  const tiempoTotal = secondsToTime(tiempoTotalSegundos)
   const totalValue = (product.precioUnitario || 0) * (product.unidades || 0)
-  const precioPorMinuto = tiempoMinutos > 0 ? (product.precioUnitario || 0) / tiempoMinutos : 0
+  const precioPorMinuto = tiempoSegundos > 0 ? (product.precioUnitario || 0) / (tiempoSegundos / 60) : 0
 
   return (
     <div style={{
