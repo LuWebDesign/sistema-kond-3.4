@@ -281,30 +281,29 @@ export async function updateUserProfile(userId, profileData) {
       .from('usuarios')
       .select('*')
       .eq('id', correctUserId)
-      .single();
+      .maybeSingle();
 
-    if (!fetchError) {
+    if (userById) {
       existingUser = userById;
-    } else if (fetchError.code === 'PGRST116') {
+    } else {
       // No existe por ID, verificar por email
       const { data: userByEmail } = await supabase
         .from('usuarios')
         .select('*')
         .eq('email', authUser.email)
-        .single();
+        .maybeSingle();
       
-      if (userByEmail) {
-        // Usuario existe pero con ID diferente, actualizar el ID
-        const { data: updatedUser, error: updateIdError } = await supabase
+      if (userByEmail && userByEmail.id !== correctUserId) {
+        // Usuario existe con ID diferente, eliminarlo
+        await supabase
           .from('usuarios')
-          .update({ id: correctUserId })
-          .eq('email', authUser.email)
-          .select()
-          .single();
+          .delete()
+          .eq('email', authUser.email);
         
-        if (!updateIdError) {
-          existingUser = updatedUser;
-        }
+        // Se creará uno nuevo abajo con el ID correcto
+        existingUser = null;
+      } else if (userByEmail) {
+        existingUser = userByEmail;
       }
     }
 
@@ -312,7 +311,7 @@ export async function updateUserProfile(userId, profileData) {
     if (!existingUser) {
       // Generar username único usando email y timestamp
       const baseUsername = authUser.user_metadata?.full_name || authUser.email.split('@')[0];
-      const uniqueUsername = `${baseUsername}_${Date.now()}`.substring(0, 100);
+      const uniqueUsername = `${baseUsername.replace(/\s+/g, '_')}_${Date.now()}`.substring(0, 100);
       
       const { data: newUser, error: insertError } = await supabase
         .from('usuarios')
@@ -331,7 +330,7 @@ export async function updateUserProfile(userId, profileData) {
           rol: 'cliente',
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (insertError) {
         console.error('Error creando usuario en BD:', insertError);
