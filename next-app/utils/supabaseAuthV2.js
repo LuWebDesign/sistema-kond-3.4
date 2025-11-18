@@ -264,16 +264,26 @@ export async function hasActiveSession() {
  */
 export async function updateUserProfile(userId, profileData) {
   try {
-    // Primero verificar si el usuario existe en la tabla usuarios
+    // Obtener el usuario autenticado actual
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authUser) {
+      console.error('Error obteniendo usuario autenticado:', authError);
+      return { data: null, error: 'No hay usuario autenticado' };
+    }
+
+    // Usar el ID del usuario autenticado en lugar del que viene por parámetro
+    const correctUserId = authUser.id;
+    
+    // Verificar si el usuario existe en la tabla usuarios
     const { data: existingUser, error: fetchError } = await supabase
       .from('usuarios')
       .select('*')
-      .eq('id', userId)
+      .eq('id', correctUserId)
       .single();
 
-    // Si el usuario no existe, obtener datos de auth y crearlo
+    // Si el usuario no existe, crearlo
     if (fetchError && fetchError.code === 'PGRST116') {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
       
       if (authUser) {
         // Crear el usuario en la tabla con el id correcto
@@ -319,7 +329,7 @@ export async function updateUserProfile(userId, profileData) {
         observaciones: profileData.observaciones,
         updated_at: new Date().toISOString()
       })
-      .eq('id', userId)
+      .eq('id', correctUserId)
       .select()
       .single();
 
