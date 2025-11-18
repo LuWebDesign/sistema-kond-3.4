@@ -1,24 +1,20 @@
 -- ============================================
--- SCRIPT PERSONALIZADO PARA TU SUPER ADMIN
--- Reemplaza TU_ID_REAL_AQUI con el ID que encontraste en el paso anterior
+-- ACTUALIZAR TU USUARIO EXISTENTE A SUPER ADMIN
+-- Usa este script si ya te logueaste con Google y tu usuario existe
 -- ============================================
 
--- Tu ID real de auth.users (reemplaza esto):
--- Ejemplo: '550e8400-e29b-41d4-a716-446655440000'
+-- PASO 1: Confirma que tu usuario existe
+SELECT id, email, username, rol FROM usuarios WHERE email = 'tu-email@gmail.com';
 
-INSERT INTO usuarios (id, email, username, nombre, apellido, rol, created_at, updated_at)
-VALUES (
-  'TU_ID_REAL_AQUI',    -- ← PEGA AQUÍ TU ID REAL
-  'tu-email@gmail.com', -- ← TU EMAIL REAL
-  'superadmin',
-  'Super',
-  'Admin',
-  'super_admin',
-  NOW(),
-  NOW()
-) ON CONFLICT (id) DO UPDATE SET
+-- PASO 2: Actualiza tu usuario existente a Super Admin
+UPDATE usuarios
+SET
   rol = 'super_admin',
-  updated_at = NOW();
+  username = 'superadmin',
+  nombre = COALESCE(nombre, 'Super'),
+  apellido = COALESCE(apellido, 'Admin'),
+  updated_at = NOW()
+WHERE email = 'tu-email@gmail.com';
 
--- Verificar que se creó
+-- PASO 3: Verificar que se actualizó correctamente
 SELECT id, email, username, rol FROM usuarios WHERE rol = 'super_admin';
