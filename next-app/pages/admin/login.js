@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { loginAdmin } from '../utils/supabaseAuthV2';
+import { loginAdmin } from '../../utils/supabaseAuthV2';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
