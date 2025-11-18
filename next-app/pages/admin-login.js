@@ -1,16 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { loginWithEmail, getCurrentSession } from '../utils/supabaseAuthV2'
+import { loginWithGoogle, getCurrentSession } from '../utils/supabaseAuthV2'
 
 export default function AdminLogin() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
 
   // Verificar si ya está logueado como admin
   useEffect(() => {
@@ -24,22 +19,13 @@ export default function AdminLogin() {
     checkSession()
   }, [router])
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-    setError('')
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
     try {
-      const result = await loginWithEmail(formData.email, formData.password)
+      const result = await loginWithGoogle()
       
       if (result.error) {
         setError(result.error)
@@ -109,105 +95,11 @@ export default function AdminLogin() {
             color: '#6b7280',
             fontSize: '0.875rem'
           }}>
-            Ingresa tus credenciales de administrador
+            Acceso exclusivo para administradores autorizados
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              placeholder="admin@kond.local"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s',
-                outline: 'none'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea'
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d1d5db'
-                e.target.style.boxShadow = 'none'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Contraseña
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  paddingRight: '48px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '0.875rem',
-                  transition: 'all 0.2s',
-                  outline: 'none'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#d1d5db'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.25rem',
-                  opacity: 0.6
-                }}
-              >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-          </div>
-
           {error && (
             <div style={{
               background: '#fee2e2',
@@ -228,7 +120,7 @@ export default function AdminLogin() {
             style={{
               width: '100%',
               padding: '14px',
-              background: isLoading ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: isLoading ? '#9ca3af' : '#4285f4',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -236,20 +128,26 @@ export default function AdminLogin() {
               fontWeight: 600,
               cursor: isLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
-              boxShadow: isLoading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)'
+              boxShadow: isLoading ? 'none' : '0 4px 12px rgba(66, 133, 244, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
             }}
             onMouseEnter={(e) => {
               if (!isLoading) {
+                e.target.style.background = '#3367d6'
                 e.target.style.transform = 'translateY(-2px)'
-                e.target.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)'
+                e.target.style.boxShadow = '0 6px 16px rgba(66, 133, 244, 0.5)'
               }
             }}
             onMouseLeave={(e) => {
+              e.target.style.background = isLoading ? '#9ca3af' : '#4285f4'
               e.target.style.transform = 'translateY(0)'
-              e.target.style.boxShadow = isLoading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)'
+              e.target.style.boxShadow = isLoading ? 'none' : '0 4px 12px rgba(66, 133, 244, 0.4)'
             }}
           >
-            {isLoading ? '🔄 Iniciando sesión...' : '🚀 Iniciar Sesión'}
+            {isLoading ? '🔄 Iniciando sesión...' : '🔵 Iniciar sesión con Google'}
           </button>
         </form>
 
