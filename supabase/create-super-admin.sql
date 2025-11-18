@@ -4,7 +4,7 @@
 -- ============================================
 
 -- PASO 1: Confirma que tu usuario existe
-SELECT id, email, username, rol FROM usuarios WHERE email = 'tu-email@gmail.com';
+SELECT id, email, username, rol FROM usuarios WHERE email = 'sergionhobj@gmail.com';
 
 -- PASO 2: Actualiza tu usuario existente a Super Admin
 UPDATE usuarios
@@ -14,7 +14,7 @@ SET
   nombre = COALESCE(nombre, 'Super'),
   apellido = COALESCE(apellido, 'Admin'),
   updated_at = NOW()
-WHERE email = 'tu-email@gmail.com';
+WHERE email = 'sergionhobj@gmail.com';
 
 -- PASO 3: Verificar que se actualizó correctamente
 SELECT id, email, username, rol FROM usuarios WHERE rol = 'super_admin';
