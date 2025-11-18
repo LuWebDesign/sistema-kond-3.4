@@ -12,13 +12,18 @@ export default function AdminLogin() {
     password: ''
   })
 
-  // Verificar si ya está logueado como admin
+  // Verificar si ya está logueado
   useEffect(() => {
     const checkSession = async () => {
       const session = await getCurrentSession()
-      if (session?.user?.rol === 'admin' || session?.user?.rol === 'super_admin') {
-        // Ya está logueado como admin, redirigir al dashboard
-        router.replace('/admin/dashboard')
+      if (session?.user) {
+        if (session.user.rol === 'admin' || session.user.rol === 'super_admin') {
+          // Ya está logueado como admin, redirigir al dashboard
+          router.replace('/admin/dashboard')
+        } else if (session.user.rol === 'cliente') {
+          // Usuario de catálogo, redirigir al catálogo
+          router.replace('/catalog')
+        }
       }
     }
     checkSession()
