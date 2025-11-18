@@ -48,6 +48,13 @@ export default function AdminLogin() {
     setIsLoading(false);
   };
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   return (
     <div className="admin-login-container">
       <div className="admin-login-card">
