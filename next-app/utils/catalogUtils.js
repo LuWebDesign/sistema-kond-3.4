@@ -207,8 +207,6 @@ export const showNotification = (message, type = 'info') => {
 export const createToast = (message, type = 'info', duration = 3000) => {
   if (typeof window === 'undefined') return
   
-  console.log('🔔 createToast llamado:', message, type)
-  
   const toast = document.createElement('div')
   toast.style.cssText = `
     position: fixed;
@@ -233,7 +231,6 @@ export const createToast = (message, type = 'info', duration = 3000) => {
   // Asegurar que el body esté listo
   if (document.body) {
     document.body.appendChild(toast)
-    console.log('✅ Toast añadido al DOM')
   } else {
     console.error('❌ document.body no está disponible')
     return

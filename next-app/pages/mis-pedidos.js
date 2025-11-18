@@ -119,7 +119,6 @@ export default function MisPedidos() {
           pedidosMapped.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
           setUserOrders(pedidosMapped)
         } else {
-          console.log('⚠️ No hay pedidos en Supabase o error, intentando localStorage...')
           // Fallback a localStorage
           const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
           const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
@@ -127,7 +126,6 @@ export default function MisPedidos() {
           )
           userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
           setUserOrders(userOrdersFiltered)
-          console.log('📂 Pedidos cargados desde localStorage:', userOrdersFiltered.length)
         }
       } else {
         setUserOrders([])

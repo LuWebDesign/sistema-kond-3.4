@@ -1,5 +1,6 @@
 import PublicLayout from '../components/PublicLayout'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { getCurrentUser, createToast, formatCurrency, formatDate } from '../utils/catalogUtils'
 import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback } from '../utils/supabaseAuthV2'
 
@@ -23,6 +24,8 @@ export default function User() {
   const [avatar, setAvatar] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  const router = useRouter()
+
   // Cargar usuario actual y manejar OAuth callback
   useEffect(() => {
     const loadUser = async () => {
@@ -45,10 +48,8 @@ export default function User() {
               localStorage.setItem('currentUser', JSON.stringify(result.data.user))
             }
             
-            // Redirigir al catálogo después de 1 segundo
-            setTimeout(() => {
-              window.location.href = '/catalog'
-            }, 1000)
+            // Redirigir al catálogo inmediatamente
+            router.push('/catalog')
           }
         } catch (error) {
           console.error('Error en OAuth callback:', error)

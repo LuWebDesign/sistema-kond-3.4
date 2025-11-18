@@ -368,7 +368,6 @@ function PedidosCatalogo() {
         const normalized = pedidosMapped.map(normalizePedido)
         setPedidosCatalogo(normalized)
       } else {
-        console.log('⚠️ No hay pedidos en Supabase o error, intentando localStorage...')
         // Fallback a localStorage
         const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
         const normalized = (pedidos || []).map(normalizePedido)
