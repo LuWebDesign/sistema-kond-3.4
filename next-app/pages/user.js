@@ -64,7 +64,6 @@ export default function User() {
                 window.location.href = '/catalog'
               }, 1000)
             }
-            }, 1000)
           }
         } catch (error) {
           console.error('Error en OAuth callback:', error)
