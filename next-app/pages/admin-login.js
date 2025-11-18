@@ -11,9 +11,9 @@ export default function AdminLogin() {
   useEffect(() => {
     const checkSession = async () => {
       const session = await getCurrentSession()
-      if (session?.user?.rol === 'admin') {
+      if (session?.user?.rol === 'admin' || session?.user?.rol === 'super_admin') {
         // Ya está logueado como admin, redirigir al dashboard
-        router.replace('/dashboard')
+        router.replace('/admin/dashboard')
       }
     }
     checkSession()
@@ -25,35 +25,20 @@ export default function AdminLogin() {
     setError('')
 
     try {
+      // Iniciar flujo OAuth - esto redirigirá al usuario a Google
       const result = await loginWithGoogle()
-      
+
       if (result.error) {
         setError(result.error)
         setIsLoading(false)
         return
       }
 
-      if (result.user) {
-        // Verificar que el usuario sea admin
-        if (result.user.rol === 'admin') {
-          // Guardar sesión admin en localStorage para compatibilidad
-          localStorage.setItem('adminSession', JSON.stringify({
-            loggedIn: true,
-            isLoggedIn: true,
-            timestamp: Date.now(),
-            sessionDuration: 24 * 60 * 60 * 1000, // 24 horas
-            user: result.user
-          }))
+      // El loginWithGoogle redirige al usuario, no devuelve datos aquí
+      // La lógica de verificación de rol se maneja en el callback OAuth
 
-          // Redirigir al dashboard
-          router.push('/dashboard')
-        } else {
-          setError('❌ No tienes permisos de administrador')
-          setIsLoading(false)
-        }
-      }
     } catch (err) {
-      console.error('Error en login admin:', err)
+      console.error('Error iniciando login con Google:', err)
       setError('Error al iniciar sesión. Por favor, intenta nuevamente.')
       setIsLoading(false)
     }
