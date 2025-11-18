@@ -264,6 +264,48 @@ export async function hasActiveSession() {
  */
 export async function updateUserProfile(userId, profileData) {
   try {
+    // Primero verificar si el usuario existe en la tabla usuarios
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    // Si el usuario no existe, obtener datos de auth y crearlo
+    if (fetchError && fetchError.code === 'PGRST116') {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (authUser) {
+        // Crear el usuario en la tabla con el id correcto
+        const { data: newUser, error: insertError } = await supabase
+          .from('usuarios')
+          .insert({
+            id: authUser.id,
+            email: authUser.email,
+            username: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+            nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
+            apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: profileData.telefono || '',
+            direccion: profileData.direccion || '',
+            localidad: profileData.localidad || '',
+            cp: profileData.cp || '',
+            provincia: profileData.provincia || '',
+            observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
+            rol: 'cliente',
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creando usuario en BD:', insertError);
+          return { data: null, error: insertError.message };
+        }
+
+        return { data: newUser, error: null };
+      }
+    }
+
+    // Si existe, actualizar normalmente
     const { data, error } = await supabase
       .from('usuarios')
       .update({
