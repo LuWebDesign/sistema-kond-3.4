@@ -210,8 +210,11 @@ export async function logout() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('kond-user');
     }
+    
+    return { error: null };
   } catch (error) {
     console.error('Error al cerrar sesión:', error);
+    return { error };
   }
 }
 
@@ -365,8 +368,6 @@ export async function handleOAuthCallback() {
             provincia: '',
             observaciones: 'Usuario registrado con Google OAuth',
             rol: 'cliente',
-            activo: true,
-            fecha_creacion: new Date().toISOString(),
           })
           .select()
           .single();
@@ -376,34 +377,44 @@ export async function handleOAuthCallback() {
           return { error: insertError.message, user: null, session: null };
         }
 
-        // Guardar información del usuario en localStorage
+        // Guardar información del usuario del catálogo en localStorage
         if (typeof window !== 'undefined') {
-          localStorage.setItem('kond-user', JSON.stringify({
+          const userData = {
             id: newUser.id,
             email: newUser.email,
             username: newUser.username,
             nombre: newUser.nombre,
             apellido: newUser.apellido,
             telefono: newUser.telefono,
+            direccion: newUser.direccion,
+            localidad: newUser.localidad,
+            cp: newUser.cp,
+            provincia: newUser.provincia,
             rol: newUser.rol,
             avatar_url: user.user_metadata?.avatar_url,
-          }));
+          };
+          localStorage.setItem('currentUser', JSON.stringify(userData));
         }
 
         return { data: { user: newUser, session: data.session }, error: null };
       } else {
         // Usuario ya existe, actualizar localStorage
         if (typeof window !== 'undefined') {
-          localStorage.setItem('kond-user', JSON.stringify({
+          const userData = {
             id: existingUser.id,
             email: existingUser.email,
             username: existingUser.username,
             nombre: existingUser.nombre,
             apellido: existingUser.apellido,
             telefono: existingUser.telefono,
+            direccion: existingUser.direccion,
+            localidad: existingUser.localidad,
+            cp: existingUser.cp,
+            provincia: existingUser.provincia,
             rol: existingUser.rol,
             avatar_url: user.user_metadata?.avatar_url,
-          }));
+          };
+          localStorage.setItem('currentUser', JSON.stringify(userData));
         }
 
         return { data: { user: existingUser, session: data.session }, error: null };

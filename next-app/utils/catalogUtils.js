@@ -165,9 +165,15 @@ export const getCurrentUser = () => {
       return window.KONDAuth.currentUser()
     }
     
-    // Fallback: buscar en localStorage
-    const userData = localStorage.getItem('currentUser')
-    return userData ? JSON.parse(userData) : null
+    // Fallback: buscar en localStorage (primero 'currentUser' para clientes del catálogo)
+    const currentUser = localStorage.getItem('currentUser')
+    if (currentUser) {
+      return JSON.parse(currentUser)
+    }
+    
+    // Si no hay currentUser, verificar kond-user (usuarios admin del sistema interno)
+    const kondUser = localStorage.getItem('kond-user')
+    return kondUser ? JSON.parse(kondUser) : null
   } catch (error) {
     console.warn('Error getting current user:', error)
     return null

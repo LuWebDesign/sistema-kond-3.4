@@ -28,7 +28,7 @@ export default function Catalog() {
   const [showCart, setShowCart] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
-  const [currentUserState, setCurrentUserState] = useState(getCurrentUser())
+  const [currentUserState, setCurrentUserState] = useState(null)
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [imageModalSrc, setImageModalSrc] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
@@ -41,6 +41,28 @@ export default function Catalog() {
 
     return () => clearTimeout(timer)
   }, [searchTerm])
+
+  // Escuchar cambios en localStorage para actualizar el usuario logueado
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = getCurrentUser()
+      setCurrentUserState(updatedUser)
+    }
+
+    // Verificar usuario al montar
+    handleStorageChange()
+
+    // Escuchar evento 'storage' para cambios desde otras pestañas/ventanas
+    window.addEventListener('storage', handleStorageChange)
+
+    // También verificar al montar/focus para cambios en la misma pestaña
+    window.addEventListener('focus', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('focus', handleStorageChange)
+    }
+  }, [])
 
   // Función para manejar la selección de categoría desde URLs
   const setCategoryHandler = (e) => {

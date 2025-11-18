@@ -26,21 +26,29 @@ export default function User() {
   // Cargar usuario actual y manejar OAuth callback
   useEffect(() => {
     const loadUser = async () => {
-      // Primero verificar si hay un callback de OAuth
+      // Verificar si hay un callback de OAuth (puede venir en query params o hash)
       const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-      const hasAuthCallback = urlParams.has('code') || urlParams.has('access_token')
+      const hashParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.hash.substring(1) : '')
+      const hasAuthCallback = urlParams.has('code') || urlParams.has('access_token') || hashParams.has('access_token')
 
       if (hasAuthCallback) {
         try {
           const result = await handleOAuthCallback()
+          
           if (result.error) {
             createToast('Error al procesar login con Google', 'error')
-          } else if (result.data) {
+          } else if (result.data && result.data.user) {
             createToast('¡Bienvenido! Has iniciado sesión con Google', 'success')
-            // Limpiar URL
+            
+            // Guardar usuario del catálogo (cliente) en 'currentUser'
             if (typeof window !== 'undefined') {
-              window.history.replaceState({}, document.title, window.location.pathname)
+              localStorage.setItem('currentUser', JSON.stringify(result.data.user))
             }
+            
+            // Redirigir al catálogo después de 1 segundo
+            setTimeout(() => {
+              window.location.href = '/catalog'
+            }, 1000)
           }
         } catch (error) {
           console.error('Error en OAuth callback:', error)
@@ -48,15 +56,15 @@ export default function User() {
         }
       }
 
-      // Cargar sesión actual
+      // Cargar sesión actual (verificar Supabase Auth o localStorage)
       const session = await getCurrentSession()
-      if (session) {
+      if (session && session.user) {
         setCurrentUser(session.user)
-        // Rellenar todo el formulario con los datos disponibles en la sesión (kond-user)
+        // Rellenar todo el formulario con los datos disponibles en la sesión
         setFormData(prev => ({
           ...prev,
           email: session.user.email || prev.email,
-          nombre: session.user.username || prev.nombre,
+          nombre: session.user.nombre || session.user.username || prev.nombre,
           apellido: session.user.apellido || prev.apellido,
           telefono: session.user.telefono || prev.telefono,
           direccion: session.user.direccion || prev.direccion,
@@ -65,6 +73,24 @@ export default function User() {
           provincia: session.user.provincia || prev.provincia,
           observaciones: session.user.observaciones || prev.observaciones
         }))
+      } else {
+        // Fallback: verificar si hay usuario en localStorage (currentUser)
+        const localUser = getCurrentUser()
+        if (localUser) {
+          setCurrentUser(localUser)
+          setFormData(prev => ({
+            ...prev,
+            email: localUser.email || prev.email,
+            nombre: localUser.nombre || localUser.username || prev.nombre,
+            apellido: localUser.apellido || prev.apellido,
+            telefono: localUser.telefono || prev.telefono,
+            direccion: localUser.direccion || prev.direccion,
+            localidad: localUser.localidad || prev.localidad,
+            cp: localUser.cp || prev.cp,
+            provincia: localUser.provincia || prev.provincia,
+            observaciones: localUser.observaciones || prev.observaciones
+          }))
+        }
       }
     }
     loadUser()
@@ -217,6 +243,11 @@ export default function User() {
     if (error) {
       createToast('Error al cerrar sesión', 'error')
       return
+    }
+    
+    // Limpiar también localStorage (currentUser)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser')
     }
     
     setCurrentUser(null)
