@@ -275,44 +275,70 @@ export async function updateUserProfile(userId, profileData) {
     // Usar el ID del usuario autenticado en lugar del que viene por parámetro
     const correctUserId = authUser.id;
     
-    // Verificar si el usuario existe en la tabla usuarios
-    const { data: existingUser, error: fetchError } = await supabase
+    // Verificar si el usuario existe en la tabla usuarios (por ID o por email)
+    let existingUser = null;
+    const { data: userById, error: fetchError } = await supabase
       .from('usuarios')
       .select('*')
       .eq('id', correctUserId)
       .single();
 
-    // Si el usuario no existe, crearlo
-    if (fetchError && fetchError.code === 'PGRST116') {
+    if (!fetchError) {
+      existingUser = userById;
+    } else if (fetchError.code === 'PGRST116') {
+      // No existe por ID, verificar por email
+      const { data: userByEmail } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('email', authUser.email)
+        .single();
       
-      if (authUser) {
-        // Crear el usuario en la tabla con el id correcto
-        const { data: newUser, error: insertError } = await supabase
+      if (userByEmail) {
+        // Usuario existe pero con ID diferente, actualizar el ID
+        const { data: updatedUser, error: updateIdError } = await supabase
           .from('usuarios')
-          .insert({
-            id: authUser.id,
-            email: authUser.email,
-            username: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
-            nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
-            apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            telefono: profileData.telefono || '',
-            direccion: profileData.direccion || '',
-            localidad: profileData.localidad || '',
-            cp: profileData.cp || '',
-            provincia: profileData.provincia || '',
-            observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
-            rol: 'cliente',
-          })
+          .update({ id: correctUserId })
+          .eq('email', authUser.email)
           .select()
           .single();
-
-        if (insertError) {
-          console.error('Error creando usuario en BD:', insertError);
-          return { data: null, error: insertError.message };
+        
+        if (!updateIdError) {
+          existingUser = updatedUser;
         }
-
-        return { data: newUser, error: null };
       }
+    }
+
+    // Si no existe, crearlo
+    if (!existingUser) {
+      // Generar username único usando email y timestamp
+      const baseUsername = authUser.user_metadata?.full_name || authUser.email.split('@')[0];
+      const uniqueUsername = `${baseUsername}_${Date.now()}`.substring(0, 100);
+      
+      const { data: newUser, error: insertError } = await supabase
+        .from('usuarios')
+        .insert({
+          id: authUser.id,
+          email: authUser.email,
+          username: uniqueUsername,
+          nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
+          apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+          telefono: profileData.telefono || '',
+          direccion: profileData.direccion || '',
+          localidad: profileData.localidad || '',
+          cp: profileData.cp || '',
+          provincia: profileData.provincia || '',
+          observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
+          rol: 'cliente',
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error creando usuario en BD:', insertError);
+        return { data: null, error: insertError.message };
+      }
+
+      return { data: newUser, error: null };
     }
 
     // Si existe, actualizar normalmente
