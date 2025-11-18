@@ -26,13 +26,19 @@ FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = id);
 
--- UPDATE: Los usuarios pueden actualizar su propio perfil
+-- UPDATE: Los usuarios pueden actualizar su propio perfil (por ID o por email)
 CREATE POLICY "update_own_profile"
 ON usuarios
 FOR UPDATE
 TO authenticated
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+USING (
+  auth.uid() = id OR
+  (auth.email() = email AND auth.uid() IS NOT NULL)
+)
+WITH CHECK (
+  auth.uid() = id OR
+  (auth.email() = email AND auth.uid() IS NOT NULL)
+);
 
 -- DELETE: Los usuarios pueden eliminar su propio perfil
 CREATE POLICY "delete_own_profile"

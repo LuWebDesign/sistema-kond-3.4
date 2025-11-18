@@ -301,43 +301,74 @@ export async function updateUserProfile(userId, profileData) {
       }
     }
 
-    // Si no existe, crearlo con UPSERT
+    // Si no existe, crearlo
     if (!existingUser) {
       // Generar username único usando email y timestamp
       const baseUsername = authUser.user_metadata?.full_name || authUser.email.split('@')[0];
       const uniqueUsername = `${baseUsername.replace(/\s+/g, '_')}_${Date.now()}`.substring(0, 100);
 
-      const { data: newUser, error: upsertError } = await supabase
+      // Verificar si ya existe un usuario con este email
+      const { data: existingByEmail } = await supabase
         .from('usuarios')
-        .upsert({
-          id: authUser.id,
-          email: authUser.email,
-          username: uniqueUsername,
-          nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
-          apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-          telefono: profileData.telefono || '',
-          direccion: profileData.direccion || '',
-          localidad: profileData.localidad || '',
-          cp: profileData.cp || '',
-          provincia: profileData.provincia || '',
-          observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
-          rol: 'cliente',
-        }, {
-          onConflict: 'email',
-          ignoreDuplicates: false
-        })
-        .select()
+        .select('*')
+        .eq('email', authUser.email)
         .maybeSingle();
 
-      if (upsertError) {
-        console.error('Error creando/actualizando usuario en BD:', upsertError);
-        return { data: null, error: upsertError.message };
+      let result;
+      if (existingByEmail) {
+        // Actualizar el usuario existente
+        const { data, error } = await supabase
+          .from('usuarios')
+          .update({
+            id: authUser.id, // Actualizar ID al correcto
+            nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
+            apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: profileData.telefono || '',
+            direccion: profileData.direccion || '',
+            localidad: profileData.localidad || '',
+            cp: profileData.cp || '',
+            provincia: profileData.provincia || '',
+            observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
+          })
+          .eq('email', authUser.email)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error actualizando usuario existente:', error);
+          return { data: null, error: error.message };
+        }
+        result = data;
+      } else {
+        // Crear nuevo usuario
+        const { data, error } = await supabase
+          .from('usuarios')
+          .insert({
+            id: authUser.id,
+            email: authUser.email,
+            username: uniqueUsername,
+            nombre: profileData.nombre || authUser.user_metadata?.full_name?.split(' ')[0] || '',
+            apellido: profileData.apellido || authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: profileData.telefono || '',
+            direccion: profileData.direccion || '',
+            localidad: profileData.localidad || '',
+            cp: profileData.cp || '',
+            provincia: profileData.provincia || '',
+            observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
+            rol: 'cliente',
+          })
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error creando usuario en BD:', error);
+          return { data: null, error: error.message };
+        }
+        result = data;
       }
 
-      return { data: newUser, error: null };
-    }
-
-    // Si existe, actualizar normalmente
+      return { data: result, error: null };
+    }    // Si existe, actualizar normalmente
     const { data, error } = await supabase
       .from('usuarios')
       .update({
