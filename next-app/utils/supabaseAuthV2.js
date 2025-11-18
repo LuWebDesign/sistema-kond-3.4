@@ -147,7 +147,76 @@ export async function loginWithEmail(email, password) {
 }
 
 /**
- * Crear usuario en Supabase Auth (solo para inicializar admin)
+ * Login específico para administradores (NO usa Google OAuth)
+ * Los admin usan credenciales separadas del sistema de usuarios compradores
+ */
+export async function loginAdmin(username, password) {
+  try {
+    // Buscar usuario admin por username
+    const { data: usuario, error: fetchError } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('username', username)
+      .in('rol', ['admin', 'super_admin'])
+      .single();
+
+    if (fetchError || !usuario) {
+      return {
+        error: 'Usuario administrador no encontrado',
+        user: null,
+        session: null
+      };
+    }
+
+    // Para admin, usamos un email especial: admin-<username>@kond.local
+    const adminEmail = `admin-${username}@kond.local`;
+
+    // Intentar login con Supabase Auth usando email especial
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: adminEmail,
+      password,
+    });
+
+    if (authError) {
+      console.error('Error de autenticación admin:', authError);
+      return {
+        error: 'Credenciales de administrador incorrectas',
+        user: null,
+        session: null,
+      };
+    }
+
+    // Usuario admin autenticado exitosamente
+    const adminUser = {
+      id: usuario.id,
+      username: usuario.username,
+      email: usuario.email || adminEmail,
+      rol: usuario.rol,
+      nombre: usuario.nombre || 'Admin',
+      apellido: usuario.apellido || usuario.username,
+      isAdmin: true
+    };
+
+    // Guardar información del admin en localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kond-admin', JSON.stringify(adminUser));
+      localStorage.setItem('kond-user', JSON.stringify(adminUser)); // Para compatibilidad
+    }
+
+    return {
+      error: null,
+      user: adminUser,
+      session: authData.session,
+    };
+  } catch (error) {
+    console.error('Error en loginAdmin:', error);
+    return {
+      error: error.message,
+      user: null,
+      session: null,
+    };
+  }
+}
  * Nota: Esto debe ejecutarse una sola vez después de crear el usuario en la tabla
  */
 export async function createAuthUserForAdmin(userId, password) {
@@ -531,5 +600,27 @@ export async function handleOAuthCallback() {
   } catch (error) {
     console.error('Error en handleOAuthCallback:', error);
     return { error: error.message, user: null, session: null };
+  }
+}
+
+/**
+ * Cerrar sesión de administrador
+ */
+export async function logoutAdmin() {
+  try {
+    // Cerrar sesión en Supabase Auth
+    const { error } = await supabase.auth.signOut();
+
+    // Limpiar localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kond-admin');
+      localStorage.removeItem('kond-user');
+      localStorage.removeItem('currentUser');
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Error al cerrar sesión admin:', error);
+    return { error: error.message };
   }
 }

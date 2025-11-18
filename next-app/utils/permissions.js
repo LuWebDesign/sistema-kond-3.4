@@ -69,10 +69,17 @@ export function hasPermission(user, permission) {
  * Hook personalizado para usar permisos en componentes
  */
 export function usePermissions() {
-  // Obtener usuario del contexto o localStorage
-  const user = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('currentUser') || 'null')
+  // Obtener usuario del localStorage (priorizar admin sobre usuario normal)
+  const adminUser = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('kond-admin') || 'null')
     : null;
+
+  const regularUser = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('kond-user') || 'null')
+    : null;
+
+  // Usar admin si existe, sino usuario regular
+  const user = adminUser || regularUser;
 
   return {
     user,

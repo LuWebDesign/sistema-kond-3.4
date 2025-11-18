@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { loginWithGoogle } from '../utils/supabaseAuthV2';
+import { loginAdmin } from '../utils/supabaseAuthV2';
 import { usePermissions } from '../utils/permissions';
 import { createToast } from '../utils/catalogUtils';
 
 export default function AdminLogin() {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { isAdmin } = usePermissions();
@@ -21,10 +25,10 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const { error, user } = await loginWithGoogle();
+      const { error, user } = await loginAdmin(formData.username, formData.password);
 
       if (error) {
-        createToast('Error al iniciar sesión con Google', 'error');
+        createToast('Credenciales incorrectas', 'error');
         setIsLoading(false);
         return;
       }
@@ -50,29 +54,50 @@ export default function AdminLogin() {
     setIsLoading(false);
   };
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   return (
     <div className="admin-login-container">
       <div className="admin-login-card">
         <h1>🔐 Panel de Administración</h1>
-        <p className="admin-subtitle">Acceso exclusivo para administradores autorizados</p>
+        <p className="admin-subtitle">Acceso exclusivo para administradores</p>
 
         <form onSubmit={handleSubmit} className="admin-login-form">
+          <div className="form-group">
+            <label htmlFor="username">Usuario Administrador</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              placeholder="Ingresa tu usuario admin"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Ingresa tu contraseña"
+              disabled={isLoading}
+            />
+          </div>
+
           <button
             type="submit"
-            className="google-login-btn"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Iniciando sesión...' : '🔵 Iniciar sesión con Google'}
-          </button>
-        </form>
-
-        <div className="admin-info">
-          <p>⚠️ Solo usuarios con permisos de administrador pueden acceder</p>
-        </div>
-      </div>
-    </div>
-  );
-}
             className="admin-login-btn"
             disabled={isLoading}
           >
@@ -152,30 +177,27 @@ export default function AdminLogin() {
           cursor: not-allowed;
         }
 
-        .google-login-btn {
+        .admin-login-btn {
           width: 100%;
           padding: 14px;
-          background: #4285f4;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border: none;
           border-radius: 8px;
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.3s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
+          transition: transform 0.2s;
         }
 
-        .google-login-btn:hover:not(:disabled) {
-          background: #3367d6;
+        .admin-login-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
         }
 
-        .google-login-btn:disabled {
+        .admin-login-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
 
         .admin-login-footer {
@@ -196,19 +218,8 @@ export default function AdminLogin() {
           font-weight: 500;
         }
 
-        .admin-info {
-          margin-top: 20px;
-          padding: 15px;
-          background: #fff3cd;
-          border: 1px solid #ffeaa7;
-          border-radius: 8px;
-        }
-
-        .admin-info p {
-          color: #856404;
-          margin: 0;
-          font-size: 0.9rem;
-          font-weight: 500;
+        .client-link:hover {
+          text-decoration: underline;
         }
       `}</style>
     </div>

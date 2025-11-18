@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { usePermissions } from '../../utils/permissions';
-import { logout } from '../../utils/supabaseAuthV2';
+import { logoutAdmin } from '../../utils/supabaseAuthV2';
 import { createToast } from '../../utils/catalogUtils';
 import { withAdminAuth } from '../../utils/adminAuth';
 
@@ -38,8 +38,8 @@ function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    await logout();
-    createToast('Sesión cerrada correctamente', 'success');
+    await logoutAdmin();
+    createToast('Sesión de administrador cerrada correctamente', 'success');
     router.push('/admin/login');
   };
 

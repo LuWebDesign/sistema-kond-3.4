@@ -38,32 +38,17 @@ export default function User() {
           if (result.error) {
             createToast('Error al procesar login con Google', 'error')
           } else if (result.data && result.data.user) {
-            // Verificar si el usuario es admin o super_admin
-            if (result.data.user.rol === 'admin' || result.data.user.rol === 'super_admin') {
-              createToast('¡Bienvenido al panel de administración!', 'success')
-              
-              // Guardar usuario admin en localStorage
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('kond-user', JSON.stringify(result.data.user))
-              }
-              
-              // Redirigir al dashboard de admin
-              setTimeout(() => {
-                window.location.href = '/admin/dashboard'
-              }, 1000)
-            } else {
-              createToast('¡Bienvenido! Has iniciado sesión con Google', 'success')
-              
-              // Guardar usuario del catálogo (cliente) en 'currentUser'
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('currentUser', JSON.stringify(result.data.user))
-              }
-              
-              // Redirigir al catálogo
-              setTimeout(() => {
-                window.location.href = '/catalog'
-              }, 1000)
+            createToast('¡Bienvenido! Has iniciado sesión con Google', 'success')
+            
+            // Guardar usuario del catálogo (cliente) en 'currentUser'
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('currentUser', JSON.stringify(result.data.user))
             }
+            
+            // Redirigir al catálogo después de 1 segundo
+            setTimeout(() => {
+              window.location.href = '/catalog'
+            }, 1000)
           }
         } catch (error) {
           console.error('Error en OAuth callback:', error)
