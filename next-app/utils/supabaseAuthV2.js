@@ -357,6 +357,7 @@ export async function handleOAuthCallback() {
         const { data: newUser, error: insertError } = await supabase
           .from('usuarios')
           .insert({
+            id: user.id,
             email: user.email,
             username: user.user_metadata?.full_name || user.email.split('@')[0],
             nombre: user.user_metadata?.full_name?.split(' ')[0] || '',
