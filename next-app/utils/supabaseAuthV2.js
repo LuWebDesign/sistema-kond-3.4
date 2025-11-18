@@ -277,7 +277,7 @@ export async function updateUserProfile(userId, profileData) {
     
     // Verificar si el usuario existe en la tabla usuarios (por ID o por email)
     let existingUser = null;
-    const { data: userById, error: fetchError } = await supabase
+    const { data: userById } = await supabase
       .from('usuarios')
       .select('*')
       .eq('id', correctUserId)
@@ -292,30 +292,24 @@ export async function updateUserProfile(userId, profileData) {
         .select('*')
         .eq('email', authUser.email)
         .maybeSingle();
-      
+
       if (userByEmail && userByEmail.id !== correctUserId) {
-        // Usuario existe con ID diferente, eliminarlo
-        await supabase
-          .from('usuarios')
-          .delete()
-          .eq('email', authUser.email);
-        
-        // Se creará uno nuevo abajo con el ID correcto
-        existingUser = null;
+        // Usuario existe con ID diferente, usar UPSERT para actualizar
+        existingUser = null; // Forzar creación con UPSERT
       } else if (userByEmail) {
         existingUser = userByEmail;
       }
     }
 
-    // Si no existe, crearlo
+    // Si no existe, crearlo con UPSERT
     if (!existingUser) {
       // Generar username único usando email y timestamp
       const baseUsername = authUser.user_metadata?.full_name || authUser.email.split('@')[0];
       const uniqueUsername = `${baseUsername.replace(/\s+/g, '_')}_${Date.now()}`.substring(0, 100);
-      
-      const { data: newUser, error: insertError } = await supabase
+
+      const { data: newUser, error: upsertError } = await supabase
         .from('usuarios')
-        .insert({
+        .upsert({
           id: authUser.id,
           email: authUser.email,
           username: uniqueUsername,
@@ -328,13 +322,16 @@ export async function updateUserProfile(userId, profileData) {
           provincia: profileData.provincia || '',
           observaciones: profileData.observaciones || 'Usuario sincronizado desde auth',
           rol: 'cliente',
+        }, {
+          onConflict: 'email',
+          ignoreDuplicates: false
         })
         .select()
         .maybeSingle();
 
-      if (insertError) {
-        console.error('Error creando usuario en BD:', insertError);
-        return { data: null, error: insertError.message };
+      if (upsertError) {
+        console.error('Error creando/actualizando usuario en BD:', upsertError);
+        return { data: null, error: upsertError.message };
       }
 
       return { data: newUser, error: null };
