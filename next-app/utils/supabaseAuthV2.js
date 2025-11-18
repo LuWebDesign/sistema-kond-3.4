@@ -147,40 +147,48 @@ export async function loginWithEmail(email, password) {
 }
 
 /**
- * Login específico para administradores (NO usa Google OAuth)
- * Los admin usan credenciales separadas del sistema de usuarios compradores
+ * Login específico para administradores con email y contraseña
+ * Los admin usan Supabase Auth directamente (NO Google OAuth)
  */
-export async function loginAdmin(username, password) {
+export async function loginAdmin(email, password) {
   try {
-    // Buscar usuario admin por username
-    const { data: usuario, error: fetchError } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('username', username)
-      .in('rol', ['admin', 'super_admin'])
-      .single();
-
-    if (fetchError || !usuario) {
-      return {
-        error: 'Usuario administrador no encontrado',
-        user: null,
-        session: null
-      };
-    }
-
-    // Para admin, usamos un email especial: admin-<username>@kond.local
-    const adminEmail = `admin-${username}@kond.local`;
-
-    // Intentar login con Supabase Auth usando email especial
+    // Intentar login con Supabase Auth usando email y contraseña
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: adminEmail,
+      email,
       password,
     });
 
     if (authError) {
       console.error('Error de autenticación admin:', authError);
       return {
-        error: 'Credenciales de administrador incorrectas',
+        error: 'Credenciales incorrectas',
+        user: null,
+        session: null,
+      };
+    }
+
+    // Buscar usuario en la tabla usuarios por ID
+    const { data: usuario, error: fetchError } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (fetchError || !usuario) {
+      console.error('Usuario no encontrado en tabla usuarios:', fetchError);
+      return {
+        error: 'Usuario no encontrado',
+        user: null,
+        session: null
+      };
+    }
+
+    // Verificar que sea admin o super_admin
+    if (usuario.rol !== 'admin' && usuario.rol !== 'super_admin') {
+      // Cerrar sesión si no es admin
+      await supabase.auth.signOut();
+      return {
+        error: 'No tienes permisos de administrador',
         user: null,
         session: null,
       };
@@ -190,10 +198,10 @@ export async function loginAdmin(username, password) {
     const adminUser = {
       id: usuario.id,
       username: usuario.username,
-      email: usuario.email || adminEmail,
+      email: usuario.email,
       rol: usuario.rol,
       nombre: usuario.nombre || 'Admin',
-      apellido: usuario.apellido || usuario.username,
+      apellido: usuario.apellido || '',
       isAdmin: true
     };
 

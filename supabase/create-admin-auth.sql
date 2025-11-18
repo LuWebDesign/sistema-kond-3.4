@@ -1,49 +1,60 @@
 -- ============================================
--- CREAR CREDENCIALES DE ADMIN EN SUPABASE AUTH
--- Ejecuta esto DESPUÉS de haber actualizado el rol del usuario a admin/super_admin
+-- CREAR SUPER ADMIN CON EMAIL Y CONTRASEÑA
+-- Sistema simplificado: el admin se crea directamente en Supabase Dashboard
 -- ============================================
 
--- PASO 1: Verificar que el usuario tiene rol admin
-SELECT id, email, username, rol FROM usuarios WHERE rol IN ('admin', 'super_admin');
+-- INSTRUCCIONES:
+-- 1. Ve a tu proyecto Supabase Dashboard
+-- 2. Navega a Authentication > Users
+-- 3. Haz clic en "Add user" > "Create new user"
+-- 4. Ingresa:
+--    - Email: admin@kond.local
+--    - Password: Una contraseña segura
+--    - Confirma el email automáticamente (marca la opción)
+-- 5. Copia el ID del usuario creado
+-- 6. Ejecuta las siguientes consultas SQL:
 
--- PASO 2: Crear usuario en auth.users para cada admin
--- IMPORTANTE: Cambia 'tu_password_seguro' por una contraseña REAL y segura
--- Ejecuta UNA VEZ por cada admin, cambiando el email y username según corresponda
+-- PASO 1: Actualizar el usuario en la tabla usuarios con rol super_admin
+-- Reemplaza 'USER_ID_AQUI' con el ID del usuario que creaste en el dashboard
 
--- Para superadmin (sergionhobj@gmail.com):
-INSERT INTO auth.users (
-  instance_id,
+UPDATE usuarios
+SET
+  rol = 'super_admin',
+  email = 'admin@kond.local',
+  username = 'superadmin',
+  nombre = 'Super',
+  apellido = 'Admin',
+  updated_at = NOW()
+WHERE id = 'USER_ID_AQUI';
+
+-- Si el usuario no existe en la tabla usuarios, créalo:
+INSERT INTO usuarios (
   id,
-  aud,
-  role,
   email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  is_super_admin,
+  username,
+  nombre,
+  apellido,
+  rol,
   created_at,
   updated_at
 ) VALUES (
-  '00000000-0000-0000-0000-000000000000',
-  (SELECT id FROM usuarios WHERE email = 'sergionhobj@gmail.com'),
-  'authenticated',
-  'authenticated',
-  'admin-superadmin@kond.local',
-  crypt('tu_password_seguro_aqui', gen_salt('bf')),
-  NOW(),
-  '{"provider": "email", "providers": ["email"]}',
-  '{"admin_username": "superadmin"}',
-  FALSE,
+  'USER_ID_AQUI',
+  'admin@kond.local',
+  'superadmin',
+  'Super',
+  'Admin',
+  'super_admin',
   NOW(),
   NOW()
-) ON CONFLICT (email) DO NOTHING;
+) ON CONFLICT (id) DO UPDATE SET
+  rol = 'super_admin',
+  email = 'admin@kond.local',
+  username = 'superadmin',
+  updated_at = NOW();
 
--- Para otros admins, repite el INSERT cambiando:
--- - email: 'sergionhobj@gmail.com' por el email real del admin
--- - 'admin-superadmin@kond.local' por 'admin-{username}@kond.local'
--- - 'superadmin' por el username real
--- - contraseña en crypt('tu_password_seguro_aqui', gen_salt('bf'))
+-- PASO 2: Verificar que se creó correctamente
+SELECT id, email, username, rol FROM usuarios WHERE rol = 'super_admin';
 
--- PASO 3: Verificar que se creó correctamente
-SELECT id, email, raw_user_meta_data FROM auth.users WHERE email LIKE 'admin-%@kond.local';
+-- PASO 3: Ahora puedes hacer login en /admin/login con:
+-- Email: admin@kond.local
+-- Password: La contraseña que configuraste en el dashboard

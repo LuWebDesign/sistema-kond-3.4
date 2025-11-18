@@ -4,7 +4,7 @@ import { loginAdmin } from '../utils/supabaseAuthV2';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -28,25 +28,16 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const { error, user } = await loginAdmin(formData.username, formData.password);
+      const { error, user } = await loginAdmin(formData.email, formData.password);
 
       if (error) {
-        setError('Credenciales incorrectas');
+        setError(error);
         setIsLoading(false);
         return;
       }
 
-      // Verificar que sea admin
-      if (!user.rol || (user.rol !== 'admin' && user.rol !== 'super_admin')) {
-        setError('No tienes permisos de administrador');
-        // Cerrar sesión
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('kond-user');
-        setIsLoading(false);
-        return;
-      }
-
-      alert('Bienvenido al panel de administración');
+      // Usuario ya verificado en loginAdmin
+      alert('¡Bienvenido al panel de administración!');
       router.push('/admin/dashboard');
 
     } catch (error) {
@@ -65,15 +56,15 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="admin-login-form">
           <div className="form-group">
-            <label htmlFor="username">Usuario Administrador</label>
+            <label htmlFor="email">Email Administrador</label>
             <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               required
-              placeholder="Ingresa tu usuario admin"
+              placeholder="admin@ejemplo.com"
               disabled={isLoading}
             />
           </div>
