@@ -217,6 +217,9 @@ export async function loginAdmin(username, password) {
     };
   }
 }
+
+/**
+ * Crear usuario en Supabase Auth para admin
  * Nota: Esto debe ejecutarse una sola vez después de crear el usuario en la tabla
  */
 export async function createAuthUserForAdmin(userId, password) {

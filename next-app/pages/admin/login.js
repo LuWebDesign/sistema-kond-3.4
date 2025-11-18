@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { loginAdmin } from '../utils/supabaseAuthV2';
-import { usePermissions } from '../utils/permissions';
-import { createToast } from '../utils/catalogUtils';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -10,32 +8,37 @@ export default function AdminLogin() {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
-  const { isAdmin } = usePermissions();
 
   // Redirigir si ya está logueado como admin
   useEffect(() => {
-    if (isAdmin) {
+    const adminUser = typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('kond-admin') || 'null')
+      : null;
+
+    if (adminUser && (adminUser.rol === 'admin' || adminUser.rol === 'super_admin')) {
       router.push('/admin/dashboard');
     }
-  }, [isAdmin, router]);
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
       const { error, user } = await loginAdmin(formData.username, formData.password);
 
       if (error) {
-        createToast('Credenciales incorrectas', 'error');
+        setError('Credenciales incorrectas');
         setIsLoading(false);
         return;
       }
 
       // Verificar que sea admin
       if (!user.rol || (user.rol !== 'admin' && user.rol !== 'super_admin')) {
-        createToast('No tienes permisos de administrador', 'error');
+        setError('No tienes permisos de administrador');
         // Cerrar sesión
         localStorage.removeItem('currentUser');
         localStorage.removeItem('kond-user');
@@ -43,22 +46,15 @@ export default function AdminLogin() {
         return;
       }
 
-      createToast('Bienvenido al panel de administración', 'success');
+      alert('Bienvenido al panel de administración');
       router.push('/admin/dashboard');
 
     } catch (error) {
       console.error('Error en login admin:', error);
-      createToast('Error al iniciar sesión', 'error');
+      setError('Error al iniciar sesión');
     }
 
     setIsLoading(false);
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
   };
 
   return (
@@ -95,6 +91,12 @@ export default function AdminLogin() {
               disabled={isLoading}
             />
           </div>
+
+          {error && (
+            <div className="error-message" style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
