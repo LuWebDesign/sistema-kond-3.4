@@ -1,52 +1,16 @@
-﻿import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+﻿import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
 export default function Home() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    // Evitar múltiples ejecuciones
-    if (hasChecked) return;
+    // Simplemente marcar como cargado
+    setIsLoading(false);
+  }, []);
 
-    const checkSession = () => {
-      try {
-        const sessionData = localStorage.getItem('adminSession');
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
-          const now = new Date().getTime();
-          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
-
-          if (now - session.timestamp < sessionDuration) {
-            // Usar replace en lugar de push para evitar problemas de navegación
-            router.replace('/admin/dashboard');
-            return;
-          } else {
-            localStorage.removeItem('adminSession');
-          }
-        }
-        setIsLoading(false);
-        setHasChecked(true);
-      } catch (error) {
-        console.error('Error checking session:', error);
-        setIsLoading(false);
-        setHasChecked(true);
-      }
-    };
-
-    // Solo ejecutar en el cliente
-    if (typeof window !== 'undefined') {
-      checkSession();
-    } else {
-      setIsLoading(false);
-      setHasChecked(true);
-    }
-  }, [hasChecked, router]);
-
-  // Si está cargando, mostrar loading
+  // Mostrar loading inicial
   if (isLoading) {
     return (
       <div style={{

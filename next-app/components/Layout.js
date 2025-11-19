@@ -135,7 +135,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onClick={() => setSidebarOpen(false)}>
             {/* Dashboard - Panel administrativo principal */}
-            <Link href="/home" style={linkStyle}>
+            <Link href="/admin/dashboard" style={linkStyle}>
               🏠 Dashboard
             </Link>
             
