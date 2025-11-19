@@ -15,13 +15,14 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Evitar múltiples ejecuciones
-    if (hasChecked) return;
+    // Solo ejecutar en el cliente para verificar sesión
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      setHasChecked(true);
+      return;
+    }
 
     const checkSession = () => {
-      // Solo ejecutar en el cliente (navegador) para evitar errores de SSR
-      if (typeof window === 'undefined') return;
-
       try {
         const sessionData = localStorage.getItem('adminSession');
         if (sessionData) {
@@ -46,14 +47,8 @@ export default function Home() {
       }
     };
 
-    // Solo ejecutar en el cliente
-    if (typeof window !== 'undefined') {
-      checkSession();
-    } else {
-      setIsLoading(false);
-      setHasChecked(true);
-    }
-  }, [hasChecked]);
+    checkSession();
+  }, [router]); // Solo depende de router para navegación
 
   // Si no está hidratado, mostrar loading consistente
   if (!isHydrated) {
