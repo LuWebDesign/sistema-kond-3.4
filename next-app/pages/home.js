@@ -13,6 +13,9 @@ export default function Home() {
     if (hasChecked) return;
 
     const checkSession = () => {
+      // Solo ejecutar en el cliente (navegador) para evitar errores de SSR
+      if (typeof window === 'undefined') return;
+
       try {
         const sessionData = localStorage.getItem('adminSession');
         if (sessionData) {
