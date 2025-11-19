@@ -14,41 +14,62 @@ export default function Home() {
     setIsHydrated(true);
   }, []);
 
-  useEffect(() => {
-    // Solo ejecutar en el cliente para verificar sesión
+  // Memoizar la función de verificación de sesión
+  const checkSession = useCallback(() => {
+    // Solo ejecutar en el cliente
     if (typeof window === 'undefined') {
       setIsLoading(false);
       setHasChecked(true);
       return;
     }
 
-    const checkSession = () => {
-      try {
-        const sessionData = localStorage.getItem('adminSession');
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
-          const now = new Date().getTime();
-          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
+    try {
+      const sessionData = localStorage.getItem('adminSession');
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        const now = new Date().getTime();
+        const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
 
-          if (now - session.timestamp < sessionDuration) {
-            // Usar replace en lugar de push para evitar problemas de navegación
-            router.replace('/admin/dashboard');
-            return;
-          } else {
-            localStorage.removeItem('adminSession');
-          }
+        if (now - session.timestamp < sessionDuration) {
+          // Usar replace en lugar de push para evitar problemas de navegación
+          router.replace('/admin/dashboard');
+          return;
+        } else {
+          localStorage.removeItem('adminSession');
         }
-        setIsLoading(false);
-        setHasChecked(true);
-      } catch (error) {
-        console.error('Error checking session:', error);
-        setIsLoading(false);
-        setHasChecked(true);
       }
-    };
+      setIsLoading(false);
+      setHasChecked(true);
+    } catch (error) {
+      console.error('Error checking session:', error);
+      setIsLoading(false);
+      setHasChecked(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Solo ejecutar una vez al montar
+    if (hasChecked) return;
 
     checkSession();
-  }, [router]); // Solo depende de router para navegación
+  }, [hasChecked]);
+
+  // Scroll suavizado memoizado
+  const scrollToSection = useCallback((sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Handler del formulario memoizado
+  const handleContactSubmit = useCallback((e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
+    e.target.reset();
+  }, []);
 
   // Si no está hidratado, mostrar loading consistente
   if (!isHydrated) {
@@ -103,28 +124,6 @@ export default function Home() {
       </div>
     );
   }
-
-  // Scroll suavizado memoizado
-  const scrollToSection = useCallback((sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  // Handler del formulario memoizado
-  const handleContactSubmit = useCallback((e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
-    e.target.reset();
-  }, []);
-
-  useEffect(() => {
-    // Simplemente marcar como cargado
-    setIsLoading(false);
-  }, []);
 
   return (
     <>
