@@ -66,13 +66,13 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
       localStorage.removeItem('adminSession')
       setUserInfo(null)
       // Redirigir al login admin
-      router.push('/admin-login')
+      router.push('/admin/login')
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
       // Limpiar de todas formas
       localStorage.removeItem('adminSession')
       setUserInfo(null)
-      router.push('/admin-login')
+      router.push('/admin/login')
     }
   }
 

@@ -19,7 +19,7 @@ export default function withAdminAuth(WrappedComponent) {
           
           if (!session || !session.user) {
             // No hay sesión, redirigir al login admin
-            router.replace('/admin-login')
+            router.replace('/admin/login')
             return
           }
 
@@ -34,7 +34,7 @@ export default function withAdminAuth(WrappedComponent) {
           setIsLoading(false)
         } catch (error) {
           console.error('Error verificando autenticación:', error)
-          router.replace('/admin-login')
+          router.replace('/admin/login')
         }
       }
 

@@ -482,7 +482,7 @@ export default function Home() {
               <a href="#precios" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('precios'); }}>Precios</a>
               <a href="#contacto" className="nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('contacto'); }}>Contacto</a>
               <Link href="/catalog" className="nav-link">Catálogo</Link>
-              <button className="btn-admin" onClick={() => router.push('/admin-login')}>Acceso Admin</button>
+              <button className="btn-admin" onClick={() => router.push('/admin/login')}>Acceso Admin</button>
             </nav>
           </div>
         </div>
@@ -601,7 +601,7 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte por email</div>
                 <div className="feature-item">✅ 1 usuario administrador</div>
               </div>
-              <button className="pricing-btn" onClick={() => router.push('/admin-login')}>
+              <button className="pricing-btn" onClick={() => router.push('/admin/login')}>
                 Comenzar Gratis
               </button>
             </div>
@@ -626,7 +626,7 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte prioritario</div>
                 <div className="feature-item">✅ API para integraciones</div>
               </div>
-              <button className="pricing-btn featured-btn" onClick={() => router.push('/admin-login')}>
+              <button className="pricing-btn featured-btn" onClick={() => router.push('/admin/login')}>
                 Comenzar Ahora
               </button>
             </div>
@@ -650,7 +650,7 @@ export default function Home() {
                 <div className="feature-item">✅ Consultoría personalizada</div>
                 <div className="feature-item">✅ Backup y recuperación garantizada</div>
               </div>
-              <button className="pricing-btn" onClick={() => router.push('/admin-login')}>
+              <button className="pricing-btn" onClick={() => router.push('/admin/login')}>
                 Contactar Ventas
               </button>
             </div>
