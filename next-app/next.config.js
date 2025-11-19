@@ -4,6 +4,7 @@ const nextConfig = {
   // turbopack: {
   //   root: __dirname  // Removido para evitar conflicto con outputFileTracingRoot en Vercel
   // },
+  outputFileTracingRoot: __dirname,
   async redirects() {
     return [
       {

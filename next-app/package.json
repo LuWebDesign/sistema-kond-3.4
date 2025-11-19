@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 CHOKIDAR_INTERVAL=200 next dev --hostname 0.0.0.0 -p 3000",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 3000",
+    "test:prod": "next build && next start -p 3001"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.80.0",
