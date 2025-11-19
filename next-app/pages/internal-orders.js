@@ -3,7 +3,7 @@ import Layout from '../components/Layout'
 import withAdminAuth from '../components/withAdminAuth'
 import PedidoCard from '../components/PedidoCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
-import { formatCurrency } from '../utils/catalogUtils'
+import { formatCurrency, createToast } from '../utils/catalogUtils'
 
 function OrdersStats({ orders, filteredOrders }) {
   // Calcular estadísticas
@@ -992,6 +992,7 @@ function InternalOrders() {
                   getProductThumbnail={() => null}
                   formatFechaEntrega={(p) => p.fechaConfirmadaEntrega || p.fechaEntrega || '—'}
                   formatFechaProduccion={() => '—'}
+                  createToast={createToast}
                 />
               ))}
             </div>

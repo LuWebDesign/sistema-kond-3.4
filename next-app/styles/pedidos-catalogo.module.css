@@ -173,11 +173,18 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 14px 14px;
-  padding-right: 36px;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selectInline:hover {
+  border-color: var(--accent-blue);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
 }
 
 .searchInput:focus,
@@ -873,6 +880,11 @@
     border: 1px solid rgba(9, 132, 227, 0.35);
     color: #0984e3;
   }
+
+  .productoIdBadge {
+    background: var(--accent-blue);
+    color: white;
+  }
 }
 
 /* También soportar el tema oscuro controlado por la app mediante data-theme="dark" */
@@ -906,6 +918,11 @@
   background: rgba(251, 191, 36, 0.12);
   border: 1px solid rgba(251, 191, 36, 0.28);
   color: #b45309;
+}
+
+[data-theme="dark"] .productoIdBadge {
+  background: var(--accent-blue);
+  color: white;
 }
 
 .actionButton:hover {
@@ -1775,34 +1792,59 @@
 /* Dark-mode: dropdown/select text inside modal should be darker grey for readability */
 [data-theme="dark"] .modalContentNew select,
 [data-theme="dark"] .modalContentNew .selectInline {
-  color: #374151; /* slate-700 / grey-dark */
+  background: #1f2937; /* gray-800 */
+  border-color: #374151; /* gray-700 */
+  color: #f3f4f6; /* gray-100 */
+}
+
+[data-theme="dark"] .modalContentNew .selectInline {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%9ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+}
+
+[data-theme="dark"] .modalContentNew .estadoValue select::after {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .modalContentNew .estadoValue select:hover::after {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .modalContentNew select:focus,
+[data-theme="dark"] .modalContentNew .selectInline:focus {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .modalContentNew select,
   .modalContentNew .selectInline {
-    color: #374151;
+    background: #1f2937;
+    border-color: #374151;
+    color: #f3f4f6;
   }
-}
 
-/* Dark-mode: texto de los datos seleccionados dentro del modal debe ser gris claro */
-[data-theme="dark"] .modalContentNew .estadoValue,
-[data-theme="dark"] .modalContentNew .fechaValue,
-[data-theme="dark"] .modalContentNew .clienteContacto,
-[data-theme="dark"] .modalContentNew .montoInput,
-[data-theme="dark"] .modalContentNew input,
-[data-theme="dark"] .modalContentNew .selectInline {
-  color: #d1d5db; /* gris claro (slate-300) */
-}
-
-@media (prefers-color-scheme: dark) {
-  .modalContentNew .estadoValue,
-  .modalContentNew .fechaValue,
-  .modalContentNew .clienteContacto,
-  .modalContentNew .montoInput,
-  .modalContentNew input,
   .modalContentNew .selectInline {
-    color: #d1d5db;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%9ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  }
+
+  .modalContentNew .selectInline:hover {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%60a5fa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  }
+
+  .modalContentNew .estadoValue select::after {
+    color: #9ca3af;
+  }
+
+  .modalContentNew .estadoValue select:hover::after {
+    color: #60a5fa;
+  }
+
+  .modalContentNew select:focus,
+  .modalContentNew .selectInline:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
   }
 }
 
@@ -2332,6 +2374,29 @@
   align-items: center;
 }
 
+.estadoValue select {
+  background-image: none;
+  background-color: var(--bg-section);
+  padding-right: 30px;
+  position: relative;
+
+  &::after {
+    content: "▼";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 12px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+
+  &:hover::after {
+    color: var(--accent-blue);
+  }
+}
+
 .montoValue {
   padding: 12px 16px;
   border-radius: 8px;
@@ -2613,6 +2678,22 @@
   font-weight: 600;
   margin-left: -6px;
   padding-left: 0;
+}
+.productoIdBadge {
+  background: var(--accent-blue);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 8px;
+  display: inline-block;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.productoIdBadge:hover {
+  opacity: 0.8;
 }
 .productoNombreWrapper {
   margin-left: 0;

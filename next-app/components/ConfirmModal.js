@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 
-export default function ConfirmModal({ open, onClose, message = 'Cambios guardados correctamente', autoCloseMs = 2200, type = 'success' }) {
+export default function ConfirmModal({ open, onClose, message = 'Cambios guardados correctamente', title = '¡Listo!', autoCloseMs = 2200, type = 'success', countdown = null }) {
   useEffect(() => {
     if (!open) return
     if (autoCloseMs > 0) {
@@ -13,10 +13,11 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
 
   const getIcon = (type) => {
     switch (type) {
-      case 'success': return '✅'
+      case 'success': return '🎉'
       case 'error': return '❌'
       case 'warning': return '⚠️'
       case 'info': return 'ℹ️'
+      case 'welcome': return '👋'
       default: return '✅'
     }
   }
@@ -27,6 +28,7 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
       case 'error': return '#ef4444'
       case 'warning': return '#f59e0b'
       case 'info': return '#3b82f6'
+      case 'welcome': return '#8b5cf6'
       default: return '#10b981'
     }
   }
@@ -43,7 +45,8 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 2000
+        zIndex: 2000,
+        animation: 'modalFadeIn 0.3s ease-out'
       }}
       onClick={onClose}
     >
@@ -51,13 +54,14 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
         style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
-          borderRadius: '12px',
+          borderRadius: '16px',
           boxShadow: 'var(--shadow)',
-          maxWidth: '400px',
+          maxWidth: '420px',
           width: '90%',
           maxHeight: '80vh',
           overflow: 'hidden',
-          position: 'relative'
+          position: 'relative',
+          animation: 'modalScaleIn 0.4s ease-out'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -82,7 +86,7 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
               fontWeight: '600',
               color: 'var(--text-primary)'
             }}>
-              ¡Listo!
+              {title}
             </h3>
           </div>
         </div>
@@ -105,29 +109,32 @@ export default function ConfirmModal({ open, onClose, message = 'Cambios guardad
           padding: '16px 24px 20px',
           borderTop: '1px solid var(--border-color)',
           display: 'flex',
-          justifyContent: 'flex-end'
+          justifyContent: 'center'
         }}>
           <button
             onClick={onClose}
             style={{
-              padding: '8px 16px',
+              padding: '10px 24px',
               background: getColor(type),
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '8px',
               color: 'white',
-              fontSize: '0.9rem',
-              fontWeight: '500',
+              fontSize: '0.95rem',
+              fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: '120px'
             }}
             onMouseEnter={(e) => {
-              e.target.style.opacity = '0.9'
+              e.target.style.opacity = '0.9';
+              e.target.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.opacity = '1'
+              e.target.style.opacity = '1';
+              e.target.style.transform = 'translateY(0)';
             }}
           >
-            Aceptar
+            {countdown !== null ? `Continuar (${countdown})` : 'Continuar'}
           </button>
         </div>
       </div>
@@ -152,6 +159,26 @@ const styles = `
       --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       --text-primary: #1e293b;
       --text-secondary: #64748b;
+    }
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 `

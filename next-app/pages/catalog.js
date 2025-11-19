@@ -1128,11 +1128,15 @@ function CheckoutModal({
     }
   }, [currentUser])
 
-  // Auto-colapsar formulario si los datos están completos
+  // Auto-colapsar formulario si los datos están completos (solo en carga inicial)
   useEffect(() => {
     const isProfileComplete = customerData.name && customerData.phone
-    setIsProfileCollapsed(isProfileComplete)
-  }, [customerData.name, customerData.phone])
+    // Solo colapsar automáticamente si es la primera carga y el perfil está completo
+    // No colapsar durante la edición del usuario
+    if (isProfileComplete && !isProfileCollapsed) {
+      setIsProfileCollapsed(true)
+    }
+  }, []) // Sin dependencias para que solo se ejecute una vez al montar
 
   // Prefill datos del usuario si está logueado
   useEffect(() => {

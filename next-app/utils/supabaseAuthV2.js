@@ -256,26 +256,72 @@ export async function createAuthUserForAdmin(userId, password) {
 
 /**
  * Obtener sesión actual desde Supabase Auth
+ * Versión mejorada que verifica la sesión completa
  */
 export async function getCurrentSession() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error || !session) return null;
+
+    if (error || !session || !session.user) {
+      // No hay sesión válida en Supabase
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('kond-user');
+      }
+      return null;
+    }
 
     // Obtener info del usuario desde localStorage
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('kond-user');
       if (userStr) {
-        return {
-          session,
-          user: JSON.parse(userStr),
-        };
+        try {
+          const userData = JSON.parse(userStr);
+
+          // Verificar que el ID del usuario coincida con la sesión
+          if (userData.id === session.user.id) {
+            return {
+              session,
+              user: userData,
+            };
+          }
+        } catch (parseError) {
+          console.warn('Error parseando datos de usuario en localStorage:', parseError);
+        }
+      }
+
+      // Si no hay datos en localStorage, intentar obtenerlos de la BD
+      try {
+        const { data: usuario, error: fetchError } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!fetchError && usuario) {
+          // Guardar en localStorage para futuras consultas
+          const userData = {
+            id: usuario.id,
+            username: usuario.username,
+            rol: usuario.rol,
+          };
+          localStorage.setItem('kond-user', JSON.stringify(userData));
+
+          return {
+            session,
+            user: userData,
+          };
+        }
+      } catch (dbError) {
+        console.warn('Error obteniendo usuario de BD:', dbError);
       }
     }
 
-    return { session, user: null };
-  } catch {
+    return null;
+  } catch (error) {
+    console.error('Error obteniendo sesión actual:', error);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kond-user');
+    }
     return null;
   }
 }

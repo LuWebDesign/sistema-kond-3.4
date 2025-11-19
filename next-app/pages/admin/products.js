@@ -62,7 +62,8 @@ function ProductsComponent() {
     // Nuevo campo: precio que refleja el valor afectado por promociones/cupones
     precioPromos: 0,
     ensamble: 'Sin ensamble',
-    imagen: ''
+    imagen: '',
+    stock: 0
   })
 
   // Estados para manejo de imagen en el formulario de agregar
@@ -261,6 +262,7 @@ function ProductsComponent() {
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
           imagen: p.imagen_url || '',
+          stock: p.stock || 0,
           fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
       })
@@ -439,9 +441,38 @@ function ProductsComponent() {
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase()
       filtered = filtered.filter(p => 
+        // Búsqueda en campos principales
         p.nombre?.toLowerCase().includes(searchTerm) ||
         p.categoria?.toLowerCase().includes(searchTerm) ||
-        p.medidas?.toLowerCase().includes(searchTerm)
+        p.medidas?.toLowerCase().includes(searchTerm) ||
+        // Búsqueda por ID
+        String(p.id).toLowerCase().includes(searchTerm) ||
+        // Búsqueda por precio (convertir a string para buscar)
+        String(p.precioUnitario || '').toLowerCase().includes(searchTerm) ||
+        formatCurrency(p.precioUnitario || 0).toLowerCase().includes(searchTerm) ||
+        // Búsqueda por material
+        p.material?.toLowerCase().includes(searchTerm) ||
+        // Búsqueda por espesor
+        p.espesor?.toLowerCase().includes(searchTerm) ||
+        // Búsqueda por tiempo unitario
+        p.tiempoUnitario?.toLowerCase().includes(searchTerm) ||
+        // Búsqueda por costo de material
+        String(p.costoMaterial || '').toLowerCase().includes(searchTerm) ||
+        formatCurrency(p.costoMaterial || 0).toLowerCase().includes(searchTerm) ||
+        // Búsqueda por costo de placa
+        String(p.costoPlaca || '').toLowerCase().includes(searchTerm) ||
+        formatCurrency(p.costoPlaca || 0).toLowerCase().includes(searchTerm) ||
+        // Búsqueda por precio por minuto
+        String(p.precioPorMinuto || '').toLowerCase().includes(searchTerm) ||
+        formatCurrency(p.precioPorMinuto || 0).toLowerCase().includes(searchTerm) ||
+        // Búsqueda por unidades por placa
+        String(p.unidadesPorPlaca || '').toLowerCase().includes(searchTerm) ||
+        // Búsqueda por uso de placas
+        String(p.usoPlacas || '').toLowerCase().includes(searchTerm) ||
+        // Búsqueda por stock
+        String(p.stock || '').toLowerCase().includes(searchTerm) ||
+        // Búsqueda por tipo
+        p.tipo?.toLowerCase().includes(searchTerm)
       )
     }
 
@@ -497,6 +528,19 @@ function ProductsComponent() {
     loadProducts()
   }, [loadProducts])
 
+  // Escuchar cambios en productos desde otras páginas (como database)
+  useEffect(() => {
+    const handleProductosUpdated = () => {
+      loadProducts()
+    }
+
+    window.addEventListener('productos:updated', handleProductosUpdated)
+    
+    return () => {
+      window.removeEventListener('productos:updated', handleProductosUpdated)
+    }
+  }, [loadProducts])
+
   // Ya no necesitamos applyFilters como efecto porque usamos useMemo
   
   useEffect(() => {
@@ -508,7 +552,7 @@ function ProductsComponent() {
     const { name, value } = e.target
 
     // Campos que deben ser tratados como números
-  const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos'])
+  const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos', 'stock'])
 
     let newValue = value
     if (numericFields.has(name)) {
@@ -594,6 +638,7 @@ function ProductsComponent() {
         precioUnitario: finalFormData.precioUnitario,
         precioPromos: finalFormData.precioPromos,
         unidades: finalFormData.unidades,
+        stock: finalFormData.stock,
         ensamble: finalFormData.ensamble,
         imagen: '' // URL de imagen se asignará después si hay archivo
       }
@@ -653,6 +698,7 @@ function ProductsComponent() {
         precioPromos: 0,
         ensamble: 'Sin ensamble',
         imagen: '',
+        stock: 0,
         publicado: false
       })
       setImageFile(null)
@@ -921,7 +967,7 @@ function ProductsComponent() {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <input
                 type="text"
-                placeholder="Buscar productos..."
+                placeholder="🔍 Buscar por nombre, ID, precio, material, espesor..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 style={{
@@ -933,6 +979,14 @@ function ProductsComponent() {
                   fontSize: '0.9rem'
                 }}
               />
+              <small style={{ 
+                color: 'var(--text-secondary)', 
+                fontSize: '0.75rem',
+                marginLeft: '8px',
+                whiteSpace: 'nowrap'
+              }}>
+                Busca por: nombre, ID, precio, material, espesor, tiempo, etc.
+              </small>
               <select
                 value={filters.type}
                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
@@ -1136,6 +1190,29 @@ function ProductsComponent() {
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
                     min="1"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+
+                {/* Stock */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
+                    min="0"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -1884,10 +1961,34 @@ function ProductCard({
     margenMaterial: product.margenMaterial || 0,
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
-    imagen: product.imagen || ''
+    imagen: product.imagen || '',
+    stock: product.stock || 0
   })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(product.imagen || '')
+
+  // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
+  useEffect(() => {
+    setEditData({
+      nombre: product.nombre || '',
+      categoria: product.categoria || '',
+      medidas: product.medidas || '',
+      tipo: product.tipo || 'Stock',
+      tiempoUnitario: product.tiempoUnitario || '00:00:30',
+      unidades: product.unidades || 1,
+      unidadesPorPlaca: product.unidadesPorPlaca || 1,
+      usoPlacas: product.usoPlacas || 0,
+      costoPlaca: product.costoPlaca || 0,
+      costoMaterial: product.costoMaterial || 0,
+      materialId: product.materialId || '',
+      margenMaterial: product.margenMaterial || 0,
+      precioUnitario: product.precioUnitario || 0,
+      ensamble: product.ensamble || 'Sin ensamble',
+      imagen: product.imagen || '',
+      stock: product.stock || 0
+    })
+    setImagePreview(product.imagen || '')
+  }, [product])
 
   // Estados para controlar modos manuales en edición
   const [editCalculatedFields, setEditCalculatedFields] = useState({
@@ -1969,6 +2070,36 @@ function ProductCard({
       case 'Stock': return '#3b82f6'
       default: return 'var(--text-secondary)'
     }
+  }
+
+  // Función para obtener el texto del badge de tipo con información de stock
+  const getTypeBadgeText = (product) => {
+    if (product.tipo === 'Stock') {
+      const stock = product.stock || 0
+      if (stock === 0) {
+        return 'Sin stock'
+      } else if (stock < 5) {
+        return `Stock bajo (${stock})`
+      } else {
+        return `Stock (${stock})`
+      }
+    }
+    return product.tipo
+  }
+
+  // Función para obtener el color del badge de tipo con información de stock
+  const getTypeBadgeColor = (product) => {
+    if (product.tipo === 'Stock') {
+      const stock = product.stock || 0
+      if (stock === 0) {
+        return '#ef4444' // Rojo para sin stock
+      } else if (stock < 5) {
+        return '#f59e0b' // Amarillo para stock bajo
+      } else {
+        return '#10b981' // Verde para stock disponible
+      }
+    }
+    return getTypeColor(product.tipo)
   }
 
   // Función para toggle de campos manuales en edición
@@ -2087,7 +2218,8 @@ function ProductCard({
       padding: '16px',
       opacity: product.active === false ? 0.6 : 1,
       transition: 'all 0.3s ease',
-      borderColor: isEditing ? '#3b82f6' : 'var(--border-color)'
+      borderColor: isEditing ? '#3b82f6' : 'var(--border-color)',
+      position: 'relative'
     }}>
       {/* Header con información resumida */}
       <div className="product-card-header" style={{
@@ -2239,7 +2371,7 @@ function ProductCard({
           
           {/* Información resumida cuando está colapsada (versión compacta) */}
           {!isExpanded && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
               {/* Información del producto a la izquierda */}
               <div style={{
                 flex: 1,
@@ -2269,6 +2401,37 @@ function ProductCard({
                         <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(precioPorMinuto)}</strong>/min
                       </span>
                     </>
+                  )}
+                </div>
+
+                {/* Badges de estado */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '6px', 
+                  alignItems: 'center',
+                  marginTop: '4px'
+                }}>
+                  <span style={{
+                    background: getTypeBadgeColor(product) + '20',
+                    color: getTypeBadgeColor(product),
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
+                    fontWeight: 500
+                  }}>
+                    {getTypeBadgeText(product)}
+                  </span>
+                  {product.publicado && (
+                    <span style={{
+                      background: '#10b98120',
+                      color: '#10b981',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontSize: '0.7rem',
+                      fontWeight: 500
+                    }}>
+                      Público
+                    </span>
                   )}
                 </div>
               </div>
@@ -2304,40 +2467,6 @@ function ProductCard({
                   }}>
                     Sin imagen
                   </div>
-                )}
-              </div>
-              
-              {/* Badges de estado debajo */}
-              <div style={{ 
-                position: 'absolute', 
-                bottom: '12px', 
-                left: '16px', 
-                right: '16px',
-                display: 'flex', 
-                gap: '6px', 
-                alignItems: 'center' 
-              }}>
-                <span style={{
-                  background: getTypeColor(product.tipo) + '20',
-                  color: getTypeColor(product.tipo),
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '0.7rem',
-                  fontWeight: 500
-                }}>
-                  {product.tipo}
-                </span>
-                {product.publicado && (
-                  <span style={{
-                    background: '#10b98120',
-                    color: '#10b981',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.7rem',
-                    fontWeight: 500
-                  }}>
-                    Público
-                  </span>
                 )}
               </div>
             </div>
@@ -2444,6 +2573,12 @@ function ViewMode({ product }) {
             <span style={{ color: 'var(--text-secondary)' }}>Unidades a producir: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidades || 0}</span>
           </div>
+          {product.tipo === 'Stock' && (
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Stock: </span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.stock || 0} unidades</span>
+            </div>
+          )}
           <div>
             <span style={{ color: 'var(--text-secondary)' }}>Unidades por placa: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidadesPorPlaca || 1}</span>
@@ -2818,6 +2953,27 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
               type="number"
               value={editData.unidades}
               onChange={(e) => handleInputChange('unidades', Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem'
+              }}
+              min="0"
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Stock
+            </label>
+            <input
+              type="number"
+              value={editData.stock}
+              onChange={(e) => handleInputChange('stock', Number(e.target.value))}
               style={{
                 width: '100%',
                 padding: '6px 8px',

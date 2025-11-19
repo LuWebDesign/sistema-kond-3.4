@@ -36,6 +36,12 @@ const parseInputNumber = (str) => {
   return Number(cleaned)
 }
 
+// Formatea número con separadores de miles para input
+const formatInputNumber = (num) => {
+  if (num === null || num === undefined || num === 0) return ''
+  return new Intl.NumberFormat('es-AR').format(num)
+}
+
 // Mapea pedido de Supabase (snake_case) a formato frontend (camelCase)
 // productosBase se pasa como parámetro para incluir imágenes
 const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
@@ -1047,12 +1053,12 @@ function PedidosCatalogo() {
   }
 
   const handleCardClick = (pedido) => {
-    // Abrir modal y actualizar la URL (shallow) para que quede /admin/orders/detalle-pedido/:id
+    // Abrir modal y actualizar la URL para que incluya el ID del pedido
     try {
       const asPath = `/admin/orders/detalle-pedido/${pedido.id}`
-      router.push({ pathname: router.pathname, query: { modal: 'detalle', id: pedido.id } }, asPath, { shallow: true })
+      router.push({ pathname: router.pathname, query: { ...router.query, modal: 'detalle', id: pedido.id } }, asPath, { shallow: true })
     } catch (e) {
-      // Si router falla por algún motivo, seguir mostrando el modal sin cambiar la URL
+      // Si router falla, abrir modal sin cambiar URL
     }
     setSelectedPedido(pedido)
     setShowDetailModal(true)
@@ -1065,14 +1071,30 @@ function PedidosCatalogo() {
     // Usar setTimeout para asegurar que el estado se actualice antes de cambiar la URL
     setTimeout(() => {
       try {
-        // Restaurar URL base sin historial (shallow)
-        router.replace({ pathname: router.pathname, query: {} }, '/admin/orders', { shallow: true })
+        // Restaurar URL sin modal e id, pero manteniendo el tab actual
+        const newQuery = { ...router.query }
+        delete newQuery.modal
+        delete newQuery.id
+        const queryString = Object.keys(newQuery).length > 0 ? '?' + new URLSearchParams(newQuery).toString() : ''
+        router.replace({ pathname: router.pathname, query: newQuery }, `/admin/orders${queryString}`, { shallow: true })
       } catch (e) {}
       // Resetear la bandera después de un breve delay
       setTimeout(() => {
         isClosingModalRef.current = false
       }, 100)
     }, 0)
+  }
+
+  const handleTabChange = (tabName) => {
+    setActiveSubtab(tabName)
+    // Actualizar la URL con el parámetro tab
+    try {
+      const newQuery = { ...router.query }
+      newQuery.tab = tabName
+      router.replace({ pathname: router.pathname, query: newQuery }, `/admin/orders?tab=${tabName}`, { shallow: true })
+    } catch (e) {
+      console.warn('Error updating URL for tab change:', e)
+    }
   }
 
   const handleSaveChanges = () => {
@@ -1116,12 +1138,25 @@ function PedidosCatalogo() {
   }
 
   // Si la URL contiene ?modal=detalle&id=..., abrir el modal al cargar la página
+  // También manejar ?tab=pendientes|entregados para las subtabs
   useEffect(() => {
     if (!router || !router.isReady) return
     if (isClosingModalRef.current) return // No reabrir si estamos cerrando
     
-    const { modal, id } = router.query || {}
-    // Solo abrir si hay parámetros y el modal NO está ya abierto
+    const { modal, id, tab } = router.query || {}
+    
+    // Manejar el parámetro tab para subtabs
+    if (tab === 'entregados') {
+      setActiveSubtab('entregados')
+    } else if (tab === 'pendientes') {
+      setActiveSubtab('pendientes')
+    } else {
+      // Si no hay tab especificado, redirigir a pendientes
+      setActiveSubtab('pendientes')
+      router.replace({ pathname: router.pathname, query: { tab: 'pendientes' } }, '/admin/orders?tab=pendientes', { shallow: true })
+    }
+    
+    // Solo abrir modal si hay parámetros y el modal NO está ya abierto
     if (modal === 'detalle' && id && !showDetailModal) {
       // Intentar encontrar el pedido en la lista cargada
       const found = (pedidosCatalogo || []).find(p => String(p.id) === String(id))
@@ -1249,7 +1284,7 @@ function PedidosCatalogo() {
   const handleDelete = async () => {
     if (!selectedPedido) return
 
-    if (!confirm(`¿Estás seguro de eliminar el pedido #${selectedPedido.id}?`)) {
+    if (!confirm(`¿Estás seguro de eliminar este pedido?`)) {
       return
     }
 
@@ -1359,7 +1394,7 @@ function PedidosCatalogo() {
     const cliente = selectedPedido.cliente
     const telefono = cliente.telefono.replace(/\D/g, '')
     
-    let mensaje = `Hola ${cliente.nombre}! Te contacto sobre tu pedido #${selectedPedido.id}:\n\n`
+    let mensaje = `Hola ${cliente.nombre}! Te contacto sobre tu pedido:\n\n`
     
     selectedPedido.productos.forEach(prod => {
       mensaje += `• ${prod.cantidad}x ${prod.nombre}\n`
@@ -1378,7 +1413,7 @@ function PedidosCatalogo() {
     }
     
     const cliente = selectedPedido.cliente
-    const subject = `Pedido #${selectedPedido.id} - Sistema KOND`
+    const subject = `Pedido - Sistema KOND`
     
     let body = `Hola ${cliente.nombre},\n\nTe contacto sobre tu pedido #${selectedPedido.id}:\n\n`
     
@@ -1464,7 +1499,7 @@ function PedidosCatalogo() {
         {/* Sub-pestañas */}
         <div className={styles.subtabs}>
           <button
-            onClick={() => setActiveSubtab('pendientes')}
+            onClick={() => handleTabChange('pendientes')}
             className={`${styles.subtab} ${activeSubtab === 'pendientes' ? styles.active : ''}`}
           >
             <span>⏳</span>
@@ -1473,7 +1508,7 @@ function PedidosCatalogo() {
           </button>
           
           <button
-            onClick={() => setActiveSubtab('entregados')}
+            onClick={() => handleTabChange('entregados')}
             className={`${styles.subtab} ${activeSubtab === 'entregados' ? styles.active : ''}`}
           >
             <span>🎉</span>
@@ -1584,6 +1619,7 @@ function PedidosCatalogo() {
                       getProductThumbnail={getProductThumbnail}
                       formatFechaEntrega={formatFechaEntrega}
                       formatFechaProduccion={formatFechaProduccion}
+                      createToast={createToast}
                     />
                   ))}
                 </div>
@@ -1727,6 +1763,7 @@ function PedidosCatalogo() {
                       getProductThumbnail={getProductThumbnail}
                       formatFechaEntrega={formatFechaEntrega}
                       formatFechaProduccion={formatFechaProduccion}
+                      createToast={createToast}
                     />
                   ))}
                 </div>
@@ -1781,7 +1818,6 @@ function PedidosCatalogo() {
               {/* Header Minimalista */}
               <div className={styles.modalHeaderNew}>
                 <div className={styles.headerTop}>
-                  <div className={styles.pedidoId}>#{selectedPedido.id}</div>
                   <button onClick={handleCloseModal} className={styles.closeBtnNew}>×</button>
                 </div>
                 <div className={styles.headerInfo}>
@@ -1849,23 +1885,23 @@ function PedidosCatalogo() {
                     <div className={styles.fechaValue}>{formatDate(selectedPedido.fechaSolicitudEntrega)}</div>
                   </div>
                   <div className={styles.fechaItem}>
-                    <label>Fecha de entrega confirmada</label>
-                    <div className={styles.fechaValue}>
-                      <input
-                        type="date"
-                        value={selectedPedido.fechaConfirmadaEntrega || ''}
-                        onChange={handleChangeFechaConfirmada}
-                        className={styles.dateInput}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.fechaItem}>
                     <label>Fecha Producción</label>
                     <div className={styles.fechaValue}>
                       <input
                         type="date"
                         value={selectedPedido.fechaProduccion || ''}
                         onChange={handleChangeFechaProduccion}
+                        className={styles.dateInput}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.fechaItem}>
+                    <label>Fecha de entrega confirmada</label>
+                    <div className={styles.fechaValue}>
+                      <input
+                        type="date"
+                        value={selectedPedido.fechaConfirmadaEntrega || ''}
+                        onChange={handleChangeFechaConfirmada}
                         className={styles.dateInput}
                       />
                     </div>
@@ -2011,7 +2047,7 @@ function PedidosCatalogo() {
           <div className={styles.modalOverlay}>
             <div className={styles.modalContent} style={{ maxWidth: '940px' }}>
               <div className={styles.modalHeader}>
-                <h2>Asignar Pedido #{selectedPedido.id}</h2>
+                <h2>Asignar Pedido</h2>
                 <button onClick={closeAssignModal} className={styles.closeBtn}>×</button>
               </div>
               <div className={styles.modalBody}>

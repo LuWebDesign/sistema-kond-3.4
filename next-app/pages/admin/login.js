@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { loginAdmin, getCurrentSession } from '../../utils/supabaseAuthV2';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,8 @@ export default function AdminLogin() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const router = useRouter();
 
   // Redirigir si ya está logueado como admin
@@ -42,15 +45,33 @@ export default function AdminLogin() {
       }
 
       // Usuario ya verificado en loginAdmin
-      alert('¡Bienvenido al panel de administración!');
-      router.push('/admin/dashboard');
+      setIsLoading(false);
+      setCountdown(3); // Reset countdown
+      setShowWelcomeModal(true);
 
     } catch (error) {
       console.error('Error en login admin:', error);
       setError('Error al iniciar sesión');
+      setIsLoading(false);
     }
+  };
 
-    setIsLoading(false);
+  // Efecto para manejar la cuenta regresiva del modal
+  useEffect(() => {
+    if (showWelcomeModal && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (showWelcomeModal && countdown === 0) {
+      handleWelcomeModalClose();
+    }
+  }, [showWelcomeModal, countdown]);
+
+  const handleWelcomeModalClose = () => {
+    setShowWelcomeModal(false);
+    setCountdown(3);
+    router.push('/admin/dashboard');
   };
 
   const handleChange = (e) => {
@@ -227,6 +248,17 @@ export default function AdminLogin() {
           text-decoration: underline;
         }
       `}</style>
+
+      {/* Modal de bienvenida */}
+      <ConfirmModal
+        open={showWelcomeModal}
+        onClose={handleWelcomeModalClose}
+        title="¡Bienvenido Administrador!"
+        message={`Has iniciado sesión correctamente en el panel de administración de KOND. Serás redirigido automáticamente en ${countdown} segundos.`}
+        autoCloseMs={0}
+        type="welcome"
+        countdown={countdown}
+      />
     </div>
   );
 }

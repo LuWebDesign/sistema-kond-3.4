@@ -11,26 +11,40 @@ import supabase from './supabaseClient';
 async function generateRandomPedidoId() {
   let attempts = 0;
   const maxAttempts = 100;
-  
+
   while (attempts < maxAttempts) {
     // Generar número aleatorio entre 1000 y 9999
     const randomId = Math.floor(Math.random() * 9000) + 1000;
-    
-    // Verificar si el ID ya existe
-    const { data, error } = await supabase
-      .from('pedidos_catalogo')
-      .select('id')
-      .eq('id', randomId)
-      .single();
-    
-    // Si no existe (error porque no se encontró), usamos este ID
-    if (error && error.code === 'PGRST116') {
-      return randomId;
+
+    try {
+      // Verificar si el ID ya existe
+      const { data, error } = await supabase
+        .from('pedidos_catalogo')
+        .select('id')
+        .eq('id', randomId)
+        .limit(1);
+
+      // Si no hay error y no hay datos, el ID está disponible
+      if (!error && (!data || data.length === 0)) {
+        return randomId;
+      }
+
+      // Si hay datos, el ID ya existe, intentar otro
+      if (data && data.length > 0) {
+        attempts++;
+        continue;
+      }
+
+      // Si hay error, intentar otro ID (podría ser problema de permisos)
+      console.warn(`Error verificando ID ${randomId}:`, error);
+      attempts++;
+
+    } catch (err) {
+      console.warn(`Error verificando ID ${randomId}:`, err);
+      attempts++;
     }
-    
-    attempts++;
   }
-  
+
   // Si después de 100 intentos no encontramos un ID único, lanzar error
   throw new Error('No se pudo generar un ID único para el pedido después de múltiples intentos');
 }
@@ -147,6 +161,19 @@ export async function getPedidoCatalogoById(id) {
  */
 export async function createPedidoCatalogo(pedido, items) {
   try {
+    // Validaciones básicas
+    if (!pedido || !pedido.cliente || !items || items.length === 0) {
+      throw new Error('Datos del pedido incompletos');
+    }
+    
+    if (!pedido.cliente.nombre || !pedido.cliente.telefono) {
+      throw new Error('Nombre y teléfono del cliente son requeridos');
+    }
+    
+    if (!pedido.metodoPago || !pedido.total || pedido.total <= 0) {
+      throw new Error('Método de pago y total válido son requeridos');
+    }
+
     // Generar ID aleatorio de 4 dígitos
     const randomId = await generateRandomPedidoId();
     
@@ -155,17 +182,17 @@ export async function createPedidoCatalogo(pedido, items) {
       .from('pedidos_catalogo')
       .insert([{
         id: randomId,
-        cliente_nombre: pedido.cliente.nombre,
-        cliente_apellido: pedido.cliente.apellido,
-        cliente_telefono: pedido.cliente.telefono,
-        cliente_email: pedido.cliente.email,
-        cliente_direccion: pedido.cliente.direccion,
+        cliente_nombre: pedido.cliente.nombre || '',
+        cliente_apellido: pedido.cliente.apellido || '',
+        cliente_telefono: pedido.cliente.telefono || '',
+        cliente_email: pedido.cliente.email || '',
+        cliente_direccion: pedido.cliente.direccion || '',
         metodo_pago: pedido.metodoPago,
         estado_pago: pedido.estadoPago || 'sin_seña',
         comprobante_url: pedido.comprobante || null,
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
-        total: pedido.total,
+        total: Number(pedido.total) || 0,
       }])
       .select()
       .single();

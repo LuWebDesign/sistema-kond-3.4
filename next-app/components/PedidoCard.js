@@ -18,7 +18,7 @@ const secondsToHHMMSS = (totalSeconds) => {
   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion }) {
+export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion, createToast }) {
   // Calcular monto recibido estimado y restante
   const recibido = Number(pedido.montoRecibido || 0) || (pedido.estadoPago === 'seña_pagada' ? (Number(pedido.total || 0) * 0.5) : (pedido.estadoPago === 'pagado_total' ? Number(pedido.total || 0) : 0))
   const seña = pedido.estadoPago === 'seña_pagada' ? recibido : 0
@@ -42,6 +42,25 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
       case 'pagado': return 'pagado-total'
       case 'seña_pagada': return 'seña-pagada'
       default: return 'sin-seña'
+    }
+  }
+
+  // Función para copiar ID del producto al portapapeles
+  const copyProductId = async (productId, event) => {
+    event.stopPropagation() // Evitar que se abra el modal del pedido
+    try {
+      await navigator.clipboard.writeText(productId.toString())
+      createToast(`ID ${productId} copiado al portapapeles`, 'success')
+    } catch (err) {
+      console.error('Error al copiar ID:', err)
+      // Fallback para navegadores antiguos
+      const textArea = document.createElement('textarea')
+      textArea.value = productId.toString()
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      createToast(`ID ${productId} copiado al portapapeles`, 'success')
     }
   }
 
@@ -205,6 +224,13 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                     <div key={index} className={styles.productoItemCompact}>
                       <div className={styles.productoNombreWrapper}>
                         <div className={styles.productoNombreCompact}>
+                          <span 
+                            className={styles.productoIdBadge} 
+                            onClick={(e) => copyProductId(prod.idProducto, e)}
+                            title="Click para copiar ID"
+                          >
+                            ID: {prod.idProducto}
+                          </span>
                           {prod.nombre}
                           {prod.medidas && <span className={styles.productoMedidas}> • {prod.medidas}</span>}
                         </div>

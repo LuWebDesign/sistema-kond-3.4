@@ -3,7 +3,7 @@ import withAdminAuth from '../../components/withAdminAuth'
 import PedidosModal from '../../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
-import { formatCurrency, isAdminLogged } from '../../utils/catalogUtils'
+import { formatCurrency } from '../../utils/catalogUtils'
 import { getAllPedidosInternos, createPedidoInterno, updatePedidoInterno } from '../../utils/supabasePedidosInternos'
 import { getPedidosCatalogoParaCalendario } from '../../utils/supabasePedidos'
 import { getProductosPublicadosParaCalendario } from '../../utils/supabaseProductos'
@@ -40,27 +40,6 @@ function AdminCalendar() {
     totalTiempo: 0,
     totalValor: 0
   })
-
-  // Estados de administrador
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  // Efecto de verificación de permisos
-  useEffect(() => {
-    const checkAdminAccess = () => {
-      const adminStatus = isAdminLogged()
-      setIsAdmin(adminStatus)
-      setLoading(false)
-
-      if (!adminStatus) {
-        setTimeout(() => {
-          router.push('/home')
-        }, 3000)
-      }
-    }
-
-    checkAdminAccess()
-  }, [])
 
   // Efecto para manejar URL con parámetro date
   useEffect(() => {
@@ -408,86 +387,6 @@ function AdminCalendar() {
       console.error('Error creando pedido interno:', error)
       alert('Error al crear el pedido interno')
     }
-  }
-
-  // Renders condicionales
-  if (loading) {
-    return (
-      <Layout title="Calendario - Sistema KOND">
-        <div style={{
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            padding: '40px',
-            textAlign: 'center',
-            maxWidth: '400px',
-            width: '100%'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
-            <h2 style={{
-              color: 'var(--text-primary)',
-              marginBottom: '16px'
-            }}>
-              Verificando permisos...
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Verificando acceso administrativo
-            </p>
-          </div>
-        </div>
-      </Layout>
-    )
-  }
-
-  if (!isAdmin) {
-    return (
-      <Layout title="Acceso Denegado - Sistema KOND">
-        <div style={{
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            padding: '40px',
-            textAlign: 'center',
-            maxWidth: '400px',
-            width: '100%'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
-            <h2 style={{
-              color: 'var(--text-primary)',
-              marginBottom: '16px'
-            }}>
-              Acceso Denegado
-            </h2>
-            <p style={{
-              color: 'var(--text-secondary)',
-              marginBottom: '24px'
-            }}>
-              Esta página es exclusiva para administradores del sistema.
-            </p>
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.9rem'
-            }}>
-              Serás redirigido automáticamente en unos segundos...
-            </p>
-          </div>
-        </div>
-      </Layout>
-    )
   }
 
   // Función común para renderizar tarjetas de pedidos
