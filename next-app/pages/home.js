@@ -47,7 +47,7 @@ export default function Home() {
       setIsLoading(false);
       setHasChecked(true);
     }
-  }, [hasChecked, router]);
+  }, [hasChecked]);
 
   // Si está cargando, mostrar loading
   if (isLoading) {
