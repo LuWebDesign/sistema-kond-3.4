@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, useMemo } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -6,34 +6,45 @@ import Link from 'next/link';
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-
-  // Verificar sesión activa al cargar la página con useCallback
-  const checkSession = useCallback(() => {
-    try {
-      const sessionData = localStorage.getItem('adminSession');
-      if (sessionData) {
-        const session = JSON.parse(sessionData);
-        const now = new Date().getTime();
-        const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
-
-        if (now - session.timestamp < sessionDuration) {
-          // Redirigir al dashboard en lugar de renderizar el componente
-          router.push('/admin/dashboard');
-          return;
-        } else {
-          localStorage.removeItem('adminSession');
-        }
-      }
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error checking session:', error);
-      setIsLoading(false);
-    }
-  }, [router]);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    checkSession();
-  }, [checkSession]);
+    // Evitar múltiples ejecuciones
+    if (hasChecked) return;
+
+    const checkSession = () => {
+      try {
+        const sessionData = localStorage.getItem('adminSession');
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          const now = new Date().getTime();
+          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
+
+          if (now - session.timestamp < sessionDuration) {
+            // Usar replace en lugar de push para evitar problemas de navegación
+            router.replace('/admin/dashboard');
+            return;
+          } else {
+            localStorage.removeItem('adminSession');
+          }
+        }
+        setIsLoading(false);
+        setHasChecked(true);
+      } catch (error) {
+        console.error('Error checking session:', error);
+        setIsLoading(false);
+        setHasChecked(true);
+      }
+    };
+
+    // Solo ejecutar en el cliente
+    if (typeof window !== 'undefined') {
+      checkSession();
+    } else {
+      setIsLoading(false);
+      setHasChecked(true);
+    }
+  }, [hasChecked, router]);
 
   // Si está cargando, mostrar loading
   if (isLoading) {
