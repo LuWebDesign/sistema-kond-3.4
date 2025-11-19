@@ -72,11 +72,6 @@ export default function Home() {
           }}></div>
           <p>Cargando...</p>
         </div>
-        <style jsx>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -522,6 +517,10 @@ export default function Home() {
           .pricing-card.featured { transform: none; }
           .pricing-card.featured:hover { transform: translateY(-8px); }
           .price-amount { font-size: 2.5rem; }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
