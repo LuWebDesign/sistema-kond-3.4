@@ -7,6 +7,12 @@ export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Marcar hidratación completa
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     // Evitar múltiples ejecuciones
@@ -48,6 +54,33 @@ export default function Home() {
       setHasChecked(true);
     }
   }, [hasChecked]);
+
+  // Si no está hidratado, mostrar loading consistente
+  if (!isHydrated) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#e2e8f0'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Si está cargando, mostrar loading
   if (isLoading) {
