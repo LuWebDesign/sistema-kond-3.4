@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  turbopack: {
-    root: __dirname
-  },
+  // turbopack: {
+  //   root: __dirname  // Removido para evitar conflicto con outputFileTracingRoot en Vercel
+  // },
   async redirects() {
     return [
       {
