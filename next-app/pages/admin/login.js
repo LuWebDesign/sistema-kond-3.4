@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { loginAdmin } from '../../utils/supabaseAuthV2';
+import { loginAdmin, getCurrentSession } from '../../utils/supabaseAuthV2';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -13,13 +13,18 @@ export default function AdminLogin() {
 
   // Redirigir si ya está logueado como admin
   useEffect(() => {
-    const adminUser = typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('kond-admin') || 'null')
-      : null;
+    const checkIfLoggedIn = async () => {
+      try {
+        const session = await getCurrentSession();
+        if (session && session.user && session.user.rol === 'admin') {
+          router.push('/admin/dashboard');
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      }
+    };
 
-    if (adminUser && (adminUser.rol === 'admin' || adminUser.rol === 'super_admin')) {
-      router.push('/admin/dashboard');
-    }
+    checkIfLoggedIn();
   }, [router]);
 
   const handleSubmit = async (e) => {
