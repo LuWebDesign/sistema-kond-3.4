@@ -2,10 +2,12 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import Dashboard from './admin/dashboard';
 
 export default function Home() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   // Verificar sesión activa al cargar la página con useCallback
   const checkSession = useCallback(() => {
@@ -17,20 +19,62 @@ export default function Home() {
         const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
 
         if (now - session.timestamp < sessionDuration) {
-          router.push('/admin/dashboard');
+          setIsAdminLoggedIn(true);
+          setIsLoading(false);
           return;
         } else {
           localStorage.removeItem('adminSession');
         }
       }
+      setIsAdminLoggedIn(false);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error checking session:', error);
+      setIsAdminLoggedIn(false);
+      setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     checkSession();
   }, [checkSession]);
+
+  // Si es admin logueado, mostrar dashboard
+  if (isAdminLoggedIn) {
+    return <Dashboard />;
+  }
+
+  // Si está cargando, mostrar loading
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#e2e8f0'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p>Cargando...</p>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // Scroll suavizado memoizado
   const scrollToSection = useCallback((sectionId) => {
