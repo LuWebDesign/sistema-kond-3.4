@@ -2,12 +2,10 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import Dashboard from './admin/dashboard';
 
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   // Verificar sesión activa al cargar la página con useCallback
   const checkSession = useCallback(() => {
@@ -19,30 +17,23 @@ export default function Home() {
         const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
 
         if (now - session.timestamp < sessionDuration) {
-          setIsAdminLoggedIn(true);
-          setIsLoading(false);
+          // Redirigir al dashboard en lugar de renderizar el componente
+          router.push('/admin/dashboard');
           return;
         } else {
           localStorage.removeItem('adminSession');
         }
       }
-      setIsAdminLoggedIn(false);
       setIsLoading(false);
     } catch (error) {
       console.error('Error checking session:', error);
-      setIsAdminLoggedIn(false);
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     checkSession();
   }, [checkSession]);
-
-  // Si es admin logueado, mostrar dashboard
-  if (isAdminLoggedIn) {
-    return <Dashboard />;
-  }
 
   // Si está cargando, mostrar loading
   if (isLoading) {
