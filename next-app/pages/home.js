@@ -5,7 +5,80 @@ import { useRouter } from 'next/router';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [hasChecked, setHasChecked] = useState(false);
+
+  useEffect(() => {
+    // Evitar múltiples ejecuciones
+    if (hasChecked) return;
+
+    const checkSession = () => {
+      // Solo ejecutar en el cliente (navegador) para evitar errores de SSR
+      if (typeof window === 'undefined') return;
+
+      try {
+        const sessionData = localStorage.getItem('adminSession');
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          const now = new Date().getTime();
+          const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
+
+          if (now - session.timestamp < sessionDuration) {
+            // Usar replace en lugar de push para evitar problemas de navegación
+            router.replace('/admin/dashboard');
+            return;
+          } else {
+            localStorage.removeItem('adminSession');
+          }
+        }
+        setIsLoading(false);
+        setHasChecked(true);
+      } catch (error) {
+        console.error('Error checking session:', error);
+        setIsLoading(false);
+        setHasChecked(true);
+      }
+    };
+
+    // Solo ejecutar en el cliente
+    if (typeof window !== 'undefined') {
+      checkSession();
+    } else {
+      setIsLoading(false);
+      setHasChecked(true);
+    }
+  }, [hasChecked, router]);
+
+  // Si está cargando, mostrar loading
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#e2e8f0'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p>Cargando...</p>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // Scroll suavizado memoizado
   const scrollToSection = useCallback((sectionId) => {

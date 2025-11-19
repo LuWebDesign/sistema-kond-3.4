@@ -9,19 +9,25 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+let supabase = null;
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Faltan variables de entorno de Supabase. Verifica que NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY estén definidas en .env.local'
+  console.warn(
+    '⚠️ Variables de entorno de Supabase no encontradas. Funciones de autenticación pueden no funcionar correctamente. ' +
+    'Verifica que NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY estén definidas en Vercel.'
   );
+} else {
+  // Cliente público de Supabase (respeta RLS)
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
 }
 
-// Cliente público de Supabase (respeta RLS)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+// Exportar el cliente (puede ser null si no hay variables)
+export { supabase };
 
 // Cliente con service_role (solo para operaciones server-side)
 // ⚠️ NUNCA usar en el cliente, solo en API routes

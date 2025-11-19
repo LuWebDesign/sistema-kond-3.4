@@ -6,11 +6,25 @@
 
 import supabase from './supabaseClient';
 
+// Verificar que Supabase esté inicializado
+if (!supabase) {
+  console.warn('⚠️ Supabase no inicializado. Funciones de autenticación pueden no funcionar correctamente.');
+}
+
 /**
  * Login con username y password usando Supabase Auth
  * Nota: Creamos usuarios en auth.users vinculados con nuestra tabla usuarios
  */
 export async function loginWithUsername(username, password) {
+  if (!supabase) {
+    console.warn('Supabase no inicializado - loginWithUsername fallando gracefully');
+    return { 
+      error: 'Sistema de autenticación no disponible',
+      user: null,
+      session: null
+    };
+  }
+
   try {
     // Buscar usuario por username para obtener su email (usamos username como email temporalmente)
     const { data: usuario, error: fetchError } = await supabase
@@ -78,6 +92,15 @@ export async function loginWithUsername(username, password) {
  * Para admin: admin@kond.local
  */
 export async function loginWithEmail(email, password) {
+  if (!supabase) {
+    console.warn('Supabase no inicializado - loginWithEmail fallando gracefully');
+    return {
+      error: 'Sistema de autenticación no disponible',
+      user: null,
+      session: null,
+    };
+  }
+
   try {
     // Intentar login con Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -151,6 +174,14 @@ export async function loginWithEmail(email, password) {
  * Los admin usan Supabase Auth directamente (NO Google OAuth)
  */
 export async function loginAdmin(email, password) {
+  if (!supabase) {
+    return {
+      error: 'Sistema de autenticación no disponible',
+      user: null,
+      session: null,
+    };
+  }
+
   try {
     // Intentar login con Supabase Auth usando email y contraseña
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -259,6 +290,11 @@ export async function createAuthUserForAdmin(userId, password) {
  * Versión mejorada que verifica la sesión completa
  */
 export async function getCurrentSession() {
+  if (!supabase) {
+    console.warn('Supabase no inicializado');
+    return null;
+  }
+
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
 
