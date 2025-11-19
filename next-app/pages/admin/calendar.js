@@ -1,13 +1,13 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
-import PedidosModal from '../components/PedidosModal'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
+import PedidosModal from '../../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
-import { formatCurrency, isAdminLogged } from '../utils/catalogUtils'
-import { getAllPedidosInternos, createPedidoInterno, updatePedidoInterno } from '../utils/supabasePedidosInternos'
-import { getPedidosCatalogoParaCalendario } from '../utils/supabasePedidos'
-import { getProductosPublicadosParaCalendario } from '../utils/supabaseProductos'
-import { getAllMateriales } from '../utils/supabaseMateriales'
+import { formatCurrency, isAdminLogged } from '../../utils/catalogUtils'
+import { getAllPedidosInternos, createPedidoInterno, updatePedidoInterno } from '../../utils/supabasePedidosInternos'
+import { getPedidosCatalogoParaCalendario } from '../../utils/supabasePedidos'
+import { getProductosPublicadosParaCalendario } from '../../utils/supabaseProductos'
+import { getAllMateriales } from '../../utils/supabaseMateriales'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
 const timeToMinutes = (timeStr = '00:00:00') => {
@@ -22,7 +22,7 @@ const formatTime = (minutes) => {
   return `${hours}h ${mins}m`
 }
 
-function Calendar() {
+function AdminCalendar() {
   const router = useRouter()
   // Estados principales
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -345,7 +345,7 @@ function Calendar() {
         if (showPedidosModal) {
           setShowPedidosModal(false)
           // Limpiar parámetro date de la URL
-          router.push('/calendar', undefined, { shallow: true })
+          router.push('/admin/calendar', undefined, { shallow: true })
         } else if (showCreateInternalModal) {
           setShowCreateInternalModal(false)
         }
@@ -1003,7 +1003,7 @@ function Calendar() {
                 setPedidosModalTitle('Todos los pedidos de catálogo')
                 setShowPedidosModal(true)
                 // No agregar parámetro date ya que es vista general
-                router.push('/calendar', undefined, { shallow: true })
+                router.push('/admin/calendar', undefined, { shallow: true })
               }}
               style={{
                 padding: '10px 16px',
@@ -1197,7 +1197,7 @@ function Calendar() {
                           setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
                           setShowPedidosModal(true)
                           // Actualizar URL con el parámetro date
-                          router.push(`/calendar?date=${dateStr}`, undefined, { shallow: true })
+                          router.push(`/admin/calendar?date=${dateStr}`, undefined, { shallow: true })
                         }
                       }}
                 style={{
@@ -1576,7 +1576,7 @@ function Calendar() {
         onClose={() => {
           setShowPedidosModal(false)
           // Limpiar parámetro date de la URL
-          router.push('/calendar', undefined, { shallow: true })
+          router.push('/admin/calendar', undefined, { shallow: true })
         }}
         orders={pedidosForModal.length ? pedidosForModal : catalogo}
         title={pedidosModalTitle || '📦 Pedidos del Catálogo'}
@@ -1585,4 +1585,4 @@ function Calendar() {
   )
 }
 
-export default withAdminAuth(Calendar)
+export default withAdminAuth(AdminCalendar)

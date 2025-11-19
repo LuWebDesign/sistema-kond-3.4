@@ -1,11 +1,29 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { formatCurrency } from '../utils/catalogUtils'
-import { getAllProductos, updateProducto, deleteProducto } from '../utils/supabaseProducts'
-import styles from '../styles/pedidos-catalogo.module.css'
+import { formatCurrency } from '../../utils/catalogUtils'
+import { getAllProductos, updateProducto, deleteProducto } from '../../utils/supabaseProducts'
+import styles from '../../styles/pedidos-catalogo.module.css'
+import dynamic from 'next/dynamic'
 
-function Database() {
+// Componente sin SSR para evitar hydration mismatches
+const Database = dynamic(() => Promise.resolve(DatabaseComponent), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      minHeight: '100vh',
+      background: '#f5f5f5',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div>Cargando base de datos...</div>
+    </div>
+  )
+});
+
+function DatabaseComponent() {
   const [products, setProducts] = useState([])
   const [filters, setFilters] = useState({
     search: '',
@@ -82,7 +100,7 @@ function Database() {
     
     try {
       // Intentar cargar desde Supabase primero
-      const { getAllMateriales } = await import('../utils/supabaseMateriales')
+      const { getAllMateriales } = await import('../../utils/supabaseMateriales')
       const { data: materialesSupabase, error } = await getAllMateriales()
       
       if (materialesSupabase && !error && materialesSupabase.length > 0) {

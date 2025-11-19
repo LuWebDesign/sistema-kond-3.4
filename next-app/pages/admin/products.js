@@ -1,8 +1,8 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../utils/catalogUtils'
+import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../utils/catalogUtils'
 import { 
   getAllProductos, 
   createProducto, 
@@ -10,9 +10,27 @@ import {
   deleteProducto, 
   toggleProductoPublicado,
   uploadProductoImagen 
-} from '../utils/supabaseProducts'
+} from '../../utils/supabaseProducts'
+import dynamic from 'next/dynamic'
 
-function Products() {
+// Componente sin SSR para evitar hydration mismatches
+const Products = dynamic(() => Promise.resolve(ProductsComponent), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      minHeight: '100vh',
+      background: '#f5f5f5',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div>Cargando productos...</div>
+    </div>
+  )
+});
+
+function ProductsComponent() {
   // Estados principales
   const [products, setProducts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -243,7 +261,7 @@ function Products() {
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
           imagen: p.imagen_url || '',
-          fechaCreacion: p.created_at || new Date().toISOString()
+          fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
       })
 
@@ -295,7 +313,7 @@ function Products() {
     try {
       // 🆕 Intentar actualizar en Supabase
       try {
-        const { updateMaterial } = await import('../utils/supabaseMateriales')
+        const { updateMaterial } = await import('../../utils/supabaseMateriales')
         const { data, error } = await updateMaterial(editingMaterial, materialForm)
         
         if (data && !error) {
@@ -362,7 +380,7 @@ function Products() {
     if (typeof window === 'undefined') return
     
     try {
-      const { getAllMateriales } = await import('../utils/supabaseMateriales')
+      const { getAllMateriales } = await import('../../utils/supabaseMateriales')
       const { data: materialesSupabase, error } = await getAllMateriales()
       
       if (materialesSupabase && !error) {

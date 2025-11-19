@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  turbopack: {
+    root: __dirname
+  },
   async redirects() {
     return [
       {
@@ -16,6 +19,27 @@ const nextConfig = {
       {
         source: '/catalog-public.html',
         destination: '/catalog',
+        permanent: false
+      },
+      // Redirecciones para reorganización de admin
+      {
+        source: '/products',
+        destination: '/admin/products',
+        permanent: false
+      },
+      {
+        source: '/pedidos-catalogo',
+        destination: '/admin/orders',
+        permanent: false
+      },
+      {
+        source: '/database',
+        destination: '/admin/database',
+        permanent: false
+      },
+      {
+        source: '/dashboard',
+        destination: '/admin/dashboard',
         permanent: false
       }
     ]

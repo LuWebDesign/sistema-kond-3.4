@@ -144,15 +144,15 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               Gestión Interna
             </div>
             
-            <Link href="/products" style={linkStyle}>
+            <Link href="/admin/products" style={linkStyle}>
               🏷️ Productos
             </Link>
             
-            <Link href="/calendar" style={linkStyle}>
+            <Link href="/admin/calendar" style={linkStyle}>
               📅 Calendario
             </Link>
             
-            <Link href="/database" style={linkStyle}>
+            <Link href="/admin/database" style={linkStyle}>
               🗄️ Base de Datos
             </Link>
             
@@ -175,7 +175,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               📦 Pedidos Internos
             </Link>
             
-            <Link href="/pedidos-catalogo" style={linkStyle}>
+            <Link href="/admin/orders" style={linkStyle}>
               🛒 Pedidos Catálogo
             </Link>
             

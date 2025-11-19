@@ -1,22 +1,32 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
-import AvailabilityCalendar from '../components/AvailabilityCalendar'
-import PedidoCard from '../components/PedidoCard'
-import ConfirmModal from '../components/ConfirmModal'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
+import AvailabilityCalendar from '../../components/AvailabilityCalendar'
+import PedidoCard from '../../components/PedidoCard'
+import ConfirmModal from '../../components/ConfirmModal'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import styles from '../styles/pedidos-catalogo.module.css'
-import { formatCurrency, createToast } from '../utils/catalogUtils'
-import { getAllPedidosCatalogo, getPedidoCatalogoById, updateMontoRecibido } from '../utils/supabasePedidos'
-import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import styles from '../../styles/pedidos-catalogo.module.css'
+import { formatCurrency, createToast } from '../../utils/catalogUtils'
+import { getAllPedidosCatalogo, getPedidoCatalogoById, updateMontoRecibido } from '../../utils/supabasePedidos'
+import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProductos'
+import dynamic from 'next/dynamic'
 
-// Formatea un número con separadores de miles para mostrar en inputs (sin símbolo)
-const formatInputNumber = (n) => {
-  if (n === null || n === undefined || n === '') return ''
-  const num = Number(n)
-  if (isNaN(num)) return ''
-  return new Intl.NumberFormat('es-AR').format(Math.round(num))
-}
+// Componente sin SSR para evitar hydration mismatches
+const Orders = dynamic(() => Promise.resolve(PedidosCatalogo), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      minHeight: '100vh',
+      background: '#f5f5f5',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div>Cargando pedidos...</div>
+    </div>
+  )
+});
 
 // Parsea el string con separadores y devuelve número entero
 const parseInputNumber = (str) => {
@@ -821,6 +831,8 @@ function PedidosCatalogo() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Sin fecha'
+    // Use client-only formatting to avoid hydration mismatches
+    if (typeof window === 'undefined') return dateString
     const date = new Date(dateString)
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',
@@ -877,7 +889,9 @@ function PedidosCatalogo() {
 
   const formatFechaEntrega = (pedido) => {
     if (pedido.fechaConfirmadaEntrega) {
-      const { parseDateYMD } = require('../utils/catalogUtils')
+      // Use client-only formatting to avoid hydration mismatches
+      if (typeof window === 'undefined') return pedido.fechaConfirmadaEntrega
+      const { parseDateYMD } = require('../../utils/catalogUtils')
       const fecha = parseDateYMD(pedido.fechaConfirmadaEntrega) || new Date(pedido.fechaConfirmadaEntrega + 'T00:00:00')
       return fecha.toLocaleDateString('es-AR', {
         day: '2-digit',
@@ -1010,12 +1024,14 @@ function PedidosCatalogo() {
 
   const formatFechaProduccion = (pedido) => {
     if (pedido.fechaProduccion) {
-  const { parseDateYMD } = require('../utils/catalogUtils')
-  const fecha = parseDateYMD(pedido.fechaProduccion) || new Date(pedido.fechaProduccion + 'T00:00:00')
-      return fecha.toLocaleDateString('es-AR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
+      // Use client-only formatting to avoid hydration mismatches
+      if (typeof window === 'undefined') return pedido.fechaProduccion
+      const { parseDateYMD } = require('../../utils/catalogUtils')
+      const fecha = parseDateYMD(pedido.fechaProduccion) || new Date(pedido.fechaProduccion + 'T00:00:00')
+      return fecha.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       })
     }
     return 'Sin asignar'
@@ -1031,9 +1047,9 @@ function PedidosCatalogo() {
   }
 
   const handleCardClick = (pedido) => {
-    // Abrir modal y actualizar la URL (shallow) para que quede /pedidos-catalogo/detalle-pedido/:id
+    // Abrir modal y actualizar la URL (shallow) para que quede /admin/orders/detalle-pedido/:id
     try {
-      const asPath = `/pedidos-catalogo/detalle-pedido/${pedido.id}`
+      const asPath = `/admin/orders/detalle-pedido/${pedido.id}`
       router.push({ pathname: router.pathname, query: { modal: 'detalle', id: pedido.id } }, asPath, { shallow: true })
     } catch (e) {
       // Si router falla por algún motivo, seguir mostrando el modal sin cambiar la URL
@@ -1050,7 +1066,7 @@ function PedidosCatalogo() {
     setTimeout(() => {
       try {
         // Restaurar URL base sin historial (shallow)
-        router.replace({ pathname: router.pathname, query: {} }, '/pedidos-catalogo', { shallow: true })
+        router.replace({ pathname: router.pathname, query: {} }, '/admin/orders', { shallow: true })
       } catch (e) {}
       // Resetear la bandera después de un breve delay
       setTimeout(() => {

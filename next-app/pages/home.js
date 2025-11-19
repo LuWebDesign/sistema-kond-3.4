@@ -17,7 +17,7 @@ export default function Home() {
         const sessionDuration = session.sessionDuration || (24 * 60 * 60 * 1000);
 
         if (now - session.timestamp < sessionDuration) {
-          router.push('/dashboard');
+          router.push('/admin/dashboard');
           return;
         } else {
           localStorage.removeItem('adminSession');
