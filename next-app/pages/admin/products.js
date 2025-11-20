@@ -934,76 +934,79 @@ function ProductsComponent() {
             flexWrap: 'wrap',
             gap: '12px'
           }}>
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              style={{
-                background: showAddForm ? 'var(--text-secondary)' : 'var(--accent-blue)',
-                color: 'white',
-                border: 'none',
+            <div className="buttons-section" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                style={{
+                  background: showAddForm ? 'var(--text-secondary)' : 'var(--accent-blue)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 20px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}
+              >
+                {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
+              </button>
+
+              <Link href="/materiales" style={{
+                background: '#e5e7eb',
+                color: '#374151',
+                border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 padding: '12px 20px',
                 cursor: 'pointer',
                 fontWeight: '600',
-                fontSize: '0.9rem'
-              }}
-            >
-              {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
-            </button>
-
-            <Link href="/materiales" style={{
-              marginLeft: '8px',
-              background: '#e5e7eb',
-              color: '#374151',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              padding: '12px 20px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              textDecoration: 'none',
-              display: 'inline-block'
-            }}>Ir a Materiales</Link>
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}>Ir a Materiales</Link>
+            </div>
 
             {/* Filtros */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <input
-                type="text"
-                placeholder="🔍 Buscar por nombre, ID, precio, material, espesor..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.9rem'
-                }}
-              />
-              <small style={{ 
-                color: 'var(--text-secondary)', 
+            <div className="filters-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="filters-input-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar por nombre, ID, precio, material, espesor..."
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.9rem',
+                    flex: 1
+                  }}
+                />
+                <select
+                  value={filters.type}
+                  onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  <option value="all">Todos los tipos</option>
+                  <option value="Venta">Venta</option>
+                  <option value="Presupuesto">Presupuesto</option>
+                  <option value="Stock">Stock</option>
+                </select>
+              </div>
+              <small style={{
+                color: 'var(--text-secondary)',
                 fontSize: '0.75rem',
-                marginLeft: '8px',
-                whiteSpace: 'nowrap'
+                marginLeft: '4px'
               }}>
                 Busca por: nombre, ID, precio, material, espesor, tiempo, etc.
               </small>
-              <select
-                value={filters.type}
-                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.9rem'
-                }}
-              >
-                <option value="all">Todos los tipos</option>
-                <option value="Venta">Venta</option>
-                <option value="Presupuesto">Presupuesto</option>
-                <option value="Stock">Stock</option>
-              </select>
             </div>
           </div>
 
@@ -3287,6 +3290,38 @@ const styles = `
     .product-card-actions button {
       padding: 8px 10px !important;
       font-size: 0.75rem !important;
+    }
+
+    /* Estilos para la sección de filtros en móvil */
+    .filters-section {
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+
+    .filters-input-row {
+      flex-direction: column !important;
+      gap: 8px !important;
+      width: 100% !important;
+    }
+
+    .filters-input-row input {
+      width: 100% !important;
+    }
+
+    .filters-input-row select {
+      width: 100% !important;
+    }
+
+    /* Estilos para los botones en móvil */
+    .buttons-section {
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+
+    .buttons-section button,
+    .buttons-section a {
+      flex: 1 !important;
+      min-width: 120px !important;
     }
   }
 
