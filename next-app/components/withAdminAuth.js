@@ -19,11 +19,11 @@ export default function withAdminAuth(WrappedComponent) {
           const session = await getCurrentSession()
 
           // console.log('📋 Estado de sesión:', {
-            hasSession: !!session,
-            hasUser: !!(session?.user),
-            userRol: session?.user?.rol,
-            userId: session?.user?.id
-          })
+          //   hasSession: !!session,
+          //   hasUser: !!(session?.user),
+          //   userRol: session?.user?.rol,
+          //   userId: session?.user?.id
+          // })
 
           if (!session || !session.user) {
             // console.log('❌ No hay sesión válida, redirigiendo a login')
