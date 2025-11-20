@@ -186,17 +186,35 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
   // Fecha de producción: preferir fechaProduccionCalendario o fechaProduccion
   const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
 
+  // Obtener imagen del primer producto disponible
+  const getPrimerProductoImagen = () => {
+    if (!pedido.productos || pedido.productos.length === 0) return null
+    
+    for (const prod of pedido.productos) {
+      // Intentar desde el producto mismo
+      if (prod.imagen) return prod.imagen
+      if (prod.image) return prod.image
+      
+      // Intentar desde productosBase
+      const thumbnail = getProductThumbnailIndividual(prod)
+      if (thumbnail) return thumbnail
+    }
+    
+    return null
+  }
+
+  const imagenPreliminar = getPrimerProductoImagen()
+
   return (
     <div
       className={styles.pedidoCard}
     >
       {/* Header con miniatura (izquierda), cliente (centro) y total/fecha (derecha) */}
   <div className={styles.pedidoHeader} onClick={openModal} role="button" tabIndex={0} onKeyDown={handleKeyDown} style={{ cursor: 'pointer' }}>
-        {/* miniatura removida del header por petición (imagen previa) */}
-
           <div className={styles.pedidoHeaderMain}>
           <div className={styles.pedidoIdLine}>
             <strong>{pedido.nroPedido ? pedido.nroPedido : `N°${pedido.id}`}</strong>
+            <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
             <div className={styles.clienteNombreHead}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
           </div>
           {/* tarjeta de estado: estado del pedido + estado de pago (reemplaza badge 'Asignado al calendario') */}
@@ -207,7 +225,12 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
         </div>
 
         <div className={styles.pedidoHeaderRight}>
-          <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
+          {/* Miniatura del producto */}
+          {imagenPreliminar && (
+            <div className={styles.pedidoThumb}>
+              <img src={imagenPreliminar} alt="Vista previa" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -235,8 +258,9 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                           {prod.medidas && <span className={styles.productoMedidas}> • {prod.medidas}</span>}
                         </div>
                         <div className={styles.productoInfoSecondary}>
-                          <div className={styles.productoUnidadesMaterialCol}>
-                            <span className={styles.productoUnidades}>Unidades: {prod.cantidad || 1}</span>
+                          <div className={styles.productoUnidadesMaterialRow}>
+                            <span className={styles.productoUnidades}>Unidades: {prod.cantidad || 1} </span>
+                            <span className={styles.separadorMaterial}>• • •</span>
                             {materialInfo ? (
                               <span className={styles.productoMaterialCompact}>Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm</span>
                             ) : (productData?.material && (

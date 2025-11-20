@@ -97,6 +97,7 @@ export async function getPedidosCatalogoParaCalendario() {
         price: item.producto_precio,
         quantity: item.cantidad,
         measures: item.medidas,
+        imagen: item.producto_imagen,
       })),
       productos: (pedido.items || []).map(item => ({
         id: item.id,
@@ -108,6 +109,7 @@ export async function getPedidosCatalogoParaCalendario() {
         price: item.producto_precio,
         quantity: item.cantidad,
         cantidad: item.cantidad,
+        imagen: item.producto_imagen,
         measures: item.medidas,
       })),
       metodoPago: pedido.metodo_pago,
@@ -207,6 +209,7 @@ export async function createPedidoCatalogo(pedido, items) {
       producto_precio: item.price || item.producto_precio,
       cantidad: item.quantity || item.cantidad,
       medidas: item.measures || item.medidas,
+      producto_imagen: item.imagen || item.image || null,
     }));
 
     const { data: itemsInserted, error: itemsError } = await supabase

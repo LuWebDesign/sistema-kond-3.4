@@ -713,6 +713,26 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
                   </p>
                 )}
+
+                {/* Indicador de stock */}
+                {product.stock !== undefined && product.stock !== null && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
+                    border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`,
+                    marginBottom: '12px'
+                  }}>
+                    <span>{product.stock > 0 ? '✓' : '✕'}</span>
+                    <span>Stock: {product.stock}</span>
+                  </div>
+                )}
               </>
             )
           })()}
@@ -1102,29 +1122,11 @@ function CheckoutModal({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Callback memoizado para crear notificaciones cuando se guarda un pedido
+  // Callback memoizado para acciones después de guardar el pedido
+  // NOTA: La notificación se crea automáticamente en el backend (API)
   const handleOrderSuccess = useCallback((pedido, items) => {
-    console.log('📝 Creando notificación para pedido:', { pedidoId: pedido.id, itemsCount: items.length });
-    if (addNotification) {
-      const notification = addNotification({
-        title: '🛒 Nuevo pedido recibido',
-        body: `${customerData.nombre || customerData.name} ${customerData.apellido} realizó un pedido por ${formatCurrency ? formatCurrency(total) : total} (${items.length} producto${items.length !== 1 ? 's' : ''})`,
-        type: 'success',
-        meta: {
-          tipo: 'nuevo_pedido',
-          target: 'admin', // Para mostrar en el panel de admin
-          pedidoId: pedido.id,
-          cliente: customerData,
-          total: total,
-          metodoPago: paymentMethod,
-          items: items
-        }
-      });
-      console.log('✅ Notificación creada:', notification);
-    } else {
-      console.error('❌ addNotification no está disponible');
-    }
-  }, [addNotification, customerData, total, paymentMethod, formatCurrency])
+    // La notificación ya se creó en el backend vía /api/notifications/create-order
+  }, [])
   
   // Auto-scroll a método de pago en mobile si el perfil está completo
   useEffect(() => {

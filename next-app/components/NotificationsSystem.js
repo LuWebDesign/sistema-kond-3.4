@@ -69,7 +69,8 @@ export const NotificationsPanel = ({ target = undefined }) => {
     markAsRead, 
     deleteNotification,
     markAllAsRead,
-    clearAll 
+    clearAll,
+    closePanel
   } = useNotifications()
   const router = useRouter()
 
@@ -104,6 +105,9 @@ export const NotificationsPanel = ({ target = undefined }) => {
     if (!notification.read) {
       markAsRead(notification.id)
     }
+    
+    // Cerrar el panel antes de navegar
+    closePanel()
     
     // Navegar al pedido si es una notificación de pedido
     if (notification.meta?.pedidoId || notification.meta?.orderId) {

@@ -92,10 +92,8 @@ export async function createNotification({
  */
 export async function markNotificationAsRead(notificationId) {
   try {
-    // Usar cliente administrativo para operaciones server-side
-    const client = supabaseAdmin();
-
-    const { error } = await client
+    // Usar cliente público (respeta RLS)
+    const { error } = await supabase
       .from('notifications')
       .update({
         read: true,
@@ -123,10 +121,8 @@ export async function markNotificationAsRead(notificationId) {
  */
 export async function markAllNotificationsAsRead(targetUser = 'admin', userId = null) {
   try {
-    // Usar cliente administrativo para operaciones server-side
-    const client = supabaseAdmin();
-
-    let query = client
+    // Usar cliente público (respeta RLS)
+    let query = supabase
       .from('notifications')
       .update({
         read: true,
@@ -161,10 +157,8 @@ export async function markAllNotificationsAsRead(targetUser = 'admin', userId = 
  */
 export async function deleteNotification(notificationId) {
   try {
-    // Usar cliente administrativo para operaciones server-side
-    const client = supabaseAdmin();
-
-    const { error } = await client
+    // Usar cliente público (respeta RLS)
+    const { error } = await supabase
       .from('notifications')
       .delete()
       .eq('id', notificationId);

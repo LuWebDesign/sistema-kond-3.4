@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import {
   getNotifications,
   createNotification,
@@ -7,6 +7,7 @@ import {
   deleteNotification as deleteNotificationFromDB,
   getUnreadCount
 } from '../utils/supabaseNotifications'
+import { listenNotifications, unsubscribeNotifications } from '../utils/listenNotifications'
 
 const NotificationsContext = createContext()
 
@@ -17,6 +18,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const realtimeChannelRef = useRef(null)
 
   // Cargar notificaciones desde Supabase
   const loadNotifications = useCallback(async () => {
@@ -207,7 +209,71 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
     loadNotifications()
   }, [loadNotifications])
 
-  // Escuchar eventos de notificaciones y reconectar periódicamente
+  // Configurar listener de Realtime para notificaciones en tiempo real
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    // Configurar listener de Realtime
+    const channel = listenNotifications({
+      targetUser,
+      userId,
+      onInsert: (newNotification) => {
+        // Agregar la nueva notificación al estado
+        setNotifications(prev => [newNotification, ...prev])
+        
+        // Incrementar contador de no leídas si la notificación no está leída
+        if (!newNotification.read) {
+          setUnreadCount(prev => prev + 1)
+        }
+
+        // Emitir evento para otros componentes
+        window.dispatchEvent(new CustomEvent('notifications:new', { detail: newNotification }))
+      },
+      onUpdate: (updatedNotification) => {
+        // Actualizar la notificación en el estado
+        setNotifications(prev => 
+          prev.map(n => String(n.id) === String(updatedNotification.id) ? updatedNotification : n)
+        )
+        
+        // Recalcular contador de no leídas
+        setNotifications(prev => {
+          const newCount = prev.filter(n => !n.read).length
+          setUnreadCount(newCount)
+          return prev
+        })
+      },
+      onDelete: (deletedNotification) => {
+        // Eliminar la notificación del estado
+        setNotifications(prev => 
+          prev.filter(n => String(n.id) !== String(deletedNotification.id))
+        )
+        
+        // Recalcular contador de no leídas
+        setNotifications(prev => {
+          const newCount = prev.filter(n => !n.read).length
+          setUnreadCount(newCount)
+          return prev
+        })
+      },
+      onError: (error) => {
+        console.error('❌ [Provider] Error en Realtime:', error)
+        setError(error.message)
+      }
+    })
+
+    // Guardar referencia al canal
+    realtimeChannelRef.current = channel
+
+    // Cleanup: cancelar suscripción al desmontar
+    return () => {
+      if (realtimeChannelRef.current) {
+        unsubscribeNotifications(realtimeChannelRef.current)
+        realtimeChannelRef.current = null
+      }
+    }
+  }, [targetUser, userId])
+
+  // Escuchar eventos de notificaciones (mantener para compatibilidad)
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -215,16 +281,10 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
       loadNotifications()
     }
 
-    // Reconectar cada 30 segundos para mantener sincronización
-    const reconnectInterval = setInterval(() => {
-      loadNotifications()
-    }, 30000)
-
     window.addEventListener('notifications:updated', handleNotificationUpdate)
 
     return () => {
       window.removeEventListener('notifications:updated', handleNotificationUpdate)
-      clearInterval(reconnectInterval)
     }
   }, [loadNotifications])
 

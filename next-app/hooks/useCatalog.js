@@ -87,6 +87,7 @@ export function useProducts() {
           margenMaterial: p.margen_material || 0,
           precioUnitario: p.precio_unitario || 0,
           precioPromos: p.precio_promos || 0,
+          stock: p.stock || 0,
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
           imagen: p.imagen_url || '',
@@ -553,10 +554,9 @@ export function useOrders() {
 
     setIsSaving(true)
     try {
-      console.log('📦 Iniciando guardado de pedido:', orderData)
-
       // Usar la función createPedidoCatalogo existente
       const { createPedidoCatalogo } = await import('../utils/supabasePedidos')
+      const { formatCurrency } = await import('../utils/catalogUtils')
 
       const pedidoData = {
         cliente: orderData.cliente,
@@ -568,27 +568,78 @@ export function useOrders() {
         total: orderData.total
       }
 
-      console.log('📋 Datos del pedido preparados:', pedidoData)
-
       // Convertir items al formato esperado
       const items = orderData.items.map(item => ({
         idProducto: item.idProducto,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
-        measures: item.measures
+        measures: item.measures,
+        imagen: item.imagen || item.image
       }))
-
-      console.log('🛒 Items preparados:', items)
 
       const { data, error } = await createPedidoCatalogo(pedidoData, items)
 
       if (error) {
-        console.error('❌ Error creando pedido:', error)
+        console.error('Error creando pedido:', error)
         return { success: false, error: { message: error.message || 'Error al crear el pedido' } }
       }
 
-      console.log('✅ Pedido creado exitosamente:', data)
+      // ============================================
+      // DESCONTAR STOCK DE PRODUCTOS
+      // ============================================
+      try {
+        const supabase = (await import('../utils/supabaseClient')).default
+
+        for (const item of items) {
+          const { data: producto, error: fetchError } = await supabase
+            .from('productos')
+            .select('stock')
+            .eq('id', item.idProducto)
+            .single()
+
+          if (fetchError) {
+            console.warn(`Error obteniendo stock del producto ${item.idProducto}:`, fetchError)
+            continue
+          }
+
+          const nuevoStock = Math.max(0, (producto.stock || 0) - item.quantity)
+
+          const { error: updateError } = await supabase
+            .from('productos')
+            .update({ stock: nuevoStock })
+            .eq('id', item.idProducto)
+
+          if (updateError) {
+            console.warn(`Error actualizando stock del producto ${item.idProducto}:`, updateError)
+          }
+        }
+      } catch (stockError) {
+        console.error('Error descontando stock:', stockError)
+      }
+
+      // ============================================
+      // CREAR NOTIFICACIÓN EN TIEMPO REAL
+      // ============================================
+      try {
+        await fetch('/api/notifications/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pedidoId: data.pedido.id,
+            cliente: orderData.cliente,
+            total: orderData.total,
+            metodoPago: orderData.metodoPago,
+            items: items,
+            formatCurrency: formatCurrency
+          })
+        })
+      } catch (notificationError) {
+        // No fallar el pedido si la notificación falla
+        console.error('Error creando notificación:', notificationError)
+      }
 
       // Llamar al callback de éxito si existe
       if (onSuccess && typeof onSuccess === 'function') {
@@ -605,14 +656,13 @@ export function useOrders() {
         }
         existingOrders.push(orderForStorage)
         localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
-        console.log('💾 Pedido guardado en localStorage')
       } catch (localStorageError) {
-        console.warn('⚠️ Error guardando en localStorage:', localStorageError)
+        console.warn('Error guardando en localStorage:', localStorageError)
       }
 
       return { success: true, orderId: data.pedido.id, order: { _comprobanteOmitted: false } }
     } catch (error) {
-      console.error('💥 Error guardando pedido:', error)
+      console.error('Error guardando pedido:', error)
       return { success: false, error: { message: error.message || 'Error desconocido al guardar el pedido' } }
     } finally {
       setIsSaving(false)
