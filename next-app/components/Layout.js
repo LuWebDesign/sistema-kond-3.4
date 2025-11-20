@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
-import NotificationsProvider from './NotificationsProvider'
 import ConfirmDialog from './ConfirmDialog'
 import { getCurrentSession, logout as supabaseLogout } from '../utils/supabaseAuthV2'
 
@@ -84,7 +83,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
   }
 
   return (
-    <NotificationsProvider>
+    <>
       <Head>
         <title>{title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -522,7 +521,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           }
         }
       `}</style>
-    </NotificationsProvider>
+    </>
   )
 }
 

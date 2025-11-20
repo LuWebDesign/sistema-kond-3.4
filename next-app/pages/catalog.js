@@ -22,7 +22,10 @@ export default function Catalog() {
   const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { activeCoupon, applyCoupon, calculateDiscount } = useCoupons()
   const { saveOrder } = useOrders()
-  const { addNotification } = useNotifications()
+  
+  // Obtener addNotification de manera segura para evitar errores de SSR
+  const notificationsContext = useNotifications()
+  const addNotification = notificationsContext?.addNotification
   
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
