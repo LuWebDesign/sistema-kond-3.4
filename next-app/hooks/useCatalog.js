@@ -548,7 +548,7 @@ export function useUserOrders() {
 export function useOrders() {
   const [isSaving, setIsSaving] = useState(false)
 
-  const saveOrder = useCallback(async (orderData) => {
+  const saveOrder = useCallback(async (orderData, onSuccess) => {
     if (typeof window === 'undefined') return { success: false, error: { message: 'Not in browser environment' } }
 
     setIsSaving(true)
@@ -589,6 +589,11 @@ export function useOrders() {
       }
 
       console.log('✅ Pedido creado exitosamente:', data)
+
+      // Llamar al callback de éxito si existe
+      if (onSuccess && typeof onSuccess === 'function') {
+        onSuccess(data.pedido, items)
+      }
 
       // Guardar también en localStorage como respaldo
       try {

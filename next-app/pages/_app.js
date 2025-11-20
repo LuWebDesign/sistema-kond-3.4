@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import '../styles/globals.css'
 import '../styles/catalog-next.css'
+import { NotificationsProvider } from '../components/NotificationsProvider'
 
 export default function MyApp({ Component, pageProps }) {
   useEffect(() => {
@@ -11,5 +12,9 @@ export default function MyApp({ Component, pageProps }) {
     }
   }, [])
 
-  return <Component {...pageProps} />
+  return (
+    <NotificationsProvider>
+      <Component {...pageProps} />
+    </NotificationsProvider>
+  )
 }
