@@ -4,7 +4,9 @@ import { useNotifications } from './NotificationsProvider'
 
 // Componente del botón de notificaciones con badge
 export const NotificationsButton = ({ className = '', target = undefined }) => {
-  const { notifications, togglePanel } = useNotifications()
+  const notificationsContext = useNotifications()
+  const notifications = notificationsContext?.notifications || []
+  const togglePanel = notificationsContext?.togglePanel || (() => {})
 
   const unreadCount = Array.isArray(notifications)
     ? notifications.filter(n => !n.read && (!target || n.meta?.target === target)).length
@@ -63,15 +65,14 @@ export const NotificationsButton = ({ className = '', target = undefined }) => {
 
 // Componente del panel de notificaciones
 export const NotificationsPanel = ({ target = undefined }) => {
-  const { 
-    notifications, 
-    isOpen, 
-    markAsRead, 
-    deleteNotification,
-    markAllAsRead,
-    clearAll,
-    closePanel
-  } = useNotifications()
+  const notificationsContext = useNotifications()
+  const notifications = notificationsContext?.notifications || []
+  const isOpen = notificationsContext?.isOpen || false
+  const markAsRead = notificationsContext?.markAsRead || (() => {})
+  const deleteNotification = notificationsContext?.deleteNotification || (() => {})
+  const markAllAsRead = notificationsContext?.markAllAsRead || (() => {})
+  const clearAll = notificationsContext?.clearAll || (() => {})
+  const closePanel = notificationsContext?.closePanel || (() => {})
   const router = useRouter()
 
   if (!isOpen) return null
