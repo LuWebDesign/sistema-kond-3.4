@@ -57,11 +57,14 @@ export default function User() {
         }
       }
 
-      // Cargar sesión actual (verificar Supabase Auth o localStorage)
+      // Cargar sesión actual de Supabase
       const session = await getCurrentSession()
-      if (session && session.user) {
+      
+      // IMPORTANTE: Si la sesión es de un ADMIN, ignorarla en el catálogo público
+      // Los admins no deben usar la cuenta del catálogo mientras están logueados como admin
+      if (session && session.user && session.user.rol !== 'admin') {
         setCurrentUser(session.user)
-        // Rellenar todo el formulario con los datos disponibles en la sesión
+        // Rellenar formulario con datos de Supabase
         setFormData(prev => ({
           ...prev,
           email: session.user.email || prev.email,
@@ -75,7 +78,7 @@ export default function User() {
           observaciones: session.user.observaciones || prev.observaciones
         }))
       } else {
-        // Fallback: verificar si hay usuario en localStorage (currentUser)
+        // Si no hay sesión Supabase o es admin, usar localStorage (currentUser - clientes del catálogo)
         const localUser = getCurrentUser()
         if (localUser) {
           setCurrentUser(localUser)
