@@ -346,9 +346,31 @@ export async function getCurrentSession() {
             session,
             user: userData,
           };
+        } else if (fetchError) {
+          // Si hay error (como 406 por RLS), retornar sesión básica sin datos de usuario
+          console.warn('No se pudo obtener datos del usuario (posible error de permisos):', fetchError);
+          return {
+            session,
+            user: {
+              id: session.user.id,
+              email: session.user.email,
+              username: session.user.email?.split('@')[0] || 'usuario',
+              rol: 'cliente'
+            }
+          };
         }
       } catch (dbError) {
         console.warn('Error obteniendo usuario de BD:', dbError);
+        // Retornar sesión básica con datos mínimos
+        return {
+          session,
+          user: {
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.email?.split('@')[0] || 'usuario',
+            rol: 'cliente'
+          }
+        };
       }
     }
 
@@ -615,8 +637,24 @@ export async function handleOAuthCallback() {
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Error verificando usuario existente:', fetchError);
-        return { error: fetchError.message, user: null, session: null };
+        console.warn('Error verificando usuario existente (posible error de permisos RLS):', fetchError);
+        // En lugar de fallar, continuar con datos básicos del usuario
+        if (typeof window !== 'undefined') {
+          const basicUserData = {
+            id: user.id,
+            email: user.email,
+            nombre: user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0],
+            apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: '',
+            direccion: '',
+            localidad: '',
+            cp: '',
+            provincia: '',
+            observaciones: '',
+          };
+          localStorage.setItem('currentUser', JSON.stringify(basicUserData));
+        }
+        return { error: null, user: user, session: data.session };
       }
 
       if (!existingUser) {
