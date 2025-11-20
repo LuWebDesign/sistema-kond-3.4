@@ -3,7 +3,7 @@
 // Funciones para gestión de notificaciones en Supabase
 // ============================================
 
-import { supabase } from './supabaseClient';
+import { supabase, supabaseAdmin } from './supabaseClient';
 
 /**
  * Obtener notificaciones para un usuario específico
@@ -57,7 +57,10 @@ export async function createNotification({
   targetUser = 'admin'
 }) {
   try {
-    const { data, error } = await supabase
+    // Usar cliente administrativo para operaciones server-side (ignora RLS)
+    const client = supabaseAdmin();
+
+    const { data, error } = await client
       .from('notifications')
       .insert([{
         title,
@@ -89,7 +92,10 @@ export async function createNotification({
  */
 export async function markNotificationAsRead(notificationId) {
   try {
-    const { error } = await supabase
+    // Usar cliente administrativo para operaciones server-side
+    const client = supabaseAdmin();
+
+    const { error } = await client
       .from('notifications')
       .update({
         read: true,
@@ -117,7 +123,10 @@ export async function markNotificationAsRead(notificationId) {
  */
 export async function markAllNotificationsAsRead(targetUser = 'admin', userId = null) {
   try {
-    let query = supabase
+    // Usar cliente administrativo para operaciones server-side
+    const client = supabaseAdmin();
+
+    let query = client
       .from('notifications')
       .update({
         read: true,
@@ -152,7 +161,10 @@ export async function markAllNotificationsAsRead(targetUser = 'admin', userId = 
  */
 export async function deleteNotification(notificationId) {
   try {
-    const { error } = await supabase
+    // Usar cliente administrativo para operaciones server-side
+    const client = supabaseAdmin();
+
+    const { error } = await client
       .from('notifications')
       .delete()
       .eq('id', notificationId);
@@ -178,7 +190,10 @@ export async function cleanupOldNotifications() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { error } = await supabase
+    // Usar cliente administrativo para operaciones server-side
+    const client = supabaseAdmin();
+
+    const { error } = await client
       .from('notifications')
       .delete()
       .eq('read', true)
