@@ -326,29 +326,49 @@ export async function getCurrentSession() {
       }
 
       // Si no hay datos en localStorage, intentar obtenerlos de la BD
-      try {
-        const { data: usuario, error: fetchError } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      // Solo si estamos en una página de admin (no en catálogo público)
+      const isPublicPage = typeof window !== 'undefined' && 
+        (window.location.pathname === '/catalog' || 
+         window.location.pathname === '/user' || 
+         window.location.pathname.startsWith('/tracking'));
+      
+      if (!isPublicPage) {
+        try {
+          const { data: usuario, error: fetchError } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (!fetchError && usuario) {
-          // Guardar en localStorage para futuras consultas
-          const userData = {
-            id: usuario.id,
-            username: usuario.username,
-            rol: usuario.rol,
-          };
-          localStorage.setItem('kond-user', JSON.stringify(userData));
+          if (!fetchError && usuario) {
+            // Guardar en localStorage para futuras consultas
+            const userData = {
+              id: usuario.id,
+              username: usuario.username,
+              rol: usuario.rol,
+            };
+            localStorage.setItem('kond-user', JSON.stringify(userData));
 
-          return {
-            session,
-            user: userData,
-          };
-        } else if (fetchError) {
-          // Si hay error (como 406 por RLS), retornar sesión básica sin datos de usuario
-          console.warn('No se pudo obtener datos del usuario (posible error de permisos):', fetchError);
+            return {
+              session,
+              user: userData,
+            };
+          } else if (fetchError) {
+            // Si hay error (como 406 por RLS o PGRST116), retornar sesión básica sin datos de usuario
+            console.warn('No se pudo obtener datos del usuario (posible error de permisos):', fetchError);
+            return {
+              session,
+              user: {
+                id: session.user.id,
+                email: session.user.email,
+                username: session.user.email?.split('@')[0] || 'usuario',
+                rol: 'cliente'
+              }
+            };
+          }
+        } catch (dbError) {
+          console.warn('Error obteniendo usuario de BD:', dbError);
+          // Retornar sesión básica con datos mínimos
           return {
             session,
             user: {
@@ -359,9 +379,8 @@ export async function getCurrentSession() {
             }
           };
         }
-      } catch (dbError) {
-        console.warn('Error obteniendo usuario de BD:', dbError);
-        // Retornar sesión básica con datos mínimos
+      } else {
+        // En páginas públicas, retornar solo la sesión sin consultar BD
         return {
           session,
           user: {
