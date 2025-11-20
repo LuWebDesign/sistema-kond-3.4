@@ -2,7 +2,8 @@ import { useNotifications } from '../components/NotificationsProvider'
 
 // Hook personalizado para facilitar el uso de notificaciones en Next.js
 export const useToast = () => {
-  const { addNotification } = useNotifications()
+  const notificationsContext = useNotifications()
+  const addNotification = notificationsContext?.addNotification || (async () => null)
 
   const toast = {
     success: (title, body) => addNotification({

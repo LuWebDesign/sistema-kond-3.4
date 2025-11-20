@@ -27,7 +27,7 @@ async function run() {
   try {
     const { data, error } = await supabase.from('usuarios').select('*');
     if (error) throw error;
-    console.log(JSON.stringify(data, null, 2));
+    // console.log(JSON.stringify(data, null, 2));
   } catch (err) {
     console.error('Error imprimiendo usuarios:', err.message || err);
     process.exit(1);

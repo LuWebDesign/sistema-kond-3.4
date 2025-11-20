@@ -128,8 +128,8 @@ export async function loginWithEmail(email, password) {
       console.warn('Usuario autenticado pero no encontrado en tabla usuarios:', fetchError);
     }
 
-    console.log('🔍 Usuario desde BD:', usuario);
-    console.log('🔍 Rol del usuario:', usuario?.rol);
+    // console.log('🔍 Usuario desde BD:', usuario);
+    // console.log('🔍 Rol del usuario:', usuario?.rol);
 
     const user = {
       id: authData.user.id,
@@ -147,7 +147,7 @@ export async function loginWithEmail(email, password) {
       observaciones: usuario?.observaciones || ''
     };
 
-    console.log('✅ Usuario final:', user);
+    // console.log('✅ Usuario final:', user);
 
     // Guardar información del usuario en localStorage para acceso rápido
     if (typeof window !== 'undefined') {
@@ -326,6 +326,11 @@ export async function getCurrentSession() {
       }
 
       // Si no hay datos en localStorage, intentar obtenerlos de la BD
+      const isPublicPage = typeof window !== 'undefined' && 
+        (window.location.pathname === '/catalog' || 
+         window.location.pathname === '/user' || 
+         window.location.pathname.startsWith('/tracking'));
+      
       try {
         const { data: usuario, error: fetchError } = await supabase
           .from('usuarios')
@@ -339,16 +344,63 @@ export async function getCurrentSession() {
             id: usuario.id,
             username: usuario.username,
             rol: usuario.rol,
+            email: usuario.email,
+            nombre: usuario.nombre,
+            apellido: usuario.apellido,
+            telefono: usuario.telefono,
+            direccion: usuario.direccion,
+            localidad: usuario.localidad,
+            cp: usuario.cp,
+            provincia: usuario.provincia,
+            observaciones: usuario.observaciones
           };
-          localStorage.setItem('kond-user', JSON.stringify(userData));
+          
+          // Si estamos en página pública y el usuario es ADMIN, no retornar sesión
+          if (isPublicPage && usuario.rol === 'admin') {
+            // console.log('Sesión de admin detectada en página pública - ignorando');
+            return null;
+          }
+          
+          // Guardar en la clave correcta según el contexto
+          if (isPublicPage) {
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+          } else {
+            localStorage.setItem('kond-user', JSON.stringify(userData));
+          }
 
           return {
             session,
             user: userData,
           };
+        } else if (fetchError) {
+          // Si hay error (como 406 por RLS o PGRST116), retornar sesión básica sin datos de usuario
+          if (!isPublicPage) {
+            console.warn('No se pudo obtener datos del usuario (posible error de permisos):', fetchError);
+          }
+          return {
+            session,
+            user: {
+              id: session.user.id,
+              email: session.user.email,
+              username: session.user.email?.split('@')[0] || 'usuario',
+              rol: 'cliente'
+            }
+          };
         }
       } catch (dbError) {
-        console.warn('Error obteniendo usuario de BD:', dbError);
+        if (!isPublicPage) {
+          console.warn('Error obteniendo usuario de BD:', dbError);
+        }
+        // Retornar sesión básica con datos mínimos
+        return {
+          session,
+          user: {
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.email?.split('@')[0] || 'usuario',
+            rol: 'cliente'
+          }
+        };
       }
     }
 
@@ -615,8 +667,24 @@ export async function handleOAuthCallback() {
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Error verificando usuario existente:', fetchError);
-        return { error: fetchError.message, user: null, session: null };
+        console.warn('Error verificando usuario existente (posible error de permisos RLS):', fetchError);
+        // En lugar de fallar, continuar con datos básicos del usuario
+        if (typeof window !== 'undefined') {
+          const basicUserData = {
+            id: user.id,
+            email: user.email,
+            nombre: user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0],
+            apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            telefono: '',
+            direccion: '',
+            localidad: '',
+            cp: '',
+            provincia: '',
+            observaciones: '',
+          };
+          localStorage.setItem('currentUser', JSON.stringify(basicUserData));
+        }
+        return { error: null, user: user, session: data.session };
       }
 
       if (!existingUser) {

@@ -713,6 +713,26 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
                   </p>
                 )}
+
+                {/* Indicador de stock */}
+                {product.stock !== undefined && product.stock !== null && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
+                    border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`,
+                    marginBottom: '12px'
+                  }}>
+                    <span>{product.stock > 0 ? '✓' : '✕'}</span>
+                    <span>Stock: {product.stock}</span>
+                  </div>
+                )}
               </>
             )
           })()}
@@ -1102,107 +1122,11 @@ function CheckoutModal({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Callback memoizado para crear notificaciones cuando se guarda un pedido
-  const handleOrderSuccess = useCallback(async (pedido, items) => {
-    console.log('📝 [CATALOG] Creando notificación para pedido:', {
-      pedidoId: pedido.id,
-      itemsCount: items.length,
-      timestamp: new Date().toISOString()
-    });
-
-    try {
-      // Crear notificación via API para asegurar que funcione en Vercel
-      const response = await fetch('/api/notifications/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pedidoId: pedido.id,
-          cliente: customerData,
-          total: total,
-          metodoPago: paymentMethod,
-          items: items,
-          formatCurrency: (amount) => `$${amount.toLocaleString('es-AR')}`
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      console.log('✅ [CATALOG] Notificación creada via API:', {
-        notificationId: result.notification?.id,
-        pedidoId: pedido.id
-      });
-
-      // También intentar crear la notificación localmente como respaldo
-      if (addNotification) {
-        try {
-          addNotification({
-            title: '🛒 Nuevo pedido recibido',
-            body: `${customerData.nombre || customerData.name} ${customerData.apellido} realizó un pedido por ${formatCurrency ? formatCurrency(total) : total} (${items.length} producto${items.length !== 1 ? 's' : ''})`,
-            type: 'success',
-            meta: {
-              tipo: 'nuevo_pedido',
-              target: 'admin',
-              pedidoId: pedido.id,
-              cliente: customerData,
-              total: total,
-              metodoPago: paymentMethod,
-              items: items,
-              createdAt: new Date().toISOString(),
-              source: 'catalog-fallback'
-            }
-          });
-          console.log('✅ [CATALOG] Notificación local también creada');
-        } catch (localError) {
-          console.warn('⚠️ [CATALOG] Error en notificación local:', localError);
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ [CATALOG] Error creando notificación via API:', error);
-
-      // Fallback: intentar crear notificación localmente
-      if (addNotification) {
-        try {
-          addNotification({
-            title: '🛒 Nuevo pedido recibido (fallback)',
-            body: `${customerData.nombre || customerData.name} ${customerData.apellido} realizó un pedido por ${formatCurrency ? formatCurrency(total) : total} (${items.length} producto${items.length !== 1 ? 's' : ''})`,
-            type: 'warning',
-            meta: {
-              tipo: 'nuevo_pedido',
-              target: 'admin',
-              pedidoId: pedido.id,
-              cliente: customerData,
-              total: total,
-              metodoPago: paymentMethod,
-              items: items,
-              createdAt: new Date().toISOString(),
-              source: 'catalog-fallback-error'
-            }
-          });
-          console.log('✅ [CATALOG] Notificación fallback creada');
-        } catch (fallbackError) {
-          console.error('❌ [CATALOG] Error en fallback:', fallbackError);
-        }
-      }
-    }
-  }, [addNotification, customerData, total, paymentMethod, formatCurrency])
-          id: notification?.id,
-          title: notification?.title,
-          target: notification?.meta?.target
-        });
-      } catch (error) {
-        console.error('❌ Error creando notificación:', error);
-      }
-    } else {
-      console.error('❌ addNotification no está disponible - posible problema de contexto');
-    }
-  }, [addNotification, customerData, total, paymentMethod, formatCurrency])
+  // Callback memoizado para acciones después de guardar el pedido
+  // NOTA: La notificación se crea automáticamente en el backend (API)
+  const handleOrderSuccess = useCallback((pedido, items) => {
+    // La notificación ya se creó en el backend vía /api/notifications/create-order
+  }, [])
   
   // Auto-scroll a método de pago en mobile si el perfil está completo
   useEffect(() => {

@@ -25,10 +25,10 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testPromoSave() {
-  console.log('\n🧪 Iniciando test de guardado de promoción...\n');
+  // console.log('\n🧪 Iniciando test de guardado de promoción...\n');
 
   // 1. Verificar estructura de la tabla
-  console.log('1️⃣ Verificando estructura de tabla promociones...');
+  // console.log('1️⃣ Verificando estructura de tabla promociones...');
   const { data: columns, error: colError } = await supabase
     .rpc('exec_sql', { 
       query: `SELECT column_name, data_type 
@@ -38,13 +38,13 @@ async function testPromoSave() {
     });
   
   if (colError) {
-    console.log('⚠️ No se pudo verificar estructura (esto es normal si no tienes permisos)');
+    // console.log('⚠️ No se pudo verificar estructura (esto es normal si no tienes permisos)');
   } else {
-    console.log('✅ Columnas encontradas:', columns);
+    // console.log('✅ Columnas encontradas:', columns);
   }
 
   // 2. Intentar crear promoción de prueba
-  console.log('\n2️⃣ Intentando crear promoción de prueba (buy_x_get_y)...');
+  // console.log('\n2️⃣ Intentando crear promoción de prueba (buy_x_get_y)...');
   const testPromo = {
     nombre: 'TEST 2x1 - ELIMINAR',
     tipo: 'buy_x_get_y',
@@ -65,7 +65,7 @@ async function testPromoSave() {
     config: { buyQuantity: 2, payQuantity: 1 }
   };
 
-  console.log('📦 Datos a insertar:', JSON.stringify(testPromo, null, 2));
+  // console.log('📦 Datos a insertar:', JSON.stringify(testPromo, null, 2));
 
   const { data: insertData, error: insertError } = await supabase
     .from('promociones')
@@ -81,18 +81,18 @@ async function testPromoSave() {
     
     // Verificar si el error es por columna faltante
     if (insertError.message.includes('config') || insertError.message.includes('column')) {
-      console.log('\n⚠️ POSIBLE CAUSA: La columna "config" no existe en la tabla.');
-      console.log('📝 SOLUCIÓN: Ejecuta el archivo sql/add-config-to-promociones.sql en Supabase SQL Editor');
+      // console.log('\n⚠️ POSIBLE CAUSA: La columna "config" no existe en la tabla.');
+      // console.log('📝 SOLUCIÓN: Ejecuta el archivo sql/add-config-to-promociones.sql en Supabase SQL Editor');
     }
     return;
   }
 
-  console.log('✅ Promoción creada exitosamente!');
-  console.log('📊 ID:', insertData.id);
-  console.log('📊 Config guardado:', insertData.config);
+  // console.log('✅ Promoción creada exitosamente!');
+  // console.log('📊 ID:', insertData.id);
+  // console.log('📊 Config guardado:', insertData.config);
 
   // 3. Leer la promoción para verificar
-  console.log('\n3️⃣ Verificando lectura de la promoción...');
+  // console.log('\n3️⃣ Verificando lectura de la promoción...');
   const { data: readData, error: readError } = await supabase
     .from('promociones')
     .select('*')
@@ -104,11 +104,11 @@ async function testPromoSave() {
     return;
   }
 
-  console.log('✅ Promoción leída correctamente');
-  console.log('📊 Config leído:', readData.config);
+  // console.log('✅ Promoción leída correctamente');
+  // console.log('📊 Config leído:', readData.config);
 
   // 4. Eliminar la promoción de prueba
-  console.log('\n4️⃣ Eliminando promoción de prueba...');
+  // console.log('\n4️⃣ Eliminando promoción de prueba...');
   const { error: deleteError } = await supabase
     .from('promociones')
     .delete()
@@ -116,12 +116,12 @@ async function testPromoSave() {
 
   if (deleteError) {
     console.error('❌ Error al eliminar:', deleteError);
-    console.log('⚠️ Elimina manualmente la promoción con ID:', insertData.id);
+    // console.log('⚠️ Elimina manualmente la promoción con ID:', insertData.id);
     return;
   }
 
-  console.log('✅ Promoción de prueba eliminada correctamente\n');
-  console.log('🎉 TEST COMPLETADO CON ÉXITO!\n');
+  // console.log('✅ Promoción de prueba eliminada correctamente\n');
+  // console.log('🎉 TEST COMPLETADO CON ÉXITO!\n');
 }
 
 testPromoSave().catch(err => {

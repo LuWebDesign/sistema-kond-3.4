@@ -34,7 +34,7 @@ async function run() {
 
     const missing = authUsers.filter(u => !dbIds.has(String(u.id)));
     if (missing.length === 0) {
-      console.log('No hay usuarios faltantes.');
+      // console.log('No hay usuarios faltantes.');
       return;
     }
 
@@ -49,7 +49,7 @@ async function run() {
         created_at: new Date(u.created_at).toISOString()
       };
 
-      console.log(`Creando usuario ${username} (${u.id})`);
+      // console.log(`Creando usuario ${username} (${u.id})`);
       const { data: insertData, error: insertErr } = await supabase
         .from('usuarios')
         .insert(row)
@@ -58,11 +58,11 @@ async function run() {
       if (insertErr) {
         console.error('  Error al insertar:', insertErr.message || insertErr);
       } else {
-        console.log('  Insertado:', insertData && insertData[0] && insertData[0].id);
+        // console.log('  Insertado:', insertData && insertData[0] && insertData[0].id);
       }
     }
 
-    console.log('Proceso completado.');
+    // console.log('Proceso completado.');
   } catch (err) {
     console.error('Error en create-missing-usuarios:', err.message || err);
     process.exit(1);

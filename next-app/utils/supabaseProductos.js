@@ -133,7 +133,7 @@ export async function createProducto(producto) {
       .single();
 
     if (error) throw error;
-    console.log('✅ Producto creado en Supabase:', data.id);
+    // console.log('✅ Producto creado en Supabase:', data.id);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al crear producto:', error);
@@ -170,7 +170,7 @@ export async function updateProducto(id, productoUpdate) {
       .single();
 
     if (error) throw error;
-    console.log('✅ Producto actualizado en Supabase:', id);
+    // console.log('✅ Producto actualizado en Supabase:', id);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al actualizar producto:', error);
@@ -189,7 +189,7 @@ export async function deleteProducto(id) {
       .eq('id', id);
 
     if (error) throw error;
-    console.log('✅ Producto eliminado de Supabase:', id);
+    // console.log('✅ Producto eliminado de Supabase:', id);
     return { error: null };
   } catch (error) {
     console.error('❌ Error al eliminar producto:', error);

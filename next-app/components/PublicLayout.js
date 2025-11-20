@@ -112,7 +112,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 🛍️ Catálogo
               </Link>
               
-              {/* Solo mostrar Mi Cuenta si no estamos en esa página */}
+              {/* Solo mostrar Mi Cuenta/Iniciar sesión si no estamos en esa página */}
               {title !== 'Mi Cuenta - KOND' && (
                 <Link href="/user" style={{
                   color: 'var(--text-primary)',
@@ -124,7 +124,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 }}
                 onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
                 onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                  Mi Cuenta
+                  {currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}
                 </Link>
               )}
             </nav>
@@ -145,7 +145,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 border: '1px solid transparent',
                 background: 'transparent',
                 display: 'inline-block'
-              }}>Mi Cuenta</Link>
+              }}>{currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}</Link>
             )}
             
             {/* Botón de tema */}
@@ -254,7 +254,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                     }}
                     onMouseEnter={(e) => e.target.style.color = 'var(--accent-blue)'}
                     onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
-                      Mi cuenta
+                      {currentUser ? 'Mi cuenta' : 'Iniciar sesión'}
                     </Link>
                   )}
                 </div>

@@ -33,11 +33,11 @@ async function run() {
 
     if (error) throw error;
     if (!data || data.length === 0) {
-      console.log('No se encontraron columnas para la tabla usuarios (revisa permisos o esquema).');
+      // console.log('No se encontraron columnas para la tabla usuarios (revisa permisos o esquema).');
       return;
     }
-    console.log('Columnas encontradas en usuarios:');
-    data.forEach(c => console.log(` - ${c.column_name} (schema: ${c.table_schema})`));
+    // console.log('Columnas encontradas en usuarios:');
+    // data.forEach(c => console.log(` - ${c.column_name} (schema: ${c.table_schema})`));
   } catch (err) {
     console.error('Error consultando information_schema:', err.message || err);
     process.exit(1);

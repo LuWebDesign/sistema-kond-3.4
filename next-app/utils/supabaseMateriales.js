@@ -51,7 +51,7 @@ export async function getMaterialById(id) {
  */
 export async function createMaterial(material) {
   try {
-    console.log('📝 Creando material:', material.nombre);
+    // console.log('📝 Creando material:', material.nombre);
     
     const { data, error } = await supabase
       .from('materiales')
@@ -71,7 +71,7 @@ export async function createMaterial(material) {
 
     if (error) throw error;
     
-    console.log('✅ Material creado en Supabase:', data.id);
+    // console.log('✅ Material creado en Supabase:', data.id);
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al crear material:', error);
@@ -84,7 +84,7 @@ export async function createMaterial(material) {
  */
 export async function updateMaterial(id, materialUpdate) {
   try {
-    console.log('📝 Actualizando material:', id);
+    // console.log('📝 Actualizando material:', id);
     
     const updateData = {};
     
@@ -108,7 +108,7 @@ export async function updateMaterial(id, materialUpdate) {
 
     if (error) throw error;
     
-    console.log('✅ Material actualizado en Supabase');
+    // console.log('✅ Material actualizado en Supabase');
     return { data, error: null };
   } catch (error) {
     console.error('❌ Error al actualizar material:', error);
@@ -121,7 +121,7 @@ export async function updateMaterial(id, materialUpdate) {
  */
 export async function deleteMaterial(id) {
   try {
-    console.log('🗑️ Eliminando material:', id);
+    // console.log('🗑️ Eliminando material:', id);
     
     const { error } = await supabase
       .from('materiales')
@@ -130,7 +130,7 @@ export async function deleteMaterial(id) {
 
     if (error) throw error;
     
-    console.log('✅ Material eliminado de Supabase');
+    // console.log('✅ Material eliminado de Supabase');
     return { error: null };
   } catch (error) {
     console.error('❌ Error al eliminar material:', error);

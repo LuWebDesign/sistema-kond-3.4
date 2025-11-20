@@ -15,8 +15,24 @@ export default function MyApp({ Component, pageProps }) {
     }
   }, [])
 
-  // Determinar si estamos en una página de admin
+  // Durante SSR, siempre renderizar con NotificationsProvider
+  // La detección de página pública solo funciona en cliente
+  if (typeof window === 'undefined') {
+    return (
+      <NotificationsProvider targetUser="admin">
+        <Component {...pageProps} />
+      </NotificationsProvider>
+    )
+  }
+
+  // Determinar si estamos en una página de admin o página pública (solo en cliente)
   const isAdminPage = router.pathname.startsWith('/admin') || router.pathname.startsWith('/_admin')
+  const isPublicPage = router.pathname === '/catalog' || router.pathname.startsWith('/tracking') || router.pathname === '/user'
+  
+  // Solo usar NotificationsProvider en páginas de admin, no en públicas
+  if (isPublicPage) {
+    return <Component {...pageProps} />
+  }
 
   return (
     <NotificationsProvider targetUser={isAdminPage ? 'admin' : 'user'}>

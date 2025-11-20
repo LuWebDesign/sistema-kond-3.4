@@ -9,11 +9,11 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 async function diagnosticarCarrito() {
-  console.log('🛒 Diagnóstico de carrito con promociones\n')
+  // console.log('🛒 Diagnóstico de carrito con promociones\n')
 
   try {
     // 1. Cargar promociones activas
-    console.log('1️⃣ Cargando promociones activas desde Supabase...')
+    // console.log('1️⃣ Cargando promociones activas desde Supabase...')
     const { data: promosData, error: promosError } = await supabase
       .from('promociones')
       .select('*')
@@ -24,7 +24,7 @@ async function diagnosticarCarrito() {
       return
     }
 
-    console.log(`✅ Promociones encontradas: ${promosData?.length || 0}\n`)
+    // console.log(`✅ Promociones encontradas: ${promosData?.length || 0}\n`)
 
     // Mapear promociones a formato frontend
     const promocionesDb = (promosData || []).map(p => ({
@@ -47,24 +47,24 @@ async function diagnosticarCarrito() {
       config: p.configuracion || p.config
     }))
 
-    promosData.forEach(p => {
-      console.log(`📋 Promo ID ${p.id}: ${p.nombre}`)
-      console.log(`   - tipo: ${p.tipo}`)
-      console.log(`   - aplica_a: ${p.aplica_a}`)
-      console.log(`   - fecha_inicio: ${p.fecha_inicio}`)
-      console.log(`   - fecha_fin: ${p.fecha_fin}`)
-      console.log(`   - descuento_porcentaje: ${p.descuento_porcentaje}`)
-      console.log(`   - badge_texto: ${p.badge_texto}`)
-      console.log('')
-    })
+    // promosData.forEach(p => {
+    //   console.log(`📋 Promo ID ${p.id}: ${p.nombre}`)
+    //   console.log(`   - tipo: ${p.tipo}`)
+    //   console.log(`   - aplica_a: ${p.aplica_a}`)
+    //   console.log(`   - fecha_inicio: ${p.fecha_inicio}`)
+    //   console.log(`   - fecha_fin: ${p.fecha_fin}`)
+    //   console.log(`   - descuento_porcentaje: ${p.descuento_porcentaje}`)
+    //   console.log(`   - badge_texto: ${p.badge_texto}`)
+    //   console.log('')
+    // })
 
     // 2. Filtrar promociones activas por fecha
-    console.log('2️⃣ Aplicando filtro de fechas con motor de promociones...')
+    // console.log('2️⃣ Aplicando filtro de fechas con motor de promociones...')
     const promocionesActivas = getActivePromotions(promocionesDb)
-    console.log(`✅ Promociones activas después de filtro de fechas: ${promocionesActivas.length}\n`)
+    // console.log(`✅ Promociones activas después de filtro de fechas: ${promocionesActivas.length}\n`)
 
     // 3. Cargar un producto de ejemplo
-    console.log('3️⃣ Cargando producto de ejemplo (ID 7)...')
+    // console.log('3️⃣ Cargando producto de ejemplo (ID 7)...')
     const { data: productoData, error: productoError } = await supabase
       .from('productos')
       .select('*')
@@ -78,9 +78,9 @@ async function diagnosticarCarrito() {
       return
     }
 
-    console.log(`📦 Producto ID ${productoData.id}: ${productoData.nombre}`)
-    console.log(`   - precio_unitario: $${productoData.precio_unitario}`)
-    console.log('')
+    // console.log(`📦 Producto ID ${productoData.id}: ${productoData.nombre}`)
+    // console.log(`   - precio_unitario: $${productoData.precio_unitario}`)
+    // console.log('')
 
     // Mapear producto a formato frontend
     const producto = {
@@ -97,18 +97,18 @@ async function diagnosticarCarrito() {
     }
 
     // 4. Aplicar promociones al producto
-    console.log('4️⃣ Aplicando promociones al producto...')
+    // console.log('4️⃣ Aplicando promociones al producto...')
     const productoConPromo = applyPromotionsToProduct(producto, promocionesActivas)
     
-    console.log(`🎯 Resultado para "${producto.nombre}":`)
-    console.log(`   - Tiene promoción: ${productoConPromo.hasPromotion ? '✅ SÍ' : '❌ NO'}`)
-    console.log(`   - Precio original: $${productoConPromo.originalPrice}`)
-    console.log(`   - Precio con descuento: $${productoConPromo.discountedPrice}`)
-    console.log(`   - Badges: ${JSON.stringify(productoConPromo.badges)}`)
-    console.log('')
+    // console.log(`🎯 Resultado para "${producto.nombre}":`)
+    // console.log(`   - Tiene promoción: ${productoConPromo.hasPromotion ? '✅ SÍ' : '❌ NO'}`)
+    // console.log(`   - Precio original: $${productoConPromo.originalPrice}`)
+    // console.log(`   - Precio con descuento: $${productoConPromo.discountedPrice}`)
+    // console.log(`   - Badges: ${JSON.stringify(productoConPromo.badges)}`)
+    // console.log('')
 
     // 5. Simular lo que se guarda en el carrito
-    console.log('5️⃣ Simulando lo que se guardaría en el carrito...')
+    // console.log('5️⃣ Simulando lo que se guardaría en el carrito...')
     const productoEnriquecido = {
       ...producto,
       hasPromotion: productoConPromo.hasPromotion,
@@ -116,11 +116,11 @@ async function diagnosticarCarrito() {
       promotionBadges: productoConPromo.badges
     }
 
-    console.log('📦 Producto enriquecido (con promoción aplicada):')
-    console.log(`   - precioUnitario: $${productoEnriquecido.precioUnitario}`)
-    console.log(`   - precioPromocional: $${productoEnriquecido.precioPromocional}`)
-    console.log(`   - hasPromotion: ${productoEnriquecido.hasPromotion}`)
-    console.log('')
+    // console.log('📦 Producto enriquecido (con promoción aplicada):')
+    // console.log(`   - precioUnitario: $${productoEnriquecido.precioUnitario}`)
+    // console.log(`   - precioPromocional: $${productoEnriquecido.precioPromocional}`)
+    // console.log(`   - hasPromotion: ${productoEnriquecido.hasPromotion}`)
+    // console.log('')
 
     // Simular addToCart
     const unitPrice = (productoEnriquecido.precioPromocional !== undefined && productoEnriquecido.precioPromocional !== null) 
@@ -140,14 +140,14 @@ async function diagnosticarCarrito() {
       precioPorMinuto: productoEnriquecido.precioPorMinuto || 0
     }
 
-    console.log('🛒 Item que se guardaría en el carrito:')
-    console.log(`   - price (usado para cálculos): $${itemCarrito.price}`)
-    console.log(`   - originalPrice: $${itemCarrito.originalPrice}`)
-    console.log(`   - ¿Precio con descuento?: ${itemCarrito.originalPrice > itemCarrito.price ? '✅ SÍ' : '❌ NO'}`)
-    console.log('')
+    // console.log('🛒 Item que se guardaría en el carrito:')
+    // console.log(`   - price (usado para cálculos): $${itemCarrito.price}`)
+    // console.log(`   - originalPrice: $${itemCarrito.originalPrice}`)
+    // console.log(`   - ¿Precio con descuento?: ${itemCarrito.originalPrice > itemCarrito.price ? '✅ SÍ' : '❌ NO'}`)
+    // console.log('')
 
     // 6. Verificar lógica de renderizado del carrito
-    console.log('6️⃣ Verificando lógica de renderizado del carrito...')
+    // console.log('6️⃣ Verificando lógica de renderizado del carrito...')
     const original = itemCarrito.originalPrice
     const price = itemCarrito.price
     const totalLine = price * itemCarrito.quantity
@@ -155,14 +155,14 @@ async function diagnosticarCarrito() {
     if (original > price) {
       const savings = (original - price) * itemCarrito.quantity
       const percent = Math.round(((original - price) / original) * 100)
-      console.log('✅ El carrito DEBERÍA mostrar:')
-      console.log(`   - Precio con descuento: $${totalLine}`)
-      console.log(`   - Precio original tachado: $${original}`)
-      console.log(`   - Badge de descuento: -${percent}%`)
-      console.log(`   - Mensaje de ahorro: Ahorras $${savings}`)
+      // console.log('✅ El carrito DEBERÍA mostrar:')
+      // console.log(`   - Precio con descuento: $${totalLine}`)
+      // console.log(`   - Precio original tachado: $${original}`)
+      // console.log(`   - Badge de descuento: -${percent}%`)
+      // console.log(`   - Mensaje de ahorro: Ahorras $${savings}`)
     } else {
-      console.log('❌ El carrito NO mostrará descuento porque:')
-      console.log(`   - originalPrice ($${original}) NO es mayor que price ($${price})`)
+      // console.log('❌ El carrito NO mostrará descuento porque:')
+      // console.log(`   - originalPrice ($${original}) NO es mayor que price ($${price})`)
     }
 
   } catch (error) {

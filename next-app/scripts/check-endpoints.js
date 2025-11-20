@@ -9,7 +9,7 @@
     try {
       const res = await fetch(base + ep)
       const text = await res.text()
-      console.log(`${ep} -> ${res.status} (${text.slice(0,200).replace(/\n/g,' ')})`)
+      // console.log(`${ep} -> ${res.status} (${text.slice(0,200).replace(/\n/g,' ')})`)
     } catch (e) {
       console.error(`${ep} -> ERROR:`, e.message)
     }

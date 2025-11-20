@@ -15,29 +15,29 @@ export default function withAdminAuth(WrappedComponent) {
     useEffect(() => {
       const checkAuth = async () => {
         try {
-          console.log('🔍 Verificando autenticación admin...')
+          // console.log('🔍 Verificando autenticación admin...')
           const session = await getCurrentSession()
 
-          console.log('📋 Estado de sesión:', {
-            hasSession: !!session,
-            hasUser: !!(session?.user),
-            userRol: session?.user?.rol,
-            userId: session?.user?.id
-          })
+          // console.log('📋 Estado de sesión:', {
+          //   hasSession: !!session,
+          //   hasUser: !!(session?.user),
+          //   userRol: session?.user?.rol,
+          //   userId: session?.user?.id
+          // })
 
           if (!session || !session.user) {
-            console.log('❌ No hay sesión válida, redirigiendo a login')
+            // console.log('❌ No hay sesión válida, redirigiendo a login')
             router.replace('/admin/login')
             return
           }
 
           if (session.user.rol !== 'admin') {
-            console.log('❌ Usuario no es admin (rol:', session.user.rol, '), redirigiendo a catálogo')
+            // console.log('❌ Usuario no es admin (rol:', session.user.rol, '), redirigiendo a catálogo')
             router.replace('/catalog')
             return
           }
 
-          console.log('✅ Usuario admin autorizado')
+          // console.log('✅ Usuario admin autorizado')
           setIsAuthorized(true)
           setIsLoading(false)
         } catch (error) {
