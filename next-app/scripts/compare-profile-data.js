@@ -32,26 +32,26 @@ function emailLocalPart(email) {
 
 async function run() {
   try {
-    console.log('🔍 Obteniendo usuarios de auth.users...');
+    // console.log('🔍 Obteniendo usuarios de auth.users...');
     const { data: authResp, error: authErr } = await supabase.auth.admin.listUsers();
     if (authErr) throw authErr;
     const authUsers = authResp.users || [];
 
-    console.log('🔍 Obteniendo filas de la tabla `usuarios`...');
+    // console.log('🔍 Obteniendo filas de la tabla `usuarios`...');
     const { data: dbUsers, error: dbErr } = await supabase.from('usuarios').select('*');
     if (dbErr) throw dbErr;
 
     const dbById = new Map((dbUsers || []).map(u => [String(u.id), u]));
     const authById = new Map((authUsers || []).map(u => [String(u.id), u]));
 
-    console.log('\n=== Comparación por usuarios en auth.users ===\n');
+    // console.log('\n=== Comparación por usuarios en auth.users ===\n');
     for (const a of authUsers) {
       const id = String(a.id);
       const db = dbById.get(id);
-      console.log(`Usuario auth: ${a.email}  (id: ${id})`);
+      // console.log(`Usuario auth: ${a.email}  (id: ${id})`);
       if (!db) {
-        console.log('  ❌ No existe fila en tabla `usuarios`');
-        console.log('');
+        // console.log('  ❌ No existe fila en tabla `usuarios`');
+        // console.log('');
         continue;
       }
 
@@ -84,22 +84,22 @@ async function run() {
       }
 
       if (issues.length === 0) {
-        console.log('  ✅ Coinciden (no se detectaron diferencias importantes)');
+        // console.log('  ✅ Coinciden (no se detectaron diferencias importantes)');
       } else {
-        issues.forEach(it => console.log('  ⚠️  ' + it));
+        // issues.forEach(it => console.log('  ⚠️  ' + it));
       }
-      console.log('');
+      // console.log('');
     }
 
-    console.log('\n=== Filas en tabla `usuarios` sin auth.user correspondiente ===\n');
+    // console.log('\n=== Filas en tabla `usuarios` sin auth.user correspondiente ===\n');
     for (const db of dbUsers) {
       const id = String(db.id);
       if (!authById.has(id)) {
-        console.log(`  - username: ${db.username} id: ${id} rol: ${db.rol}`);
+        // console.log(`  - username: ${db.username} id: ${id} rol: ${db.rol}`);
       }
     }
 
-    console.log('\nComparación completada.');
+    // console.log('\nComparación completada.');
 
   } catch (err) {
     console.error('Error en compare-profile-data:', err.message || err);

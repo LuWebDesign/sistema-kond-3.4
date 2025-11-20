@@ -145,7 +145,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose, isLight
       valor: null // Este campo lo mantenemos por compatibilidad pero no lo usamos
     };
 
-    console.log('🎯 PromoModal - Datos enviados al handler:', promoData);
+    // console.log('🎯 PromoModal - Datos enviados al handler:', promoData);
     onSubmit(promoData);
   };
 

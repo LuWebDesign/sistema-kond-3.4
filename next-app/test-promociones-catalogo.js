@@ -22,11 +22,11 @@ const supabase = createClient(
 );
 
 async function testPromociones() {
-  console.log('🔍 DIAGNÓSTICO DE PROMOCIONES EN CATÁLOGO\n');
+  // console.log('🔍 DIAGNÓSTICO DE PROMOCIONES EN CATÁLOGO\n');
   
   try {
     // 1. Cargar promociones activas
-    console.log('1️⃣ Cargando promociones activas...');
+    // console.log('1️⃣ Cargando promociones activas...');
     const { data: promos, error: promosError } = await supabase
       .from('promociones')
       .select('*')
@@ -38,23 +38,23 @@ async function testPromociones() {
       return;
     }
     
-    console.log(`✅ Promociones activas: ${promos?.length || 0}\n`);
+    // console.log(`✅ Promociones activas: ${promos?.length || 0}\n`);
     
     if (promos && promos.length > 0) {
       promos.forEach(p => {
-        console.log(`📋 Promo ID ${p.id}: ${p.nombre}`);
-        console.log(`   - tipo: ${p.tipo}`);
-        console.log(`   - aplica_a: ${p.aplica_a}`);
-        console.log(`   - producto_id: ${p.producto_id}`);
-        console.log(`   - categoria: ${p.categoria}`);
-        console.log(`   - fecha_inicio: ${p.fecha_inicio}`);
-        console.log(`   - fecha_fin: ${p.fecha_fin}`);
-        console.log(`   - descuento_porcentaje: ${p.descuento_porcentaje}`);
-        console.log(`   - precio_especial: ${p.precio_especial}`);
-        console.log(`   - badge_texto: ${p.badge_texto}`);
-        console.log(`   - badge_color: ${p.badge_color}`);
-        console.log(`   - prioridad: ${p.prioridad}`);
-        console.log('');
+        // console.log(`📋 Promo ID ${p.id}: ${p.nombre}`);
+        // console.log(`   - tipo: ${p.tipo}`);
+        // console.log(`   - aplica_a: ${p.aplica_a}`);
+        // console.log(`   - producto_id: ${p.producto_id}`);
+        // console.log(`   - categoria: ${p.categoria}`);
+        // console.log(`   - fecha_inicio: ${p.fecha_inicio}`);
+        // console.log(`   - fecha_fin: ${p.fecha_fin}`);
+        // console.log(`   - descuento_porcentaje: ${p.descuento_porcentaje}`);
+        // console.log(`   - precio_especial: ${p.precio_especial}`);
+        // console.log(`   - badge_texto: ${p.badge_texto}`);
+        // console.log(`   - badge_color: ${p.badge_color}`);
+        // console.log(`   - prioridad: ${p.prioridad}`);
+        // console.log('');
       });
     }
     

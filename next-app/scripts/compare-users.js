@@ -34,26 +34,26 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 
 async function run() {
   try {
-    console.log('🔍 Listando usuarios en auth.users...');
+    // console.log('🔍 Listando usuarios en auth.users...');
     const { data: authResp, error: authErr } = await supabase.auth.admin.listUsers();
     if (authErr) throw authErr;
     const authUsers = authResp.users || [];
 
-    console.log(`  Encontrados ${authUsers.length} usuarios en auth.users`);
+    // console.log(`  Encontrados ${authUsers.length} usuarios en auth.users`);
 
-    authUsers.forEach(u => {
-      console.log(`  - ${u.email} (id: ${u.id}) created_at: ${u.created_at}`);
-    });
+    // authUsers.forEach(u => {
+    //   console.log(`  - ${u.email} (id: ${u.id}) created_at: ${u.created_at}`);
+    // });
 
-    console.log('\n🔍 Listando filas en tabla `usuarios`...');
+    // console.log('\n🔍 Listando filas en tabla `usuarios`...');
     const { data: dbUsers, error: dbErr } = await supabase
       .from('usuarios')
       .select('*');
     if (dbErr) throw dbErr;
-    console.log(`  Encontradas ${dbUsers.length} filas en tabla usuarios`);
-    dbUsers.forEach(u => {
-      console.log(`  - username: ${u.username} id: ${u.id} rol: ${u.rol} email: ${u.email || '(sin email)'}`);
-    });
+    // console.log(`  Encontradas ${dbUsers.length} filas en tabla usuarios`);
+    // dbUsers.forEach(u => {
+    //   console.log(`  - username: ${u.username} id: ${u.id} rol: ${u.rol} email: ${u.email || '(sin email)'}`);
+    // });
 
     // Comparar: por id de auth.user vs id de usuarios
     const dbIds = new Set(dbUsers.map(d => String(d.id)));
@@ -61,11 +61,11 @@ async function run() {
     const missing = authUsers.filter(u => !dbIds.has(String(u.id)));
 
     if (missing.length === 0) {
-      console.log('\n✅ No hay usuarios faltantes en la tabla `usuarios`.');
+      // console.log('\n✅ No hay usuarios faltantes en la tabla `usuarios`.');
       return;
     }
 
-    console.log(`\n⚠️  Se detectaron ${missing.length} usuarios en auth.users sin fila en \'usuarios\'`);
+    // console.log(`\n⚠️  Se detectaron ${missing.length} usuarios en auth.users sin fila en \'usuarios\'`);
 
     for (const u of missing) {
       const email = u.email || '';
@@ -78,7 +78,7 @@ async function run() {
         created_at: new Date(u.created_at).toISOString()
       };
 
-      console.log(`  -> Creando fila para ${email} (username: ${username})`);
+      // console.log(`  -> Creando fila para ${email} (username: ${username})`);
       const { data: insertData, error: insertErr } = await supabase
         .from('usuarios')
         .insert(newRow)
@@ -87,11 +87,11 @@ async function run() {
       if (insertErr) {
         console.error('     ❌ Error al crear fila:', insertErr.message || insertErr);
       } else {
-        console.log('     ✅ Fila creada con id:', insertData && insertData[0] && insertData[0].id);
+        // console.log('     ✅ Fila creada con id:', insertData && insertData[0] && insertData[0].id);
       }
     }
 
-    console.log('\n🎯 Proceso completado. Revisa la tabla `usuarios` en Supabase Dashboard para confirmar.');
+    // console.log('\n🎯 Proceso completado. Revisa la tabla `usuarios` en Supabase Dashboard para confirmar.');
 
   } catch (err) {
     console.error('❌ Error en compare-users:', err.message || err);

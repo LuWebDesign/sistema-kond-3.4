@@ -31,12 +31,12 @@ async function run() {
       .limit(1);
     if (error) throw error;
     if (!data || data.length === 0) {
-      console.log('No hay filas en usuarios para inspeccionar.');
+      // console.log('No hay filas en usuarios para inspeccionar.');
       return;
     }
     const keys = Object.keys(data[0]);
-    console.log('Claves encontradas en la primera fila de usuarios:');
-    keys.forEach(k => console.log(' -', k));
+    // console.log('Claves encontradas en la primera fila de usuarios:');
+    // keys.forEach(k => console.log(' -', k));
   } catch (err) {
     console.error('Error inspeccionando usuarios:', err.message || err);
     process.exit(1);

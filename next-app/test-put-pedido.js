@@ -4,7 +4,7 @@
 const BASE_URL = 'http://localhost:3000'
 
 async function testPutPedido() {
-  console.log('🧪 Probando PUT /api/pedidos/catalogo/[id]...\n')
+  // console.log('🧪 Probando PUT /api/pedidos/catalogo/[id]...\n')
 
   // Datos de prueba (ajusta el ID según un pedido existente en tu DB)
   const pedidoId = 13
@@ -19,9 +19,9 @@ async function testPutPedido() {
   }
 
   try {
-    console.log('📤 Enviando PUT a:', `${BASE_URL}/api/pedidos/catalogo/${pedidoId}`)
-    console.log('📦 Payload:', JSON.stringify(updatePayload, null, 2))
-    console.log('')
+    // console.log('📤 Enviando PUT a:', `${BASE_URL}/api/pedidos/catalogo/${pedidoId}`)
+    // console.log('📦 Payload:', JSON.stringify(updatePayload, null, 2))
+    // console.log('')
 
     const response = await fetch(`${BASE_URL}/api/pedidos/catalogo/${pedidoId}`, {
       method: 'PUT',
@@ -31,16 +31,16 @@ async function testPutPedido() {
       body: JSON.stringify(updatePayload)
     })
 
-    console.log('📥 Respuesta del servidor:')
-    console.log('   Status:', response.status, response.statusText)
+    // console.log('📥 Respuesta del servidor:')
+    // console.log('   Status:', response.status, response.statusText)
     
     const data = await response.json()
-    console.log('   Body:', JSON.stringify(data, null, 2))
+    // console.log('   Body:', JSON.stringify(data, null, 2))
 
     if (response.ok) {
-      console.log('\n✅ PUT exitoso! El pedido se actualizó en Supabase')
+      // console.log('\n✅ PUT exitoso! El pedido se actualizó en Supabase')
     } else {
-      console.log('\n❌ PUT falló:', data.error || 'Error desconocido')
+      // console.log('\n❌ PUT falló:', data.error || 'Error desconocido')
     }
 
   } catch (error) {

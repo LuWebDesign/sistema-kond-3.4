@@ -152,7 +152,7 @@ export async function createProducto(producto) {
       active: producto.active !== undefined ? producto.active : true
     };
 
-    console.log('📝 Datos del producto a crear:', productData);
+    // console.log('📝 Datos del producto a crear:', productData);
 
     const { data, error } = await supabase
       .from('productos')
@@ -221,7 +221,7 @@ export async function updateProducto(id, producto) {
     if (producto.ensamble !== undefined) updateData.ensamble = producto.ensamble;
     if (producto.active !== undefined) updateData.active = producto.active;
 
-    console.log('📝 Datos del producto a actualizar:', updateData);
+    // console.log('📝 Datos del producto a actualizar:', updateData);
 
     const { data, error } = await supabase
       .from('productos')

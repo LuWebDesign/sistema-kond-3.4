@@ -29,7 +29,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 async function fixAdminRole() {
   try {
-    console.log('🔧 Corrigiendo rol del usuario admin...\n');
+    // console.log('🔧 Corrigiendo rol del usuario admin...\n');
 
     // Actualizar el rol a 'admin'
     const { data, error } = await supabase
@@ -43,9 +43,9 @@ async function fixAdminRole() {
       process.exit(1);
     }
 
-    console.log('✅ Rol actualizado correctamente\n');
-    console.log('Usuario:', data[0]);
-    console.log('\n🎉 Ahora puedes hacer login y crear productos!');
+    // console.log('✅ Rol actualizado correctamente\n');
+    // console.log('Usuario:', data[0]);
+    // console.log('\n🎉 Ahora puedes hacer login y crear productos!');
 
   } catch (error) {
     console.error('❌ Error:', error);

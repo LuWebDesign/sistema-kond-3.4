@@ -53,7 +53,7 @@ export async function getPromocionesActivas() {
  */
 export async function createPromocion(promocion) {
   try {
-    console.log('📝 Datos recibidos en createPromocion:', promocion);
+    // console.log('📝 Datos recibidos en createPromocion:', promocion);
     
     const promoData = {
       nombre: promocion.nombre,
@@ -75,7 +75,7 @@ export async function createPromocion(promocion) {
       config: promocion.config || null
     };
 
-    console.log('💾 Datos a insertar en Supabase:', promoData);
+    // console.log('💾 Datos a insertar en Supabase:', promoData);
 
     const { data, error } = await supabase
       .from('promociones')
@@ -88,7 +88,7 @@ export async function createPromocion(promocion) {
       throw error;
     }
     
-    console.log('✅ Promoción creada exitosamente:', data);
+    // console.log('✅ Promoción creada exitosamente:', data);
     return { data, error: null };
   } catch (error) {
     console.error('Error al crear promoción:', error);

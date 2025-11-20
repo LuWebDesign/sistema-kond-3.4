@@ -221,7 +221,7 @@ export async function createPedidoCatalogo(pedido, items) {
 
     // NOTA: Registro automático de movimientos financieros deshabilitado temporalmente
     // Se reactivará cuando se reconstruya el módulo de finanzas
-    console.log('💰 Pedido creado sin registro financiero automático (módulo deshabilitado)');
+    // console.log('💰 Pedido creado sin registro financiero automático (módulo deshabilitado)');
 
     return { 
       data: { 
@@ -320,7 +320,7 @@ export async function updateMontoRecibido(id, montoRecibido, nuevoEstadoPago) {
 
     // NOTA: Registro automático de movimientos financieros deshabilitado temporalmente
     // Se reactivará cuando se reconstruya el módulo de finanzas
-    console.log('💰 Monto recibido actualizado sin registro financiero automático (módulo deshabilitado)');
+    // console.log('💰 Monto recibido actualizado sin registro financiero automático (módulo deshabilitado)');
 
     return { data: pedidoActualizado, error: null };
   } catch (error) {

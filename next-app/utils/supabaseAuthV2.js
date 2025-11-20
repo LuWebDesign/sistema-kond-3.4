@@ -128,8 +128,8 @@ export async function loginWithEmail(email, password) {
       console.warn('Usuario autenticado pero no encontrado en tabla usuarios:', fetchError);
     }
 
-    console.log('🔍 Usuario desde BD:', usuario);
-    console.log('🔍 Rol del usuario:', usuario?.rol);
+    // console.log('🔍 Usuario desde BD:', usuario);
+    // console.log('🔍 Rol del usuario:', usuario?.rol);
 
     const user = {
       id: authData.user.id,
@@ -147,7 +147,7 @@ export async function loginWithEmail(email, password) {
       observaciones: usuario?.observaciones || ''
     };
 
-    console.log('✅ Usuario final:', user);
+    // console.log('✅ Usuario final:', user);
 
     // Guardar información del usuario en localStorage para acceso rápido
     if (typeof window !== 'undefined') {
@@ -357,7 +357,7 @@ export async function getCurrentSession() {
           
           // Si estamos en página pública y el usuario es ADMIN, no retornar sesión
           if (isPublicPage && usuario.rol === 'admin') {
-            console.log('Sesión de admin detectada en página pública - ignorando');
+            // console.log('Sesión de admin detectada en página pública - ignorando');
             return null;
           }
           

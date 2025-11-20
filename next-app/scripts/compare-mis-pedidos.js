@@ -29,7 +29,7 @@ function safeNum(v){ return Number(v || 0); }
 
 async function run() {
   try {
-    console.log('🔍 Obteniendo todos los pedidos de Supabase (pedidos_catalogo + items)...');
+    // console.log('🔍 Obteniendo todos los pedidos de Supabase (pedidos_catalogo + items)...');
     const { data: pedidos, error } = await supabase
       .from('pedidos_catalogo')
       .select('*, items:pedidos_catalogo_items(*)')
@@ -37,11 +37,11 @@ async function run() {
 
     if (error) throw error;
     if (!pedidos || pedidos.length === 0) {
-      console.log('No se encontraron pedidos en la tabla pedidos_catalogo.');
+      // console.log('No se encontraron pedidos en la tabla pedidos_catalogo.');
       return;
     }
 
-    console.log(`  Encontrados ${pedidos.length} pedidos. Iniciando validaciones...`);
+    // console.log(`  Encontrados ${pedidos.length} pedidos. Iniciando validaciones...`);
 
     const report = [];
     let totalIssues = 0;
@@ -97,15 +97,15 @@ async function run() {
       }
     }
 
-    console.log('\n=== Reporte de discrepancias por pedido ===');
+    // console.log('\n=== Reporte de discrepancias por pedido ===');
     if (report.length === 0) {
-      console.log('✅ No se detectaron discrepancias relevantes en los pedidos.');
+      // console.log('✅ No se detectaron discrepancias relevantes en los pedidos.');
     } else {
-      report.forEach(r => {
-        console.log(`\nPedido ID: ${r.id}  cliente_email: ${r.cliente_email}`);
-        r.issues.forEach(it => console.log('  -', it));
-      });
-      console.log(`\nResumen: ${report.length} pedidos con issues, ${totalIssues} issues totales.`);
+      // report.forEach(r => {
+      //   console.log(`\nPedido ID: ${r.id}  cliente_email: ${r.cliente_email}`);
+      //   r.issues.forEach(it => console.log('  -', it));
+      // });
+      // console.log(`\nResumen: ${report.length} pedidos con issues, ${totalIssues} issues totales.`);
     }
 
   } catch (err) {
