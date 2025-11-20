@@ -3,11 +3,11 @@
 // Cómo usar el sistema de notificaciones en tiempo real
 // ============================================
 
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
-import { NotificationsButton, NotificationsPanel } from '../components/NotificationsSystem'
-import { useNotifications } from '../components/NotificationsProvider'
-import { useToast } from '../hooks/useToast'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
+import { NotificationsButton, NotificationsPanel } from '../../components/NotificationsSystem'
+import { useNotifications } from '../../components/NotificationsProvider'
+import { useToast } from '../../hooks/useToast'
 import { useState, useEffect } from 'react'
 
 function AdminDashboard() {
