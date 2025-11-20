@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import NotificationsProvider from './NotificationsProvider'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 
@@ -56,7 +55,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   }
 
   return (
-    <NotificationsProvider>
+    <>
       <title>{title}</title>
       
       <div style={{
@@ -136,9 +135,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             alignItems: 'center',
             gap: '16px'
           }}>
-            {/* Notificaciones para usuario */}
-            <NotificationsButton target="user" />
-            
             {/* Mi cuenta visible en la derecha (útil en móvil) - solo mostrar si no estamos en la página de usuario */}
             {title !== 'Mi Cuenta - KOND' && (
               <Link href="/user" style={{
@@ -177,7 +173,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         </header>
 
         {/* Panel de notificaciones para usuario */}
-        <NotificationsPanel target="user" />
+        {/* <NotificationsPanel target="user" /> */}
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">
@@ -368,6 +364,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           }
         }
       `}</style>
-    </NotificationsProvider>
+    </>
   )
 }

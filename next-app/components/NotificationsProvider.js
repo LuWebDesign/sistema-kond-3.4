@@ -1,105 +1,197 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import {
+  getNotifications,
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification as deleteNotificationFromDB,
+  getUnreadCount
+} from '../utils/supabaseNotifications'
 
 const NotificationsContext = createContext()
 
 // Componente proveedor para el sistema de notificaciones
-export const NotificationsProvider = ({ children }) => {
+export const NotificationsProvider = ({ children, targetUser = 'admin', userId = null }) => {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  // Cargar notificaciones del localStorage
-  const loadNotifications = useCallback(() => {
+  // Cargar notificaciones desde Supabase
+  const loadNotifications = useCallback(async () => {
     if (typeof window === 'undefined') return
-    
+
+    setIsLoading(true)
+    setError(null)
+
     try {
-      const stored = localStorage.getItem('notifications')
-      const list = stored ? JSON.parse(stored) : []
-      setNotifications(list)
-      setUnreadCount(list.filter(n => !n.read).length)
+      const [notificationsData, unreadCountData] = await Promise.all([
+        getNotifications(targetUser, userId),
+        getUnreadCount(targetUser, userId)
+      ])
+
+      setNotifications(notificationsData)
+      setUnreadCount(unreadCountData)
     } catch (error) {
       console.error('Error loading notifications:', error)
+      setError(error.message)
+
+      // Fallback a localStorage si Supabase falla
+      try {
+        const stored = localStorage.getItem('notifications')
+        const list = stored ? JSON.parse(stored) : []
+        setNotifications(list)
+        setUnreadCount(list.filter(n => !n.read).length)
+      } catch (fallbackError) {
+        console.error('Fallback to localStorage also failed:', fallbackError)
+        setNotifications([])
+        setUnreadCount(0)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [targetUser, userId])
+
+  // Añadir nueva notificación
+  const addNotification = useCallback(async ({
+    title,
+    body,
+    type = 'info',
+    meta = {},
+    read = false
+  }) => {
+    try {
+      const newNotification = await createNotification({
+        title: title || 'Notificación',
+        body: body || '',
+        type,
+        meta: {
+          tipo: type,
+          ...meta
+        },
+        targetUser
+      })
+
+      // Recargar notificaciones para mantener sincronización
+      await loadNotifications()
+
+      return newNotification
+    } catch (error) {
+      console.error('Error creando notificación:', error)
+
+      // Fallback a localStorage si Supabase falla
+      const fallbackNotification = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        title: title || 'Notificación',
+        body: body || '',
+        type,
+        date: new Date().toISOString().slice(0, 10),
+        read: !!read,
+        meta: {
+          tipo: type,
+          ...meta
+        }
+      }
+
+      const updatedList = [fallbackNotification, ...notifications].slice(0, 300)
+      setNotifications(updatedList)
+      setUnreadCount(updatedList.filter(n => !n.read).length)
+
+      // Guardar en localStorage como respaldo
+      try {
+        localStorage.setItem('notifications', JSON.stringify(updatedList))
+        localStorage.setItem('notifications_updated', new Date().toISOString())
+      } catch (storageError) {
+        console.error('Error saving to localStorage:', storageError)
+      }
+
+      return fallbackNotification
+    }
+  }, [notifications, targetUser, loadNotifications])
+
+  // Marcar notificación como leída
+  const markAsRead = useCallback(async (id) => {
+    try {
+      const success = await markNotificationAsRead(id)
+      if (success) {
+        // Actualizar estado local inmediatamente
+        const updatedList = notifications.map(n =>
+          String(n.id) === String(id) ? { ...n, read: true } : n
+        )
+        setNotifications(updatedList)
+        setUnreadCount(updatedList.filter(n => !n.read).length)
+      }
+    } catch (error) {
+      console.error('Error marcando notificación como leída:', error)
+
+      // Fallback local
+      const updatedList = notifications.map(n =>
+        String(n.id) === String(id) ? { ...n, read: true } : n
+      )
+      setNotifications(updatedList)
+      setUnreadCount(updatedList.filter(n => !n.read).length)
+    }
+  }, [notifications])
+
+  // Marcar todas como leídas
+  const markAllAsRead = useCallback(async () => {
+    try {
+      const success = await markAllNotificationsAsRead(targetUser, userId)
+      if (success) {
+        // Actualizar estado local
+        const updatedList = notifications.map(n => ({ ...n, read: true }))
+        setNotifications(updatedList)
+        setUnreadCount(0)
+      }
+    } catch (error) {
+      console.error('Error marcando todas las notificaciones como leídas:', error)
+
+      // Fallback local
+      const updatedList = notifications.map(n => ({ ...n, read: true }))
+      setNotifications(updatedList)
+      setUnreadCount(0)
+    }
+  }, [notifications, targetUser, userId])
+
+  // Eliminar notificación
+  const deleteNotification = useCallback(async (id) => {
+    try {
+      const success = await deleteNotificationFromDB(id)
+      if (success) {
+        // Actualizar estado local
+        const updatedList = notifications.filter(n => String(n.id) !== String(id))
+        setNotifications(updatedList)
+        setUnreadCount(updatedList.filter(n => !n.read).length)
+      }
+    } catch (error) {
+      console.error('Error eliminando notificación:', error)
+
+      // Fallback local
+      const updatedList = notifications.filter(n => String(n.id) !== String(id))
+      setNotifications(updatedList)
+      setUnreadCount(updatedList.filter(n => !n.read).length)
+    }
+  }, [notifications])
+
+  // Limpiar todas las notificaciones
+  const clearAll = useCallback(async () => {
+    try {
+      // Para limpiar todas, marcamos todas como leídas y luego las eliminamos
+      // Nota: En una implementación real, podríamos tener un endpoint para eliminar todas
+      const deletePromises = notifications.map(n => deleteNotificationFromDB(n.id))
+      await Promise.all(deletePromises)
+
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Error limpiando todas las notificaciones:', error)
+
+      // Fallback local
       setNotifications([])
       setUnreadCount(0)
     }
-  }, [])
-
-  // Guardar notificaciones en localStorage
-  const saveNotifications = useCallback((list) => {
-    if (typeof window === 'undefined') return
-    
-    try {
-      localStorage.setItem('notifications', JSON.stringify(list))
-      localStorage.setItem('notifications_updated', new Date().toISOString())
-      
-      // Disparar evento personalizado
-      window.dispatchEvent(new CustomEvent('notifications:updated'))
-    } catch (error) {
-      console.error('Error saving notifications:', error)
-    }
-  }, [])
-
-  // Añadir nueva notificación
-  const addNotification = useCallback(({ 
-    title, 
-    body, 
-    type = 'info',
-    meta = {},
-    read = false 
-  }) => {
-    const newNotification = {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      title: title || 'Notificación',
-      body: body || '',
-      type,
-      date: new Date().toISOString().slice(0, 10),
-      read: !!read,
-      meta: {
-        tipo: type,
-        ...meta
-      }
-    }
-
-    const updatedList = [newNotification, ...notifications].slice(0, 300)
-    setNotifications(updatedList)
-    setUnreadCount(updatedList.filter(n => !n.read).length)
-    saveNotifications(updatedList)
-
-    return newNotification
-  }, [notifications, saveNotifications])
-
-  // Marcar notificación como leída
-  const markAsRead = useCallback((id) => {
-    const updatedList = notifications.map(n => 
-      String(n.id) === String(id) ? { ...n, read: true } : n
-    )
-    setNotifications(updatedList)
-    setUnreadCount(updatedList.filter(n => !n.read).length)
-    saveNotifications(updatedList)
-  }, [notifications, saveNotifications])
-
-  // Marcar todas como leídas
-  const markAllAsRead = useCallback(() => {
-    const updatedList = notifications.map(n => ({ ...n, read: true }))
-    setNotifications(updatedList)
-    setUnreadCount(0)
-    saveNotifications(updatedList)
-  }, [notifications, saveNotifications])
-
-  // Eliminar notificación
-  const deleteNotification = useCallback((id) => {
-    const updatedList = notifications.filter(n => String(n.id) !== String(id))
-    setNotifications(updatedList)
-    setUnreadCount(updatedList.filter(n => !n.read).length)
-    saveNotifications(updatedList)
-  }, [notifications, saveNotifications])
-
-  // Limpiar todas las notificaciones
-  const clearAll = useCallback(() => {
-    setNotifications([])
-    setUnreadCount(0)
-    saveNotifications([])
-  }, [saveNotifications])
+  }, [notifications])
 
   // Toggle del panel
   const togglePanel = useCallback(() => {
@@ -115,7 +207,7 @@ export const NotificationsProvider = ({ children }) => {
     loadNotifications()
   }, [loadNotifications])
 
-  // Escuchar eventos de notificaciones
+  // Escuchar eventos de notificaciones y reconectar periódicamente
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -123,18 +215,16 @@ export const NotificationsProvider = ({ children }) => {
       loadNotifications()
     }
 
-    const handleStorage = (e) => {
-      if (e.key === 'notifications_updated') {
-        loadNotifications()
-      }
-    }
+    // Reconectar cada 30 segundos para mantener sincronización
+    const reconnectInterval = setInterval(() => {
+      loadNotifications()
+    }, 30000)
 
     window.addEventListener('notifications:updated', handleNotificationUpdate)
-    window.addEventListener('storage', handleStorage)
 
     return () => {
       window.removeEventListener('notifications:updated', handleNotificationUpdate)
-      window.removeEventListener('storage', handleStorage)
+      clearInterval(reconnectInterval)
     }
   }, [loadNotifications])
 
@@ -145,7 +235,7 @@ export const NotificationsProvider = ({ children }) => {
     const handleClickOutside = (e) => {
       const panel = document.getElementById('notifications-panel')
       const button = document.getElementById('notifications-button')
-      
+
       if (panel && button && !panel.contains(e.target) && !button.contains(e.target)) {
         closePanel()
       }
@@ -159,13 +249,16 @@ export const NotificationsProvider = ({ children }) => {
     notifications,
     unreadCount,
     isOpen,
+    isLoading,
+    error,
     addNotification,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     clearAll,
     togglePanel,
-    closePanel
+    closePanel,
+    reloadNotifications: loadNotifications
   }
 
   return (

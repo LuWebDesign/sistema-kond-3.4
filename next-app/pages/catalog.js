@@ -14,6 +14,7 @@ import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
+import { useNotifications } from '../components/NotificationsProvider'
 
 export default function Catalog() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function Catalog() {
   const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { activeCoupon, applyCoupon, calculateDiscount } = useCoupons()
   const { saveOrder } = useOrders()
+  const { addNotification } = useNotifications()
   
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
@@ -469,6 +471,7 @@ export default function Catalog() {
               createToast('¡Pedido enviado exitosamente!', 'success')
             }}
             saveOrder={saveOrder}
+            addNotification={addNotification}
             mode={checkoutMode}
             currentUser={currentUserState}
             paymentConfig={paymentConfig}
@@ -1062,6 +1065,7 @@ function CheckoutModal({
   onDateSelect,
   onOrderComplete,
   saveOrder,
+  addNotification,
   mode = 'order', // 'order' or 'edit'
   currentUser,
   paymentConfig,
@@ -1094,6 +1098,30 @@ function CheckoutModal({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Callback memoizado para crear notificaciones cuando se guarda un pedido
+  const handleOrderSuccess = useCallback((pedido, items) => {
+    console.log('📝 Creando notificación para pedido:', { pedidoId: pedido.id, itemsCount: items.length });
+    if (addNotification) {
+      const notification = addNotification({
+        title: '🛒 Nuevo pedido recibido',
+        body: `${customerData.nombre || customerData.name} ${customerData.apellido} realizó un pedido por ${formatCurrency ? formatCurrency(total) : total} (${items.length} producto${items.length !== 1 ? 's' : ''})`,
+        type: 'success',
+        meta: {
+          tipo: 'nuevo_pedido',
+          target: 'admin', // Para mostrar en el panel de admin
+          pedidoId: pedido.id,
+          cliente: customerData,
+          total: total,
+          metodoPago: paymentMethod,
+          items: items
+        }
+      });
+      console.log('✅ Notificación creada:', notification);
+    } else {
+      console.error('❌ addNotification no está disponible');
+    }
+  }, [addNotification, customerData, total, paymentMethod, formatCurrency])
   
   // Auto-scroll a método de pago en mobile si el perfil está completo
   useEffect(() => {
@@ -1234,7 +1262,7 @@ function CheckoutModal({
       }
       if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
 
-      const result = await saveOrder(orderData)
+      const result = await saveOrder(orderData, handleOrderSuccess)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
       if (result.order._comprobanteOmitted) {

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useRouter } from 'next/router'
 import { useNotifications } from './NotificationsProvider'
 
 // Componente del botón de notificaciones con badge
@@ -18,14 +19,18 @@ export const NotificationsButton = ({ className = '', target = undefined }) => {
       aria-haspopup="true"
       style={{
         position: 'relative',
-        background: 'transparent',
-        border: 'none',
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
         color: 'var(--text-primary)',
         fontSize: '1.2rem',
         cursor: 'pointer',
-        padding: '8px',
+        padding: '8px 12px',
         borderRadius: '6px',
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
+        minWidth: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
       🔔
@@ -66,6 +71,7 @@ export const NotificationsPanel = ({ target = undefined }) => {
     markAllAsRead,
     clearAll 
   } = useNotifications()
+  const router = useRouter()
 
   if (!isOpen) return null
 
@@ -98,6 +104,12 @@ export const NotificationsPanel = ({ target = undefined }) => {
     if (!notification.read) {
       markAsRead(notification.id)
     }
+    
+    // Navegar al pedido si es una notificación de pedido
+    if (notification.meta?.pedidoId || notification.meta?.orderId) {
+      const pedidoId = notification.meta.pedidoId || notification.meta.orderId
+      router.push(`/admin/orders/detalle-pedido/${pedidoId}`)
+    }
   }
 
   return (
@@ -105,16 +117,16 @@ export const NotificationsPanel = ({ target = undefined }) => {
       id="notifications-panel"
       style={{
         position: 'fixed',
-        top: '60px',
+        top: '70px',
         right: '12px',
-        width: '380px',
+        width: '400px',
         maxWidth: 'calc(100vw - 24px)',
-        maxHeight: '70vh',
+        maxHeight: '80vh',
         background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
+        border: '2px solid var(--accent-blue)',
         borderRadius: '12px',
-        boxShadow: 'var(--shadow)',
-        zIndex: 1000,
+        boxShadow: 'var(--shadow-lg)',
+        zIndex: 9999,
         overflow: 'hidden'
       }}
     >
