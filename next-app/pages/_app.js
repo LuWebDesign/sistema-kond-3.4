@@ -15,8 +15,14 @@ export default function MyApp({ Component, pageProps }) {
     }
   }, [])
 
-  // Determinar si estamos en una página de admin
+  // Determinar si estamos en una página de admin o página pública
   const isAdminPage = router.pathname.startsWith('/admin') || router.pathname.startsWith('/_admin')
+  const isPublicPage = router.pathname === '/catalog' || router.pathname.startsWith('/tracking')
+  
+  // Solo usar NotificationsProvider en páginas de admin, no en públicas
+  if (isPublicPage) {
+    return <Component {...pageProps} />
+  }
 
   return (
     <NotificationsProvider targetUser={isAdminPage ? 'admin' : 'user'}>

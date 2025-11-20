@@ -331,8 +331,9 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
 // Hook para usar el contexto
 export const useNotifications = () => {
   const context = useContext(NotificationsContext)
+  // Retornar null en lugar de lanzar error para páginas públicas sin provider
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationsProvider')
+    return null
   }
   return context
 }
