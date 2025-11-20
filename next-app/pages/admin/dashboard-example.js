@@ -11,7 +11,8 @@ import { useToast } from '../../hooks/useToast'
 import { useState, useEffect } from 'react'
 
 function AdminDashboard() {
-  const { notifications, unreadCount, isLoading } = useNotifications()
+  const notificationsContext = useNotifications()
+  const { notifications, unreadCount, isLoading } = notificationsContext || { notifications: [], unreadCount: 0, isLoading: false }
   const toast = useToast()
   
   const [stats, setStats] = useState({
