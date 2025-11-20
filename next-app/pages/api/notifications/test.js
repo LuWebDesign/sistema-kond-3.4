@@ -1,7 +1,7 @@
 // API endpoint para diagnosticar notificaciones
 // Uso: GET /api/notifications/test
 
-import { supabase } from '../../../utils/supabaseClient'
+import { supabase, supabaseAdmin } from '../../../utils/supabaseClient'
 import { createNotification } from '../../../utils/supabaseNotifications'
 
 export default async function handler(req, res) {
@@ -62,7 +62,8 @@ export default async function handler(req, res) {
     console.log('✅ Notificación creada:', createdNotification)
 
     // Verificar que se puede leer la notificación
-    const { data: readTest, error: readError } = await supabase
+    const client = supabaseAdmin();
+    const { data: readTest, error: readError } = await client
       .from('notifications')
       .select('*')
       .eq('id', createdNotification.id)
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
     console.log('✅ Notificación leída correctamente')
 
     // Limpiar notificación de prueba
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await client
       .from('notifications')
       .delete()
       .eq('id', createdNotification.id)
