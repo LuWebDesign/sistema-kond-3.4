@@ -128,12 +128,11 @@ function OrdersStats({ orders, filteredOrders }) {
   const readyOrders = filteredOrders.filter(o => o.estado === 'listo').length
   const deliveredOrders = filteredOrders.filter(o => o.estado === 'entregado').length
 
-  // Calcular montos
-  const totalAmount = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
-  const pendingAmount = filteredOrders.filter(o => o.estado !== 'entregado' && o.estado !== 'cancelado')
+  // Calcular montos basados en TODOS los pedidos (orders), no solo filteredOrders
+  const totalAmount = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+  const deliveredAmount = orders.filter(o => o.estado === 'entregado')
     .reduce((sum, order) => sum + (order.total || 0), 0)
-  const deliveredAmount = filteredOrders.filter(o => o.estado === 'entregado')
-    .reduce((sum, order) => sum + (order.total || 0), 0)
+  const pendingAmount = totalAmount - deliveredAmount
 
   // Pedidos de este mes
   const currentDate = new Date()
@@ -256,15 +255,15 @@ function OrdersStats({ orders, filteredOrders }) {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Pendiente:</span>
-              <span style={{ fontWeight: 600, color: '#f59e0b' }}>
-                {formatCurrency(pendingAmount)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Entregado:</span>
               <span style={{ fontWeight: 600, color: '#10b981' }}>
                 {formatCurrency(deliveredAmount)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', borderTop: '1px solid var(--border-color)' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Pendiente por cobrar:</span>
+              <span style={{ fontWeight: 700, color: '#f59e0b' }}>
+                {formatCurrency(pendingAmount)}
               </span>
             </div>
           </div>

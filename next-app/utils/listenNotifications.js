@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // SUPABASE REALTIME - LISTENER DE NOTIFICACIONES
 // Sistema de escucha en tiempo real para notificaciones
 // ============================================
@@ -9,25 +9,25 @@ import { supabase } from './supabaseClient'
  * Configurar listener de Realtime para notificaciones
  * Escucha INSERT en la tabla 'notifications' y ejecuta callback
  * 
- * @param {Object} options - Opciones de configuración
+ * @param {Object} options - Opciones de configuraciÃ³n
  * @param {string} options.targetUser - Usuario objetivo: 'admin' o 'user'
  * @param {string} options.userId - ID del usuario (opcional, para filtrar notificaciones de user)
- * @param {Function} options.onInsert - Callback cuando se inserta una notificación
- * @param {Function} options.onUpdate - Callback cuando se actualiza una notificación
- * @param {Function} options.onDelete - Callback cuando se elimina una notificación
+ * @param {Function} options.onInsert - Callback cuando se inserta una notificaciÃ³n
+ * @param {Function} options.onUpdate - Callback cuando se actualiza una notificaciÃ³n
+ * @param {Function} options.onDelete - Callback cuando se elimina una notificaciÃ³n
  * @param {Function} options.onError - Callback para manejar errores
- * @returns {Object} Canal de Supabase (para poder cancelar la suscripción)
+ * @returns {Object} Canal de Supabase (para poder cancelar la suscripciÃ³n)
  * 
  * @example
  * const channel = listenNotifications({
  *   targetUser: 'admin',
  *   onInsert: (notification) => {
- *     console.log('Nueva notificación:', notification)
+ *     console.log('Nueva notificaciÃ³n:', notification)
  *     // Actualizar estado, mostrar toast, etc.
  *   }
  * })
  * 
- * // Para cancelar la suscripción:
+ * // Para cancelar la suscripciÃ³n:
  * channel.unsubscribe()
  */
 export function listenNotifications({
@@ -39,11 +39,20 @@ export function listenNotifications({
   onError = null
 }) {
   if (!supabase) {
-    console.warn('⚠️ Supabase no está inicializado. Realtime no funcionará.')
+    console.warn('âš ï¸ Supabase no estÃ¡ inicializado. Realtime no funcionarÃ¡.')
     return null
   }
 
-  // Nombre único del canal para evitar conflictos
+  // Verificar sesiÃ³n de forma asÃ­ncrona
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) {
+      console.warn('âš ï¸ No hay sesiÃ³n activa. Realtime podrÃ­a fallar.')
+    }
+  }).catch(error => {
+    console.error('Error verificando sesiÃ³n:', error)
+  })
+
+  // Nombre Ãºnico del canal para evitar conflictos
   const channelName = `notifications:${targetUser}${userId ? `:${userId}` : ''}`
 
   // Crear canal de Realtime
@@ -66,12 +75,12 @@ export function listenNotifications({
           }
         }
 
-        // Ejecutar callback de inserción
+        // Ejecutar callback de inserciÃ³n
         if (onInsert && typeof onInsert === 'function') {
           try {
             onInsert(payload.new)
           } catch (error) {
-            console.error('❌ [Realtime] Error en callback onInsert:', error)
+            console.error('âŒ [Realtime] Error en callback onInsert:', error)
             if (onError) onError(error)
           }
         }
@@ -94,12 +103,12 @@ export function listenNotifications({
           }
         }
 
-        // Ejecutar callback de actualización
+        // Ejecutar callback de actualizaciÃ³n
         if (onUpdate && typeof onUpdate === 'function') {
           try {
             onUpdate(payload.new, payload.old)
           } catch (error) {
-            console.error('❌ [Realtime] Error en callback onUpdate:', error)
+            console.error('âŒ [Realtime] Error en callback onUpdate:', error)
             if (onError) onError(error)
           }
         }
@@ -122,30 +131,82 @@ export function listenNotifications({
           }
         }
 
-        // Ejecutar callback de eliminación
+        // Ejecutar callback de eliminaciÃ³n
         if (onDelete && typeof onDelete === 'function') {
           try {
             onDelete(payload.old)
           } catch (error) {
-            console.error('❌ [Realtime] Error en callback onDelete:', error)
+            console.error('âŒ [Realtime] Error en callback onDelete:', error)
             if (onError) onError(error)
           }
         }
       }
     )
-    .subscribe((status) => {
-      if (status === 'CHANNEL_ERROR') {
-        if (onError) onError(new Error('Canal de Realtime falló'))
+    .subscribe((status, err) => {
+      console.log(`ðŸ“¡ [Realtime] Estado del canal "${channelName}":`, status, err ? `(Error: ${err})` : '')
+      
+      if (status === 'SUBSCRIBED') {
+        console.log('âœ… [Realtime] Canal suscrito exitosamente')
+      } else if (status === 'CHANNEL_ERROR') {
+        const errorMessage = err?.message || err?.toString() || 'Error desconocido'
+        const errorDetails = err ? JSON.stringify(err, null, 2) : 'Sin detalles'
+        const isNetworkErr = isNetworkError(err)
+        
+        // Usar logging avanzado
+        logRealtimeError('CHANNEL_ERROR', err || new Error('Error desconocido'), {
+          channel: channelName,
+          isNetworkError: isNetworkErr,
+          errorDetails
+        })
+        
+        if (onError) {
+          onError(new Error(`Canal de Realtime fallÃ³: ${errorMessage}`))
+        }
+        
+        // Calcular delay de reconexiÃ³n basado en el tipo de error
+        const reconnectDelay = calculateReconnectDelay(err, 1)
+        console.log(`ðŸ”„ [Realtime] Intentando reconectar en ${reconnectDelay/1000}s...`)
+        
+        setTimeout(() => {
+          console.log('ðŸ”„ [Realtime] Intentando reconectar despuÃ©s de error...')
+          try {
+            channel.subscribe()
+          } catch (reconnectError) {
+            logRealtimeError('RECONNECT_FAILED', reconnectError, { originalError: err })
+          }
+        }, reconnectDelay)
+      } else if (status === 'TIMED_OUT') {
+        console.warn('â° [Realtime] Canal timeout - intentando reconectar...')
+        
+        const reconnectDelay = calculateReconnectDelay(new Error('timeout'), 1)
+        console.log(`ðŸ”„ [Realtime] Intentando reconectar despuÃ©s de timeout en ${reconnectDelay/1000}s...`)
+        
+        setTimeout(() => {
+          console.log('ðŸ”„ [Realtime] Intentando reconectar...')
+          try {
+            channel.subscribe()
+          } catch (reconnectError) {
+            console.error('âŒ [Realtime] Error al reconectar despuÃ©s de timeout:', reconnectError)
+          }
+        }, reconnectDelay)
+      } else if (status === 'CLOSED') {
+        console.log('ðŸ”Œ [Realtime] Canal cerrado')
+      } else if (status === 'JOINING') {
+        console.log('ðŸ”— [Realtime] UniÃ©ndose al canal...')
+      } else if (status === 'LEAVING') {
+        console.log('ðŸ‘‹ [Realtime] Saliendo del canal...')
+      } else {
+        console.warn(`âš ï¸ [Realtime] Estado desconocido: ${status}`, err)
       }
     })
 
-  // Retornar el canal para permitir cancelar la suscripción
+  // Retornar el canal para permitir cancelar la suscripciÃ³n
   return channel
 }
 
 /**
- * Cancelar suscripción a notificaciones
- * @param {Object} channel - Canal retornado por listenNotifications
+ * Cancelar suscripciÃ³n a notificaciones Realtime
+ * @param {Object} channel - Canal de Supabase a cancelar
  * @returns {Promise<void>}
  */
 export async function unsubscribeNotifications(channel) {
@@ -153,8 +214,177 @@ export async function unsubscribeNotifications(channel) {
 
   try {
     await supabase.removeChannel(channel)
+    console.log('âœ… [Realtime] SuscripciÃ³n cancelada exitosamente')
   } catch (error) {
-    console.error('Error al cancelar suscripción:', error)
+    console.error('âŒ [Realtime] Error al cancelar suscripciÃ³n:', error)
+  }
+}
+
+/**
+ * Diagnosticar problemas de conexiÃ³n Realtime
+ * @returns {Object} InformaciÃ³n de diagnÃ³stico
+ */
+export function diagnoseRealtimeConnection() {
+  const diagnostics = {
+    timestamp: new Date().toISOString(),
+    supabaseAvailable: !!supabase,
+    channels: [],
+    networkStatus: 'unknown',
+    authStatus: 'unknown'
+  }
+
+  try {
+    // Verificar estado de red bÃ¡sico
+    diagnostics.networkStatus = navigator.onLine ? 'online' : 'offline'
+    
+    if (supabase) {
+      // Verificar canales activos
+      const channels = supabase.getChannels()
+      diagnostics.channels = channels.map(ch => ({
+        name: ch.topic,
+        state: ch.state,
+        joined: ch.state === 'joined'
+      }))
+      
+      // Verificar autenticaciÃ³n
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        diagnostics.authStatus = session ? 'authenticated' : 'not_authenticated'
+      }).catch(() => {
+        diagnostics.authStatus = 'auth_error'
+      })
+    }
+  } catch (error) {
+    diagnostics.error = error.message
+  }
+
+  console.log('ðŸ” [Realtime] DiagnÃ³stico de conexiÃ³n:', diagnostics)
+  return diagnostics
+}
+
+/**
+ * Manejar errores de red especÃ­ficamente
+ * @param {Error} error - Error original
+ * @returns {boolean} true si es un error de red
+ */
+function isNetworkError(error) {
+  if (!error) return false
+  
+  const networkErrorPatterns = [
+    'network',
+    'connection',
+    'timeout',
+    'offline',
+    'unreachable',
+    'failed to fetch',
+    'net::',
+    'websocket'
+  ]
+  
+  const errorString = (error.message || error.toString() || '').toLowerCase()
+  return networkErrorPatterns.some(pattern => errorString.includes(pattern))
+}
+
+/**
+ * Calcular delay de reconexiÃ³n basado en el tipo de error
+ * @param {Error} error - Error que causÃ³ la desconexiÃ³n
+ * @param {number} attempt - NÃºmero de intento (para backoff exponencial)
+ * @returns {number} Delay en milisegundos
+ */
+function calculateReconnectDelay(error, attempt = 1) {
+  const baseDelay = 5000 // 5 segundos base
+  
+  if (isNetworkError(error)) {
+    // Para errores de red, usar backoff exponencial mÃ¡s agresivo
+    return Math.min(baseDelay * Math.pow(2, attempt), 60000) // MÃ¡ximo 1 minuto
+  } else {
+    // Para otros errores, reconexiÃ³n mÃ¡s rÃ¡pida
+    return Math.min(baseDelay * attempt, 30000) // MÃ¡ximo 30 segundos
+  }
+}
+
+/**
+ * FunciÃ³n de utilidad para logging avanzado de errores
+ * @param {string} context - Contexto donde ocurre el error
+ * @param {Error} error - Error a loggear
+ * @param {Object} extraData - Datos adicionales para el log
+ */
+export function logRealtimeError(context, error, extraData = {}) {
+  const errorInfo = {
+    context,
+    timestamp: new Date().toISOString(),
+    error: {
+      message: error?.message || 'Sin mensaje',
+      stack: error?.stack,
+      name: error?.name
+    },
+    diagnostics: diagnoseRealtimeConnection(),
+    ...extraData
+  }
+  
+  console.error(`âŒ [Realtime:${context}] Error detallado:`, errorInfo)
+  
+  // En desarrollo, tambiÃ©n mostrar en consola como tabla
+  if (process.env.NODE_ENV === 'development') {
+    console.table({
+      'Contexto': context,
+      'Mensaje': error?.message || 'N/A',
+      'Tipo': error?.name || 'Unknown',
+      'Timestamp': errorInfo.timestamp
+    })
+  }
+}
+
+/**
+ * Verificar estado de conexión de Realtime
+ * @returns {boolean} true si está conectado
+ */
+export function isRealtimeConnected() {
+  if (!supabase) return false
+  
+  try {
+    // Verificar si hay canales activos
+    const channels = supabase.getChannels()
+    return channels.some(channel => channel.state === 'joined')
+  } catch (error) {
+    console.error('Error verificando conexión Realtime:', error)
+    return false
+  }
+}
+
+/**
+ * Forzar reconexión de Realtime con diagnóstico
+ * @param {Object} channel - Canal existente
+ * @returns {Object} Nuevo canal o el mismo si ya está conectado
+ */
+export function reconnectRealtime(channel) {
+  if (!channel) return null
+  
+  try {
+    // Ejecutar diagnóstico antes de reconectar
+    const diagnostics = diagnoseRealtimeConnection()
+    
+    // Si el canal ya está unido, no hacer nada
+    if (channel.state === 'joined') {
+      console.log('✅ [Realtime] Canal ya está conectado')
+      return channel
+    }
+    
+    console.log('🔄 [Realtime] Forzando reconexión...')
+    
+    // Desuscribir y volver a suscribir
+    channel.unsubscribe()
+    setTimeout(() => {
+      try {
+        channel.subscribe()
+      } catch (subscribeError) {
+        console.error('❌ [Realtime] Error al suscribir después de reconexión forzada:', subscribeError)
+      }
+    }, 1000)
+    
+    return channel
+  } catch (error) {
+    console.error('Error reconectando Realtime:', error)
+    return null
   }
 }
 
@@ -200,15 +430,6 @@ export function setupRealtimeWithReconnect(setupFunction, retryInterval = 5000) 
 /**
  * Hook simplificado para React (alternativa al hook completo)
  * Usar este si solo necesitas escuchar sin manejar estado complejo
- * 
- * @example
- * useEffect(() => {
- *   const { cleanup } = setupRealtimeForAdmin((notification) => {
- *     console.log('Nueva notificación:', notification)
- *   })
- *   
- *   return cleanup
- * }, [])
  */
 export function setupRealtimeForAdmin(onNewNotification) {
   return setupRealtimeWithReconnect(() => {
@@ -233,6 +454,55 @@ export function setupRealtimeForUser(userId, onNewNotification) {
       }
     })
   })
+}
+
+/**
+ * Resetear completamente la conexión Realtime
+ * Útil cuando hay problemas persistentes
+ * @param {Object} channel - Canal existente a resetear
+ * @returns {Object} Nuevo canal
+ */
+export function resetRealtimeConnection(channel) {
+  console.log('🔄 [Realtime] Reseteando conexión completamente...')
+  
+  try {
+    // Ejecutar diagnóstico
+    const diagnostics = diagnoseRealtimeConnection()
+    
+    // Cerrar canal existente si existe
+    if (channel) {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
+    
+    // Limpiar todos los canales existentes
+    const existingChannels = supabase.getChannels()
+    existingChannels.forEach(ch => {
+      try {
+        supabase.removeChannel(ch)
+      } catch (error) {
+        console.warn('Error removiendo canal existente:', error)
+      }
+    })
+    
+    console.log('✅ [Realtime] Conexión reseteada. Los listeners necesitarán ser recreados.')
+    
+    return null // Indicar que se necesita crear un nuevo canal
+  } catch (error) {
+    console.error('❌ [Realtime] Error al resetear conexión:', error)
+    return null
+  }
+}
+
+// Función de utilidad para debugging desde consola del navegador
+// Ejecutar en la consola:
+// - diagnoseRealtime() - Para diagnóstico completo
+// - resetRealtime() - Para resetear conexión
+// - testRealtimeConnection() - Para verificar estado
+if (typeof window !== "undefined") {
+  window.diagnoseRealtime = diagnoseRealtimeConnection
+  window.resetRealtime = () => resetRealtimeConnection(null)
+  window.testRealtimeConnection = isRealtimeConnected
 }
 
 export default listenNotifications

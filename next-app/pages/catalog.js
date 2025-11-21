@@ -18,7 +18,7 @@ import { useNotifications } from '../components/NotificationsProvider'
 
 export default function Catalog() {
   const router = useRouter()
-  const { products, categories } = useProducts()
+  const { products, categories, materials } = useProducts()
   const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { activeCoupon, applyCoupon, calculateDiscount } = useCoupons()
   const { saveOrder } = useOrders()
@@ -420,6 +420,7 @@ export default function Catalog() {
               getCategoryStyle={getCategoryStyle}
               onImageClick={handleImageClick}
               onAddToCart={handleAddToCart}
+              materials={materials}
             />
           ))}
         </div>
@@ -497,28 +498,27 @@ export default function Catalog() {
 }
 
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [] }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
-  const [materials, setMaterials] = useState([])
   const [isDarkTheme, setIsDarkTheme] = useState(false)
 
-  // ProductCard will use the shared slugify helper imported above
-
-  // Cargar materiales al montar el componente
+  // Log único para verificar datos (solo primer producto)
   useEffect(() => {
-    const loadMaterials = () => {
-      try {
-        const storedMaterials = localStorage.getItem('materiales')
-        if (storedMaterials) {
-          setMaterials(JSON.parse(storedMaterials))
-        }
-      } catch (error) {
-        console.error('Error loading materials:', error)
-      }
+    if (product.id === 1) {
+      console.log('🔍 ProductCard Debug:', {
+        productId: product.id,
+        productName: product.nombre,
+        materialId: product.materialId,
+        material: product.material,
+        tipoMaterial: product.tipoMaterial,
+        materialsCount: materials.length,
+        materials: materials
+      })
     }
-    loadMaterials()
-  }, [])
+  }, [product.id, materials])
+
+  // ProductCard will use the shared slugify helper imported above
 
   // Detectar tema (dark vs light) para ajustar estilos de badge de categoría
   useEffect(() => {
@@ -555,20 +555,37 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
   // Obtener información del material
   const getMaterialInfo = () => {
+    // Debug: verificar datos
+    if (product.id === 1) {
+      console.log('🔍 Debug Material Info:', {
+        materials,
+        materialsLength: materials.length,
+        productMaterialId: product.materialId,
+        productMaterial: product.material
+      })
+    }
+    
     if (materials.length === 0) return null
     
     // Primero intentar por materialId
     if (product.materialId) {
       const material = materials.find(m => String(m.id) === String(product.materialId))
-      if (material) return material
+      if (material) {
+        if (product.id === 1) console.log('✅ Material encontrado por ID:', material)
+        return material
+      }
     }
     
     // Si no hay materialId, intentar por nombre del material (para compatibilidad con productos antiguos)
     if (product.material) {
       const material = materials.find(m => m.nombre === product.material)
-      if (material) return material
+      if (material) {
+        if (product.id === 1) console.log('✅ Material encontrado por nombre:', material)
+        return material
+      }
     }
     
+    if (product.id === 1) console.log('❌ Material no encontrado')
     return null
   }
 
@@ -713,25 +730,15 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
                   </p>
                 )}
-
-                {/* Indicador de stock */}
-                {product.stock !== undefined && product.stock !== null && (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 10px',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
-                    border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`,
-                    marginBottom: '12px'
+                
+                {!materialInfo && product.tipoMaterial && (
+                  <p style={{
+                    color: secondaryTextColor,
+                    fontSize: '0.9rem',
+                    marginBottom: '8px'
                   }}>
-                    <span>{product.stock > 0 ? '✓' : '✕'}</span>
-                    <span>Stock: {product.stock}</span>
-                  </div>
+                    Material: {product.tipoMaterial}
+                  </p>
                 )}
               </>
             )
@@ -774,6 +781,25 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     {badge.text}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Indicador de stock al lado del precio */}
+            {product.stock !== undefined && product.stock !== null && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
+                border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`
+              }}>
+                <span>{product.stock > 0 ? '✓' : '✕'}</span>
+                <span>Stock: {product.stock}</span>
               </div>
             )}
           </div>

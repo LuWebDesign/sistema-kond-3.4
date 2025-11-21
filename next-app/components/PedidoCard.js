@@ -213,9 +213,11 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
   <div className={styles.pedidoHeader} onClick={openModal} role="button" tabIndex={0} onKeyDown={handleKeyDown} style={{ cursor: 'pointer' }}>
           <div className={styles.pedidoHeaderMain}>
           <div className={styles.pedidoIdLine}>
-            <strong>{pedido.nroPedido ? pedido.nroPedido : `N°${pedido.id}`}</strong>
-            <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
-            <div className={styles.clienteNombreHead}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
+            <div className={styles.pedidoIdFecha}>
+              <strong>{pedido.nroPedido ? pedido.nroPedido : `N°${pedido.id}`}</strong>
+              <div className={styles.fechaCreacion}>{formatDate(pedido.fechaCreacion)}</div>
+              <div className={styles.clienteNombreHead}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
+            </div>
           </div>
           {/* tarjeta de estado: estado del pedido + estado de pago (reemplaza badge 'Asignado al calendario') */}
           <div className={styles.statusCard}>
@@ -247,15 +249,19 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                     <div key={index} className={styles.productoItemCompact}>
                       <div className={styles.productoNombreWrapper}>
                         <div className={styles.productoNombreCompact}>
-                          <span 
-                            className={styles.productoIdBadge} 
-                            onClick={(e) => copyProductId(prod.idProducto, e)}
-                            title="Click para copiar ID"
-                          >
-                            ID: {prod.idProducto}
-                          </span>
-                          {prod.nombre}
-                          {prod.medidas && <span className={styles.productoMedidas}> • {prod.medidas}</span>}
+                          <div className={styles.productoIdMobile}>
+                            <span 
+                              className={styles.productoIdBadge} 
+                              onClick={(e) => copyProductId(prod.idProducto, e)}
+                              title="Click para copiar ID"
+                            >
+                              ID: {prod.idProducto}
+                            </span>
+                          </div>
+                          <div className={styles.productoNombreLine}>
+                            {prod.nombre}
+                            {prod.medidas && <span className={styles.productoMedidas}> • {prod.medidas}</span>}
+                          </div>
                         </div>
                         <div className={styles.productoInfoSecondary}>
                           <div className={styles.productoUnidadesMaterialRow}>

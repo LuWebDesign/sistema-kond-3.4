@@ -17,6 +17,8 @@ function Dashboard() {
     totalOrders: 0,
     totalRevenue: 0,
     pendingOrders: 0,
+    pendingOrdersAmount: 0,
+    deliveredPendingAmount: 0,
     thisMonthRevenue: 0,
     thisMonthOrders: 0,
     lowStockProducts: 0,
@@ -69,10 +71,16 @@ function Dashboard() {
       // Calcular ingresos totales
       const totalRevenue = pedidosCatalogo.reduce((sum, order) => sum + (order.total || 0), 0)
       
-      // Pedidos pendientes (sin seña o con seña pagada pero no completos)
-      const pendingOrders = pedidosCatalogo.filter(order => 
-        order.estado_pago === 'sin_seña' || order.estado_pago === 'seña_pagada'
-      ).length
+      // Pedidos pendientes (pedidos por confirmar - sin seña)
+      const pendingOrdersFiltered = pedidosCatalogo.filter(order => order.estado_pago === 'sin_seña')
+      const pendingOrders = pendingOrdersFiltered.length
+      const pendingOrdersAmount = pendingOrdersFiltered.reduce((sum, order) => sum + (order.total || 0), 0)
+
+      // Pedidos entregados pendientes de pago completo
+      const deliveredPendingPayment = pedidosCatalogo.filter(order => 
+        order.estado === 'entregado' && order.estado_pago !== 'pagado'
+      )
+      const deliveredPendingAmount = deliveredPendingPayment.reduce((sum, order) => sum + (order.total || 0), 0)
 
       // Pedidos completados
       const completedOrders = pedidosCatalogo.filter(order => 
@@ -93,7 +101,9 @@ function Dashboard() {
         return orderDate >= firstDayOfMonth
       })
       
-      const thisMonthRevenue = thisMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+      const thisMonthRevenue = thisMonthOrders.filter(order => 
+        order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado'
+      ).reduce((sum, order) => sum + (order.total || 0), 0)
 
       // Calcular tendencias (comparación con mes anterior)
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -104,7 +114,9 @@ function Dashboard() {
         return orderDate >= firstDayOfLastMonth && orderDate <= lastDayOfLastMonth
       })
       
-      const lastMonthRevenue = lastMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+      const lastMonthRevenue = lastMonthOrders.filter(order => 
+        order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado'
+      ).reduce((sum, order) => sum + (order.total || 0), 0)
       
       const ordersTrend = lastMonthOrders.length > 0 
         ? ((thisMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length * 100)
@@ -119,6 +131,8 @@ function Dashboard() {
         totalOrders,
         totalRevenue,
         pendingOrders,
+        pendingOrdersAmount,
+        deliveredPendingAmount,
         thisMonthRevenue,
         thisMonthOrders: thisMonthOrders.length,
         lowStockProducts,
@@ -246,7 +260,7 @@ function Dashboard() {
             icon="⏳"
             color="#ef4444"
             trend={formatTrend(trends.pendingTrend)}
-            subtitle={`${stats.completedOrders} completados`}
+            subtitle={`${formatCurrency(stats.pendingOrdersAmount)} por confirmar${stats.deliveredPendingAmount > 0 ? ` • ${formatCurrency(stats.deliveredPendingAmount)} entregados` : ''}`}
           />
         </div>
 

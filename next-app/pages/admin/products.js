@@ -490,21 +490,22 @@ function ProductsComponent() {
   // Calcular métricas
   const calculateMetrics = useCallback(() => {
     const activeProducts = filteredProducts.filter(p => p.active !== false)
-    
-  const total = activeProducts.length
-  const totalValue = activeProducts.reduce((sum, p) => sum + (Number(p.precioUnitario) || 0) * (Number(p.unidades) || 0), 0)
-    
-    // Calcular tiempo total
-    const totalMinutes = activeProducts.reduce((sum, p) => {
+
+    const total = activeProducts.length
+
+    // Valor total: suma de todos los precios unitarios
+    const totalValue = activeProducts.reduce((sum, p) => sum + (Number(p.precioUnitario) || 0), 0)
+
+    // Tiempo total: suma del tiempo de corte de todos los productos
+    const totalTimeMinutes = activeProducts.reduce((sum, p) => {
       const timeStr = p.tiempoUnitario || '00:00:30'
       const [hours, minutes, seconds] = timeStr.split(':').map(Number)
       const totalMin = (hours * 60) + minutes + (seconds / 60)
-      return sum + totalMin * (p.unidades || 0)
+      return sum + totalMin
     }, 0)
 
-  // Prefer weighted average by unidades (precio promedio por unidad)
-  const totalUnits = activeProducts.reduce((sum, p) => sum + (Number(p.unidades) || 0), 0)
-  const averagePrice = totalUnits > 0 ? totalValue / totalUnits : (total > 0 ? activeProducts.reduce((sum, p) => sum + (Number(p.precioUnitario) || 0), 0) / total : 0)
+    // Precio promedio: valor total / total de productos
+    const averagePrice = total > 0 ? totalValue / total : 0
 
     // Distribución por tipo
     const typeDistribution = { Venta: 0, Presupuesto: 0, Stock: 0 }
@@ -517,7 +518,7 @@ function ProductsComponent() {
     setMetrics({
       total,
       totalValue,
-      totalTime: totalMinutes,
+      totalTime: totalTimeMinutes,
       averagePrice,
       typeDistribution
     })
@@ -945,7 +946,12 @@ function ProductsComponent() {
                   padding: '12px 20px',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  height: '44px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
@@ -960,7 +966,12 @@ function ProductsComponent() {
                 cursor: 'pointer',
                 fontWeight: '600',
                 textDecoration: 'none',
-                display: 'inline-block'
+                display: 'inline-block',
+                height: '44px',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>Ir a Materiales</Link>
             </div>
 
@@ -991,7 +1002,8 @@ function ProductsComponent() {
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-secondary)',
                     color: 'var(--text-primary)',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    flex: 1
                   }}
                 >
                   <option value="all">Todos los tipos</option>
@@ -1835,7 +1847,7 @@ function ProductsComponent() {
               color: 'var(--text-secondary)',
               padding: '40px'
             }}>
-              {filters.search || filters.type !== 'all' 
+              {filters.search || filters.type !== 'all'
                 ? 'No se encontraron productos con los filtros aplicados'
                 : 'No hay productos. ¡Agrega tu primer producto!'
               }
@@ -3310,6 +3322,7 @@ const styles = `
 
     .filters-input-row select {
       width: 100% !important;
+      display: none !important;
     }
 
     /* Estilos para los botones en móvil */
@@ -3322,6 +3335,8 @@ const styles = `
     .buttons-section a {
       flex: 1 !important;
       min-width: 120px !important;
+      height: 44px !important;
+      box-sizing: border-box !important;
     }
   }
 

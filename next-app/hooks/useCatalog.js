@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
 import { getProductosPublicados } from '../utils/supabaseProducts'
 import { getPromocionesActivas } from '../utils/supabaseMarketing'
+import { getAllMateriales } from '../utils/supabaseMateriales'
 import supabase from '../utils/supabaseClient'
 
 // Hook para gestionar productos
@@ -12,6 +13,7 @@ export function useProducts() {
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [promociones, setPromociones] = useState([])
+  const [materials, setMaterials] = useState([])
   
   useEffect(() => {
     loadProducts()
@@ -22,6 +24,28 @@ export function useProducts() {
     
     setIsLoading(true)
     try {
+      // Cargar materiales desde Supabase
+      const { data: materialesData, error: materialesError } = await getAllMateriales()
+      if (materialesError) {
+        console.error('Error loading materiales:', materialesError)
+      } else {
+        // Mapear de snake_case a camelCase
+        const mappedMateriales = (materialesData || []).map(m => ({
+          id: m.id,
+          nombre: m.nombre,
+          tipo: m.tipo,
+          tamano: m.tamano,
+          espesor: m.espesor,
+          unidad: m.unidad,
+          costoUnitario: m.costo_unitario,
+          proveedor: m.proveedor,
+          stock: m.stock,
+          notas: m.notas
+        }))
+        setMaterials(mappedMateriales)
+        console.log('✅ Materiales cargados en catálogo:', mappedMateriales.length, mappedMateriales)
+      }
+      
       // Cargar promociones activas desde Supabase
       const { data: promosData, error: promosError } = await getPromocionesActivas()
       if (promosError) {
@@ -84,6 +108,7 @@ export function useProducts() {
           costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
           materialId: p.material_id || '',
           material: p.material || '',
+          tipoMaterial: p.tipo_material || '',
           margenMaterial: p.margen_material || 0,
           precioUnitario: p.precio_unitario || 0,
           precioPromos: p.precio_promos || 0,
