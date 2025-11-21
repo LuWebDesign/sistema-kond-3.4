@@ -16,10 +16,12 @@ function Dashboard() {
     totalProducts: 0,
     totalOrders: 0,
     totalRevenue: 0,
+    totalDeliveredAmount: 0,
     pendingOrders: 0,
     pendingOrdersAmount: 0,
     deliveredPendingAmount: 0,
     thisMonthRevenue: 0,
+    thisMonthDelivered: 0,
     thisMonthOrders: 0,
     lowStockProducts: 0,
     completedOrders: 0
@@ -68,8 +70,12 @@ function Dashboard() {
       const totalProducts = productos.filter(p => p.active !== false && p.publicado).length
       const totalOrders = pedidosInternos.length + pedidosCatalogo.length
       
-      // Calcular ingresos totales
+      // Calcular ingresos totales (históricos)
       const totalRevenue = pedidosCatalogo.reduce((sum, order) => sum + (order.total || 0), 0)
+      
+      // Calcular monto total entregado (histórico)
+      const deliveredOrders = pedidosCatalogo.filter(order => order.estado === 'entregado')
+      const totalDeliveredAmount = deliveredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
       
       // Pedidos pendientes (pedidos por confirmar - sin seña)
       const pendingOrdersFiltered = pedidosCatalogo.filter(order => order.estado_pago === 'sin_seña')
@@ -101,9 +107,14 @@ function Dashboard() {
         return orderDate >= firstDayOfMonth
       })
       
+      // Ingresos del mes: pedidos del mes que tienen seña o están pagados
       const thisMonthRevenue = thisMonthOrders.filter(order => 
         order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado'
       ).reduce((sum, order) => sum + (order.total || 0), 0)
+      
+      // Monto entregado este mes
+      const thisMonthDelivered = thisMonthOrders.filter(order => order.estado === 'entregado')
+        .reduce((sum, order) => sum + (order.total || 0), 0)
 
       // Calcular tendencias (comparación con mes anterior)
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -130,10 +141,12 @@ function Dashboard() {
         totalProducts,
         totalOrders,
         totalRevenue,
+        totalDeliveredAmount,
         pendingOrders,
         pendingOrdersAmount,
         deliveredPendingAmount,
         thisMonthRevenue,
+        thisMonthDelivered,
         thisMonthOrders: thisMonthOrders.length,
         lowStockProducts,
         completedOrders
@@ -252,7 +265,7 @@ function Dashboard() {
             color="#f59e0b"
             isAmount
             trend={formatTrend(trends.revenueTrend)}
-            subtitle={`${formatCurrency(stats.totalRevenue)} totales`}
+            subtitle={`${formatCurrency(stats.thisMonthDelivered)} entregados este mes • ${formatCurrency(stats.totalRevenue)} totales`}
           />
           <StatsCard
             title="Pedidos Pendientes"
