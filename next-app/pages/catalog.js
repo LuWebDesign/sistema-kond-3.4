@@ -1244,6 +1244,7 @@ function CheckoutModal({
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
+  const [deliveryMethod, setDeliveryMethod] = useState('envio') // 'envio' | 'retiro'
   const [customerData, setCustomerData] = useState(() => {
     const u = currentUser || getCurrentUser()
     if (!u) return { name: '', apellido: '', phone: '', email: '', address: '' }
@@ -1383,6 +1384,7 @@ function CheckoutModal({
     if (isSubmitting) return
     const validationErrors = validateCheckoutForm(customerData, paymentMethod)
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
+    if (deliveryMethod === 'envio' && (!customerData.address || customerData.address.trim() === '')) return createToast('La dirección es requerida para envío', 'error')
     if (paymentMethod === 'transferencia' && !selectedDeliveryDate) return createToast('Selecciona una fecha de entrega para transferencia', 'error')
     if (paymentMethod === 'transferencia' && !comprobante) return createToast('Sube el comprobante de transferencia', 'error')
 
@@ -1407,6 +1409,7 @@ function CheckoutModal({
           imagen: item.image || null
         })),
         metodoPago: paymentMethod,
+        metodoEntrega: deliveryMethod,
         estadoPago: paymentMethod === 'transferencia' ? 'seña_pagada' : 'sin_seña',
         fechaSolicitudEntrega: selectedDeliveryDate,
         total: total,
@@ -1561,39 +1564,27 @@ function CheckoutModal({
             )}
           </div>
 
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>🚚 Elegir método de entrega</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+              <button onClick={() => setDeliveryMethod('envio')} style={{ padding: '8px 12px', borderRadius: 8, border: deliveryMethod === 'envio' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: deliveryMethod === 'envio' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)' }}>🚚 Con envío</button>
+              <button onClick={() => setDeliveryMethod('retiro')} style={{ padding: '8px 12px', borderRadius: 8, border: deliveryMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: deliveryMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)' }}>🏪 Retiro por local</button>
+            </div>
+          </div>
+
           <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>
               <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia (Seña 50%)</button>
-              <button onClick={() => setPaymentMethod('retiro')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏪 Retiro</button>
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
-
-            {/* Retiro info removed as requested */}
-
             {paymentMethod === 'whatsapp' && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
                   {paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
                 </div>
-              </div>
-            )}
-
-            {paymentMethod === 'retiro' && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
-                {(paymentConfig?.retiro?.direccion || paymentConfig?.retiro?.horarios) && (
-                  <div style={{ marginTop: 8, fontSize: 13 }}>
-                    {paymentConfig.retiro.direccion && (
-                      <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>
-                    )}
-                    {paymentConfig.retiro.horarios && (
-                      <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
@@ -1608,14 +1599,7 @@ function CheckoutModal({
             )}
 
             {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
-            {paymentMethod === 'retiro' && paymentConfig?.retiro?.direccion && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700 }}>🚚 Información de retiro</div>
-                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Si elegís retirar por local podés pasar a buscar tu pedido en nuestro punto de retiro. {paymentConfig.retiro.horarios && `Horario de retiro: ${paymentConfig.retiro.horarios}.`} Avisanos por WhatsApp si llegás fuera de ese horario.
-                </div>
-              </div>
-            )}
+            
           </section>
 
           {paymentMethod === 'transferencia' && (

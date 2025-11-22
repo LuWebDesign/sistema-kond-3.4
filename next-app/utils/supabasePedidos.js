@@ -35,6 +35,7 @@ async function generateRandomPedidoId() {
         continue;
       }
 
+        metodo_entrega: pedido.metodoEntrega || pedido.metodo_entrega || 'envio',
       // Si hay error, intentar otro ID (podría ser problema de permisos)
       console.warn(`Error verificando ID ${randomId}:`, error);
       attempts++;
@@ -123,6 +124,7 @@ export async function getPedidosCatalogoParaCalendario() {
       fechaProduccionCalendario: pedido.fecha_produccion_calendario,
       asignadoAlCalendario: pedido.asignado_al_calendario || false,
       total: pedido.total,
+      metodoEntrega: pedido.metodo_entrega || 'envio',
       createdAt: pedido.created_at,
       updatedAt: pedido.updated_at,
       envioGratis: pedido.envio_gratis || false,
@@ -258,6 +260,7 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (pedidoUpdate.fechaSolicitudEntrega) updateData.fecha_solicitud_entrega = pedidoUpdate.fechaSolicitudEntrega;
     if (pedidoUpdate.total) updateData.total = pedidoUpdate.total;
     if (pedidoUpdate.envioGratis !== undefined) updateData.envio_gratis = pedidoUpdate.envioGratis;
+    if (pedidoUpdate.metodoEntrega) updateData.metodo_entrega = pedidoUpdate.metodoEntrega;
 
     const { data, error } = await supabase
       .from('pedidos_catalogo')
