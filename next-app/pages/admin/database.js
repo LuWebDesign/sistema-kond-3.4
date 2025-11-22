@@ -236,6 +236,45 @@ function DatabaseComponent() {
     return filteredProducts.slice(start, start + itemsPerPage)
   }, [filteredProducts, currentPage])
 
+  // Render helper para paginación (evita JSX complejo inline en el return principal)
+  const renderPagination = () => {
+    if (filteredProducts.length <= itemsPerPage) return null
+
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px' }}>
+        <button
+          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === 1 ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === 1 ? 'var(--text-secondary)' : 'white' }}
+        >◀ Prev</button>
+
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {Array.from({ length: totalPages }).map((_, i) => {
+            const page = i + 1
+            if (totalPages <= 7 || Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages) {
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  aria-current={page === currentPage}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: page === currentPage ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: page === currentPage ? 'var(--accent-blue)' : 'var(--bg-section)', color: page === currentPage ? 'white' : 'var(--text-primary)' }}
+                >{page}</button>
+              )
+            }
+            const shouldShowEllipsis = (i === 1 && currentPage > 3) || (i === totalPages - 2 && currentPage < totalPages - 2)
+            return shouldShowEllipsis ? <span key={page}>…</span> : null
+          })}
+        </div>
+
+        <button
+          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === totalPages ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === totalPages ? 'var(--text-secondary)' : 'white' }}
+        >Next ▶</button>
+      </div>
+    )
+  }
+
   // Manejar ordenamiento
   const handleSort = (key) => {
     let direction = 'asc'
@@ -642,99 +681,70 @@ function DatabaseComponent() {
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
-          {filteredProducts.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '0.9rem'
-              }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg-secondary)' }}>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('id')}>
-                      ID {getSortIcon('id')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('nombre')}>
-                      Nombre {getSortIcon('nombre')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('categoria')}>
-                      Categoría {getSortIcon('categoria')}
-                    </th>
-                    <th style={thStyle}>Material</th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('tipo')}>
-                      Tipo {getSortIcon('tipo')}
-                    </th>
-                    <th style={thStyle}>Medidas</th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('costoPlaca')}>
-                      Costo Placa {getSortIcon('costoPlaca')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('unidadesPorPlaca')}>
-                      Unid/Placa {getSortIcon('unidadesPorPlaca')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('stock')}>
-                      Stock {getSortIcon('stock')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioUnitario')}>
-                      Precio {getSortIcon('precioUnitario')}
-                    </th>
-                    <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioPromos')}>
-                      Precio Promos {getSortIcon('precioPromos')}
-                    </th>
-                    <th style={thStyle}>Tiempo</th>
-                    <th style={thStyle}>Estados</th>
-                    <th style={thStyle}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedProducts.map((product, index) => (
-                    <ProductRow
-                      key={product.id}
-                      product={product}
-                      isEven={index % 2 === 0}
-                      materials={materials}
-                      onToggleVisibility={toggleProductVisibility}
-                      onTogglePublished={toggleProductPublished}
-                      onDelete={handleDeleteProduct}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px' }}>
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === 1 ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === 1 ? 'var(--text-secondary)' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
-              >◀ Prev</button>
-
-              
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const page = i + 1
-                  // Mostrar todos si <= 7 páginas, si no mostrar extremos y entorno del actual
-                  if (totalPages <= 7 || Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages) {
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        aria-current={page === currentPage}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: page === currentPage ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: page === currentPage ? 'var(--accent-blue)' : 'var(--bg-section)', color: page === currentPage ? 'white' : 'var(--text-primary)', cursor: 'pointer' }}
-                      >{page}</button>
-                    )
-                  }
-                  // Insertar separador si se ha mostrado un botón y el siguiente está muy lejos
-                  const shouldShowEllipsis = (i === 1 && currentPage > 3) || (i === totalPages - 2 && currentPage < totalPages - 2)
-                  return shouldShowEllipsis ? <span key={page}>…</span> : null
-                })}
+          {filteredProducts.length > 0 && (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '0.9rem'
+                }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('id')}>
+                        ID {getSortIcon('id')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('nombre')}>
+                        Nombre {getSortIcon('nombre')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('categoria')}>
+                        Categoría {getSortIcon('categoria')}
+                      </th>
+                      <th style={thStyle}>Material</th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('tipo')}>
+                        Tipo {getSortIcon('tipo')}
+                      </th>
+                      <th style={thStyle}>Medidas</th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('costoPlaca')}>
+                        Costo Placa {getSortIcon('costoPlaca')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('unidadesPorPlaca')}>
+                        Unid/Placa {getSortIcon('unidadesPorPlaca')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('stock')}>
+                        Stock {getSortIcon('stock')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioUnitario')}>
+                        Precio {getSortIcon('precioUnitario')}
+                      </th>
+                      <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('precioPromos')}>
+                        Precio Promos {getSortIcon('precioPromos')}
+                      </th>
+                      <th style={thStyle}>Tiempo</th>
+                      <th style={thStyle}>Estados</th>
+                      <th style={thStyle}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedProducts.map((product, index) => (
+                      <ProductRow
+                        key={product.id}
+                        product={product}
+                        isEven={index % 2 === 0}
+                        materials={materials}
+                        onToggleVisibility={toggleProductVisibility}
+                        onTogglePublished={toggleProductPublished}
+                        onDelete={handleDeleteProduct}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
+              {renderPagination()}
+            </>
+          )}
 
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === totalPages ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === totalPages ? 'var(--text-secondary)' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
-              >Next ▶</button>
-            </div>
-          ) : (
+          {filteredProducts.length === 0 && (
             <div style={{
               textAlign: 'center',
               color: 'var(--text-secondary)',
