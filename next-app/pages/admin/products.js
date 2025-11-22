@@ -67,20 +67,25 @@ function ProductsComponent() {
   })
 
   // Estados para manejo de imagen en el formulario de agregar
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState('')
+  const [imageFiles, setImageFiles] = useState([])
+  const [imagePreviews, setImagePreviews] = useState([])
 
   // Manejar cambio de imagen en el formulario de agregar
   const handleImageChange = (e) => {
-    const file = e.target.files && e.target.files[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onload = (ev) => setImagePreview(ev.target.result)
-      reader.readAsDataURL(file)
+    const files = Array.from(e.target.files).slice(0, 5) // Limitar a 5 archivos
+    if (files.length > 0) {
+      setImageFiles(files)
+      const previews = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = (ev) => resolve(ev.target.result)
+          reader.readAsDataURL(file)
+        })
+      })
+      Promise.all(previews).then(setImagePreviews)
     } else {
-      setImageFile(null)
-      setImagePreview('')
+      setImageFiles([])
+      setImagePreviews([])
     }
   }
 
@@ -641,7 +646,7 @@ function ProductsComponent() {
         unidades: finalFormData.unidades,
         stock: finalFormData.stock,
         ensamble: finalFormData.ensamble,
-        imagen: '' // URL de imagen se asignará después si hay archivo
+        imagenes: [] // Array de URLs de imágenes
       }
 
       // Crear producto en Supabase
@@ -653,17 +658,22 @@ function ProductsComponent() {
         return
       }
 
-      // Si hay imagen, subirla a Storage y actualizar el producto
-      if (imageFile && createdProduct) {
+      // Si hay imágenes, subirlas a Storage y actualizar el producto
+      if (imageFiles.length > 0 && createdProduct) {
         try {
-          const { data: uploadData, error: uploadError } = await uploadProductoImagen(imageFile, createdProduct.id)
+          const uploadPromises = imageFiles.map(file => uploadProductoImagen(file, createdProduct.id))
+          const uploadResults = await Promise.all(uploadPromises)
           
-          if (!uploadError && uploadData) {
-            // Actualizar producto con la URL de la imagen
-            await updateProducto(createdProduct.id, { imagen: uploadData.url })
+          const imageUrls = uploadResults
+            .filter(result => !result.error && result.data)
+            .map(result => result.data.url)
+          
+          if (imageUrls.length > 0) {
+            // Actualizar producto con el array de URLs de imágenes
+            await updateProducto(createdProduct.id, { imagenes: imageUrls })
           }
         } catch (uploadErr) {
-          console.warn('No se pudo subir la imagen:', uploadErr)
+          console.warn('No se pudieron subir algunas imágenes:', uploadErr)
         }
       }
 
@@ -698,12 +708,12 @@ function ProductsComponent() {
         precioUnitario: 0,
         precioPromos: 0,
         ensamble: 'Sin ensamble',
-        imagen: '',
+        imagenes: [],
         stock: 0,
         publicado: false
       })
-      setImageFile(null)
-      setImagePreview('')
+      setImageFiles([])
+      setImagePreviews([])
       setShowAddForm(false)
 
       // Mostrar notificación
@@ -1691,20 +1701,25 @@ function ProductsComponent() {
                 marginTop: '12px'
               }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  Imagen (opcional)
+                  Imágenes (opcional, hasta 5)
                 </label>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     style={{
                       flex: 1
                     }}
                   />
-                  {imagePreview && (
-                    <div style={{ width: 72, height: 48, borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                      <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
+                  {imagePreviews.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} style={{ width: 72, height: 48, borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                          <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Preview ${index + 1}`} />
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1976,11 +1991,11 @@ function ProductCard({
     margenMaterial: product.margenMaterial || 0,
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
-    imagen: product.imagen || '',
+    imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
     stock: product.stock || 0
   })
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(product.imagen || '')
+  const [imageFiles, setImageFiles] = useState([])
+  const [imagePreviews, setImagePreviews] = useState(product.imagenes || [product.imagen].filter(Boolean) || [])
 
   // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
   useEffect(() => {
@@ -1999,10 +2014,10 @@ function ProductCard({
       margenMaterial: product.margenMaterial || 0,
       precioUnitario: product.precioUnitario || 0,
       ensamble: product.ensamble || 'Sin ensamble',
-      imagen: product.imagen || '',
+      imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
       stock: product.stock || 0
     })
-    setImagePreview(product.imagen || '')
+    setImagePreviews(product.imagenes || [product.imagen].filter(Boolean) || [])
   }, [product])
 
   // Estados para controlar modos manuales en edición
@@ -2127,14 +2142,20 @@ function ProductCard({
 
   // Manejar cambio de imagen
   const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target.result)
-      }
-      reader.readAsDataURL(file)
+    const files = Array.from(e.target.files).slice(0, 5) // Limitar a 5 archivos
+    if (files.length > 0) {
+      setImageFiles(files)
+      const previews = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = (ev) => resolve(ev.target.result)
+          reader.readAsDataURL(file)
+        })
+      })
+      Promise.all(previews).then(setImagePreviews)
+    } else {
+      setImageFiles([])
+      setImagePreviews([])
     }
   }
 
@@ -2174,10 +2195,22 @@ function ProductCard({
         finalData.material = ''
       }
       
-      // Si hay una nueva imagen, convertirla a base64
-      if (imageFile) {
-        const imageData = await fileToBase64(imageFile)
-        finalData.imagen = imageData
+      // Si hay nuevas imágenes, subirlas a Storage
+      if (imageFiles.length > 0) {
+        try {
+          const uploadPromises = imageFiles.map(file => uploadProductoImagen(file, product.id))
+          const uploadResults = await Promise.all(uploadPromises)
+          
+          const imageUrls = uploadResults
+            .filter(result => !result.error && result.data)
+            .map(result => result.data.url)
+          
+          if (imageUrls.length > 0) {
+            finalData.imagenes = imageUrls
+          }
+        } catch (uploadErr) {
+          console.warn('No se pudieron subir algunas imágenes:', uploadErr)
+        }
       }
 
       // Validaciones básicas
@@ -2464,9 +2497,9 @@ function ProductCard({
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {product.imagen ? (
+                {product.imagenes && product.imagenes.length > 0 ? (
                   <img
-                    src={product.imagen}
+                    src={product.imagenes[0]}
                     alt={product.nombre}
                     style={{
                       width: '100%',
@@ -2511,7 +2544,7 @@ function ProductCard({
             <EditForm 
               editData={editData}
               setEditData={setEditData}
-              imagePreview={imagePreview}
+              imagePreviews={imagePreviews}
               onImageChange={handleImageChange}
               onSave={handleSave}
               materials={materials}
@@ -2695,7 +2728,7 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+function EditForm({ editData, setEditData, imagePreviews, onImageChange, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -3241,24 +3274,28 @@ function EditForm({ editData, setEditData, imagePreview, onImageChange, onSave, 
               fontSize: '0.9rem'
             }}
           />
-          {imagePreview && (
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              border: '1px solid var(--border-color)'
-            }}>
-              <img 
-                src={imagePreview} 
-                alt="Preview"
-                loading="lazy"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+          {imagePreviews.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {imagePreviews.map((preview, index) => (
+                <div key={index} style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <img 
+                    src={preview} 
+                    alt={`Preview ${index + 1}`}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </div>

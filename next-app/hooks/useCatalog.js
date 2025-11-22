@@ -287,7 +287,7 @@ export function useCart() {
         // originalPrice: precio base del producto (para mostrar ahorro si aplica)
         originalPrice: product.precioUnitario || unitPrice,
         measures: product.medidas || '',
-        image: product.imagen,
+        image: (product.imagenes && product.imagenes[0]) || product.imagen || '',
         quantity,
         tiempoUnitario: product.tiempoUnitario || '00:00:00',
         precioPorMinuto: product.precioPorMinuto || 0

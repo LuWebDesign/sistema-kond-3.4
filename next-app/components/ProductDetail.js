@@ -10,8 +10,8 @@ export default function ProductDetail({ product }) {
       <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
-            {product.imagen ? (
-              <img src={product.imagen} alt={product.nombre} style={{ width: '100%', borderRadius: 8 }} />
+            {product.imagenes && product.imagenes.length > 0 ? (
+              <img src={product.imagenes[0]} alt={product.nombre} style={{ width: '100%', borderRadius: 8 }} />
             ) : (
               <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Sin imagen</div>
             )}

@@ -638,12 +638,12 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         paddingTop: '100%',
         background: '#ffffff'
       }}>
-        {product.imagen ? (
+        {product.imagenes && product.imagenes.length > 0 ? (
           <img
-            src={product.imagen}
+            src={product.imagenes[0]}
             alt={product.nombre}
             loading="lazy"
-            onClick={() => onImageClick && onImageClick(product.imagen)}
+            onClick={() => onImageClick && onImageClick(product.imagenes[0])}
             style={{
               position: 'absolute',
               top: 0,
@@ -668,6 +668,29 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             fontSize: '0.9rem'
           }}>
             Sin imagen
+          </div>
+        )}
+        {product.imagenes && product.imagenes.length > 1 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '4px'
+          }}>
+            {product.imagenes.map((_, index) => (
+              <div
+                key={index}
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: index === 0 ? 'var(--accent-color)' : 'rgba(255,255,255,0.5)',
+                  border: '1px solid rgba(0,0,0,0.2)'
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
