@@ -43,7 +43,6 @@ export function useProducts() {
           notas: m.notas
         }))
         setMaterials(mappedMateriales)
-        console.log('✅ Materiales cargados en catálogo:', mappedMateriales.length, mappedMateriales)
       }
       
       // Cargar promociones activas desde Supabase

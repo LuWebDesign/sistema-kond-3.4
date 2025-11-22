@@ -107,10 +107,25 @@ function Dashboard() {
         return orderDate >= firstDayOfMonth
       })
       
-      // Ingresos del mes: pedidos del mes que tienen seña o están pagados
-      const thisMonthRevenue = thisMonthOrders.filter(order => 
-        order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado'
-      ).reduce((sum, order) => sum + (order.total || 0), 0)
+      // Ingresos del mes: sumar montos efectivamente recibidos cuando existan
+      // - Si `monto_recibido` está presente, usarlo (registro de pago parcial/completo)
+      // - Si estado 'pagado', sumar `total`
+      // - Si estado 'seña_pagada' y no hay `monto_recibido`, sumar 50% como fallback
+      const thisMonthRevenue = thisMonthOrders.reduce((sum, order) => {
+        const montoRecibido = order.monto_recibido != null ? Number(order.monto_recibido) : null
+        if (montoRecibido !== null) return sum + montoRecibido
+
+        if (order.estado_pago === 'pagado') return sum + Number(order.total || 0)
+
+        if (order.estado_pago === 'seña_pagada') {
+          // fallback: asumir seña del 50% si no hay registro explícito
+          const fallbackSenia = Number(order.total || 0) * 0.5
+          return sum + fallbackSenia
+        }
+
+        // si no hay pago ni monto recibido, no sumar
+        return sum
+      }, 0)
       
       // Monto entregado este mes
       const thisMonthDelivered = thisMonthOrders.filter(order => order.estado === 'entregado')

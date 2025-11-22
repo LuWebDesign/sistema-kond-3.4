@@ -1195,6 +1195,7 @@ export default function User() {
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleInputChange}
+                  autoComplete="name"
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -1224,6 +1225,7 @@ export default function User() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                autoComplete="email"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -1252,6 +1254,7 @@ export default function User() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
+                autoComplete={isLoginMode ? 'current-password' : 'new-password'}
                 style={{
                   width: '100%',
                   padding: '12px',

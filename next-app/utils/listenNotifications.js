@@ -143,11 +143,16 @@ export function listenNotifications({
       }
     )
     .subscribe((status, err) => {
-      console.log(`ðŸ“¡ [Realtime] Estado del canal "${channelName}":`, status, err ? `(Error: ${err})` : '')
-      
-      if (status === 'SUBSCRIBED') {
-        console.log('âœ… [Realtime] Canal suscrito exitosamente')
-      } else if (status === 'CHANNEL_ERROR') {
+        console.log(`ðŸ“¡ [Realtime] Estado del canal "${channelName}":`, status, err ? `(Error: ${err})` : '')
+
+        // Mantener contador de intentos de reconexión por canal
+        if (!channel._reconnectAttempts) channel._reconnectAttempts = 0
+
+        if (status === 'SUBSCRIBED') {
+          console.log('âœ… [Realtime] Canal suscrito exitosamente')
+          // Resetear intentos al suscribirse correctamente
+          channel._reconnectAttempts = 0
+        } else if (status === 'CHANNEL_ERROR') {
         const errorMessage = err?.message || err?.toString() || 'Error desconocido'
         const errorDetails = err ? JSON.stringify(err, null, 2) : 'Sin detalles'
         const isNetworkErr = isNetworkError(err)
@@ -164,10 +169,14 @@ export function listenNotifications({
         }
         
         // Calcular delay de reconexiÃ³n basado en el tipo de error
-        const reconnectDelay = calculateReconnectDelay(err, 1)
-        console.log(`ðŸ”„ [Realtime] Intentando reconectar en ${reconnectDelay/1000}s...`)
-        
-        setTimeout(() => {
+        // Incrementar contador de intentos y calcular backoff
+        channel._reconnectAttempts = (channel._reconnectAttempts || 0) + 1
+        const reconnectDelay = calculateReconnectDelay(err, channel._reconnectAttempts)
+        console.log(`ðŸ”„ [Realtime] Intentando reconectar en ${reconnectDelay/1000}s... (intento ${channel._reconnectAttempts})`)
+
+        // Intentar reconectar llamando a subscribe() respectando backoff
+        if (channel._reconnectTimer) clearTimeout(channel._reconnectTimer)
+        channel._reconnectTimer = setTimeout(() => {
           console.log('ðŸ”„ [Realtime] Intentando reconectar despuÃ©s de error...')
           try {
             channel.subscribe()
@@ -178,10 +187,12 @@ export function listenNotifications({
       } else if (status === 'TIMED_OUT') {
         console.warn('â° [Realtime] Canal timeout - intentando reconectar...')
         
-        const reconnectDelay = calculateReconnectDelay(new Error('timeout'), 1)
-        console.log(`ðŸ”„ [Realtime] Intentando reconectar despuÃ©s de timeout en ${reconnectDelay/1000}s...`)
-        
-        setTimeout(() => {
+        channel._reconnectAttempts = (channel._reconnectAttempts || 0) + 1
+        const reconnectDelay = calculateReconnectDelay(new Error('timeout'), channel._reconnectAttempts)
+        console.log(`ðŸ”„ [Realtime] Intentando reconectar despuÃ©s de timeout en ${reconnectDelay/1000}s... (intento ${channel._reconnectAttempts})`)
+
+        if (channel._reconnectTimer) clearTimeout(channel._reconnectTimer)
+        channel._reconnectTimer = setTimeout(() => {
           console.log('ðŸ”„ [Realtime] Intentando reconectar...')
           try {
             channel.subscribe()
@@ -191,6 +202,34 @@ export function listenNotifications({
         }, reconnectDelay)
       } else if (status === 'CLOSED') {
         console.log('ðŸ”Œ [Realtime] Canal cerrado')
+
+        // Programar reconexiÃ³n ante cierre inesperado
+        channel._reconnectAttempts = (channel._reconnectAttempts || 0) + 1
+        const reconnectDelay = calculateReconnectDelay(new Error('closed'), channel._reconnectAttempts)
+        console.log(`ðŸ”„ [Realtime] Canal cerrado. Intentando reconectar en ${reconnectDelay/1000}s... (intento ${channel._reconnectAttempts})`)
+
+        if (channel._reconnectTimer) clearTimeout(channel._reconnectTimer)
+        channel._reconnectTimer = setTimeout(() => {
+          try {
+            // Si el canal fue removido, recrearlo
+            const existing = supabase.getChannels().find(ch => ch.topic === channel.topic)
+            if (!existing) {
+              console.log('ðŸ”„ [Realtime] Canal no existe, recreando...')
+              // Intentar recrear suscripción llamando a listenNotifications de nuevo
+              try {
+                // Nota: esto retornará un nuevo canal; el caller podría guardar la referencia
+                listenNotifications({ targetUser, userId, onInsert, onUpdate, onDelete, onError })
+              } catch (recreateError) {
+                logRealtimeError('RECREATE_FAILED', recreateError, { channel: channelName })
+              }
+            } else {
+              console.log('ðŸ”„ [Realtime] Re-suscribiendo al canal existente...')
+              existing.subscribe()
+            }
+          } catch (reconnectError) {
+            logRealtimeError('RECONNECT_AFTER_CLOSED_FAILED', reconnectError, { channel: channelName })
+          }
+        }, reconnectDelay)
       } else if (status === 'JOINING') {
         console.log('ðŸ”— [Realtime] UniÃ©ndose al canal...')
       } else if (status === 'LEAVING') {
@@ -199,6 +238,26 @@ export function listenNotifications({
         console.warn(`âš ï¸ [Realtime] Estado desconocido: ${status}`, err)
       }
     })
+
+  // Reconectar cuando vuelve la conexiÃ³n de red
+  if (typeof window !== 'undefined') {
+    const onlineHandler = () => {
+      try {
+        if (channel && channel.state !== 'joined') {
+          console.log('ðŸ”„ [Realtime] Navegador online - intentando reconectar canal...')
+          if (channel._reconnectTimer) clearTimeout(channel._reconnectTimer)
+          channel._reconnectAttempts = 0
+          channel.subscribe()
+        }
+      } catch (err) {
+        console.error('âŒ [Realtime] Error al reconectar en online event:', err)
+      }
+    }
+
+    window.addEventListener('online', onlineHandler)
+    // Guardar handler para permitir limpieza si se remueve el canal
+    channel._onlineHandler = onlineHandler
+  }
 
   // Retornar el canal para permitir cancelar la suscripciÃ³n
   return channel
@@ -213,6 +272,28 @@ export async function unsubscribeNotifications(channel) {
   if (!channel) return
 
   try {
+    // Limpiar timers y handlers asociados al canal
+    try {
+      if (channel._reconnectTimer) {
+        clearTimeout(channel._reconnectTimer)
+        channel._reconnectTimer = null
+      }
+      if (typeof window !== 'undefined' && channel._onlineHandler) {
+        window.removeEventListener('online', channel._onlineHandler)
+        channel._onlineHandler = null
+      }
+    } catch (cleanupError) {
+      console.warn('Error limpiando datos del canal antes de removerlo:', cleanupError)
+    }
+
+    // Primero intentar unsubscribir formalmente, luego remover de supabase internals
+    try {
+      if (typeof channel.unsubscribe === 'function') await channel.unsubscribe()
+    } catch (uErr) {
+      // No crítico: continuar con removeChannel
+      console.warn('Error al llamar channel.unsubscribe():', uErr)
+    }
+
     await supabase.removeChannel(channel)
     console.log('âœ… [Realtime] SuscripciÃ³n cancelada exitosamente')
   } catch (error) {

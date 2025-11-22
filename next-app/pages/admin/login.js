@@ -99,6 +99,7 @@ export default function AdminLogin() {
               required
               placeholder="admin@ejemplo.com"
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -113,6 +114,7 @@ export default function AdminLogin() {
               required
               placeholder="Ingresa tu contraseña"
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
 
