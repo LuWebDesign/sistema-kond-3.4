@@ -118,7 +118,7 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
 }
 
 function OrdersStats({ orders, filteredOrders }) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   
   // Calcular estadísticas
   const totalOrders = filteredOrders.length
