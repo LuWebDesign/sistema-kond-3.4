@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS productos (
   costo_placa NUMERIC(10, 2),
   costo_material NUMERIC(10, 2),
   imagen_url TEXT,
+  imagenes_urls TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -154,7 +154,7 @@ export default function PedidosModal({ open = false, onClose = () => {}, orders 
                     try {
                       const productosBase = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('productosBase') || '[]') : []
                       const foundImg = productosBase.find(pb => String(pb.id) === String(prod.productId || prod.id) || (pb.nombre && name && pb.nombre.toLowerCase() === String(name).toLowerCase()))
-                      imageSrc = prod.imagen || prod.image || prod.thumbnail || foundImg?.imagen || foundImg?.imagen_url || foundImg?.image || ''
+                      imageSrc = prod.imagen || prod.image || prod.thumbnail || foundImg?.imagen || foundImg?.image || ''
                     } catch (e) {
                       imageSrc = prod.imagen || prod.image || prod.thumbnail || ''
                     }

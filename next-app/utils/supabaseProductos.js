@@ -42,8 +42,8 @@ export function mapProductoToFrontend(p) {
     usoPlacas: p.uso_placas,
     costoPlaca: p.costo_placa,
     costoMaterial: p.costo_material,
-    imagen: p.imagen_url,
-    imagenes: p.imagenes_urls || (p.imagen_url ? [p.imagen_url] : []),
+    imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
+    imagenes: p.imagenes_urls || [],
     materialId: p.material_id,
     material: p.material,
     margenMaterial: p.margen_material || 0,
@@ -135,8 +135,8 @@ export async function createProducto(producto) {
         uso_placas: producto.usoPlacas,
         costo_placa: producto.costoPlaca,
         costo_material: producto.costoMaterial,
-        imagen_url: producto.imagen || null,
-        imagenes_urls: producto.imagenes || []
+        // Usar `imagenes_urls` como campo fuente de verdad.
+        imagenes_urls: producto.imagenes || (producto.imagen ? [producto.imagen] : [])
       }])
       .select()
       .single();
@@ -169,7 +169,7 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.usoPlacas !== undefined) updateData.uso_placas = productoUpdate.usoPlacas;
     if (productoUpdate.costoPlaca !== undefined) updateData.costo_placa = productoUpdate.costoPlaca;
     if (productoUpdate.costoMaterial !== undefined) updateData.costo_material = productoUpdate.costoMaterial;
-    if (productoUpdate.imagen !== undefined) updateData.imagen_url = productoUpdate.imagen;
+    if (productoUpdate.imagen !== undefined) updateData.imagenes_urls = Array.isArray(productoUpdate.imagen) ? productoUpdate.imagen : [productoUpdate.imagen];
     if (productoUpdate.imagenes !== undefined) updateData.imagenes_urls = productoUpdate.imagenes;
 
     const { data, error } = await supabase

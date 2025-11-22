@@ -266,8 +266,8 @@ function ProductsComponent() {
           precioPromos: p.precio_promos || 0,
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
-          imagen: p.imagen_url || '',
-          imagenes: p.imagenes_urls || (p.imagen_url ? [p.imagen_url] : []),
+          imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
+          imagenes: p.imagenes_urls || [],
           stock: p.stock || 0,
           fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
@@ -1995,8 +1995,10 @@ function ProductCard({
     imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
     stock: product.stock || 0
   })
-  const [imageFiles, setImageFiles] = useState([])
-  const [imagePreviews, setImagePreviews] = useState(product.imagenes || [product.imagen].filter(Boolean) || [])
+  const initialPreviews = product.imagenes || [product.imagen].filter(Boolean) || []
+  const [imagePreviews, setImagePreviews] = useState(initialPreviews)
+  // imageFiles is aligned with imagePreviews: null for existing images, File for newly selected
+  const [imageFiles, setImageFiles] = useState(initialPreviews.map(() => null))
 
   // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
   useEffect(() => {
@@ -2018,7 +2020,9 @@ function ProductCard({
       imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
       stock: product.stock || 0
     })
-    setImagePreviews(product.imagenes || [product.imagen].filter(Boolean) || [])
+    const initial = product.imagenes || [product.imagen].filter(Boolean) || []
+    setImagePreviews(initial)
+    setImageFiles(initial.map(() => null))
   }, [product])
 
   // Estados para controlar modos manuales en edición
@@ -2141,23 +2145,59 @@ function ProductCard({
     }))
   }
 
-  // Manejar cambio de imagen
+  // Manejar cambio de imagen (agregar nuevas manteniendo las existentes)
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files).slice(0, 5) // Limitar a 5 archivos
-    if (files.length > 0) {
-      setImageFiles(files)
-      const previews = files.map(file => {
-        return new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = (ev) => resolve(ev.target.result)
-          reader.readAsDataURL(file)
-        })
-      })
-      Promise.all(previews).then(setImagePreviews)
-    } else {
-      setImageFiles([])
-      setImagePreviews([])
+    const incoming = Array.from(e.target.files || [])
+    if (incoming.length === 0) return
+
+    // calcular cuántos slots quedan (max 5)
+    const remaining = Math.max(0, 5 - imagePreviews.length)
+    const toTake = incoming.slice(0, remaining)
+
+    if (toTake.length === 0) {
+      // no hay espacio para más imágenes
+      return
     }
+
+    // Generar previews para los nuevos files
+    const previewPromises = toTake.map(file => new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (ev) => resolve(ev.target.result)
+      reader.readAsDataURL(file)
+    }))
+
+    Promise.all(previewPromises).then(newPreviews => {
+      const updatedPreviews = [...imagePreviews, ...newPreviews].slice(0, 5)
+      const updatedFiles = [...imageFiles, ...toTake].slice(0, 5)
+      setImagePreviews(updatedPreviews)
+      setImageFiles(updatedFiles)
+    })
+  }
+
+  // Reordenar imágenes (mover index a otra posición)
+  const moveImage = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return
+    const previews = Array.from(imagePreviews)
+    const files = Array.from(imageFiles)
+    const [p] = previews.splice(fromIndex, 1)
+    const [f] = files.splice(fromIndex, 1)
+    previews.splice(toIndex, 0, p)
+    files.splice(toIndex, 0, f)
+    setImagePreviews(previews)
+    setImageFiles(files)
+  }
+
+  const moveLeft = (idx) => { if (idx > 0) moveImage(idx, idx - 1) }
+  const moveRight = (idx) => { if (idx < imagePreviews.length - 1) moveImage(idx, idx + 1) }
+
+  // Eliminar imagen por índice
+  const removeImage = (idx) => {
+    const previews = Array.from(imagePreviews)
+    const files = Array.from(imageFiles)
+    previews.splice(idx, 1)
+    files.splice(idx, 1)
+    setImagePreviews(previews)
+    setImageFiles(files)
   }
 
   // Convertir archivo a base64 (intenta comprimir/resamplear antes)
@@ -2196,22 +2236,45 @@ function ProductCard({
         finalData.material = ''
       }
       
-      // Si hay nuevas imágenes, subirlas a Storage
-      if (imageFiles.length > 0) {
-        try {
-          const uploadPromises = imageFiles.map(file => uploadProductoImagen(file, product.id))
-          const uploadResults = await Promise.all(uploadPromises)
-          
-          const imageUrls = uploadResults
-            .filter(result => !result.error && result.data)
-            .map(result => result.data.url)
-          
-          if (imageUrls.length > 0) {
-            finalData.imagenes = imageUrls
+      // Si hay imágenes nuevas (Files) subir solo esos y mantener el orden elegido por el usuario
+      try {
+        // Preparar promesas de subida para las posiciones que tengan File
+        const uploadPromises = imageFiles.map((file, idx) => {
+          if (file instanceof File) {
+            return uploadProductoImagen(file, product.id)
+              .then(res => ({ idx, res }))
+              .catch(err => ({ idx, res: { error: err } }))
           }
-        } catch (uploadErr) {
-          console.warn('No se pudieron subir algunas imágenes:', uploadErr)
+          return Promise.resolve({ idx, res: null })
+        })
+
+        const uploadResults = await Promise.all(uploadPromises)
+
+        // Construir arreglo final de URLs según el orden actual en imagePreviews
+        const finalUrls = []
+        for (let i = 0; i < imagePreviews.length; i++) {
+          const fileEntry = imageFiles[i]
+          if (fileEntry instanceof File) {
+            const result = uploadResults.find(r => r.idx === i)
+            if (result && result.res && !result.res.error && result.res.data && result.res.data.url) {
+              finalUrls.push(result.res.data.url)
+            } else {
+              // si falló la subida, omitimos esa entrada
+            }
+          } else {
+            // mantener la URL existente (asegurarse que sea URL pública)
+            const preview = imagePreviews[i]
+            if (typeof preview === 'string' && preview.startsWith('http')) {
+              finalUrls.push(preview)
+            }
+          }
         }
+
+        if (finalUrls.length > 0) {
+          finalData.imagenes = finalUrls.slice(0, 5)
+        }
+      } catch (uploadErr) {
+        console.warn('No se pudieron subir algunas imágenes:', uploadErr)
       }
 
       // Validaciones básicas
@@ -2547,6 +2610,8 @@ function ProductCard({
               setEditData={setEditData}
               imagePreviews={imagePreviews}
               onImageChange={handleImageChange}
+              onReorderImage={moveImage}
+              onRemoveImage={removeImage}
               onSave={handleSave}
               materials={materials}
               categories={categories}
@@ -2729,7 +2794,7 @@ function ViewMode({ product }) {
 }
 
 // Componente para el formulario de edición
-function EditForm({ editData, setEditData, imagePreviews, onImageChange, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -3265,6 +3330,7 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onSave,
           <input
             type="file"
             accept="image/*"
+            multiple
             onChange={onImageChange}
             style={{
               padding: '6px 8px',
@@ -3278,23 +3344,18 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onSave,
           {imagePreviews.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {imagePreviews.map((preview, index) => (
-                <div key={index} style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-color)'
-                }}>
+                <div key={index} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                   <img 
                     src={preview} 
                     alt={`Preview ${index + 1}`}
                     loading="lazy"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
+                  <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 6 }}>
+                    <button type="button" onClick={() => onReorderImage(index, Math.max(0, index - 1))} title="Mover izquierda" style={{ background: '#ffffffcc', border: 'none', padding: '4px', borderRadius: 4, cursor: 'pointer' }}>◀</button>
+                    <button type="button" onClick={() => onReorderImage(index, Math.min(imagePreviews.length -1, index + 1))} title="Mover derecha" style={{ background: '#ffffffcc', border: 'none', padding: '4px', borderRadius: 4, cursor: 'pointer' }}>▶</button>
+                    <button type="button" onClick={() => onRemoveImage(index)} title="Eliminar imagen" style={{ background: '#ff4d4dcc', border: 'none', padding: '4px', borderRadius: 4, cursor: 'pointer', color: 'white' }}>✕</button>
+                  </div>
                 </div>
               ))}
             </div>

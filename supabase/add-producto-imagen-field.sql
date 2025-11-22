@@ -17,8 +17,15 @@ COMMENT ON COLUMN pedidos_catalogo_items.producto_imagen IS 'URL o dataURL de la
 -- Actualizar pedidos existentes con las imágenes desde la tabla productos
 -- Solo si quieres llenar los registros históricos
 
+-- Preferir la primera URL en `imagenes_urls`; si no existe usar `imagen_url` como fallback.
 UPDATE pedidos_catalogo_items pci
-SET producto_imagen = p.imagen_url
+SET producto_imagen = COALESCE(
+  -- Postgres arrays son 1-based; p.imagenes_urls[1] devuelve la primera URL si existe
+  (CASE WHEN (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'imagenes_urls') > 0
+        THEN p.imagenes_urls[1]
+        ELSE NULL END),
+  p.imagen_url
+)
 FROM productos p
 WHERE pci.producto_id = p.id
   AND (pci.producto_imagen IS NULL OR pci.producto_imagen = '');

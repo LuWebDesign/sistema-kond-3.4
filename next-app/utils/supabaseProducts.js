@@ -140,7 +140,8 @@ export async function createProducto(producto) {
       uso_placas: parseIntOrNull(producto.usoPlacas || producto.uso_placas) || 0,
       costo_placa: parseFloatOrZero(producto.costoPlaca || producto.costo_placa),
       // costo_material: NO se guarda, se calcula automáticamente como costoPlaca / unidadesPorPlaca
-      imagen_url: producto.imagen || producto.imagen_url || '',
+      // Usar `imagenes_urls` como campo fuente de verdad para múltiples imágenes.
+      imagenes_urls: producto.imagenes || (producto.imagen ? [producto.imagen] : []),
       material_id: parseMaterialId(producto.materialId || producto.material_id),
       material: producto.material || '',
       margen_material: parseFloatOrZero(producto.margenMaterial || producto.margen_material),
@@ -203,8 +204,12 @@ export async function updateProducto(id, producto) {
     if (producto.costoPlaca !== undefined) updateData.costo_placa = producto.costoPlaca;
     if (producto.costo_placa !== undefined) updateData.costo_placa = producto.costo_placa;
     // costo_material: NO se actualiza, se calcula automáticamente como costoPlaca / unidadesPorPlaca
-    if (producto.imagen !== undefined) updateData.imagen_url = producto.imagen;
-    if (producto.imagen_url !== undefined) updateData.imagen_url = producto.imagen_url;
+    // Actualizar `imagenes_urls` desde cualquiera de las formas aceptadas.
+    if (producto.imagenes !== undefined) {
+      updateData.imagenes_urls = producto.imagenes;
+    } else if (producto.imagen !== undefined) {
+      updateData.imagenes_urls = Array.isArray(producto.imagen) ? producto.imagen : [producto.imagen];
+    }
     
     // Nuevos campos - con parseo especial para material_id
     if (producto.materialId !== undefined) updateData.material_id = parseMaterialId(producto.materialId);

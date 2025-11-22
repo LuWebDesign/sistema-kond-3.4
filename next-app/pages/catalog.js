@@ -35,7 +35,8 @@ export default function Catalog() {
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
   const [currentUserState, setCurrentUserState] = useState(null)
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
-  const [imageModalSrc, setImageModalSrc] = useState(null)
+  // imageModal: { productId: Number, index: Number } or null
+  const [imageModal, setImageModal] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
 
   // Debounce para la búsqueda (300ms)
@@ -95,11 +96,21 @@ export default function Catalog() {
 
   // Cerrar lightbox con Esc
   useEffect(() => {
-    if (!imageModalSrc) return
-    const onKey = (e) => { if (e.key === 'Escape') setImageModalSrc(null) }
+    if (!imageModal) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') return setImageModal(null)
+      if (!imageModal) return
+      const pid = imageModal.productId
+      const idx = Number.isFinite(imageModal.index) ? imageModal.index : 0
+      const prod = (products || []).find(p => p.id === pid)
+      const imgs = prod?.imagenes || []
+      if (!imgs || imgs.length === 0) return
+      if (e.key === 'ArrowLeft') setImageModal({ productId: pid, index: (idx - 1 + imgs.length) % imgs.length })
+      if (e.key === 'ArrowRight') setImageModal({ productId: pid, index: (idx + 1) % imgs.length })
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [imageModalSrc])
+  }, [imageModal, products])
 
   // Cargar configuración de métodos de pago desde Supabase
   useEffect(() => {
@@ -276,8 +287,9 @@ export default function Catalog() {
   }, [router.asPath, categories])
 
   // Memoizar handlers para evitar recrear funciones en cada render
-  const handleImageClick = useCallback((src) => {
-    setImageModalSrc(src)
+  // ahora abrimos el modal indicando producto + índice de imagen
+  const handleImageClick = useCallback((productId, index = 0) => {
+    setImageModal({ productId, index })
   }, [])
 
   const handleAddToCart = useCallback((productId, quantity) => {
@@ -483,15 +495,45 @@ export default function Catalog() {
           />
         )}
 
-        {/* Lightbox para imagen de producto */}
-        {imageModalSrc && (
-          <div onClick={() => setImageModalSrc(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ width: '90vw', height: '90vh', maxWidth: '800px', maxHeight: '800px', position: 'relative', background: '#ffffff', borderRadius: 8, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <button aria-label="Cerrar" onClick={() => setImageModalSrc(null)} style={{ position: 'absolute', right: -8, top: -8, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', zIndex: 2010 }}>✕</button>
-              <img src={imageModalSrc} alt="Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
+        {/* Lightbox para imagen de producto (navegable) */}
+        {imageModal && (() => {
+          const pid = imageModal.productId
+          const idx = Number.isFinite(imageModal.index) ? imageModal.index : 0
+          const prod = (products || []).find(p => p.id === pid)
+          const imgs = prod?.imagenes || []
+          const src = imgs[idx] || null
+
+          if (!prod || !src) return null
+
+          return (
+            <div onClick={() => setImageModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ width: '90vw', height: '90vh', maxWidth: '900px', maxHeight: '900px', position: 'relative', background: '#ffffff', borderRadius: 8, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button aria-label="Cerrar" onClick={() => setImageModal(null)} style={{ position: 'absolute', right: -8, top: -8, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', zIndex: 2010 }}>✕</button>
+
+                {/* Prev */}
+                {imgs.length > 1 && (
+                  <button aria-label="Anterior" onClick={() => setImageModal({ productId: pid, index: (idx - 1 + imgs.length) % imgs.length })} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: 'white', border: 'none', borderRadius: 6, width: 44, height: 44, cursor: 'pointer' }}>◀</button>
+                )}
+
+                <img src={src} alt={prod.nombre} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
+
+                {/* Next */}
+                {imgs.length > 1 && (
+                  <button aria-label="Siguiente" onClick={() => setImageModal({ productId: pid, index: (idx + 1) % imgs.length })} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: 'white', border: 'none', borderRadius: 6, width: 44, height: 44, cursor: 'pointer' }}>▶</button>
+                )}
+
+                {/* Dots */}
+                {imgs.length > 1 && (
+                  <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+                    {imgs.map((_, i) => (
+                      <button key={i} onClick={() => setImageModal({ productId: pid, index: i })} style={{ width: i === idx ? 12 : 8, height: i === idx ? 12 : 8, borderRadius: '50%', background: i === idx ? 'var(--accent-color)' : 'rgba(0,0,0,0.35)', border: 'none', cursor: 'pointer' }} aria-label={`Imagen ${i + 1}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
     </PublicLayout>
   )
@@ -591,6 +633,14 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
   const materialInfo = getMaterialInfo()
 
+  // Índice actual de la imagen mostrada (para productos con múltiples imágenes)
+  const [imageIndex, setImageIndex] = useState(0)
+
+  // Resetear índice si cambian las imágenes del producto
+  useEffect(() => {
+    setImageIndex(0)
+  }, [product.imagenes && product.imagenes.length])
+
   const handleAddToCart = () => {
     onAddToCart(product.id, quantity)
     setQuantity(1)
@@ -632,28 +682,101 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         </h3>
       </div>
 
-      {/* Imagen del producto */}
+      {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
         paddingTop: '100%',
         background: '#ffffff'
       }}>
         {product.imagenes && product.imagenes.length > 0 ? (
-          <img
-            src={product.imagenes[0]}
-            alt={product.nombre}
-            loading="lazy"
-            onClick={() => onImageClick && onImageClick(product.imagenes[0])}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              cursor: 'zoom-in'
-            }}
-          />
+          <>
+            <img
+              src={product.imagenes[imageIndex]}
+              alt={product.nombre}
+              loading="lazy"
+              onClick={() => onImageClick && onImageClick(product.id, imageIndex)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                cursor: 'zoom-in'
+              }}
+            />
+
+            {/* Prev / Next buttons */}
+            {product.imagenes.length > 1 && (
+              <>
+                <button
+                  aria-label="Anterior"
+                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
+                  style={{
+                    position: 'absolute',
+                    left: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.45)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    width: 34,
+                    height: 34,
+                    cursor: 'pointer'
+                  }}
+                >◀</button>
+
+                <button
+                  aria-label="Siguiente"
+                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i + 1) % product.imagenes.length) }}
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.45)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 6,
+                    width: 34,
+                    height: 34,
+                    cursor: 'pointer'
+                  }}
+                >▶</button>
+              </>
+            )}
+
+            {/* Dots indicadores clicables */}
+            {product.imagenes.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '6px',
+                alignItems: 'center'
+              }}>
+                {product.imagenes.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => { e.stopPropagation(); setImageIndex(index) }}
+                    aria-label={`Mostrar imagen ${index + 1}`}
+                    style={{
+                      width: index === imageIndex ? 10 : 8,
+                      height: index === imageIndex ? 10 : 8,
+                      borderRadius: '50%',
+                      background: index === imageIndex ? 'var(--accent-color)' : 'rgba(255,255,255,0.6)',
+                      border: '1px solid rgba(0,0,0,0.15)',
+                      padding: 0,
+                      cursor: 'pointer'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div style={{
             position: 'absolute',
@@ -668,29 +791,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             fontSize: '0.9rem'
           }}>
             Sin imagen
-          </div>
-        )}
-        {product.imagenes && product.imagenes.length > 1 && (
-          <div style={{
-            position: 'absolute',
-            bottom: '8px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '4px'
-          }}>
-            {product.imagenes.map((_, index) => (
-              <div
-                key={index}
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: index === 0 ? 'var(--accent-color)' : 'rgba(255,255,255,0.5)',
-                  border: '1px solid rgba(0,0,0,0.2)'
-                }}
-              />
-            ))}
           </div>
         )}
       </div>
