@@ -42,24 +42,24 @@ function getContrastColor(hexColor) {
 export default function PromoModal({ promo, products, onSubmit, onClose, isLight = false }) {
   const isEdit = !!promo;
   const [formData, setFormData] = useState({
-    nombre: promo?.nombre || '',
-    tipo: promo?.tipo || 'percentage_discount',
-    summary: promo?.summary || '',
-    fechaInicio: promo?.fechaInicio || '',
-    fechaFin: promo?.fechaFin || '',
-    badgeTexto: promo?.badgeTexto || '',
-    badgeColor: promo?.badgeColor || '#3b82f6',
-    badgeTextColor: promo?.badgeTextColor || 'auto',
-    tags: (promo?.tags || []).join(', '),
-    activo: promo?.activo !== false,
-    aplicaA: promo?.aplicaA || 'todos',
-    categoria: promo?.categoria || null,
-    productoId: promo?.productoId || null,
-    descuentoPorcentaje: promo?.descuentoPorcentaje || null,
-    descuentoMonto: promo?.descuentoMonto || null,
-    precioEspecial: promo?.precioEspecial || null,
-    prioridad: promo?.prioridad || 0,
-    config: promo?.config || {}
+    nombre: promo?.nombre || promo?.nombre || '',
+    tipo: promo?.tipo || promo?.type || 'percentage_discount',
+    summary: promo?.summary || promo?.summary || '',
+    fechaInicio: promo?.fechaInicio || promo?.fecha_inicio || '',
+    fechaFin: promo?.fechaFin || promo?.fecha_fin || '',
+    badgeTexto: promo?.badgeTexto || promo?.badge_texto || '',
+    badgeColor: promo?.badgeColor || promo?.badge_color || '#3b82f6',
+    badgeTextColor: promo?.badgeTextColor || promo?.badge_text_color || 'auto',
+    tags: (promo?.tags || promo?.tags || []).join(', '),
+    activo: (promo?.activo !== undefined ? promo.activo : (promo?.activo !== false)),
+    aplicaA: promo?.aplicaA || promo?.aplica_a || 'todos',
+    categoria: promo?.categoria || promo?.categoria || null,
+    productoId: promo?.productoId || promo?.producto_id || null,
+    descuentoPorcentaje: promo?.descuentoPorcentaje || promo?.descuento_porcentaje || null,
+    descuentoMonto: promo?.descuentoMonto || promo?.descuento_monto || null,
+    precioEspecial: promo?.precioEspecial || promo?.precio_especial || null,
+    prioridad: promo?.prioridad || promo?.prioridad || 0,
+    config: promo?.config || promo?.config || {}
   });
   const [errors, setErrors] = useState({})
 
