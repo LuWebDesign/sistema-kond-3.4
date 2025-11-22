@@ -267,6 +267,7 @@ function ProductsComponent() {
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
           imagen: p.imagen_url || '',
+          imagenes: p.imagenes_urls || (p.imagen_url ? [p.imagen_url] : []),
           stock: p.stock || 0,
           fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
@@ -2081,10 +2082,10 @@ function ProductCard({
         margenMaterial: product.margenMaterial || 0,
         precioUnitario: product.precioUnitario || 0,
         ensamble: product.ensamble || 'Sin ensamble',
-        imagen: product.imagen || ''
+        imagenes: product.imagenes || [product.imagen].filter(Boolean) || []
       })
-      setImagePreview(product.imagen || '')
-      setImageFile(null)
+      setImagePreviews(product.imagenes || [product.imagen].filter(Boolean) || [])
+      setImageFiles([])
       // Resetear modos manuales
       setEditCalculatedFields({
         isCostoMaterialManual: false,

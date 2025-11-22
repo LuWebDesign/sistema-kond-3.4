@@ -43,8 +43,16 @@ export function mapProductoToFrontend(p) {
     costoPlaca: p.costo_placa,
     costoMaterial: p.costo_material,
     imagen: p.imagen_url,
+    imagenes: p.imagenes_urls || (p.imagen_url ? [p.imagen_url] : []),
     materialId: p.material_id,
     material: p.material,
+    margenMaterial: p.margen_material || 0,
+    precioUnitario: p.precio_unitario || 0,
+    precioPromos: p.precio_promos || 0,
+    unidades: p.unidades || 1,
+    stock: p.stock || 0,
+    ensamble: p.ensamble || 'Sin ensamble',
+    active: p.active !== false,
     createdAt: p.created_at,
     updatedAt: p.updated_at,
   };
@@ -128,6 +136,7 @@ export async function createProducto(producto) {
         costo_placa: producto.costoPlaca,
         costo_material: producto.costoMaterial,
         imagen_url: producto.imagen || null,
+        imagenes_urls: producto.imagenes || []
       }])
       .select()
       .single();
@@ -161,6 +170,7 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.costoPlaca !== undefined) updateData.costo_placa = productoUpdate.costoPlaca;
     if (productoUpdate.costoMaterial !== undefined) updateData.costo_material = productoUpdate.costoMaterial;
     if (productoUpdate.imagen !== undefined) updateData.imagen_url = productoUpdate.imagen;
+    if (productoUpdate.imagenes !== undefined) updateData.imagenes_urls = productoUpdate.imagenes;
 
     const { data, error } = await supabase
       .from('productos')

@@ -4,7 +4,7 @@ import { useState, memo } from 'react'
 const UserOrderCard = memo(function UserOrderCard({ pedido, onClick }) {
   const [expanded, setExpanded] = useState(false)
 
-  const totalUnits = pedido.productos.reduce((sum, prod) => sum + (prod.cantidad || 0), 0)
+  const totalUnits = pedido.productos?.reduce((sum, prod) => sum + (prod.cantidad || 0), 0) || 0
   const firstProduct = pedido.productos && pedido.productos.length ? pedido.productos[0] : null
 
   // Intentar obtener imagen actual del catálogo si el pedido guarda una imagen antigua
@@ -118,12 +118,12 @@ const UserOrderCard = memo(function UserOrderCard({ pedido, onClick }) {
       {/* Productos Preview */}
       <div className="uoc-products-preview">
         <div>
-          <span>📦 Productos ({pedido.productos.length})</span>
+          <span>📦 Productos ({pedido.productos?.length || 0})</span>
         </div>
         <div style={{display: 'flex', alignItems: 'flex-start', fontSize: '0.85rem', opacity: 0.8, marginTop: '4px', gap: 10}}>
-          {pedido.productos.length > 1 ? (
+          {pedido.productos?.length > 1 ? (
             <div style={{display: 'flex', flexDirection: 'column', gap: 10}}>
-              {pedido.productos.map((p, idx) => {
+              {pedido.productos?.map((p, idx) => {
                 const price = p.precioUnitario || p.price || p.precio || 0
                 return (
                   <div key={idx} style={{display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8}}>
@@ -146,7 +146,7 @@ const UserOrderCard = memo(function UserOrderCard({ pedido, onClick }) {
               )}
               <div>
                 {firstProduct?.nombre} {firstProduct?.medidas && `(${firstProduct?.medidas})`}
-                {pedido.productos.length > 1 && ` + ${pedido.productos.length - 1} más`}
+                {pedido.productos?.length > 1 && ` + ${pedido.productos.length - 1} más`}
               </div>
             </>
           )}
@@ -171,9 +171,9 @@ const UserOrderCard = memo(function UserOrderCard({ pedido, onClick }) {
         {/* Productos completos */}
         <div className="uoc-products">
           <div className="uoc-products-row">
-            <span>📦 Productos ({pedido.productos.length})</span>
+            <span>📦 Productos ({pedido.productos?.length || 0})</span>
           </div>
-          {pedido.productos.map((producto, index) => {
+          {pedido.productos?.map((producto, index) => {
             const unitPrice = producto.precioUnitario || producto.price || producto.precio || 0
             return (
               <div key={index} className="uoc-products-title" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
