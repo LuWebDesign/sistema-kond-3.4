@@ -11,6 +11,8 @@ import {
 } from '../utils/catalogUtils'
 import { getPaymentConfig } from '../utils/supabasePaymentConfig'
 import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
+import { getPromocionesActivas } from '../utils/supabaseMarketing'
+import { applyPromotionsToCart } from '../utils/promoEngine'
 import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
@@ -1244,7 +1246,8 @@ function CheckoutModal({
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
-  const [deliveryMethod, setDeliveryMethod] = useState('envio') // 'envio' | 'retiro'
+  const [deliveryMethod, setDeliveryMethod] = useState('retiro') // 'envio' | 'retiro' - por defecto 'retiro'
+  const [freeShippingEligible, setFreeShippingEligible] = useState(false)
   const [customerData, setCustomerData] = useState(() => {
     const u = currentUser || getCurrentUser()
     if (!u) return { name: '', apellido: '', phone: '', email: '', address: '' }
@@ -1378,6 +1381,37 @@ function CheckoutModal({
       reader.readAsDataURL(file)
     }
   }
+
+  // Calcular si el carrito califica para envío gratis según promociones activas
+  useEffect(() => {
+    let mounted = true
+    const computeFreeShipping = async () => {
+      try {
+        const { data: promosData, error } = await getPromocionesActivas()
+        if (error) return
+        const promos = (promosData || []).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          tipo: p.tipo,
+          aplicaA: p.aplica_a,
+          categoria: p.categoria,
+          productoId: p.producto_id,
+          activo: p.activo,
+          descuentoMonto: p.descuento_monto,
+          config: p.configuracion || p.config
+        }))
+
+        const promoResult = applyPromotionsToCart(cart || [], promos)
+        if (!mounted) return
+        setFreeShippingEligible(!!promoResult.freeShipping)
+      } catch (err) {
+        console.warn('No se pudo calcular envío gratis:', err)
+      }
+    }
+
+    computeFreeShipping()
+    return () => { mounted = false }
+  }, [cart])
 
   const handleSubmitOrder = async () => {
     if (mode === 'edit') return
@@ -1599,7 +1633,25 @@ function CheckoutModal({
             )}
 
             {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
-            
+            {deliveryMethod === 'retiro' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
+                {(paymentConfig?.retiro?.direccion || paymentConfig?.retiro?.horarios) ? (
+                  <div style={{ marginTop: 8, fontSize: 13 }}>
+                    {paymentConfig.retiro.direccion && (
+                      <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>
+                    )}
+                    {paymentConfig.retiro.horarios && (
+                      <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    Podés pasar a retirar tu pedido por el local durante nuestros horarios de atención.
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {paymentMethod === 'transferencia' && (
@@ -1741,6 +1793,22 @@ function CheckoutModal({
               <div>-{formatCurrency(discount)}</div>
             </div>
           )}
+
+          {/* Información de envío según método y promociones */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, marginBottom: 8 }}>
+            <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
+            <div style={{ fontWeight: 700 }}>
+              {deliveryMethod === 'retiro' ? (
+                <span>🏪 Retiro por local — Sin costo</span>
+              ) : (
+                freeShippingEligible ? (
+                  <span style={{ color: '#10b981' }}>✅ Envío gratis</span>
+                ) : (
+                  <span style={{ color: '#f59e0b' }}>Solicitar cotización de envío</span>
+                )
+              )}
+            </div>
+          </div>
 
           <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
 
@@ -1920,6 +1988,21 @@ function OrderDetailModal({ order, onClose }) {
                    order.metodoPago}
                 </strong>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Método de Entrega:</span>
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {order.metodoEntrega === 'retiro' ? '🏪 Retiro por local' : '🚚 Envío'}
+                </strong>
+              </div>
+
+              {order.metodoEntrega === 'envio' && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Estado de Envío:</span>
+                  <strong style={{ color: order.envioGratis ? '#10b981' : '#f59e0b' }}>
+                    {order.envioGratis ? '✅ Envío gratis' : 'Solicitar cotización de envío'}
+                  </strong>
+                </div>
+              )}
             </div>
           </div>
 
