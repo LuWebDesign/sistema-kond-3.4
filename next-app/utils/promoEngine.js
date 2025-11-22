@@ -65,26 +65,50 @@ export function getActivePromotions(allPromos = []) {
 export function applyPromotionsToProduct(product, allPromos = []) {
   const activePromos = getActivePromotions(allPromos);
   
-  // Filtrar promociones que aplican a este producto
-  const applicablePromos = activePromos.filter(promo => {
-    // Si aplica a todos los productos
-    if (promo.aplicaA === 'todos') return true;
-    
-    // Si aplica a una categoría específica
-    if (promo.aplicaA === 'categoria' && promo.categoria === product.categoria) return true;
-    
-    // Si aplica a un producto específico
-    if (promo.aplicaA === 'producto' && promo.productoId === product.id) return true;
-    
-    return false;
-  });
-
   // Normalizar datos básicos del producto (soporta keys en ES/EN)
   const normalizedProduct = {
     id: product.id || product.idProducto || product.productId,
     categoria: product.categoria || product.category,
     precioUnitario: product.precioUnitario || product.price || product.unitPrice || 0
   };
+
+  // Filtrar promociones que aplican a este producto
+  const applicablePromos = activePromos.filter(promo => {
+    const promoType = promo.type || promo.tipo;
+    const cfg = promo.config || promo.configuracion || {};
+    const minAmount = cfg.minAmount || cfg.min || cfg.minimo || 0;
+
+    // Para promociones de envío gratis, además de aplicar según scope (todos/categoria/producto)
+    // sólo considerarlas aplicables a nivel de producto si el precio unitario del producto
+    // cumple el umbral mínimo configurado. Esto evita mostrar "Envío Gratis" en productos
+    // individuales que no alcanzan la compra mínima de la promo.
+
+    // Si aplica a todos los productos
+    if (promo.aplicaA === 'todos') {
+      if (promoType === 'free_shipping') {
+        return normalizedProduct.precioUnitario >= minAmount;
+      }
+      return true;
+    }
+
+    // Si aplica a una categoría específica
+    if (promo.aplicaA === 'categoria' && promo.categoria === normalizedProduct.categoria) {
+      if (promoType === 'free_shipping') {
+        return normalizedProduct.precioUnitario >= minAmount;
+      }
+      return true;
+    }
+
+    // Si aplica a un producto específico
+    if (promo.aplicaA === 'producto' && promo.productoId === normalizedProduct.id) {
+      if (promoType === 'free_shipping') {
+        return normalizedProduct.precioUnitario >= minAmount;
+      }
+      return true;
+    }
+
+    return false;
+  });
 
   let result = {
     originalPrice: normalizedProduct.precioUnitario,
