@@ -700,7 +700,6 @@ function DatabaseComponent() {
                 </tbody>
               </table>
             </div>
-            {/* Paginación simple */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px' }}>
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -708,7 +707,7 @@ function DatabaseComponent() {
                 style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === 1 ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === 1 ? 'var(--text-secondary)' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
               >◀ Prev</button>
 
-              {/* Números de página (limitar visualmente si hay muchas páginas) */}
+              
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {Array.from({ length: totalPages }).map((_, i) => {
                   const page = i + 1
