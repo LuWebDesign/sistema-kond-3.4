@@ -83,8 +83,8 @@ export function applyPromotionsToProduct(product, allPromos = []) {
     // cumple el umbral mínimo configurado. Esto evita mostrar "Envío Gratis" en productos
     // individuales que no alcanzan la compra mínima de la promo.
 
-    // Si aplica a todos los productos
-    if (promo.aplicaA === 'todos') {
+    // Si aplica a todos los productos (o aplica por monto mínimo global)
+    if (promo.aplicaA === 'todos' || promo.aplicaA === 'monto_minimo') {
       if (promoType === 'free_shipping') {
         return normalizedProduct.precioUnitario >= minAmount;
       }

@@ -214,6 +214,9 @@ export default function PromoModal({ promo, products, onSubmit, onClose, isLight
                   <option value="todos">Todos los productos</option>
                   <option value="categoria">Categoría específica</option>
                   <option value="producto">Producto específico</option>
+                  {formData.tipo === 'free_shipping' && (
+                    <option value="monto_minimo">Monto mínimo de compra</option>
+                  )}
                 </select>
                 {errors.aplicaA && <small className={styles.errorText}>{errors.aplicaA}</small>}
               </div>
