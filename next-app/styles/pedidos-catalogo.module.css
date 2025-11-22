@@ -649,7 +649,7 @@
 }
 
 .statsToggle {
-  display: none; /* Oculto por defecto en desktop */
+  display: flex; /* Mostrar toggle también en desktop */
   width: 100%;
   padding: 16px 20px;
   background: transparent;
@@ -673,7 +673,19 @@
 }
 
 .statsContent {
+  /* Por defecto colapsada: se abrirá cuando se añada la clase .statsContentOpen */
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 20px;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.statsContentOpen {
+  max-height: 1200px;
+  opacity: 1;
   padding: 20px;
+  transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.25s ease;
 }
 
 /* Estilos para sección de filtros */
@@ -3253,25 +3265,6 @@
 }
 
 @media (max-width: 768px) {
-  /* Estadísticas colapsables en mobile */
-  .statsToggle {
-    display: flex;
-  }
-  
-  .statsContent {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    padding: 0 20px;
-    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
-  }
-  
-  .statsContentOpen {
-    max-height: 1000px;
-    opacity: 1;
-    padding: 20px;
-  }
-  
   /* Filtros colapsables en mobile */
   .filtersToggle {
     display: flex;
