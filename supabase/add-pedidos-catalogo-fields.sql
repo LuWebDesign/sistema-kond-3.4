@@ -15,7 +15,9 @@ ADD COLUMN IF NOT EXISTS monto_recibido NUMERIC(10, 2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS asignado_al_calendario BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notas TEXT,
 ADD COLUMN IF NOT EXISTS notas_admin TEXT,
-ADD COLUMN IF NOT EXISTS envio_gratis BOOLEAN DEFAULT false;
+ADD COLUMN IF NOT EXISTS envio_gratis BOOLEAN DEFAULT false,
+-- Método de entrega: 'envio' o 'retiro'
+ADD COLUMN IF NOT EXISTS metodo_entrega VARCHAR(50) DEFAULT 'envio';
 
 -- Crear índices para mejorar rendimiento de búsquedas
 CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_estado ON pedidos_catalogo(estado);
