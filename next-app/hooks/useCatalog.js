@@ -593,6 +593,19 @@ export function useOrders() {
         total: orderData.total
       }
 
+      // Determinar si aplica envío gratis a todo el carrito
+      try {
+        const { applyPromotionsToCart } = await import('../utils/promoEngine')
+        const { getPromocionesActivas } = await import('../utils/supabaseMarketing')
+        const { data: promosData } = await getPromocionesActivas()
+        const promoResult = applyPromotionsToCart(orderData.items || [], promosData || [])
+        pedidoData.envioGratis = !!promoResult.freeShipping
+      } catch (promoErr) {
+        // No bloquear el checkout si el motor de promos falla
+        console.warn('No se pudo calcular envío gratis para el pedido:', promoErr)
+        pedidoData.envioGratis = false
+      }
+
       // Convertir items al formato esperado
       const items = orderData.items.map(item => ({
         idProducto: item.idProducto,
@@ -658,6 +671,7 @@ export function useOrders() {
             total: orderData.total,
             metodoPago: orderData.metodoPago,
             items: items,
+            envioGratis: data.pedido.envio_gratis || pedidoData.envioGratis || false,
             formatCurrency: formatCurrency
           })
         })
@@ -677,6 +691,7 @@ export function useOrders() {
         const orderForStorage = {
           ...orderData,
           id: data.pedido.id,
+          envioGratis: data.pedido.envio_gratis || pedidoData.envioGratis || false,
           fechaCreacion: new Date().toISOString()
         }
         existingOrders.push(orderForStorage)

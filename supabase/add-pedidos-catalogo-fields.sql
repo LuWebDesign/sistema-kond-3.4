@@ -14,7 +14,8 @@ ADD COLUMN IF NOT EXISTS fecha_entrega_calendario DATE,
 ADD COLUMN IF NOT EXISTS monto_recibido NUMERIC(10, 2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS asignado_al_calendario BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notas TEXT,
-ADD COLUMN IF NOT EXISTS notas_admin TEXT;
+ADD COLUMN IF NOT EXISTS notas_admin TEXT,
+ADD COLUMN IF NOT EXISTS envio_gratis BOOLEAN DEFAULT false;
 
 -- Crear índices para mejorar rendimiento de búsquedas
 CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_estado ON pedidos_catalogo(estado);
@@ -33,6 +34,7 @@ COMMENT ON COLUMN pedidos_catalogo.monto_recibido IS 'Monto recibido (seña o pa
 COMMENT ON COLUMN pedidos_catalogo.asignado_al_calendario IS 'Indica si el pedido fue asignado al calendario de producción';
 COMMENT ON COLUMN pedidos_catalogo.notas IS 'Notas del cliente';
 COMMENT ON COLUMN pedidos_catalogo.notas_admin IS 'Notas internas del administrador';
+COMMENT ON COLUMN pedidos_catalogo.envio_gratis IS 'Indica si el pedido obtuvo envío gratis por promociones';
 
 -- Mensaje de éxito
 DO $$

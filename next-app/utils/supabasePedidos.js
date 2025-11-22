@@ -125,6 +125,7 @@ export async function getPedidosCatalogoParaCalendario() {
       total: pedido.total,
       createdAt: pedido.created_at,
       updatedAt: pedido.updated_at,
+      envioGratis: pedido.envio_gratis || false,
       // Compatibilidad con código antiguo
       fecha: pedido.fecha_creacion,
     }));
@@ -195,6 +196,7 @@ export async function createPedidoCatalogo(pedido, items) {
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
         total: Number(pedido.total) || 0,
+        envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
       }])
       .select()
       .single();
@@ -255,6 +257,7 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (pedidoUpdate.comprobanteOmitido !== undefined) updateData.comprobante_omitido = pedidoUpdate.comprobanteOmitido;
     if (pedidoUpdate.fechaSolicitudEntrega) updateData.fecha_solicitud_entrega = pedidoUpdate.fechaSolicitudEntrega;
     if (pedidoUpdate.total) updateData.total = pedidoUpdate.total;
+    if (pedidoUpdate.envioGratis !== undefined) updateData.envio_gratis = pedidoUpdate.envioGratis;
 
     const { data, error } = await supabase
       .from('pedidos_catalogo')
