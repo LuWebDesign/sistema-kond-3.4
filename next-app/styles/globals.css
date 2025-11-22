@@ -155,6 +155,11 @@
     .product-card .category-badge {
       display: none !important;
     }
+    /* Reducir ancho mínimo del botón 'Agregar' en mobile */
+    .product-card button:last-of-type {
+      min-width: 64px !important;
+      padding: 8px 10px !important;
+    }
   }
 }
 
