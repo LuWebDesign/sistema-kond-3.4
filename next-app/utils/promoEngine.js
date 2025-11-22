@@ -76,7 +76,9 @@ export function applyPromotionsToProduct(product, allPromos = []) {
   const applicablePromos = activePromos.filter(promo => {
     const promoType = promo.type || promo.tipo;
     const cfg = promo.config || promo.configuracion || {};
-    const minAmount = cfg.minAmount || cfg.min || cfg.minimo || 0;
+    // Soportar minAmount en distintas ubicaciones: config.minAmount, config.min, config.minimo
+    // o en el campo descuentoMonto/descuento_monto usado por el admin/DB
+    const minAmount = cfg.minAmount || cfg.min || cfg.minimo || promo.descuentoMonto || promo.descuento_monto || 0;
 
     // Para promociones de envío gratis, además de aplicar según scope (todos/categoria/producto)
     // sólo considerarlas aplicables a nivel de producto si el precio unitario del producto
@@ -278,7 +280,7 @@ export function applyPromotionsToCart(cartItems, allPromos = []) {
   const shippingPromos = activePromos.filter(p => (p.type || p.tipo) === 'free_shipping');
   for (const promo of shippingPromos) {
     const cfg = promo.config || promo.configuracion || {};
-    const minAmount = cfg.minAmount || cfg.min || 0;
+    const minAmount = cfg.minAmount || cfg.min || promo.descuentoMonto || promo.descuento_monto || 0;
     if (cartTotal >= minAmount) {
       freeShipping = true;
       if (!appliedPromotions.find(p => p.id === promo.id)) {
