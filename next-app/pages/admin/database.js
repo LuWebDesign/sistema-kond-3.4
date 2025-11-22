@@ -221,6 +221,21 @@ function DatabaseComponent() {
     return filtered
   }, [products, filters, sortConfig])
 
+  // Paginación: estado y computados
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage))
+
+  // Resetear página cuando cambien filtros u orden
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filters, sortConfig, filteredProducts.length])
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredProducts.slice(start, start + itemsPerPage)
+  }, [filteredProducts, currentPage])
+
   // Manejar ordenamiento
   const handleSort = (key) => {
     let direction = 'asc'
@@ -671,7 +686,7 @@ function DatabaseComponent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((product, index) => (
+                  {paginatedProducts.map((product, index) => (
                     <ProductRow
                       key={product.id}
                       product={product}
@@ -684,6 +699,41 @@ function DatabaseComponent() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* Paginación simple */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px' }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === 1 ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === 1 ? 'var(--text-secondary)' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+              >◀ Prev</button>
+
+              {/* Números de página (limitar visualmente si hay muchas páginas) */}
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const page = i + 1
+                  // Mostrar todos si <= 7 páginas, si no mostrar extremos y entorno del actual
+                  if (totalPages <= 7 || Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        aria-current={page === currentPage}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: page === currentPage ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: page === currentPage ? 'var(--accent-blue)' : 'var(--bg-section)', color: page === currentPage ? 'white' : 'var(--text-primary)', cursor: 'pointer' }}
+                      >{page}</button>
+                    )
+                  }
+                  // Insertar separador si se ha mostrado un botón y el siguiente está muy lejos
+                  const shouldShowEllipsis = (i === 1 && currentPage > 3) || (i === totalPages - 2 && currentPage < totalPages - 2)
+                  return shouldShowEllipsis ? <span key={page}>…</span> : null
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: currentPage === totalPages ? 'var(--bg-section)' : 'var(--accent-blue)', color: currentPage === totalPages ? 'var(--text-secondary)' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+              >Next ▶</button>
             </div>
           ) : (
             <div style={{
