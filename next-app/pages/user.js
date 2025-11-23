@@ -6,6 +6,7 @@ import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUser
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
+  const [isHydrated, setIsHydrated] = useState(false)
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [isProfileExpanded, setIsProfileExpanded] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -97,7 +98,10 @@ export default function User() {
         }
       }
     }
-    loadUser()
+    loadUser().finally(() => {
+      // Marcar que el cliente ya realizó la carga inicial (hydration)
+      if (typeof window !== 'undefined') setIsHydrated(true)
+    })
   }, [])
 
   // Manejar cambios en el formulario
@@ -292,6 +296,11 @@ export default function User() {
   // Eliminar avatar
   const handleRemoveAvatar = () => {
     setAvatar(null)
+  }
+
+  // Esperar a que el cliente lea localStorage en despliegue para evitar parpadeos
+  if (!isHydrated) {
+    return null
   }
 
   // Si el usuario está logueado, mostrar perfil
