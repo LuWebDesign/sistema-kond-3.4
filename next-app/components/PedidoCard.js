@@ -76,7 +76,18 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
   // Función para obtener thumbnail de un producto específico
   const getProductThumbnailIndividual = (prod) => {
-    const productBase = productosBase.find(p => p.id === prod.productId || p.id === prod.idProducto)
+    // Buscar por ID (coerción a string para evitar mismatch de tipos)
+    const idCandidate = prod.productId || prod.idProducto || prod.id
+    let productBase = productosBase.find(p => String(p.id) === String(idCandidate))
+    // Si no por ID, intentar buscar por nombre (fallback)
+    if (!productBase && prod.nombre) {
+      productBase = productosBase.find(p => (p.nombre || '').toLowerCase() === (prod.nombre || '').toLowerCase())
+    }
+
+    // Preferir imagen directa en el item del pedido
+    if (prod.imagen) return prod.imagen
+    if (prod.image) return prod.image
+
     return productBase?.imagen || null
   }
 
@@ -225,16 +236,17 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
         </div>
 
         <div className={styles.pedidoHeaderRight}>
-          {/* Miniatura del producto */}
-          {imagenPreliminar && (
-            <div className={styles.pedidoThumb}>
-              <img src={imagenPreliminar} alt="Vista previa" />
-            </div>
-          )}
+          {/* header right left intentionally empty: main preview moved to the right summary column */}
         </div>
       </div>
 
       <div className={styles.pedidoContent}>
+        {/* Línea de producción (moved arriba para que el resumen financiero quede debajo en la columna derecha) */}
+        <div className={styles.productionLine}>
+          <div className={styles.productionLabel}>Tiempo de corte</div>
+          <div className={styles.productionValue}>⏱ {tiempoTotalFormatted}</div>
+        </div>
+
         <div className={styles.pedidoMain}>
           {/* Productos compactos: nombre + unidades, medidas y material en la misma línea */}
           <div className={styles.productosPreview}>
@@ -293,23 +305,34 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
             )}
           </div>
 
-          {/* Línea de producción / tiempo total */}
-          <div className={styles.productionLine}>
-            <div className={styles.productionLabel}>Tiempo de corte</div>
-            <div className={styles.productionValue}>⏱ {tiempoTotalFormatted}</div>
-              {/* fechas mostradas en el header; se eliminan aquí para evitar duplicado */}
-          </div>
+          {/* fechas mostradas en el header; se eliminan aquí para evitar duplicado */}
         </div>
 
         <div className={styles.pedidoRightSummary}>
+          {/* Miniatura del pedido en la columna derecha */}
+          {imagenPreliminar && (
+            <div className={styles.pedidoThumb}>
+              <img src={imagenPreliminar} alt="Vista previa" />
+            </div>
+          )}
+
           {/* información financiera compacta: Total, Seña, Restante */}
           <div className={styles.totalRestanteColumn}>
-            <div className={`${styles.totalFloatingRight} ${styles.restanteSmall}`} aria-hidden="false">
+            <div className={`${styles.totalFloatingRight}`} aria-hidden="false">
               <span className={styles.totalLabel}>Total</span>
               <span className={styles.totalAmount}>{formatCurrency(pedido.total)}</span>
             </div>
-            <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>
-            
+
+            <div className={styles.resumenRow}>
+              <span className={styles.resumenLabel}>Restante</span>
+              <span className={styles.resumenValue}>{formatCurrency(restante)}</span>
+            </div>
+
+            <div className={styles.resumenRow}>
+              <span className={styles.resumenLabel}>Seña</span>
+              <span className={styles.resumenValue}>{formatCurrency(seña || 0)}</span>
+            </div>
+
             {/* Fechas de producción y entrega */}
             <div className={styles.headerDates}>
               <div className={styles.fechaInfo}>
@@ -323,7 +346,6 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
               </div>
             </div>
           </div>
-          <div className={`${styles.señaInfoSmall} ${styles.restanteSmall}`}><span>Seña: {formatCurrency(seña || 0)}</span></div>
         </div>
       </div>
 

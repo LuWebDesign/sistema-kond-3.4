@@ -417,6 +417,7 @@
   background: var(--bg-card);
   border-radius: 8px;
   padding: 12px 0;
+  text-align: left;
 }
 
 .productosList {
@@ -450,6 +451,40 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+/* Lista compacta: forzar alineación a la izquierda dentro del card (anula text-align:center global) */
+.productosListCompact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  align-items: stretch;
+}
+
+/* Asegurar que el nombre y la info secundaria queden alineados a la izquierda */
+.productoNombreCompact {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.productoInfoSecondary {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Asegurar que la miniatura se alinee verticalmente al centro y no aparezca debajo */
+.productoMiniaturaCompactWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .productoMiniaturaCompactWrapper {
@@ -745,11 +780,14 @@
   transition: transform 0.2s ease;
 }
 
-/* Contenedor principal centrado */
+/* Contenedor principal centrado: usar grid para situar la línea de producción arriba y el resumen financiero a la derecha debajo */
 .pedidoContent {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "production production"
+    "main right";
   gap: 16px;
   flex: 1;
   padding: 16px;
@@ -825,12 +863,13 @@
 
 /* Columna central: Info principal centrada */
 .pedidoMain {
-  flex: 1;
+  grid-area: main;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding-left: 0;
-  text-align: center;
+  text-align: left;
+  align-items: stretch;
 }
 
 .pedidoTopline {
@@ -1211,6 +1250,21 @@
   gap: 8px;
 }
 
+.pedidoRightSummary {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+/* Asegurar que el resumen financiero se muestre alineado a la derecha pero con contenido apilado hacia abajo */
+.pedidoRightSummary .totalFloating, .pedidoRightSummary .totalBox, .pedidoRightSummary .totalFloatingRight {
+  margin-bottom: 8px;
+  text-align: right;
+}
+
 .totalBox {
   background: linear-gradient(180deg, var(--bg-section), var(--bg-card));
   padding: 12px 16px;
@@ -1562,6 +1616,30 @@
 
 .resumenRow:last-child {
   border-bottom: none;
+}
+
+/* --- Overrides finales: forzar alineación izquierda del contenido dentro de la tarjeta
+   Esto corrige reglas duplicadas más arriba que estaban centrando texto y justificando al centro. */
+.pedidoCard .pedidoHeaderMain,
+.pedidoCard .pedidoMain,
+.pedidoCard .productosPreview,
+.pedidoCard .productoNombreWrapper,
+.pedidoCard .productoInfoSecondary {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+/* Forzar que la columna derecha quede a la derecha y su contenido apile hacia abajo */
+.pedidoCard .pedidoRightSummary {
+  grid-area: right !important;
+  align-items: flex-end !important;
+}
+
+/* Asegurar que la miniatura quede a la derecha y no afecte el centrado del texto */
+.pedidoCard .pedidoThumb {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .resumenRow.total {
@@ -3078,7 +3156,13 @@
 }
 
 .pedidoHeaderMain {
+  flex-direction: column;
   flex: 1;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  padding-left: 12px;
+  display: flex;
   padding-left: 12px;
   display: flex;
   flex-direction: column;
@@ -3204,6 +3288,7 @@
 .tiempoPorProducto { font-size: 0.8rem; color: var(--text-secondary); }
 
 .productionLine {
+  grid-area: production;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -3524,24 +3609,47 @@
   .totalRestanteColumn {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     flex: 1;
-    text-align: center;
+    text-align: right;
+    min-width: 160px;
+    align-items: flex-end;
   }
-  
-  .totalFloatingRight,
-  .señaInfoSmall,
-  .restanteSmall {
-    text-align: center;
-    font-size: 0.9rem;
+
+  .totalFloatingRight {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   }
-  
-  .señaInfoSmall {
-    flex: 1;
+
+  .resumenRow {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 6px 10px;
+    background: transparent;
+    border-radius: 6px;
   }
-  
+
+  .resumenLabel {
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  .resumenValue {
+    color: var(--accent-green);
+    font-weight: 800;
+  }
+
   .totalFloatingRight .totalLabel,
   .totalFloatingRight .totalAmount {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 }
