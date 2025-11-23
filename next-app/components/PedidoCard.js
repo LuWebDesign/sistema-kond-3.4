@@ -243,6 +243,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                 {pedido.productos.slice(0, 3).map((prod, index) => {
                   const productData = getProductData(prod)
                   const materialInfo = productData?.material ? getMaterialInfo(productData.material, productData.materialId) : null
+                  const thumbnail = getProductThumbnailIndividual(prod)
                   return (
                     <div key={index} className={styles.productoItemCompact}>
                       <div className={styles.productoNombreWrapper}>
@@ -270,6 +271,14 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
                           <span className={styles.productoPrecioInline}>Precio unit: {formatCurrency(prod.precioUnitario)}</span>
                         </div>
                       </div>
+
+                      {/* Miniatura al lado derecho del nombre del producto */}
+                      {thumbnail ? (
+                        <div className={styles.productoMiniaturaCompactWrapper}>
+                          <img src={thumbnail} alt={prod.nombre || 'Producto'} className={styles.productoMiniaturaCompact} />
+                        </div>
+                      ) : null}
+
                       {/* ocultamos el tiempo por producto aquí para evitar duplicados con el tiempo total; si se quiere mostrar, usar tooltip o detalle */}
                     </div>
                   )
