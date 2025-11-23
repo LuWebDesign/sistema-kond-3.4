@@ -8,6 +8,7 @@ import {
   getUnreadCount
 } from '../utils/supabaseNotifications'
 import { listenNotifications, unsubscribeNotifications } from '../utils/listenNotifications'
+import { supabase } from '../utils/supabaseClient'
 
 const NotificationsContext = createContext()
 
@@ -210,62 +211,64 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   }, [loadNotifications])
 
   // Configurar listener de Realtime para notificaciones en tiempo real
+  // Sólo crear la suscripción cuando exista una sesión activa (evita logs/errores en entornos públicos)
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Configurar listener de Realtime
-    const channel = listenNotifications({
-      targetUser,
-      userId,
-      onInsert: (newNotification) => {
-        // Agregar la nueva notificación al estado
-        setNotifications(prev => [newNotification, ...prev])
-        
-        // Incrementar contador de no leídas si la notificación no está leída
-        if (!newNotification.read) {
-          setUnreadCount(prev => prev + 1)
+    let mounted = true
+
+    const setup = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          console.warn('⚠️ No hay sesión activa — se omite la suscripción Realtime de notificaciones')
+          return
         }
 
-        // Emitir evento para otros componentes
-        window.dispatchEvent(new CustomEvent('notifications:new', { detail: newNotification }))
-      },
-      onUpdate: (updatedNotification) => {
-        // Actualizar la notificación en el estado
-        setNotifications(prev => 
-          prev.map(n => String(n.id) === String(updatedNotification.id) ? updatedNotification : n)
-        )
-        
-        // Recalcular contador de no leídas
-        setNotifications(prev => {
-          const newCount = prev.filter(n => !n.read).length
-          setUnreadCount(newCount)
-          return prev
+        if (!mounted) return
+
+        const channel = listenNotifications({
+          targetUser,
+          userId,
+          onInsert: (newNotification) => {
+            setNotifications(prev => [newNotification, ...prev])
+            if (!newNotification.read) setUnreadCount(prev => prev + 1)
+            window.dispatchEvent(new CustomEvent('notifications:new', { detail: newNotification }))
+          },
+          onUpdate: (updatedNotification) => {
+            setNotifications(prev => 
+              prev.map(n => String(n.id) === String(updatedNotification.id) ? updatedNotification : n)
+            )
+            setNotifications(prev => {
+              const newCount = prev.filter(n => !n.read).length
+              setUnreadCount(newCount)
+              return prev
+            })
+          },
+          onDelete: (deletedNotification) => {
+            setNotifications(prev => prev.filter(n => String(n.id) !== String(deletedNotification.id)))
+            setNotifications(prev => {
+              const newCount = prev.filter(n => !n.read).length
+              setUnreadCount(newCount)
+              return prev
+            })
+          },
+          onError: (error) => {
+            console.error('❌ [Provider] Error en Realtime:', error)
+            setError(error.message)
+          }
         })
-      },
-      onDelete: (deletedNotification) => {
-        // Eliminar la notificación del estado
-        setNotifications(prev => 
-          prev.filter(n => String(n.id) !== String(deletedNotification.id))
-        )
-        
-        // Recalcular contador de no leídas
-        setNotifications(prev => {
-          const newCount = prev.filter(n => !n.read).length
-          setUnreadCount(newCount)
-          return prev
-        })
-      },
-      onError: (error) => {
-        console.error('❌ [Provider] Error en Realtime:', error)
-        setError(error.message)
+
+        realtimeChannelRef.current = channel
+      } catch (err) {
+        console.error('Error comprobando sesión antes de crear Realtime listener:', err)
       }
-    })
+    }
 
-    // Guardar referencia al canal
-    realtimeChannelRef.current = channel
+    setup()
 
-    // Cleanup: cancelar suscripción al desmontar
     return () => {
+      mounted = false
       if (realtimeChannelRef.current) {
         unsubscribeNotifications(realtimeChannelRef.current)
         realtimeChannelRef.current = null

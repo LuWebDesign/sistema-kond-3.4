@@ -42,22 +42,24 @@ export function listenNotifications({
     console.warn('âš ï¸ Supabase no estÃ¡ inicializado. Realtime no funcionarÃ¡.')
     return null
   }
-
-  // Verificar sesiÃ³n de forma asÃ­ncrona
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (!session) {
-      console.warn('âš ï¸ No hay sesiÃ³n activa. Realtime podrÃ­a fallar.')
-    }
-  }).catch(error => {
-    console.error('Error verificando sesiÃ³n:', error)
-  })
-
   // Nombre Ãºnico del canal para evitar conflictos
   const channelName = `notifications:${targetUser}${userId ? `:${userId}` : ''}`
 
-  // Crear canal de Realtime
-  const channel = supabase
-    .channel(channelName)
+  // Intentar obtener la sesiÃ³n de forma asÃ­ncrona; crear el canal real solo si hay sesiÃ³n.
+  // Para mantener compatibilidad con callers que esperan un canal síncrono, devolvemos
+  // un `proxy`/`fakeChannel` inmediato que delega en el canal real cuando estÃ© disponible.
+
+  let realChannel = null
+  const sessionPromise = supabase.auth.getSession()
+    .then(({ data: { session } }) => {
+      if (!session) {
+        console.warn('âš ï¸ No hay sesiÃ³n activa. Realtime no se suscribirá (evita reconexiones).')
+        return null
+      }
+
+      // Crear canal real ahora que hay sesiÃ³n
+      realChannel = supabase
+        .channel(channelName)
     .on(
       'postgres_changes',
       {
@@ -142,8 +144,8 @@ export function listenNotifications({
         }
       }
     )
-    .subscribe((status, err) => {
-        console.log(`ðŸ“¡ [Realtime] Estado del canal "${channelName}":`, status, err ? `(Error: ${err})` : '')
+      .subscribe((status, err) => {
+      console.log(`ðŸ“¡ [Realtime] Estado del canal "${channelName}":`, status, err ? `(Error: ${err})` : '')
 
         // Mantener contador de intentos de reconexión por canal
         if (!channel._reconnectAttempts) channel._reconnectAttempts = 0
@@ -238,16 +240,48 @@ export function listenNotifications({
         console.warn(`âš ï¸ [Realtime] Estado desconocido: ${status}`, err)
       }
     })
+      .catch(err => {
+        console.error('Error creando canal Realtime:', err)
+      })
 
-  // Reconectar cuando vuelve la conexiÃ³n de red
-  if (typeof window !== 'undefined') {
-    const onlineHandler = () => {
+  // Proxy / fake channel que devolvemos inmediatamente
+  const fakeChannel = {
+    topic: `realtime:${channelName}`,
+    state: 'closed',
+    _reconnectAttempts: 0,
+    async unsubscribe() {
       try {
-        if (channel && channel.state !== 'joined') {
+        // Esperar a que se resuelva la promesa de sesión/canal
+        await sessionPromise
+        if (realChannel && typeof realChannel.unsubscribe === 'function') {
+          await realChannel.unsubscribe()
+        }
+      } catch (e) {
+        // noop
+      }
+    },
+    async subscribe() {
+      await sessionPromise
+      if (realChannel && typeof realChannel.subscribe === 'function') {
+        try {
+          await realChannel.subscribe()
+        } catch (e) {
+          console.error('Error al subscribir el canal real desde proxy:', e)
+        }
+      }
+    }
+  }
+
+  // Reconectar cuando vuelve la conexiÃ³n de red: delegar al realChannel si existe
+  if (typeof window !== 'undefined') {
+    const onlineHandler = async () => {
+      try {
+        await sessionPromise
+        if (realChannel && realChannel.state !== 'joined') {
           console.log('ðŸ”„ [Realtime] Navegador online - intentando reconectar canal...')
-          if (channel._reconnectTimer) clearTimeout(channel._reconnectTimer)
-          channel._reconnectAttempts = 0
-          channel.subscribe()
+          if (realChannel._reconnectTimer) clearTimeout(realChannel._reconnectTimer)
+          realChannel._reconnectAttempts = 0
+          realChannel.subscribe()
         }
       } catch (err) {
         console.error('âŒ [Realtime] Error al reconectar en online event:', err)
@@ -256,11 +290,11 @@ export function listenNotifications({
 
     window.addEventListener('online', onlineHandler)
     // Guardar handler para permitir limpieza si se remueve el canal
-    channel._onlineHandler = onlineHandler
+    fakeChannel._onlineHandler = onlineHandler
   }
 
-  // Retornar el canal para permitir cancelar la suscripciÃ³n
-  return channel
+  // Retornar el fakeChannel (compatible con callers que esperan un objeto canal)
+  return fakeChannel
 }
 
 /**
