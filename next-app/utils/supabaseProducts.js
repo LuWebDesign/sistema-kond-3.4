@@ -248,42 +248,89 @@ export async function updateProducto(id, producto) {
  */
 export async function deleteProducto(id) {
   try {
-    const { error } = await supabase
-      .from('productos')
-      .delete()
-      .eq('id', id);
+    // 1) Revisar si existen referencias en pedidos_catalogo_items
+    const { data: items, error: itemsErr } = await supabase
+      .from('pedidos_catalogo_items')
+      .select('id, pedido_catalogo_id, producto_nombre, producto_precio, pedidos_catalogo(estado)')
+      .eq('producto_id', id);
 
-    if (error) {
-      // Detectar violación de FK (p. ej. pedidos_catalogo_items hace referencia)
-      // Código Postgres 23503 = foreign_key_violation
-      const isFkViolation = error.code === '23503' || (error.details && String(error.details).includes('pedidos_catalogo_items'));
-
-      if (isFkViolation) {
-        // En lugar de eliminar, aplicamos soft-delete: ocultar el producto
-        try {
-          const { data: updated, error: updateErr } = await supabase
-            .from('productos')
-            .update({ hidden_in_productos: true, publicado: false, active: false })
-            .eq('id', id)
-            .select()
-            .single();
-
-          if (updateErr) {
-            // Si falla la actualización, devolvemos el error original para logging
-            throw error;
-          }
-
-          return { error: null, softDeleted: true, data: updated };
-        } catch (innerErr) {
-          console.error('Error aplicando soft-delete tras FK violation:', innerErr);
-          throw error;
-        }
-      }
-
-      throw error;
+    if (itemsErr) {
+      // Fallback: intentar borrado directo y retornar error si falla
+      console.error('Error consultando items de pedidos antes de borrar producto:', itemsErr);
+      const { error } = await supabase.from('productos').delete().eq('id', id);
+      if (error) throw error;
+      return { error: null };
     }
 
-    return { error: null };
+    // Si no hay referencias, borrar físicamente
+    if (!items || items.length === 0) {
+      const { error } = await supabase.from('productos').delete().eq('id', id);
+      if (error) throw error;
+      return { error: null };
+    }
+
+    // Separar items según estado del pedido
+    const toKeep = []; // items pertenecientes a pedidos entregados
+    const toRemove = []; // items pertenecientes a pedidos NO entregados
+
+    for (const it of items) {
+      const estado = (it.pedidos_catalogo && it.pedidos_catalogo[0] && it.pedidos_catalogo[0].estado) || null;
+      if (String(estado).toLowerCase() === 'entregado') {
+        toKeep.push(it.id);
+      } else {
+        toRemove.push(it.id);
+      }
+    }
+
+    // 2) Eliminar items que pertenecen a pedidos NO entregados (permitir borrar referencias temporales)
+    if (toRemove.length > 0) {
+      const { error: delItemsErr } = await supabase
+        .from('pedidos_catalogo_items')
+        .delete()
+        .in('id', toRemove);
+
+      if (delItemsErr) {
+        console.error('Error eliminando items de pedidos no entregados antes de borrar producto:', delItemsErr);
+        throw delItemsErr;
+      }
+    }
+
+    // 3) Para items de pedidos entregados: desvincular producto_id para conservar el registro histórico
+    //    y asegurarnos de que producto_nombre/producto_precio estén poblados.
+    if (toKeep.length > 0) {
+      // Obtener datos actuales del producto para rellenar nombre/precio si es necesario
+      const { data: prod, error: prodErr } = await supabase.from('productos').select('*').eq('id', id).single();
+      if (prodErr) {
+        console.error('Error obteniendo producto para preservar datos históricos:', prodErr);
+        throw prodErr;
+      }
+
+      const updatePayload = {
+        producto_nombre: prod.nombre || undefined,
+        producto_precio: prod.precio_unitario !== undefined ? prod.precio_unitario : undefined,
+        producto_id: null
+      };
+
+      const { error: updateItemsErr } = await supabase
+        .from('pedidos_catalogo_items')
+        .update(updatePayload)
+        .in('id', toKeep);
+
+      if (updateItemsErr) {
+        console.error('Error desvinculando producto en items entregados:', updateItemsErr);
+        throw updateItemsErr;
+      }
+    }
+
+    // 4) Ahora que no hay referencias FK activas, borrar el producto físicamente
+    const { error: finalDelErr } = await supabase.from('productos').delete().eq('id', id);
+    if (finalDelErr) {
+      // Si por alguna razón falla, loguear y devolver error
+      console.error('Error borrando producto después de limpiar referencias:', finalDelErr);
+      throw finalDelErr;
+    }
+
+    return { error: null, deleted: true };
   } catch (error) {
     console.error('Error al eliminar producto:', error);
     return { error: error.message };

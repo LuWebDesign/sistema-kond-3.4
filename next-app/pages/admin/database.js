@@ -353,19 +353,17 @@ function DatabaseComponent() {
         return
       }
 
-      // Si el backend aplicó un soft-delete por FK, actualizar la lista y notificar
-      if (res.softDeleted) {
-        // Actualizar el producto en el estado local (marcar como oculto/no publicado)
-        const updatedProducts = products.map(p => p.id === id ? { ...p, hiddenInProductos: true, publicado: false, active: false, ...((res.data) ? ({ imagen: res.data.imagen_url } ) : {}) } : p)
+      if (res.deleted) {
+        // Eliminación completa: quitar de la lista y notificar
+        const updatedProducts = products.filter(p => p.id !== id)
         setProducts(updatedProducts)
-        alert('El producto está referenciado en pedidos y fue ocultado en su lugar.')
+        alert('Producto eliminado. Se eliminaron referencias en pedidos no entregados y se preservó el historial de pedidos entregados.')
         return
       }
 
-      // Eliminación normal: quitar de la lista
+      // Fallback: recargar lista
       const updatedProducts = products.filter(p => p.id !== id)
       setProducts(updatedProducts)
-
       alert('Producto eliminado exitosamente')
     } catch (error) {
       console.error('Error deleting product:', error)

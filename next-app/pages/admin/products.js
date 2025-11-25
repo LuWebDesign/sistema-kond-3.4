@@ -741,14 +741,29 @@ function ProductsComponent() {
       try {
         const res = await deleteProducto(id)
 
-        if (res.error) {
-          console.error('Error deleting product:', res.error)
-          alert('Error al eliminar el producto')
-          return
-        }
+          if (res.error) {
+            console.error('Error deleting product:', res.error)
+            alert('Error al eliminar el producto')
+            return
+          }
 
-        if (res.softDeleted) {
-          // Producto referenciado: recargar y notificar
+          // Caso exitoso: res.deleted === true
+          if (res.deleted) {
+            // Recargar lista y disparar evento de actualización
+            await loadProducts()
+            try {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('productos:updated'))
+                localStorage.setItem('productos_updated', Date.now().toString())
+              }
+            } catch (e) {}
+
+            // Mensaje informativo: si se limpiaron referencias, el backend ya lo hizo
+            alert('Producto eliminado. Se eliminaron referencias en pedidos no entregados y se preservó el historial de pedidos entregados.')
+            return
+          }
+
+          // Fallback: recargar productos por seguridad
           await loadProducts()
           try {
             if (typeof window !== 'undefined') {
@@ -756,18 +771,6 @@ function ProductsComponent() {
               localStorage.setItem('productos_updated', Date.now().toString())
             }
           } catch (e) {}
-          alert('El producto está referenciado en pedidos y fue ocultado en su lugar.')
-          return
-        }
-
-        // Eliminación normal: recargar
-        await loadProducts()
-        try {
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new Event('productos:updated'))
-            localStorage.setItem('productos_updated', Date.now().toString())
-          }
-        } catch (e) {}
       } catch (error) {
         console.error('Error deleting product:', error)
         alert('Error al eliminar el producto')
