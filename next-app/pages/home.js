@@ -608,33 +608,37 @@ export default function Home() {
             <div className="feature-card">
               <div className="feature-icon">🏭</div>
               <h3>Gestión de Producción</h3>
-              <p>Control completo de productos, medidas, tiempos de fabricación y calendarios de producción.</p>
+              <p>Controla productos, tiempos y procesos: calcula tiempos de fabricación, optimiza órdenes por lote y planifica producción con calendarios reales.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📦</div>
               <h3>Pedidos Inteligentes</h3>
-              <p>Sistema avanzado de pedidos con estados, seguimiento y notificaciones automáticas.</p>
+              <p>Flujo de pedidos con estados claros, seguimiento y notificaciones automáticas para reducir errores y agilizar entregas.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">💰</div>
               <h3>Control Financiero</h3>
-              <p>Registro de movimientos, cálculo de señas, balance en tiempo real y reportes detallados.</p>
+              <p>Calcula señas, costos y márgenes por producto; genera reportes financieros y balances para decisiones rápidas y rentables.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🛒</div>
-              <h3>Catálogo Público</h3>
-              <p>Tienda online para clientes con carrito, métodos de pago y selección de fechas.</p>
+              <h3>Catálogo Público Optimizado</h3>
+              <p>Publica productos con variantes, medidas e imágenes; carrito y checkout por WhatsApp/transferencia con selección de fechas disponible al cliente.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📊</div>
               <h3>Métricas y Análisis</h3>
-              <p>Dashboard con estadísticas de producción, ventas y rendimiento del negocio.</p>
+              <p>Dashboard con métricas clave (tiempo por pedido, tasa de conversión, ingresos por producto) para identificar cuellos de botella y oportunidades.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🔧</div>
-              <h3>Fácil de Usar</h3>
-              <p>Interfaz intuitiva, sin instalaciones complejas. Funciona directamente en el navegador.</p>
+              <h3>Fácil de Usar y Personalizable</h3>
+              <p>Interfaz intuitiva, configuración rápida y APIs para integrar con herramientas existentes. Ideal para talleres y PYMEs sin equipo técnico grande.</p>
             </div>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ color: '#94a3b8', marginBottom: 12 }}>¿Quieres ver cómo funciona en tu negocio? Solicita una demo de 15 minutos.</p>
+            <button className="btn-primary" onClick={() => scrollToSection('contacto')} aria-label="Solicitar demo">Solicitar Demo</button>
           </div>
         </div>
       </section>
