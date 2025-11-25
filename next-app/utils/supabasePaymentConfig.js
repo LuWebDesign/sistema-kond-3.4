@@ -6,14 +6,36 @@ import supabase from './supabaseClient'
  */
 export async function getPaymentConfig() {
   try {
-    const { data, error } = await supabase
-      .from('payment_config')
-      .select('*')
-      .single()
+    // Preferir la API server-side que usa service_role para lectura/escritura segura
+    if (typeof window !== 'undefined') {
+      try {
+        const resp = await fetch('/api/admin/payment-config')
+        if (resp.ok) {
+          const json = await resp.json()
+          return json.config
+        }
+      } catch (e) {
+        console.warn('Fallo al obtener config vía API admin, intentando fallback:', e)
+      }
+    }
 
+    // Fallback: si no hay API disponible o estamos en servidor, usar cliente Supabase o localStorage
+    if (!supabase) {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('paymentConfig')
+        if (raw) return JSON.parse(raw)
+      }
+
+      return {
+        transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
+        whatsapp: { enabled: true, numero: '', mensaje: '' },
+        retiro: { enabled: true, direccion: '', horarios: '' }
+      }
+    }
+
+    const { data, error } = await supabase.from('payment_config').select('*').single()
     if (error) {
-      // Si no existe configuración, retornar configuración por defecto
-      if (error.code === 'PGRST116') {
+      if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
         return {
           transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
           whatsapp: { enabled: true, numero: '', mensaje: '' },
@@ -37,46 +59,89 @@ export async function getPaymentConfig() {
  */
 export async function savePaymentConfig(config) {
   try {
-    // Verificar si ya existe una configuración
-    const { data: existing, error: fetchError } = await supabase
-      .from('payment_config')
-      .select('id')
-      .single()
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError
-    }
-
-    let result
-
-    if (existing) {
-      // Actualizar configuración existente
-      result = await supabase
-        .from('payment_config')
-        .update({
-          config: config,
-          updated_at: new Date().toISOString()
+    // Intentar primero a través de la API server-side (service_role)
+    if (typeof window !== 'undefined') {
+      try {
+        const resp = await fetch('/api/admin/payment-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config })
         })
-        .eq('id', existing.id)
-    } else {
-      // Crear nueva configuración
-      result = await supabase
-        .from('payment_config')
-        .insert([{
-          config: config,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
+
+        if (resp.ok) {
+          const json = await resp.json()
+          if (typeof window !== 'undefined') localStorage.setItem('paymentConfig', JSON.stringify(config))
+              // Emitir evento para que otras partes de la app (checkout) se actualicen inmediatamente
+              try { window.dispatchEvent(new CustomEvent('paymentConfig:updated', { detail: config })) } catch (e) { /* noop */ }
+              return { success: true, data: json }
+        }
+
+        // Si la API respondió con error (500/403/etc), intentar fallback automático:
+        const text = await resp.text()
+        console.warn('API admin devolvió error, intentando fallback. status=', resp.status, text)
+        // Intentar fallback a Supabase directo
+        if (supabase) {
+          try {
+            const payload = { config }
+            const { data, error } = await supabase.from('payment_config').upsert(payload, { returning: 'representation' })
+            if (error) {
+              console.error('Error fallback supabase upsert:', error)
+              return { success: false, error: { message: `Supabase upsert failed: ${error.message || String(error)}`, details: text } }
+            }
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('paymentConfig', JSON.stringify(config))
+              try { window.dispatchEvent(new CustomEvent('paymentConfig:updated', { detail: config })) } catch (e) {}
+            }
+            return { success: true, data }
+          } catch (e) {
+            console.error('Excepción during supabase fallback:', e)
+          }
+        }
+
+        // Último recurso: almacenar en localStorage para ambiente local
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('paymentConfig', JSON.stringify(config))
+            try { window.dispatchEvent(new CustomEvent('paymentConfig:updated', { detail: config })) } catch(e) {}
+            return { success: true, data: { fallback: 'localStorage', details: text } }
+          } catch (e) {
+            console.error('No se pudo guardar en localStorage:', e)
+            return { success: false, error: { message: `API error: ${resp.status}`, details: text } }
+          }
+        }
+
+        return { success: false, error: { message: `API error: ${resp.status}`, details: text } }
+      } catch (e) {
+        console.warn('Fallo al guardar vía API admin, intentando fallback:', e)
+      }
     }
 
-    if (result.error) {
-      throw result.error
+    // Fallback: usar Supabase directo si está disponible
+    if (!supabase) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('paymentConfig', JSON.stringify(config))
+        try { window.dispatchEvent(new CustomEvent('paymentConfig:updated', { detail: config })) } catch (e) { /* noop */ }
+        return { success: true }
+      }
+
+      return { success: false, error: { message: 'No supabase client available' } }
     }
 
-    return true
+    const payload = { config }
+    const { data, error } = await supabase.from('payment_config').upsert(payload, { returning: 'representation' })
+
+    if (error) {
+      console.error('Error al guardar config en Supabase:', error)
+      return { success: false, error }
+    }
+
+    if (typeof window !== 'undefined') localStorage.setItem('paymentConfig', JSON.stringify(config))
+    try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('paymentConfig:updated', { detail: config })) } catch(e) { }
+
+    return { success: true, data }
   } catch (error) {
     console.error('Error al guardar configuración de pago:', error)
-    return false
+    return { success: false, error: error?.message || String(error) }
   }
 }
 

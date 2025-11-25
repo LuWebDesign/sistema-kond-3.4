@@ -387,6 +387,12 @@ function Dashboard() {
                 title="Marketing"
                 subtitle="Promociones"
               />
+              <QuickActionButton
+                href="/admin/payment-config"
+                icon="💳"
+                title="Finalizar Compra"
+                subtitle="Configuración de checkout"
+              />
             </div>
           </DashboardSection>
 

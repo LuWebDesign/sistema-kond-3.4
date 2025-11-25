@@ -21,31 +21,78 @@ COMMENT ON COLUMN payment_config.updated_at IS 'Fecha de última actualización'
 
 -- RLS (Row Level Security) - Permitir lectura pública pero escritura solo para admin
 ALTER TABLE payment_config ENABLE ROW LEVEL SECURITY;
-
 -- Política para lectura pública (necesario para el catálogo público)
-CREATE POLICY "Permitir lectura pública de configuración de pago"
-  ON payment_config
-  FOR SELECT
-  USING (true);
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.policyname = 'Permitir lectura pública de configuración de pago'
+      AND p.tablename = 'payment_config'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Permitir lectura pública de configuración de pago"
+        ON payment_config
+        FOR SELECT
+        USING (true);
+    $policy$;
+  END IF;
+END
+$do$;
 
 -- Política para inserción (solo authenticated users - admin)
-CREATE POLICY "Permitir inserción solo a usuarios autenticados"
-  ON payment_config
-  FOR INSERT
-  WITH CHECK (true);
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.policyname = 'Permitir inserción solo a usuarios autenticados'
+      AND p.tablename = 'payment_config'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Permitir inserción solo a usuarios autenticados"
+        ON payment_config
+        FOR INSERT
+        WITH CHECK (true);
+    $policy$;
+  END IF;
+END
+$do$;
 
 -- Política para actualización (solo authenticated users - admin)
-CREATE POLICY "Permitir actualización solo a usuarios autenticados"
-  ON payment_config
-  FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.policyname = 'Permitir actualización solo a usuarios autenticados'
+      AND p.tablename = 'payment_config'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Permitir actualización solo a usuarios autenticados"
+        ON payment_config
+        FOR UPDATE
+        USING (true)
+        WITH CHECK (true);
+    $policy$;
+  END IF;
+END
+$do$;
 
 -- Política para eliminación (solo authenticated users - admin)
-CREATE POLICY "Permitir eliminación solo a usuarios autenticados"
-  ON payment_config
-  FOR DELETE
-  USING (true);
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.policyname = 'Permitir eliminación solo a usuarios autenticados'
+      AND p.tablename = 'payment_config'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Permitir eliminación solo a usuarios autenticados"
+        ON payment_config
+        FOR DELETE
+        USING (true);
+    $policy$;
+  END IF;
+END
+$do$;
 
 -- Insertar configuración por defecto si la tabla está vacía
 INSERT INTO payment_config (config)

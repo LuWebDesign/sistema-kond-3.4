@@ -54,17 +54,20 @@ function PaymentConfigAdmin() {
     setIsSaving(true)
     setSaveMessage('')
     try {
-      const success = await savePaymentConfig(paymentConfig)
-      if (success) {
-        localStorage.setItem('paymentConfig', JSON.stringify(paymentConfig))
+      const result = await savePaymentConfig(paymentConfig)
+      if (result && result.success) {
+        // keep local copy as backup
+        if (typeof window !== 'undefined') localStorage.setItem('paymentConfig', JSON.stringify(paymentConfig))
         setSaveMessage('✅ Configuración guardada exitosamente')
         setTimeout(() => setSaveMessage(''), 3000)
       } else {
-        setSaveMessage('❌ Error al guardar la configuración')
+        const errObj = result?.error
+        const errMsg = errObj?.message || (typeof errObj === 'string' ? errObj : JSON.stringify(errObj)) || 'Error al guardar la configuración'
+        setSaveMessage(`❌ ${errMsg}`)
       }
     } catch (error) {
       console.error('Error al guardar configuración:', error)
-      setSaveMessage('❌ Error al guardar la configuración')
+      setSaveMessage(`❌ ${error?.message || String(error)}`)
     } finally {
       setIsSaving(false)
     }
@@ -110,8 +113,22 @@ function PaymentConfigAdmin() {
                 <h3 style={{ margin: 0 }}>🏦 Transferencia Bancaria</h3>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Datos de cuenta para recibir transferencias</p>
               </div>
-              <div>
-                <input type="checkbox" checked={paymentConfig.transferencia.enabled} onChange={(e) => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, enabled: e.target.checked } }))} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, enabled: !prev.transferencia.enabled } }))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid var(--border-color)',
+                    background: paymentConfig.transferencia.enabled ? 'rgba(16,185,129,0.08)' : 'transparent',
+                    color: paymentConfig.transferencia.enabled ? 'var(--color-success)' : 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {paymentConfig.transferencia.enabled ? 'Visible' : 'No visible'}
+                </button>
+                <button type="button" onClick={() => setIsTransferenciaCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)' }}>{isTransferenciaCollapsed ? 'Editar' : 'Ocultar'}</button>
               </div>
             </div>
 
@@ -119,6 +136,8 @@ function PaymentConfigAdmin() {
               <div style={{ marginTop: 12 }}>
                 <input placeholder="Alias" value={paymentConfig.transferencia.alias} onChange={(e) => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, alias: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8 }} />
                 <input placeholder="CBU/CVU" value={paymentConfig.transferencia.cbu} onChange={(e) => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, cbu: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
+                <input placeholder="Titular" value={paymentConfig.transferencia.titular} onChange={(e) => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, titular: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
+                <input placeholder="Banco" value={paymentConfig.transferencia.banco} onChange={(e) => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, banco: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
               </div>
             )}
           </div>
@@ -129,15 +148,61 @@ function PaymentConfigAdmin() {
                 <h3 style={{ margin: 0 }}>💬 WhatsApp</h3>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Contacto directo</p>
               </div>
-              <div>
-                <input type="checkbox" checked={paymentConfig.whatsapp.enabled} onChange={(e) => setPaymentConfig(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: e.target.checked } }))} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: !prev.whatsapp.enabled } }))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid var(--border-color)',
+                    background: paymentConfig.whatsapp.enabled ? 'rgba(16,185,129,0.08)' : 'transparent',
+                    color: paymentConfig.whatsapp.enabled ? 'var(--color-success)' : 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {paymentConfig.whatsapp.enabled ? 'Visible' : 'No visible'}
+                </button>
+                <button type="button" onClick={() => setIsWhatsappCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)' }}>{isWhatsappCollapsed ? 'Editar' : 'Ocultar'}</button>
               </div>
             </div>
-
             {!isWhatsappCollapsed && (
               <div style={{ marginTop: 12 }}>
                 <input placeholder="Número" value={paymentConfig.whatsapp.numero} onChange={(e) => setPaymentConfig(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, numero: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8 }} />
                 <textarea placeholder="Mensaje" value={paymentConfig.whatsapp.mensaje} onChange={(e) => setPaymentConfig(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, mensaje: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>📦 Retiro</h3>
+                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Datos para retiro en local</p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, enabled: !prev.retiro.enabled } }))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid var(--border-color)',
+                    background: paymentConfig.retiro.enabled ? 'rgba(16,185,129,0.08)' : 'transparent',
+                    color: paymentConfig.retiro.enabled ? 'var(--color-success)' : 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {paymentConfig.retiro.enabled ? 'Visible' : 'No visible'}
+                </button>
+                <button type="button" onClick={() => setIsRetiroCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)' }}>{isRetiroCollapsed ? 'Editar' : 'Ocultar'}</button>
+              </div>
+            </div>
+
+            {!isRetiroCollapsed && (
+              <div style={{ marginTop: 12 }}>
+                <input placeholder="Dirección" value={paymentConfig.retiro.direccion} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, direccion: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8 }} />
+                <input placeholder="Horarios" value={paymentConfig.retiro.horarios} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, horarios: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
               </div>
             )}
           </div>

@@ -37,6 +37,7 @@ export default function Catalog() {
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
   const [currentUserState, setCurrentUserState] = useState(null)
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
+  const [deliveryMethod, setDeliveryMethod] = useState('retiro') // 'envio' | 'retiro' - por defecto 'retiro'
   // imageModal: { productId: Number, index: Number } or null
   const [imageModal, setImageModal] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
@@ -322,6 +323,8 @@ export default function Catalog() {
             </div>
           </div>
 
+            
+
           <button onClick={() => { router.push('/catalog/mi-carrito') }} style={{ position: 'relative', background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 24px', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
             🛒 Carrito
             {totalItems > 0 && (
@@ -493,6 +496,9 @@ export default function Catalog() {
             mode={checkoutMode}
             currentUser={currentUserState}
             paymentConfig={paymentConfig}
+            setPaymentConfig={setPaymentConfig}
+            deliveryMethod={deliveryMethod}
+            setDeliveryMethod={setDeliveryMethod}
             onProfileUpdate={handleProfileUpdated}
           />
         )}
@@ -540,7 +546,6 @@ export default function Catalog() {
     </PublicLayout>
   )
 }
-
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
 const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [] }) {
   const router = useRouter()
@@ -1243,10 +1248,13 @@ function CheckoutModal({
   mode = 'order', // 'order' or 'edit'
   currentUser,
   paymentConfig,
+  setPaymentConfig,
+  deliveryMethod,
+  setDeliveryMethod,
   onProfileUpdate
 }) {
-  const [paymentMethod, setPaymentMethod] = useState('whatsapp')
-  const [deliveryMethod, setDeliveryMethod] = useState('retiro') // 'envio' | 'retiro' - por defecto 'retiro'
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const router = useRouter()
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
   const [customerData, setCustomerData] = useState(() => {
     const u = currentUser || getCurrentUser()
@@ -1292,28 +1300,68 @@ function CheckoutModal({
     
     if (isProfileComplete && paymentSectionRef.current) {
       // Esperar un tick para asegurar que el DOM esté renderizado
-      setTimeout(() => {
-        paymentSectionRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        })
-      }, 100)
-    }
-  }, [customerData.name, customerData.phone])
+        const loadPaymentConfig = async () => {
+          try {
+            const config = await getPaymentConfig()
+            if (config) {
+              setPaymentConfig(config)
+              // elegir método por defecto según lo disponible
+              if (!paymentMethod) {
+                if (config.whatsapp?.enabled) setPaymentMethod('whatsapp')
+                else if (config.transferencia?.enabled) setPaymentMethod('transferencia')
+                else if (config.retiro?.enabled) setPaymentMethod('retiro')
+                else setPaymentMethod('')
+              }
+            }
+          } catch (error) {
+            console.error('Error al cargar configuración de pago:', error)
+            try {
+              const localConfig = localStorage.getItem('paymentConfig')
+              if (localConfig) {
+                const cfg = JSON.parse(localConfig)
+                setPaymentConfig(cfg)
+                if (!paymentMethod) {
+                  if (cfg.whatsapp?.enabled) setPaymentMethod('whatsapp')
+                  else if (cfg.transferencia?.enabled) setPaymentMethod('transferencia')
+                  else if (cfg.retiro?.enabled) setPaymentMethod('retiro')
+                  else setPaymentMethod('')
+                }
+              }
+            } catch (e) {
+              console.error('Error al cargar configuración local:', e)
+            }
+          }
+        }
 
-  // Sincronizar datos cuando cambia currentUser prop
-  useEffect(() => {
-    if (currentUser) {
-      setCustomerData({
-        name: currentUser.nombre || currentUser.name || currentUser.email || '',
-        apellido: currentUser.apellido || currentUser.lastName || '',
-        phone: currentUser.telefono || currentUser.phone || currentUser.telefonoMovil || '',
-        email: currentUser.email || currentUser.correo || '',
-        address: [currentUser.direccion || currentUser.address || '', currentUser.localidad || currentUser.city || '', currentUser.cp || currentUser.zip || '', currentUser.provincia || currentUser.state || ''].filter(Boolean).join(', ')
-      })
-    }
-  }, [currentUser])
+        loadPaymentConfig()
 
+        // Escuchar actualizaciones emitidas por el admin al guardar
+        const onConfigUpdated = async (e) => {
+          try {
+            const cfg = e?.detail || (await getPaymentConfig())
+            if (cfg) {
+              setPaymentConfig(cfg)
+              // si el método seleccionado actualmente quedó deshabilitado, elegir uno disponible
+              setPaymentMethod((prev) => {
+                if (prev && cfg[prev]?.enabled) return prev
+                if (cfg.whatsapp?.enabled) return 'whatsapp'
+                if (cfg.transferencia?.enabled) return 'transferencia'
+                if (cfg.retiro?.enabled) return 'retiro'
+                return ''
+              })
+            }
+          } catch (err) {
+            console.error('Error al manejar paymentConfig:updated', err)
+          }
+        }
+
+        window.addEventListener('paymentConfig:updated', onConfigUpdated)
+        // cleanup: remover listener cuando el effect padre se limpie
+        const __remove_payment_listener = () => window.removeEventListener('paymentConfig:updated', onConfigUpdated)
+        // registrar cleanup en el efecto padre devolviendo la función
+        return __remove_payment_listener
+      }
+  }, [])
   // Auto-colapsar formulario si los datos están completos (solo en carga inicial)
   useEffect(() => {
     const isProfileComplete = customerData.name && customerData.phone
@@ -1609,8 +1657,13 @@ function CheckoutModal({
           <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>
-              <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia (Seña 50%)</button>
+              {paymentConfig?.whatsapp?.enabled && (
+                <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>
+              )}
+
+              {paymentConfig?.transferencia?.enabled && (
+                <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia (Seña 50%)</button>
+              )}
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
             {paymentMethod === 'whatsapp' && (
@@ -1622,12 +1675,23 @@ function CheckoutModal({
               </div>
             )}
 
-            {/* Bloque independiente de información sobre Transferencia (solo visible si el usuario selecciona Transferencia) */}
-            {(paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && (
+            {/* Bloque independiente de información sobre Transferencia (solo visible si el método Transferencia está habilitado y el usuario selecciona Transferencia o WhatsApp) */}
+            {paymentConfig?.transferencia?.enabled && (paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>ℹ️ Información sobre Transferencia</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
                   Nota: si elegís el método <strong>Transferencia</strong> y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.
+                </div>
+              </div>
+            )}
+
+            {/* Bloque informativo para Envío (solo dentro del modal cuando seleccionó 'Con envío') */}
+            {deliveryMethod === 'envio' && (
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>🚚 Completa tus datos de envío</div>
+                <div>Para facilitar la cotización y coordinación del envío, por favor completa tu dirección, localidad y código postal en <strong>Mi Cuenta → Información de perfil</strong>. Con esos datos podremos calcular el costo y tiempo de entrega con mayor precisión.</div>
+                <div style={{ marginTop: 8 }}>
+                  <button onClick={() => router.push('/mi-cuenta')} style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--accent-blue)', color: '#fff', border: 'none', cursor: 'pointer' }}>Ir a Mi Cuenta</button>
                 </div>
               </div>
             )}
