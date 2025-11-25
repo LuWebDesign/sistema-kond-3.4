@@ -13,6 +13,7 @@ export default function Home() {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Memoizar la función de verificación de sesión
   const checkSession = useCallback(() => {
@@ -67,8 +68,11 @@ export default function Home() {
     e.preventDefault();
     const formData = new FormData(e.target);
     const name = formData.get('name');
-    alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
+    // Mostrar mensaje inline en lugar de alert para mejor UX
+    setSuccessMessage(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
     e.target.reset();
+    // Borrar el mensaje después de unos segundos
+    setTimeout(() => setSuccessMessage(''), 8000);
   }, []);
 
   // Si no está hidratado, mostrar loading consistente
@@ -128,9 +132,25 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>KOND - Sistema de Gestión de Producción</title>
-        <meta name="description" content="Sistema integral para gestión de producción láser, pedidos, finanzas y catálogo público. Optimiza tu negocio con KOND." />
+        <title>KOND — Gestión para talleres y producción por encargo</title>
+        <meta name="description" content="Reduce tiempos de producción y errores. Gestiona pedidos, catálogo y finanzas desde una única plataforma. Prueba 14 días gratis." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Open Graph / Social */}
+        <meta property="og:title" content="KOND — Gestión para talleres y producción por encargo" />
+        <meta property="og:description" content="Reduce tiempos de producción y errores. Gestiona pedidos, catálogo y finanzas desde una única plataforma." />
+        <meta property="og:image" content="/og-home.png" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+
+        {/* JSON-LD básico */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "KOND",
+          "description": "Sistema integral para gestión de producción, pedidos y catálogo público.",
+          "applicationCategory": "BusinessApplication",
+          "url": typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'
+        }) }} />
       </Head>
 
       <style jsx global>{`
@@ -571,11 +591,11 @@ export default function Home() {
       {/* Hero Section */}
       <section id="inicio" className="hero">
         <div className="container">
-          <h1>Sistema KOND</h1>
-          <p>Plataforma integral para gestión de producción láser, control de pedidos, finanzas y catálogo público. Optimiza tu negocio con herramientas profesionales.</p>
+          <h1>KOND — Gestión para talleres y producción por encargo</h1>
+          <p>Reduce tiempos de producción y errores. Gestiona pedidos, catálogo y finanzas desde una única plataforma. Prueba 14 días gratis, sin tarjeta.</p>
           <div className="cta-buttons">
-            <Link href="/catalog" className="btn-primary">Ver Catálogo</Link>
-            <button className="btn-secondary" onClick={() => scrollToSection('sobre')}>Conocer Más</button>
+            <Link href="/catalog" className="btn-primary" aria-label="Ver catálogo">Probar 14 días gratis</Link>
+            <button className="btn-secondary" onClick={() => scrollToSection('sobre')} aria-label="Conocer más">Conocer Más</button>
           </div>
         </div>
       </section>
@@ -681,8 +701,8 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte por email</div>
                 <div className="feature-item">✅ 1 usuario administrador</div>
               </div>
-              <button className="pricing-btn" onClick={() => router.push('/admin/login')}>
-                Comenzar Gratis
+              <button className="pricing-btn" onClick={() => router.push('/admin/login')} aria-label="Crear cuenta plan básico">
+                Crear cuenta (14 días gratis)
               </button>
             </div>
 
@@ -706,8 +726,8 @@ export default function Home() {
                 <div className="feature-item">✅ Soporte prioritario</div>
                 <div className="feature-item">✅ API para integraciones</div>
               </div>
-              <button className="pricing-btn featured-btn" onClick={() => router.push('/admin/login')}>
-                Comenzar Ahora
+              <button className="pricing-btn featured-btn" onClick={() => router.push('/admin/login')} aria-label="Comenzar prueba profesional">
+                Comenzar prueba
               </button>
             </div>
 
@@ -730,7 +750,7 @@ export default function Home() {
                 <div className="feature-item">✅ Consultoría personalizada</div>
                 <div className="feature-item">✅ Backup y recuperación garantizada</div>
               </div>
-              <button className="pricing-btn" onClick={() => router.push('/admin/login')}>
+              <button className="pricing-btn" onClick={() => router.push('/admin/login')} aria-label="Contactar ventas">
                 Contactar Ventas
               </button>
             </div>
