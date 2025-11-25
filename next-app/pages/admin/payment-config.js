@@ -78,6 +78,16 @@ function PaymentConfigAdmin() {
     )
   }
 
+  const saveMessageStyle = {
+    padding: '12px 16px',
+    borderRadius: '8px',
+    marginBottom: '24px',
+    background: saveMessage.includes('✅') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+    border: saveMessage.includes('✅') ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+    color: saveMessage.includes('✅') ? '#10b981' : '#ef4444',
+    fontWeight: 500,
+  }
+
   return (
     <Layout title="Configuración de Métodos de Pago - Sistema KOND">
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -87,7 +97,7 @@ function PaymentConfigAdmin() {
         </div>
 
         {saveMessage && (
-          <div style={{ padding: '12px 16px', borderRadius: '8px', marginBottom: '24px', background: saveMessage.includes('✅') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${saveMessage.includes('✅') ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)}`, color: saveMessage.includes('✅') ? '#10b981' : '#ef4444', fontWeight: 500 }}>
+          <div style={saveMessageStyle}>
             {saveMessage}
           </div>
         )}
