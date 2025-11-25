@@ -182,7 +182,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               🎯 Marketing
             </Link>
 
-            <Link href="/payment-config" style={linkStyle}>
+            <Link href="/admin/payment-config" style={linkStyle}>
               💳 Finalizar Compra
             </Link>
             

@@ -1,23 +1,15 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getPaymentConfig, savePaymentConfig } from '../utils/supabasePaymentConfig'
 
-function PaymentConfig() {
+export default function PaymentConfigRedirect() {
   const router = useRouter()
-  const [paymentConfig, setPaymentConfig] = useState({
-    transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
-    whatsapp: { enabled: true, numero: '', mensaje: '' },
-    retiro: { enabled: true, direccion: '', horarios: '' }
-  })
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [saveMessage, setSaveMessage] = useState('')
-  
-  // Estados de colapso para cada sección
-  const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(false)
-  const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(false)
+  useEffect(() => {
+    // Redirigir al editor dentro del panel admin
+    router.replace('/admin/payment-config')
+  }, [router])
+
+  return null
+}
   const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(false)
 
   // Cargar configuración desde Supabase al montar
