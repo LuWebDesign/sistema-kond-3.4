@@ -649,11 +649,20 @@ export default function Home() {
           <div className="about-content">
             <div>
               <h2>Sobre el Proyecto</h2>
-              <p>KOND es un sistema de gestión integral diseñado específicamente para negocios de corte láser y producción personalizada.</p>
-              <p>Desarrollado con tecnologías web modernas, combina la simplicidad de uso con funcionalidades avanzadas para optimizar todos los aspectos de tu negocio.</p>
-              <p>Desde el control de inventario hasta la gestión financiera, KOND centraliza todas las operaciones en una plataforma unificada y accesible.</p>
+              <p><strong>KOND</strong> es una plataforma pensada para talleres y pequeñas industrias que producen por encargo: centraliza pedidos, planificación de producción y control financiero en una única interfaz fácil de usar.</p>
+              <p>Resolvemos los problemas reales de los talleres: tiempos mal calculados, pedidos que se solapan y falta de visibilidad sobre costos. Con KOND reduces tiempos de producción, minimizas errores y mejoras la comunicación con clientes.</p>
+              <ul style={{ color: '#94a3b8', marginTop: 12 }}>
+                <li><strong>Planificación real:</strong> calendario de entregas y cálculo automático de tiempos por producto.</li>
+                <li><strong>Operación centralizada:</strong> catálogo público, carrito, gestión de pedidos y control de inventario en un solo lugar.</li>
+                <li><strong>Flexibilidad comercial:</strong> checkout por WhatsApp/transferencia o retiro en local, adaptado a tu flujo de trabajo.</li>
+                <li><strong>Escala a tu ritmo:</strong> funciona sin servidor para pruebas y se integra con Supabase para producción y backups.</li>
+              </ul>
+              <p style={{ marginTop: 12 }}>¿Quieres comprobarlo en tu taller? Solicita una demo gratuita de 15 minutos y te mostramos cómo adaptar KOND a tus procesos.</p>
+              <div style={{ marginTop: 12 }}>
+                <button className="btn-primary" onClick={() => scrollToSection('contacto')} aria-label="Solicitar demo desde sección sobre">Solicitar Demo (15 min)</button>
+              </div>
             </div>
-            <div className="about-image">
+            <div className="about-image" role="img" aria-label="Gráfica de crecimiento y métricas">
               📈
             </div>
           </div>
