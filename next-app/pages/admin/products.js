@@ -738,22 +738,40 @@ function ProductsComponent() {
   // Eliminar producto
   const handleDeleteProduct = async (id) => {
     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      const { error } = await deleteProducto(id)
-      
-      if (error) {
+      try {
+        const res = await deleteProducto(id)
+
+        if (res.error) {
+          console.error('Error deleting product:', res.error)
+          alert('Error al eliminar el producto')
+          return
+        }
+
+        if (res.softDeleted) {
+          // Producto referenciado: recargar y notificar
+          await loadProducts()
+          try {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('productos:updated'))
+              localStorage.setItem('productos_updated', Date.now().toString())
+            }
+          } catch (e) {}
+          alert('El producto está referenciado en pedidos y fue ocultado en su lugar.')
+          return
+        }
+
+        // Eliminación normal: recargar
+        await loadProducts()
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('productos:updated'))
+            localStorage.setItem('productos_updated', Date.now().toString())
+          }
+        } catch (e) {}
+      } catch (error) {
         console.error('Error deleting product:', error)
         alert('Error al eliminar el producto')
-        return
       }
-
-      // Recargar productos
-      await loadProducts()
-    try {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('productos:updated'))
-        localStorage.setItem('productos_updated', Date.now().toString())
-      }
-    } catch (e) {}
     }
   }
 

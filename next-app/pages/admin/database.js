@@ -345,18 +345,27 @@ function DatabaseComponent() {
     }
     
     try {
-      const { error } = await deleteProducto(id)
-      
-      if (error) {
-        console.error('Error deleting product:', error)
+      const res = await deleteProducto(id)
+
+      if (res.error) {
+        console.error('Error deleting product:', res.error)
         alert('Error al eliminar el producto')
         return
       }
-      
-      // Actualizar estado local
+
+      // Si el backend aplicó un soft-delete por FK, actualizar la lista y notificar
+      if (res.softDeleted) {
+        // Actualizar el producto en el estado local (marcar como oculto/no publicado)
+        const updatedProducts = products.map(p => p.id === id ? { ...p, hiddenInProductos: true, publicado: false, active: false, ...((res.data) ? ({ imagen: res.data.imagen_url } ) : {}) } : p)
+        setProducts(updatedProducts)
+        alert('El producto está referenciado en pedidos y fue ocultado en su lugar.')
+        return
+      }
+
+      // Eliminación normal: quitar de la lista
       const updatedProducts = products.filter(p => p.id !== id)
       setProducts(updatedProducts)
-      
+
       alert('Producto eliminado exitosamente')
     } catch (error) {
       console.error('Error deleting product:', error)

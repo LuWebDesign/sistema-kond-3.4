@@ -253,7 +253,36 @@ export async function deleteProducto(id) {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      // Detectar violación de FK (p. ej. pedidos_catalogo_items hace referencia)
+      // Código Postgres 23503 = foreign_key_violation
+      const isFkViolation = error.code === '23503' || (error.details && String(error.details).includes('pedidos_catalogo_items'));
+
+      if (isFkViolation) {
+        // En lugar de eliminar, aplicamos soft-delete: ocultar el producto
+        try {
+          const { data: updated, error: updateErr } = await supabase
+            .from('productos')
+            .update({ hidden_in_productos: true, publicado: false, active: false })
+            .eq('id', id)
+            .select()
+            .single();
+
+          if (updateErr) {
+            // Si falla la actualización, devolvemos el error original para logging
+            throw error;
+          }
+
+          return { error: null, softDeleted: true, data: updated };
+        } catch (innerErr) {
+          console.error('Error aplicando soft-delete tras FK violation:', innerErr);
+          throw error;
+        }
+      }
+
+      throw error;
+    }
+
     return { error: null };
   } catch (error) {
     console.error('Error al eliminar producto:', error);
