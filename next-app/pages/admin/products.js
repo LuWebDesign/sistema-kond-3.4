@@ -146,62 +146,7 @@ function ProductsComponent() {
   // Obtener categorías únicas de los productos existentes
   const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort()
 
-  // Función para actualizar campos calculados
-  const updateCalculatedFields = useCallback(() => {
-    const { unidades, unidadesPorPlaca, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
-    const { isUsoPlacasManual, isCostoMaterialManual, isPrecioUnitarioManual } = calculatedFields
-
-    let newFields = { ...calculatedFields }
-
-    // Calcular uso de placas automáticamente si no es manual
-    if (!isUsoPlacasManual) {
-      const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
-      setFormData(prev => {
-        if (Number(prev.usoPlacas) === Number(usoPlacas)) return prev
-        return { ...prev, usoPlacas }
-      })
-    }
-
-    // Calcular costo de material automáticamente si no es manual
-    if (!isCostoMaterialManual) {
-      const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
-      const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
-      setFormData(prev => {
-        if (Number(prev.costoMaterial) === Number(costoMaterialRounded)) return prev
-        return { ...prev, costoMaterial: costoMaterialRounded }
-      })
-    }
-
-    // Calcular precio/margen según modo seleccionado
-    if (!isPrecioUnitarioManual) {
-      // Modo auto: derivar precio desde margen y costo material
-      const precioUnitarioCalc = costoMaterial * (1 + margenMaterial / 100)
-      const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
-      setFormData(prev => {
-        if (Number(prev.precioUnitario) === Number(precioRounded)) return prev
-        return { ...prev, precioUnitario: precioRounded }
-      })
-    } else {
-      // Modo manual de precio: derivar margen desde precio y costo material
-      const margenDesdePrecio = costoMaterial > 0 ? ((precioUnitario / costoMaterial) - 1) * 100 : 0
-      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
-      setFormData(prev => {
-        if (Number(prev.margenMaterial) === Number(margenRedondeado)) return prev
-        return { ...prev, margenMaterial: margenRedondeado }
-      })
-    }
-
-    // Calcular tiempo total
-    const tiempoSegundos = timeToSeconds(tiempoUnitario || '00:00:30')
-    const tiempoTotalSegundos = tiempoSegundos * unidades
-    newFields.tiempoTotal = secondsToTime(tiempoTotalSegundos)
-
-  // Calcular precio por minuto (siempre coherente con el precio actual)
-  const tiempoMinutos = tiempoSegundos / 60
-  newFields.precioPorMinuto = tiempoMinutos > 0 ? precioUnitario / tiempoMinutos : 0
-
-    setCalculatedFields(newFields)
-  }, [formData, calculatedFields])
+  // (updateCalculatedFields eliminado: lógica inlineada en el useEffect de abajo)
 
   // Efecto para actualizar costos cuando cambian los materiales
   useEffect(() => {
@@ -579,15 +524,63 @@ function ProductsComponent() {
     }))
   }
 
-  // Ejecutar la actualización de campos calculados cuando cambien inputs relevantes
+  // Actualizar campos calculados cuando cambien inputs relevantes (una sola pasada, sin cascada)
   useEffect(() => {
-    // Llamamos a la función que actualiza campos calculados
     try {
-      updateCalculatedFields()
+      const { unidades, unidadesPorPlaca, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
+      const { isUsoPlacasManual, isCostoMaterialManual, isPrecioUnitarioManual } = calculatedFields
+
+      const updates = {}
+
+      // 1. Calcular uso de placas
+      if (!isUsoPlacasManual) {
+        const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
+        if (Number(formData.usoPlacas) !== Number(usoPlacas)) updates.usoPlacas = usoPlacas
+      }
+
+      // 2. Calcular costo de material y retener el valor efectivo para el paso siguiente
+      let costoMaterialEfectivo = costoMaterial
+      if (!isCostoMaterialManual) {
+        const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
+        if (Number(costoMaterial) !== costoMaterialRounded) updates.costoMaterial = costoMaterialRounded
+        costoMaterialEfectivo = costoMaterialRounded
+      }
+
+      // 3. Calcular precio/margen usando costoMaterialEfectivo (evita la segunda pasada)
+      if (!isPrecioUnitarioManual) {
+        // Modo auto: derivar precio desde margen y costo material
+        const precioUnitarioCalc = costoMaterialEfectivo * (1 + margenMaterial / 100)
+        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+        if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
+      } else {
+        // Modo manual de precio: derivar margen desde precio y costo material
+        const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0
+        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+        if (Number(margenMaterial) !== margenRedondeado) updates.margenMaterial = margenRedondeado
+      }
+
+      // Aplicar todos los cambios de formData en una sola llamada
+      if (Object.keys(updates).length > 0) {
+        setFormData(prev => ({ ...prev, ...updates }))
+      }
+
+      // 4. Calcular tiempo total y precio por minuto
+      const tiempoSegundos = timeToSeconds(tiempoUnitario || '00:00:30')
+      const tiempoTotalSegundos = tiempoSegundos * unidades
+      const tiempoMinutos = tiempoSegundos / 60
+      const precioEfectivo = updates.precioUnitario !== undefined ? updates.precioUnitario : precioUnitario
+      const newTiempoTotal = secondsToTime(tiempoTotalSegundos)
+      const newPrecioPorMinuto = tiempoMinutos > 0 ? precioEfectivo / tiempoMinutos : 0
+
+      setCalculatedFields(prev => {
+        if (prev.tiempoTotal === newTiempoTotal && prev.precioPorMinuto === newPrecioPorMinuto) return prev
+        return { ...prev, tiempoTotal: newTiempoTotal, precioPorMinuto: newPrecioPorMinuto }
+      })
     } catch (e) {
       console.error('Error al actualizar campos calculados:', e)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.tiempoUnitario, formData.unidades, formData.unidadesPorPlaca, formData.costoPlaca, formData.costoMaterial, formData.margenMaterial, formData.precioUnitario, calculatedFields.isUsoPlacasManual, calculatedFields.isCostoMaterialManual, calculatedFields.isPrecioUnitarioManual])
 
   // Manejar Enter para pasar al siguiente campo
