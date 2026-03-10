@@ -201,6 +201,33 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             <Link href="/mi-cuenta" style={linkStyle}>
               👤 Mi Cuenta
             </Link>
+            <div style={{ marginTop: 8 }}>
+              {userInfo && (
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: 'transparent',
+                    color: 'var(--accent-red)',
+                    border: '1.5px solid var(--accent-red)',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-red)11' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  🚪 Cerrar Sesión
+                </button>
+              )}
+            </div>
           </nav>
 
           {/* Theme Toggle */}
@@ -324,34 +351,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               )}
             </div>
 
-            {/* Botón de cerrar sesión */}
-            {userInfo && (
-              <button
-  onClick={handleLogout}
-  style={{
-    padding: '8px 16px',
-    background: 'transparent',
-    color: '#ef4444',
-    border: '1.5px solid #ef4444',
-    borderRadius: '8px',
-    fontSize: '0.85rem',
-    cursor: 'pointer',
-    fontWeight: '500',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    transition: 'all 0.2s ease'
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = '#ef444422'
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = 'transparent'
-  }}
->
-  🚪 Cerrar Sesión
-</button>
-)}
             {/* Notificaciones */}
             <NotificationsButton target="admin" />
           </div>
