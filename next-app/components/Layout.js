@@ -327,32 +327,31 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             {/* Botón de cerrar sesión */}
             {userInfo && (
               <button
-                onClick={handleLogout}
-                style={{
-                  padding: '8px 16px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#dc2626'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#ef4444'
-                }}
-              >
-                🚪 Cerrar Sesión
-              </button>
-            )}
-
+  onClick={handleLogout}
+  style={{
+    padding: '8px 16px',
+    background: 'transparent',
+    color: '#ef4444',
+    border: '1.5px solid #ef4444',
+    borderRadius: '8px',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'all 0.2s ease'
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = '#ef444422'
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = 'transparent'
+  }}
+>
+  🚪 Cerrar Sesión
+</button>
+)}
             {/* Notificaciones */}
             <NotificationsButton target="admin" />
           </div>
