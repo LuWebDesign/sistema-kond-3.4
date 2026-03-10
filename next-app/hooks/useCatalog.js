@@ -91,6 +91,22 @@ export function useProducts() {
         const costoPlaca = p.costo_placa || 0
         const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
         
+        // Normalizar URLs de imágenes: si el valor es una ruta en storage (p.ej. "productos/xxx.jpg")
+        // convertirla a publicUrl usando Supabase Storage. Si ya es una URL absoluta o data:, mantenerla.
+        const imagenesPublic = (p.imagenes_urls || []).map(img => {
+          try {
+            if (!img) return ''
+            if (typeof img !== 'string') return ''
+            if (img.startsWith('http') || img.startsWith('data:')) return img
+            // Asumimos que es una ruta en el bucket, p.ej. 'productos/12345.jpg'
+            const { data: urlData } = supabase.storage.from('productos-imagenes').getPublicUrl(img)
+            return (urlData && (urlData.publicUrl || urlData.publicURL || urlData.public_url)) ? (urlData.publicUrl || urlData.publicURL || urlData.public_url) : img
+          } catch (err) {
+            console.warn('Error convirtiendo ruta de imagen a publicUrl', img, err)
+            return img
+          }
+        })
+
         return {
           id: p.id,
           nombre: p.nombre,
@@ -114,8 +130,8 @@ export function useProducts() {
           stock: p.stock || 0,
           unidades: p.unidades || 1,
           ensamble: p.ensamble || 'Sin ensamble',
-          imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
-          imagenes: p.imagenes_urls || [],
+          imagen: (imagenesPublic && imagenesPublic.length > 0) ? imagenesPublic[0] : '',
+          imagenes: imagenesPublic || [],
           fechaCreacion: p.created_at || new Date().toISOString()
         }
       })
