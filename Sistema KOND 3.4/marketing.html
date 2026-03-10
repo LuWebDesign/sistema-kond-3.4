@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KOND - Marketing</title>
+  <meta name="description" content="Central de Promociones y Cupones">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/marketing.css">
+</head>
+<body>
+  <header class="mk-header">
+    <div class="mk-container mk-header-content">
+      <h1 class="mk-title">Marketing</h1>
+      <nav class="mk-breadcrumbs" aria-label="breadcrumb">
+        <span>Inicio</span>
+        <span class="sep">/</span>
+        <span class="current">Marketing</span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mk-container">
+    <section class="mk-section">
+      <div class="mk-section-head">
+        <h2 class="mk-section-title">Marketing</h2>
+        
+        <!-- Pestañas -->
+        <div class="mk-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #374151; padding-bottom: 8px;">
+          <button id="btnTabPromos" class="mk-tab-btn active" style="padding: 8px 16px; background: none; border: none; color: #e5e7eb; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;">
+            🎯 Promociones
+          </button>
+          <button id="btnTabCoupons" class="mk-tab-btn" style="padding: 8px 16px; background: none; border: none; color: #9ca3af; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;">
+            🎫 Cupones
+          </button>
+        </div>
+
+        <div class="mk-toolbar" role="toolbar" aria-label="Acciones de marketing">
+          <div class="mk-search">
+            <input id="mkSearchInput" type="search" class="mk-input" placeholder="Buscar..." aria-label="Buscar">
+          </div>
+          <div class="mk-actions">
+            <button id="btnNuevaPromo" class="mk-btn mk-btn-primary">+ Nueva promoción</button>
+            <button id="btnNuevoCupon" class="mk-btn mk-btn-primary" style="display: none;">+ Nuevo cupón</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mkPromosContainer" class="mk-promos" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+        <!-- Render dinámico -->
+      </div>
+
+      <div id="mkEmptyState" class="mk-empty">
+        <div class="mk-empty-illust" aria-hidden="true"></div>
+        <h3>Sin promociones aún</h3>
+        <p>Crea tu primera campaña o descuento desde "Nueva promoción".</p>
+        <div class="mk-empty-actions">
+          <button class="mk-btn mk-btn-primary" id="btnEmptyNew">Crear promoción</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mk-footer mk-container">
+    <small>Marketing  Gestión de promociones y cupones</small>
+  </footer>
+
+  <style>
+    .mk-tab-btn.active {
+      color: #60a5fa !important;
+      border-bottom-color: #60a5fa !important;
+    }
+    .mk-tab-btn:hover {
+      color: #e5e7eb !important;
+    }
+  </style>
+
+  <script src="js/marketing.js"></script>
+</body>
+</html>

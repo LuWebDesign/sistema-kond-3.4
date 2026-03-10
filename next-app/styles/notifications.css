@@ -1,0 +1,83 @@
+/* Panel de notificaciones y badge */
+.notifications-panel {
+  position: fixed; /* usar fixed y calcular posición desde JS para evitar problemas de layout en diferentes headers */
+  right: 12px;
+  top: 48px;
+  width: 340px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--panel-bg, #121318);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  border-radius: 10px;
+  padding: 10px;
+  display: none;
+  z-index: 9999;
+  color: #e6eef8;
+}
+
+.notifications-empty { padding: 18px; color: #aab7c4; text-align:center; }
+
+.notification-item {
+  background: rgba(255,255,255,0.02);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+.ni-header { display:flex; gap:10px; align-items:center; }
+.ni-icon { width:36px; height:36px; background: rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.ni-head-text { display:flex; flex-direction:column; }
+.ni-title { font-weight:700; color:#e6eef8; }
+.ni-meta { color:#98a8b6; font-size:0.78rem; margin-top:2px; }
+.ni-body { color:#cfdcec; font-size:0.95rem; line-height:1.2; max-height:3.6rem; overflow:hidden; }
+.ni-extra { color:#9fb7cd; font-size:0.85rem; font-weight:600; margin-top:4px; }
+.ni-badges { display:flex; gap:8px; margin-top:8px; }
+.ni-badge { background: rgba(255,255,255,0.04); padding:4px 8px; border-radius:999px; color:#cbd9e6; font-size:0.8rem; }
+.ni-cta { display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:8px; }
+.ni-btn { padding:6px 10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem; transition: all 0.2s ease; }
+.ni-btn-primary { background: linear-gradient(90deg,#4aa3ff,#2f8bf0); color:white; }
+.ni-btn-primary:hover { background: linear-gradient(90deg,#5db1ff,#3990f5); transform: translateY(-1px); }
+.ni-btn-secondary { background: rgba(255,255,255,0.06); color:#e6eef8; border: 1px solid rgba(255,255,255,0.08); }
+.ni-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.ni-delete { background:transparent; border:none; color:#ff8b8b; cursor:pointer; padding:6px 8px; border-radius:6px; font-size:1.2rem; font-weight:normal; }
+.ni-delete:hover { background: rgba(255,139,139,0.06); }
+.notification-item.unread { box-shadow: inset 0 0 0 2px rgba(79,187,253,0.06); }
+.ni-title { font-weight:700; color: #e6eef8; }
+.ni-body { color: #cfdcec; font-size: 0.95rem; }
+.ni-meta { color: #98a8b6; font-size: 0.8rem; }
+
+.notification-actions { display:flex; gap:8px; justify-content:flex-end; align-items:center; margin-top:6px; }
+.ni-delete { background: transparent; border: none; color:#ff7b7b; cursor: pointer; font-size:0.95rem; }
+.ni-delete:hover { text-decoration: underline; }
+
+.notifications-count {
+  /* Mostrar inline a la derecha del icono */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 6px;
+}
+
+/* Asegurar que los icon buttons alineen bien el contenido */
+.icon-btn { display:inline-flex; align-items:center; gap:4px; }
+
+@media (max-width: 600px) {
+  .notifications-panel { right: 8px; left: 8px; width: auto; top: 56px; max-height: 50vh; }
+}
+
+/* Asegurar que el contenedor del botón sea referencia para posicionamiento */
+header .header-actions, .topbar .topbar-right, .header-actions {
+  position: relative;
+}

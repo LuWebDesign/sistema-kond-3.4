@@ -148,5 +148,11 @@ Desktop.ini
 *.sqlite
 *.sqlite3
 
+# Backups y exports
+backup.sql
+data-export-migration.sql
+*.sql.bak
+supabase/.temp/
+
 # Local development
 .local

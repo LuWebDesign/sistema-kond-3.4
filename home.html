@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KOND - Sistema de Gestión de Producción</title>
+  <meta name="description" content="Sistema integral para gestión de producción láser, pedidos, finanzas y catálogo público. Optimiza tu negocio con KOND.">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <style>
+    /* Página pública profesional */
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+      color: #e2e8f0; 
+      line-height: 1.6; 
+      margin: 0;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    
+    /* Header */
+    .header { 
+      background: rgba(15, 23, 42, 0.95); 
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      position: sticky; 
+      top: 0; 
+      z-index: 50;
+    }
+    .header-content { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 16px 0; 
+    }
+    .logo { 
+      font-weight: 800; 
+      font-size: 1.5rem; 
+      color: #3b82f6; 
+    }
+    .nav-links { 
+      display: flex; 
+      gap: 24px; 
+      align-items: center; 
+    }
+    .nav-link { 
+      color: #cbd5e1; 
+      text-decoration: none; 
+      font-weight: 500; 
+      transition: color 0.2s; 
+    }
+    .nav-link:hover { color: #3b82f6; }
+    .btn-admin { 
+      background: #3b82f6; 
+      color: white; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: background 0.2s;
+    }
+    .btn-admin:hover { background: #2563eb; }
+
+    /* Hero */
+    .hero { 
+      padding: 80px 0; 
+      text-align: center; 
+    }
+    .hero h1 { 
+      font-size: 3.5rem; 
+      font-weight: 800; 
+      background: linear-gradient(to right, #3b82f6, #06b6d4); 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 24px; 
+    }
+    .hero p { 
+      font-size: 1.25rem; 
+      color: #94a3b8; 
+      max-width: 600px; 
+      margin: 0 auto 32px; 
+    }
+    .cta-buttons { 
+      display: flex; 
+      gap: 16px; 
+      justify-content: center; 
+      flex-wrap: wrap; 
+    }
+    .btn-primary { 
+      background: #3b82f6; 
+      color: white; 
+      padding: 12px 24px; 
+      border-radius: 8px; 
+      border: none; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { 
+      background: transparent; 
+      color: #cbd5e1; 
+      padding: 12px 24px; 
+      border: 1px solid #475569; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { 
+      border-color: #3b82f6; 
+      color: #3b82f6; 
+    }
+
+    /* Features */
+    .features { 
+      padding: 80px 0; 
+      background: rgba(30, 41, 59, 0.3);
+    }
+    .features h2 { 
+      text-align: center; 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      margin-bottom: 48px; 
+      color: #f8fafc;
+    }
+    .features-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+      gap: 32px; 
+    }
+    .feature-card { 
+      background: rgba(51, 65, 85, 0.5); 
+      padding: 32px; 
+      border-radius: 12px; 
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      transition: transform 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-icon { 
+      font-size: 2rem; 
+      margin-bottom: 16px; 
+    }
+    .feature-card h3 { 
+      font-size: 1.25rem; 
+      font-weight: 600; 
+      margin-bottom: 12px; 
+      color: #f8fafc;
+    }
+    .feature-card p { 
+      color: #94a3b8; 
+    }
+
+    /* About */
+    .about { 
+      padding: 80px 0; 
+    }
+    .about-content { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 48px; 
+      align-items: center; 
+    }
+    .about h2 { 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      margin-bottom: 24px; 
+      color: #f8fafc;
+    }
+    .about p { 
+      color: #94a3b8; 
+      margin-bottom: 16px; 
+    }
+    .about-image { 
+      background: linear-gradient(45deg, #3b82f6, #06b6d4); 
+      height: 300px; 
+      border-radius: 12px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      color: white; 
+      font-size: 3rem;
+    }
+
+    /* Catalog Preview Styles */
+    .catalog-preview {
+      padding: 80px 0;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+    .catalog-preview h2 { 
+      text-align: center; 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      margin-bottom: 16px; 
+      color: #f8fafc;
+    }
+    .catalog-preview > .container > p { 
+      text-align: center; 
+      font-size: 1.2rem; 
+      color: #cbd5e1; 
+      margin-bottom: 40px; 
+    }
+    /* Nuevo diseño del catálogo demo */
+    .preview-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .preview-header h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .preview-header p {
+      font-size: 1.2rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .preview-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      color: #475569;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+    }
+    
+    .catalog-demo {
+      max-width: 900px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e2e8f0;
+    }
+    
+    /* Mockup de dispositivo */
+    .device-mockup {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .device-frame {
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .device-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .device-controls {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .control.red { background: #ef4444; }
+    .control.yellow { background: #f59e0b; }
+    .control.green { background: #10b981; }
+    
+    .device-url {
+      background: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .device-menu {
+      font-size: 16px;
+      color: #64748b;
+    }
+    
+    /* Contenido del demo */
+    .demo-screen {
+      background: white;
+      min-height: 500px;
+    }
+    
+    .demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .demo-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .brand-logo {
+      background: white;
+      color: #3b82f6;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .demo-nav {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .nav-demo-item {
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+    
+    .nav-demo-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .nav-demo-item.active {
+      background: white;
+      color: #3b82f6;
+    }
+    
+    .cart-badge {
+      background: #ef4444;
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    
+    /* Contenido de las vistas */
+    .demo-content {
+      padding: 24px;
+    }
+    
+    .demo-view {
+      animation: fadeInDemo 0.3s ease;
+    }
+    
+    @keyframes fadeInDemo {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Vista Inicio */
+    .hero-mini {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .hero-mini h3 {
+      font-size: 24px;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    
+    .hero-mini p {
+      color: #64748b;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+    }
+    
+    .stat-mini {
+      text-align: center;
+    }
+    
+    .stat-number {
+      display: block;
+      font-size: 20px;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    
+    /* Vista Catálogo */
+    .catalog-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 20px;
+    }
+    
+    .search-mini {
+      display: flex;
+      flex: 1;
+    }
+    
+    .search-mini input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px 0 0 8px;
+      font-size: 14px;
+      color: #64748b;
+    }
+    
+    .search-mini button {
+      padding: 10px 16px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+    }
+    
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .chip {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .chip.active, .chip:hover {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    
+    /* Tarjetas de productos mejoradas */
+    .product-card {
+      background: white;
+      border-radius: 16px;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .product-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+      border-color: #3b82f6;
+    }
+    
+    /* Badges de productos */
+    .product-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      z-index: 2;
+      text-transform: uppercase;
+    }
+    
+    .product-badge.popular {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: white;
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    }
+    
+    .product-badge.new {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .product-badge.offer {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    /* Contenedor de imagen */
+    .product-img-container {
+      position: relative;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      height: 200px;
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .product-img {
+      font-size: 72px;
+      transition: all 0.3s;
+    }
+    
+    .product-card:hover .product-img {
+      transform: scale(1.1) rotate(5deg);
+    }
+    
+    .quick-view {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: rgba(59, 130, 246, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s;
+      backdrop-filter: blur(4px);
+    }
+    
+    .product-card:hover .quick-view {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    /* Información del producto */
+    .product-info {
+      padding: 16px;
+    }
+    
+    .product-category {
+      font-size: 10px;
+      color: #3b82f6;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    
+    .product-info h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    
+    .product-specs {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    
+    /* Rating */
+    .product-rating {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    
+    .stars {
+      font-size: 12px;
+    }
+    
+    .rating-count {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    /* Contenedor de precios */
+    .price-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .product-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: #059669;
+    }
+    
+    .price-old {
+      font-size: 12px;
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
+    
+    .discount-badge {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    
+    .unit-price {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    /* Botón mejorado */
+    .add-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .add-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .add-btn:hover::before {
+      left: 100%;
+    }
+    
+    .add-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .add-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Vista Carrito */
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .cart-header h3 {
+      font-size: 18px;
+      color: #1e293b;
+      margin: 0;
+    }
+    
+    .item-count {
+      font-size: 12px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    
+    .cart-items {
+      margin-bottom: 20px;
+    }
+    
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .item-img {
+      font-size: 24px;
+      width: 40px;
+      text-align: center;
+    }
+    
+    .item-details {
+      flex: 1;
+    }
+    
+    .item-details h4 {
+      font-size: 14px;
+      color: #1e293b;
+      margin: 0 0 4px 0;
+    }
+    
+    .item-details p {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0 0 8px 0;
+    }
+    
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .quantity-controls button {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .quantity-controls span {
+      font-weight: 600;
+      font-size: 14px;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    .item-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: #059669;
+    }
+    
+    .cart-summary {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+    }
+    
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #64748b;
+    }
+    
+    .summary-row.total {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .cart-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn-demo {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      flex: 1;
+    }
+    
+    .btn-demo.primary {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-demo.primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+    
+    .btn-demo.secondary {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn-demo.secondary:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    
+    /* Características del catálogo */
+    .catalog-features {
+      margin-top: 60px;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+    
+    .feature-item {
+      text-align: center;
+      padding: 32px 24px;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s;
+    }
+    
+    .feature-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+      border-color: #3b82f6;
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+    
+    .feature-item h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    
+    .feature-item p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    
+    .cta-section {
+      text-align: center;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      padding: 48px 32px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+    }
+    
+    .cta-section h3 {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    
+    .cta-section p {
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+      opacity: 0.9;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .cta-buttons .btn-demo {
+      min-width: 160px;
+      padding: 16px 32px;
+      font-size: 16px;
+    }
+    
+    .cta-buttons .btn-demo.primary {
+      background: white;
+      color: #3b82f6;
+    }
+    
+    .cta-buttons .btn-demo.primary:hover {
+      background: #f8fafc;
+      transform: translateY(-2px);
+    }
+    
+    .cta-buttons .btn-demo.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .cta-buttons .btn-demo.secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    /* Responsive para el demo del catálogo */
+    @media (max-width: 768px) {
+      .catalog-demo {
+        padding: 20px;
+      }
+      
+      .device-header {
+        padding: 8px 16px;
+      }
+      
+      .demo-header {
+        padding: 12px 16px;
+      }
+      
+      .demo-nav {
+        gap: 8px;
+      }
+      
+      .nav-demo-item {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .cta-section {
+        padding: 32px 20px;
+      }
+      
+      .cta-section h3 {
+        font-size: 1.5rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+    .checkout-summary h4,
+    .checkout-options h4 {
+      margin: 0 0 15px 0;
+      color: #1e293b;
+      font-size: 16px;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid #e2e8f0;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 10px;
+    }
+    .payment-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .payment-option {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .payment-option.active {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #1e40af;
+    }
+    .delivery-date {
+      margin-bottom: 20px;
+    }
+    .delivery-date label {
+      display: block;
+      margin-bottom: 8px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .delivery-date input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .catalog-features {
+      margin-top: 30px;
+      background: #f8fafc;
+      padding: 25px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    .feature-highlight h4 {
+      margin: 0 0 15px 0;
+      color: #1e293b;
+      font-size: 18px;
+    }
+    .feature-highlight ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .feature-highlight li {
+      color: #374151;
+      font-size: 14px;
+      padding: 4px 0;
+    }
+    .cta-catalog {
+      text-align: center;
+      margin-top: 40px;
+    }
+    @media (max-width: 768px) {
+      .demo-content {
+        grid-template-columns: 1fr;
+      }
+      .demo-checkout {
+        grid-template-columns: 1fr;
+      }
+      .demo-header {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .demo-search input {
+        width: 150px;
+      }
+    }
+
+    /* Contact */
+    .contact { 
+      padding: 80px 0; 
+      background: rgba(30, 41, 59, 0.3);
+    }
+    .contact h2 { 
+      text-align: center; 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      margin-bottom: 48px; 
+      color: #f8fafc;
+    }
+    .contact-form { 
+      max-width: 600px; 
+      margin: 0 auto; 
+    }
+    .form-group { 
+      margin-bottom: 24px; 
+    }
+    .form-group label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-weight: 500; 
+      color: #cbd5e1;
+    }
+    .form-group input, 
+    .form-group textarea { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1px solid #475569; 
+      border-radius: 6px; 
+      background: rgba(51, 65, 85, 0.5); 
+      color: #e2e8f0; 
+      font-size: 16px;
+    }
+    .form-group input:focus, 
+    .form-group textarea:focus { 
+      outline: none; 
+      border-color: #3b82f6; 
+    }
+
+    /* Footer */
+    .footer { 
+      background: rgba(15, 23, 42, 0.8); 
+      padding: 40px 0; 
+      text-align: center; 
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .footer p { 
+      color: #64748b; 
+      margin-bottom: 8px; 
+    }
+
+    /* Modal Mejorado */
+    .modal { 
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0, 0, 0, 0.85); 
+      backdrop-filter: blur(4px);
+      z-index: 1000; 
+      animation: fadeIn 0.3s ease;
+    }
+    .modal.show { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .modal-content { 
+      background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+      padding: 40px; 
+      border-radius: 16px; 
+      width: 90%; 
+      max-width: 420px; 
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      border-radius: 16px 16px 0 0;
+    }
+    .modal h3 { 
+      color: #f8fafc; 
+      margin: 0 0 8px 0; 
+      text-align: center; 
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .modal h3::before {
+      content: '🔐';
+      font-size: 1.5rem;
+    }
+    .modal-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 32px;
+      font-size: 0.9rem;
+    }
+    .form-group-modal { 
+      margin-bottom: 24px; 
+      position: relative;
+    }
+    .form-group-modal label { 
+      display: block; 
+      margin-bottom: 8px; 
+      color: #cbd5e1; 
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .form-group-modal input { 
+      width: 100%; 
+      padding: 16px 20px; 
+      border: 2px solid #475569; 
+      border-radius: 10px; 
+      background: rgba(51, 65, 85, 0.8); 
+      color: #e2e8f0; 
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    .form-group-modal input:focus { 
+      outline: none; 
+      border-color: #3b82f6; 
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .modal-actions { 
+      display: flex; 
+      gap: 16px; 
+      justify-content: center; 
+      margin-top: 32px; 
+    }
+    
+    .btn-cancel { 
+      background: linear-gradient(145deg, #374151 0%, #4b5563 100%);
+      color: white; 
+      padding: 14px 28px; 
+      border: 1px solid rgba(156, 163, 175, 0.3);
+      border-radius: 12px; 
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 120px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-cancel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .btn-cancel:hover::before {
+      left: 100%;
+    }
+    
+    .btn-cancel:hover { 
+      background: linear-gradient(145deg, #4b5563 0%, #6b7280 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      border-color: rgba(156, 163, 175, 0.5);
+    }
+    
+    .btn-cancel:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-actions .btn-primary {
+      background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white; 
+      padding: 14px 28px; 
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px; 
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 120px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .modal-actions .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .modal-actions .btn-primary:hover::before {
+      left: 100%;
+    }
+    
+    .modal-actions .btn-primary:hover { 
+      background: linear-gradient(145deg, #2563eb 0%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+      border-color: rgba(59, 130, 246, 0.6);
+    }
+    
+    .modal-actions .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { 
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .hero p { font-size: 1.1rem; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .about-content { grid-template-columns: 1fr; }
+      .nav-links { gap: 16px; }
+      .header-content { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">KOND</div>
+        <nav class="nav-links">
+          <a href="#inicio" class="nav-link">Inicio</a>
+          <a href="#sobre" class="nav-link">Sobre el Proyecto</a>
+          <a href="#contacto" class="nav-link">Contacto</a>
+          <a href="catalog.html" class="nav-link" target="_blank">Catálogo</a>
+          <button class="btn-admin" onclick="openAdminModal()">Acceso Admin</button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="inicio" class="hero">
+    <div class="container">
+      <h1>Sistema KOND</h1>
+      <p>Plataforma integral para gestión de producción láser, control de pedidos, finanzas y catálogo público. Optimiza tu negocio con herramientas profesionales.</p>
+      <div class="cta-buttons">
+        <a href="catalog.html"><button class="btn-primary">Ver Catálogo</button></a>
+        <button class="btn-secondary" onclick="scrollToSection('sobre')">Conocer Más</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="container">
+      <h2>Características Principales</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🏭</div>
+          <h3>Gestión de Producción</h3>
+          <p>Control completo de productos, medidas, tiempos de fabricación y calendarios de producción.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>Pedidos Inteligentes</h3>
+          <p>Sistema avanzado de pedidos con estados, seguimiento y notificaciones automáticas.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Control Financiero</h3>
+          <p>Registro de movimientos, cálculo de señas, balance en tiempo real y reportes detallados.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛒</div>
+          <h3>Catálogo Público</h3>
+          <p>Tienda online para clientes con carrito, métodos de pago y selección de fechas.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Métricas y Análisis</h3>
+          <p>Dashboard con estadísticas de producción, ventas y rendimiento del negocio.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔧</div>
+          <h3>Fácil de Usar</h3>
+          <p>Interfaz intuitiva, sin instalaciones complejas. Funciona directamente en el navegador.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catalog Preview Section -->
+  <section class="catalog-preview">
+    <div class="container">
+      <div class="preview-header">
+        <h2>Catálogo Público - Demo Interactivo</h2>
+        <p>Experimenta la experiencia completa de compra que tendrán tus clientes</p>
+        <div class="preview-badges">
+          <span class="badge">🎨 Personalizable</span>
+          <span class="badge">📱 Responsive</span>
+          <span class="badge">⚡ Rápido</span>
+        </div>
+      </div>
+      
+      <div class="catalog-demo">
+        <!-- Mockup de dispositivo -->
+        <div class="device-mockup">
+          <div class="device-frame">
+            <div class="device-header">
+              <div class="device-controls">
+                <span class="control red"></span>
+                <span class="control yellow"></span>
+                <span class="control green"></span>
+              </div>
+              <div class="device-url">🔒 megafibro.com/catalog</div>
+              <div class="device-menu">⚙️</div>
+            </div>
+            
+            <!-- Contenido del demo -->
+            <div class="demo-screen">
+              <div class="demo-header">
+                <div class="demo-brand">
+                  <div class="brand-logo">⚡</div>
+                  <span>Megafibro</span>
+                </div>
+                <div class="demo-nav">
+                  <span class="nav-demo-item" data-demo-view="inicio">🏠</span>
+                  <span class="nav-demo-item active" data-demo-view="catalogo">�️</span>
+                  <span class="nav-demo-item" data-demo-view="carrito">🛒 <span class="cart-badge" id="demo-cart-badge">2</span></span>
+                </div>
+              </div>
+              
+              <div class="demo-content">
+                <!-- Vista Inicio -->
+                <div class="demo-view" id="demo-inicio" style="display: none;">
+                  <div class="hero-mini">
+                    <div class="hero-text">
+                      <h3>🏭 Bienvenido a Megafibro</h3>
+                      <p>Productos láser de alta calidad para tu proyecto especial</p>
+                      <button class="btn-demo primary" onclick="switchDemoView('catalogo')">Explorar Productos</button>
+                    </div>
+                    <div class="hero-stats">
+                      <div class="stat-mini">
+                        <span class="stat-number">50+</span>
+                        <span class="stat-label">Productos</span>
+                      </div>
+                      <div class="stat-mini">
+                        <span class="stat-number">24h</span>
+                        <span class="stat-label">Entrega</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Vista Catálogo -->
+                <div class="demo-view" id="demo-catalogo">
+                  <div class="catalog-toolbar">
+                    <div class="search-mini">
+                      <input type="text" placeholder="Buscar productos..." readonly>
+                      <button>🔍</button>
+                    </div>
+                    <div class="filter-chips">
+                      <span class="chip active">Todos</span>
+                      <span class="chip">Cajas</span>
+                      <span class="chip">Decorativo</span>
+                    </div>
+                  </div>
+                  
+                  <div class="products-grid">
+                    <div class="product-card" onclick="addToCartDemo('Caja Premium', 2500)">
+                      <div class="product-badge popular">⭐ Popular</div>
+                      <div class="product-img-container">
+                        <div class="product-img">📦</div>
+                        <div class="quick-view">👁️</div>
+                      </div>
+                      <div class="product-info">
+                        <div class="product-category">Packaging</div>
+                        <h4>Caja Premium Personalizada</h4>
+                        <p class="product-specs">📏 20×15×10 cm | 📐 3mm MDF</p>
+                        <div class="product-rating">
+                          <span class="stars">⭐⭐⭐⭐⭐</span>
+                          <span class="rating-count">(24)</span>
+                        </div>
+                        <div class="price-container">
+                          <span class="price-old">$3,000</span>
+                          <div class="product-price">$2,500</div>
+                          <div class="discount-badge">-17%</div>
+                        </div>
+                        <button class="add-btn primary">🛒 Agregar al Carrito</button>
+                      </div>
+                    </div>
+                    
+                    <div class="product-card" onclick="addToCartDemo('Porta Retratos', 1800)">
+                      <div class="product-img-container">
+                        <div class="product-img">🖼️</div>
+                        <div class="quick-view">👁️</div>
+                      </div>
+                      <div class="product-info">
+                        <div class="product-category">Decorativo</div>
+                        <h4>Porta Retratos Elegante</h4>
+                        <p class="product-specs">📏 15×20 cm | 🎨 Grabado láser</p>
+                        <div class="product-rating">
+                          <span class="stars">⭐⭐⭐⭐⭐</span>
+                          <span class="rating-count">(18)</span>
+                        </div>
+                        <div class="price-container">
+                          <div class="product-price">$1,800</div>
+                        </div>
+                        <button class="add-btn primary">🛒 Agregar al Carrito</button>
+                      </div>
+                    </div>
+                    
+                    <div class="product-card" onclick="addToCartDemo('Llavero Premium', 350)">
+                      <div class="product-badge new">🆕 Nuevo</div>
+                      <div class="product-img-container">
+                        <div class="product-img">🔑</div>
+                        <div class="quick-view">👁️</div>
+                      </div>
+                      <div class="product-info">
+                        <div class="product-category">Accesorios</div>
+                        <h4>Llavero Premium Corp.</h4>
+                        <p class="product-specs">📏 5×3 cm | 🏷️ Personalizable</p>
+                        <div class="product-rating">
+                          <span class="stars">⭐⭐⭐⭐⭐</span>
+                          <span class="rating-count">(31)</span>
+                        </div>
+                        <div class="price-container">
+                          <div class="product-price">$350</div>
+                          <div class="unit-price">c/u</div>
+                        </div>
+                        <button class="add-btn primary">🛒 Agregar al Carrito</button>
+                      </div>
+                    </div>
+                    
+                    <div class="product-card" onclick="addToCartDemo('Etiquetas Set', 800)">
+                      <div class="product-badge offer">🔥 Oferta</div>
+                      <div class="product-img-container">
+                        <div class="product-img">🏷️</div>
+                        <div class="quick-view">👁️</div>
+                      </div>
+                      <div class="product-info">
+                        <div class="product-category">Etiquetado</div>
+                        <h4>Set Etiquetas Premium</h4>
+                        <p class="product-specs">📦 Pack x10 | 🎯 Uso comercial</p>
+                        <div class="product-rating">
+                          <span class="stars">⭐⭐⭐⭐⚡</span>
+                          <span class="rating-count">(12)</span>
+                        </div>
+                        <div class="price-container">
+                          <span class="price-old">$1,200</span>
+                          <div class="product-price">$800</div>
+                          <div class="discount-badge">-33%</div>
+                        </div>
+                        <button class="add-btn primary">🛒 Agregar al Carrito</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Vista Carrito -->
+                <div class="demo-view" id="demo-carrito" style="display: none;">
+                  <div class="cart-header">
+                    <h3>🛒 Mi Carrito</h3>
+                    <span class="item-count">2 productos</span>
+                  </div>
+                  
+                  <div class="cart-items" id="demo-cart-items">
+                    <div class="cart-item">
+                      <div class="item-img">📦</div>
+                      <div class="item-details">
+                        <h4>Caja Premium</h4>
+                        <p>20×15×10 cm</p>
+                        <div class="quantity-controls">
+                          <button onclick="updateQuantityDemo('Caja Premium', -1)">-</button>
+                          <span>1</span>
+                          <button onclick="updateQuantityDemo('Caja Premium', 1)">+</button>
+                        </div>
+                      </div>
+                      <div class="item-price">$2,500</div>
+                    </div>
+                    
+                    <div class="cart-item">
+                      <div class="item-img">🖼️</div>
+                      <div class="item-details">
+                        <h4>Porta Retratos</h4>
+                        <p>15×20 cm</p>
+                        <div class="quantity-controls">
+                          <button onclick="updateQuantityDemo('Porta Retratos', -1)">-</button>
+                          <span>1</span>
+                          <button onclick="updateQuantityDemo('Porta Retratos', 1)">+</button>
+                        </div>
+                      </div>
+                      <div class="item-price">$1,800</div>
+                    </div>
+                  </div>
+                  
+                  <div class="cart-summary">
+                    <div class="summary-row">
+                      <span>Subtotal:</span>
+                      <span id="demo-subtotal">$4,300</span>
+                    </div>
+                    <div class="summary-row total">
+                      <span>Total:</span>
+                      <span id="demo-total">$4,300</span>
+                    </div>
+                    
+                    <div class="cart-actions">
+                      <button class="btn-demo secondary" onclick="clearCartDemo()">Vaciar</button>
+                      <button class="btn-demo primary" onclick="proceedToCheckout()">Finalizar Compra</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      
+      <!-- Características principales -->
+      <div class="catalog-features">
+        <div class="features-grid">
+          <div class="feature-item">
+            <div class="feature-icon">🎨</div>
+            <h4>Diseño Profesional</h4>
+            <p>Interfaz moderna y atractiva que genera confianza en tus clientes</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📱</div>
+            <h4>Totalmente Responsive</h4>
+            <p>Funciona perfectamente en móviles, tablets y escritorio</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🛒</div>
+            <h4>Carrito Inteligente</h4>
+            <p>Sistema de carrito con cálculos automáticos y persistencia</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">💳</div>
+            <h4>Múltiples Métodos de Pago</h4>
+            <p>Transferencia, WhatsApp y retiro en local</p>
+          </div>
+        </div>
+        
+        <div class="cta-section">
+          <h3>¿Listo para potenciar tu negocio?</h3>
+          <p>Accede al sistema completo y configura tu catálogo personalizado</p>
+          <div class="cta-buttons">
+            <a href="catalog.html" class="btn-demo primary">Ver Catálogo Real</a>
+            <button onclick="openAdminModal()" class="btn-demo secondary">Acceso Admin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="sobre" class="about">
+    <div class="container">
+      <div class="about-content">
+        <div>
+          <h2>Sobre el Proyecto</h2>
+          <p>KOND es un sistema de gestión integral diseñado específicamente para negocios de corte láser y producción personalizada.</p>
+          <p>Desarrollado con tecnologías web modernas, combina la simplicidad de uso con funcionalidades avanzadas para optimizar todos los aspectos de tu negocio.</p>
+          <p>Desde el control de inventario hasta la gestión financiera, KOND centraliza todas las operaciones en una plataforma unificada y accesible.</p>
+        </div>
+        <div class="about-image">
+          📈
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contacto" class="contact">
+    <div class="container">
+      <h2>Contacto</h2>
+      <form class="contact-form" onsubmit="handleContactForm(event)">
+        <div class="form-group">
+          <label for="name">Nombre</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="message">Mensaje</label>
+          <textarea id="message" name="message" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Enviar Mensaje</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 KOND - Sistema de Gestión de Producción</p>
+      <p>Desarrollado con tecnologías web modernas</p>
+    </div>
+  </footer>
+
+  <!-- Admin Login Modal -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <h3>Acceso Administrativo</h3>
+      <div class="modal-subtitle">Ingresa tus credenciales para acceder al panel de administración</div>
+      <form onsubmit="handleAdminLogin(event)">
+        <div class="form-group-modal">
+          <label for="adminEmail">Usuario</label>
+          <input type="text" id="adminEmail" required>
+        </div>
+        <div class="form-group-modal">
+          <label for="adminPassword">Contraseña</label>
+          <input type="password" id="adminPassword" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeAdminModal()">
+            <span>❌</span>
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            <span>🔑</span>
+            Ingresar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script>
+    // Demo cart state
+    let demoCart = [
+      { name: 'Caja Personalizada', price: 2500, quantity: 1 },
+      { name: 'Porta Retratos', price: 1800, quantity: 1 }
+    ];
+
+    // Smooth scrolling
+    function scrollToSection(sectionId) {
+      document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Demo navigation
+    function switchDemoView(viewName) {
+      // Hide all views
+      document.querySelectorAll('.demo-view').forEach(view => {
+        view.style.display = 'none';
+      });
+      
+      // Show selected view
+      const targetView = document.getElementById(`demo-${viewName}`);
+      if (targetView) {
+        targetView.style.display = 'block';
+      }
+      
+      // Update navigation
+      document.querySelectorAll('.nav-demo-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      const activeItem = document.querySelector(`[data-demo-view="${viewName}"]`);
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+      
+      // Update cart count
+      updateCartDisplay();
+    }
+
+    // Add item to demo cart
+    function addToCartDemo(itemName, price) {
+      const existingItem = demoCart.find(item => item.name === itemName);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        demoCart.push({ name: itemName, price: price, quantity: 1 });
+      }
+      
+      updateCartDisplay();
+      
+      // Show feedback
+      showDemoNotification(`${itemName} agregado al carrito`, 'success');
+    }
+
+    // Remove item from demo cart
+    function removeFromCartDemo(itemName) {
+      demoCart = demoCart.filter(item => item.name !== itemName);
+      updateCartDisplay();
+      renderCartItems();
+    }
+
+    // Update item quantity
+    function updateQuantityDemo(itemName, change) {
+      const item = demoCart.find(item => item.name === itemName);
+      if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+          removeFromCartDemo(itemName);
+          return;
+        }
+        updateCartDisplay();
+        renderCartItems();
+      }
+    }
+
+    // Clear cart
+    function clearCartDemo() {
+      if (confirm('¿Vaciar el carrito?')) {
+        demoCart = [];
+        updateCartDisplay();
+        renderCartItems();
+        showDemoNotification('Carrito vaciado', 'info');
+      }
+    }
+
+    // Update cart display
+    function updateCartDisplay() {
+      const cartCount = demoCart.reduce((total, item) => total + item.quantity, 0);
+      const cartTotal = demoCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+      
+      // Update navigation cart count
+      const navCartItem = document.querySelector('[data-demo-view="carrito"]');
+      if (navCartItem) {
+        navCartItem.textContent = `🛒 Carrito (${cartCount})`;
+      }
+      
+      // Update cart page elements
+      const cartCountEl = document.getElementById('cart-count');
+      const cartSubtotalEl = document.getElementById('cart-subtotal');
+      const cartTotalEl = document.getElementById('cart-total');
+      
+      if (cartCountEl) cartCountEl.textContent = cartCount;
+      if (cartSubtotalEl) cartSubtotalEl.textContent = `$${cartTotal.toLocaleString()}`;
+      if (cartTotalEl) cartTotalEl.textContent = `$${cartTotal.toLocaleString()}`;
+      
+      // Render cart items if on cart view
+      const cartView = document.getElementById('demo-carrito');
+      if (cartView && cartView.style.display !== 'none') {
+        renderCartItems();
+      }
+    }
+
+    // Render cart items
+    function renderCartItems() {
+      const cartItemsContainer = document.getElementById('cart-items');
+      if (!cartItemsContainer) return;
+      
+      if (demoCart.length === 0) {
+        cartItemsContainer.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #64748b;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🛒</div>
+            <h3>Tu carrito está vacío</h3>
+            <p>Agrega productos desde el catálogo</p>
+            <a href="catalog.html" class="demo-btn primary" style="margin-top: 16px; text-decoration: none; display: inline-block;">
+              Ver Catálogo
+            </a>
+          </div>
+        `;
+        return;
+      }
+      
+      cartItemsContainer.innerHTML = demoCart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">$${item.price.toLocaleString()} c/u</div>
+          </div>
+          <div class="cart-item-controls">
+            <button class="qty-btn" onclick="updateQuantityDemo('${item.name}', -1)">-</button>
+            <span style="margin: 0 8px; font-weight: 600;">${item.quantity}</span>
+            <button class="qty-btn" onclick="updateQuantityDemo('${item.name}', 1)">+</button>
+            <button class="qty-btn" onclick="removeFromCartDemo('${item.name}')" style="margin-left: 8px; background: #fee2e2; color: #dc2626;">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Proceed to checkout
+    function proceedToCheckout() {
+      if (demoCart.length === 0) {
+        showDemoNotification('El carrito está vacío', 'warning');
+        return;
+      }
+      
+      showDemoNotification('Redirigiendo al checkout...', 'info');
+      
+      // Simulate checkout process
+      setTimeout(() => {
+        if (confirm('¿Quieres ver el catálogo real para realizar una compra?')) {
+          window.open('catalog.html', '_blank');
+        }
+      }, 1000);
+    }
+
+    // Show demo notification
+    function showDemoNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      switch (type) {
+        case 'success':
+          notification.style.background = '#10b981';
+          break;
+        case 'warning':
+          notification.style.background = '#f59e0b';
+          break;
+        case 'error':
+          notification.style.background = '#ef4444';
+          break;
+        default:
+          notification.style.background = '#3b82f6';
+      }
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // Initialize demo navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add click listeners to demo navigation
+      document.querySelectorAll('.nav-demo-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const viewName = this.getAttribute('data-demo-view');
+          switchDemoView(viewName);
+        });
+      });
+      
+      // Initialize cart display
+      updateCartDisplay();
+    });
+
+    // Admin modal
+    function openAdminModal() {
+      document.getElementById('adminModal').classList.add('show');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.remove('show');
+    }
+
+    // Admin login
+    function handleAdminLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('adminEmail').value;
+      const password = document.getElementById('adminPassword').value;
+      
+      // Validación con credenciales actualizadas
+      if (email === 'admin1' && password === 'kond') {
+        showCustomAlert('✅ Acceso Concedido', 'Redirigiendo al panel administrativo...', 'success', () => {
+          window.location.href = 'index.html';
+        });
+      } else {
+        showCustomAlert('❌ Credenciales Incorrectas', 'Usuario o contraseña inválidos. Verifica e intenta de nuevo.', 'error');
+      }
+    }
+
+    // Contact form
+    function handleContactForm(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const message = document.getElementById('message').value;
+      
+      // Aquí podrías integrar con un servicio de email
+      alert(`Gracias ${name}! Tu mensaje ha sido enviado. Te contactaremos pronto.`);
+      event.target.reset();
+    }
+
+    // Close modal on outside click
+    document.getElementById('adminModal').addEventListener('click', function(event) {
+      if (event.target === this) {
+        closeAdminModal();
+      }
+    });
+
+    // Custom Alert Dialog
+    function showCustomAlert(title, message, type = 'info', callback = null) {
+      const alertModal = document.createElement('div');
+      alertModal.className = 'custom-alert-modal';
+      alertModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      const alertContent = document.createElement('div');
+      alertContent.style.cssText = `
+        background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+        padding: 32px;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        position: relative;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      const colorMap = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+      };
+      
+      alertContent.innerHTML = `
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: ${colorMap[type]}; border-radius: 16px 16px 0 0;"></div>
+        <div style="font-size: 2rem; margin-bottom: 16px;">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+        <h3 style="color: #f8fafc; margin: 0 0 12px 0; font-size: 1.4rem; font-weight: 700;">${title}</h3>
+        <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+        <button onclick="closeCustomAlert()" style="
+          background: ${colorMap[type]};
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          min-width: 100px;
+          transition: all 0.2s ease;
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          Aceptar
+        </button>
+      `;
+      
+      alertModal.appendChild(alertContent);
+      document.body.appendChild(alertModal);
+      
+      window.closeCustomAlert = function() {
+        alertModal.remove();
+        if (callback) callback();
+      };
+      
+      // Auto close for success messages
+      if (type === 'success' && callback) {
+        setTimeout(() => {
+          closeCustomAlert();
+        }, 2000);
+      }
+    }
+
+    // Custom Confirm Dialog
+    function showCustomConfirm(title, message, onConfirm, onCancel = null) {
+      const confirmModal = document.createElement('div');
+      confirmModal.className = 'custom-confirm-modal';
+      confirmModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      const confirmContent = document.createElement('div');
+      confirmContent.style.cssText = `
+        background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+        padding: 32px;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        position: relative;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      confirmContent.innerHTML = `
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #f59e0b; border-radius: 16px 16px 0 0;"></div>
+        <div style="font-size: 2rem; margin-bottom: 16px;">🤔</div>
+        <h3 style="color: #f8fafc; margin: 0 0 12px 0; font-size: 1.4rem; font-weight: 700;">${title}</h3>
+        <p style="color: #cbd5e1; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button onclick="closeCustomConfirm(false)" style="
+            background: rgba(100, 116, 139, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 100px;
+            transition: all 0.2s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            Cancelar
+          </button>
+          <button onclick="closeCustomConfirm(true)" style="
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 100px;
+            transition: all 0.2s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            Confirmar
+          </button>
+        </div>
+      `;
+      
+      confirmModal.appendChild(confirmContent);
+      document.body.appendChild(confirmModal);
+      
+      window.closeCustomConfirm = function(confirmed) {
+        confirmModal.remove();
+        if (confirmed && onConfirm) {
+          onConfirm();
+        } else if (!confirmed && onCancel) {
+          onCancel();
+        }
+      };
+    }
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes slideInFromTop {
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+  <!-- Login Modal (Usuario) - agregado para compatibilidad con js/auth.js -->
+  <div id="loginModal" class="checkout-modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content" role="dialog" style="max-width:420px; margin:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Iniciar sesión</h3>
+        <button class="close-modal" id="closeLoginModal" aria-label="Cerrar">×</button>
+      </div>
+      <div style="margin-top:12px;">
+        <input id="authEmail" type="email" placeholder="Email" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="authPhone" type="text" placeholder="Teléfono (opcional)" class="form-input" style="width:100%; margin-bottom:8px;" />
+        <input id="authPassword" type="password" placeholder="Contraseña" class="form-input" style="width:100%; margin-bottom:12px;" />
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="btnOpenSignup" class="btn-close-cart">Registrarse</button>
+          <button id="btnDoLogin" class="btn-checkout">Iniciar sesión</button>
+        </div>
+        <div style="margin-top:10px; font-size:0.9rem; color:#b0b0b0;">O bien usa tu teléfono o email para buscar pedidos como invitado.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

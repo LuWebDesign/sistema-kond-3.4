@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KOND - Marketing</title>
+  <meta name="description" content="Central de Promociones para campaÃ±as y acciones de marketing.">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/marketing.css">
+</head>
+<body>
+  <header class="mk-header">
+    <div class="mk-container mk-header-content">
+      <h1 class="mk-title">Marketing</h1>
+      <nav class="mk-breadcrumbs" aria-label="breadcrumb">
+        <span>Inicio</span>
+        <span class="sep">/</span>
+        <span class="current">Marketing</span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mk-container">
+    <section class="mk-section">
+      <div class="mk-section-head">
+        <h2 class="mk-section-title">Central de Promociones</h2>
+        <div class="mk-toolbar" role="toolbar" aria-label="Acciones de promociones">
+          <div class="mk-search">
+            <input id="mkSearchInput" type="search" class="mk-input" placeholder="Buscar promociones..." aria-label="Buscar promociones" disabled>
+          </div>
+          <div class="mk-actions">
+            <button id="btnNuevaPromo" class="mk-btn mk-btn-primary" disabled title="PrÃ³ximamente">Nueva promociÃ³n</button>
+            <button id="btnImportar" class="mk-btn" disabled title="PrÃ³ximamente">Importar</button>
+            <button id="btnExportar" class="mk-btn" disabled title="PrÃ³ximamente">Exportar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mkPromosContainer" class="mk-promos">
+        <!-- Render dinÃ¡mico -->
+      </div>
+
+      <div id="mkEmptyState" class="mk-empty">
+        <div class="mk-empty-illust" aria-hidden="true">ðŸ’¡</div>
+        <h3>Sin promociones aÃºn</h3>
+        <p>Crea tu primera campaÃ±a, cupÃ³n o descuento desde â€œNueva promociÃ³nâ€.
+          Estamos preparando el asistente para ayudarte a configurarlo de forma Ã³ptima.</p>
+        <div class="mk-empty-actions">
+          <button class="mk-btn mk-btn-primary" id="btnEmptyNew" disabled>Crear promociÃ³n</button>
+          <button class="mk-btn" id="btnEmptyDocs" disabled>Ver guÃ­a (prÃ³ximamente)</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mk-footer mk-container">
+    <small>Central de Promociones â€” fase inicial (sin vinculaciÃ³n de productos).</small>
+  </footer>
+
+  <script src="js/marketing.js"></script>
+</body>
+</html>
