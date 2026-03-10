@@ -4,7 +4,7 @@ import { useOrders } from '../hooks/useCatalog'
 import { formatCurrency, formatDate } from '../utils/catalogUtils'
 
 export default function Orders() {
-  const { orders, updateOrderStatus, updateOrderPaymentStatus } = useOrders()
+  const { orders = [], updateOrderStatus, updateOrderPaymentStatus } = useOrders()
   const [filteredOrders, setFilteredOrders] = useState([])
   const [filters, setFilters] = useState({
     status: 'all',
