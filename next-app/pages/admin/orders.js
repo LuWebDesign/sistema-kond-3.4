@@ -621,7 +621,6 @@ function PedidosCatalogo() {
             categoria: 'Ventas',
             descripcion: `Seña Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
             metodoPago,
-            pedido_catalogo_id: pedidoActualizado.id,
           })
         } else if (nuevoEstado === 'pagado_total') {
           if (prevEstado === 'seña_pagada') {
@@ -636,7 +635,6 @@ function PedidosCatalogo() {
                 categoria: 'Ventas',
                 descripcion: `Saldo Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
                 metodoPago,
-                pedido_catalogo_id: pedidoActualizado.id,
               })
             }
           } else {
@@ -650,7 +648,6 @@ function PedidosCatalogo() {
                 categoria: 'Ventas',
                 descripcion: `Pago total Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
                 metodoPago,
-                pedido_catalogo_id: pedidoActualizado.id,
               })
             }
           }

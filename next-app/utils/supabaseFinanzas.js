@@ -140,8 +140,7 @@ export async function createMovimiento(movimiento) {
       hora: movimiento.hora || null,
       categoria: movimiento.categoria || null,
       descripcion: movimiento.descripcion || null,
-      metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo',
-      pedido_catalogo_id: movimiento.pedidoCatalogoId || movimiento.pedido_catalogo_id || null
+      metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo'
     };
 
     const { data, error } = await supabase

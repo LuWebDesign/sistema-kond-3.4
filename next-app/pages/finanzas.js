@@ -73,6 +73,14 @@ function Finanzas() {
     loadData();
   }, [loadData]);
 
+  // Recargar cuando el usuario vuelve a esta pestaña
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleFocus = () => loadData();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadData]);
+
   // Calculations
   const calcularResumen = () => {
     const hoy = new Date().toISOString().slice(0, 10);
@@ -342,6 +350,14 @@ function Finanzas() {
             <h1 className={styles.title}>Finanzas</h1>
             <p className={styles.subtitle}>Gestión de ingresos y gastos</p>
           </div>
+          <button
+            className={styles.btnSecondary}
+            onClick={loadData}
+            disabled={loading}
+            style={{ alignSelf: 'center' }}
+          >
+            {loading ? '⏳ Cargando...' : '🔄 Actualizar'}
+          </button>
         </div>
 
         {loading ? (
