@@ -184,10 +184,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
             {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
             
-            {/* FINANZAS TEMPORALMENTE DESHABILITADO - EN RECONSTRUCCIÓN */}
-            {/* <Link href="/finanzas" style={linkStyle}>
+            <Link href="/finanzas" style={linkStyle}>
               💰 Finanzas
-            </Link> */}
+            </Link>
             
             {/* Sección: Administración */}
             <div style={sectionDividerStyle}>

@@ -1,12 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
+import withAdminAuth from '../components/withAdminAuth';
 import styles from '../styles/finanzas.module.css';
+import {
+  getCategorias,
+  createCategoria,
+  deleteCategoria,
+  updateCategoria,
+  getMovimientos,
+  createMovimiento,
+  updateMovimiento,
+  deleteMovimiento as deleteMovimientoApi,
+  bulkUpdateMovimientosCategoria,
+  getRegistrosCierre,
+  getRegistroCierreByFecha,
+  upsertRegistroCierre,
+} from '../utils/supabaseFinanzas';
+import { getAllPedidosCatalogo } from '../utils/supabasePedidos';
 
-export default function Finanzas() {
+function Finanzas() {
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
-  const [categorias, setCategorias] = useState(['Ventas', 'Materia Prima', 'Servicios']);
+  const [categorias, setCategorias] = useState([]);
   const [pedidosCatalogo, setPedidosCatalogo] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -30,85 +48,43 @@ export default function Finanzas() {
   const [registrosDelDia, setRegistrosDelDia] = useState([]);
   const [expandedRegistro, setExpandedRegistro] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Escuchar cambios externos (otra pestaña o módulos que registren movimientos)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleStorage = (e) => {
-      if (!e.key) return;
-      if (e.key === 'finanzas' || e.key === 'pedidosCatalogo' || e.key === 'pedidosCatalogo_updated') {
-        loadData();
-      }
-    };
-
-    const handleFinanzasUpdated = () => {
-      // Un movimiento nuevo fue registrado desde otro módulo
-      loadData();
-    };
-
-    const handlePedidosCatalogoUpdated = () => {
-      // Cuando un pedido cambia, el porCobrar puede variar
-      loadData();
-    };
-
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('finanzasUpdated', handleFinanzasUpdated);
-    window.addEventListener('pedidosCatalogo:updated', handlePedidosCatalogoUpdated);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('finanzasUpdated', handleFinanzasUpdated);
-      window.removeEventListener('pedidosCatalogo:updated', handlePedidosCatalogoUpdated);
-    };
-  }, []);
-
-  const loadData = () => {
-    if (typeof window === 'undefined') return;
-    
+  const loadData = useCallback(async () => {
     try {
-      const movs = JSON.parse(localStorage.getItem('finanzas') || '[]');
-      const regs = JSON.parse(localStorage.getItem('registros') || '[]');
-      const cats = JSON.parse(localStorage.getItem('categoriasFin') || '["Ventas", "Materia Prima", "Servicios"]');
-      const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]');
-      
-      setMovimientos(movs);
-      setRegistros(regs);
-      setCategorias(cats);
-      setPedidosCatalogo(pedidos);
+      setLoading(true);
+      const [movsRes, catsRes, regsRes, pedidosRes] = await Promise.all([
+        getMovimientos(),
+        getCategorias(),
+        getRegistrosCierre(),
+        getAllPedidosCatalogo(),
+      ]);
+
+      if (movsRes.data) setMovimientos(movsRes.data);
+      if (catsRes.data) setCategorias(catsRes.data);
+      if (regsRes.data) setRegistros(regsRes.data);
+      if (pedidosRes.data) setPedidosCatalogo(pedidosRes.data);
     } catch (e) {
       console.error('Error loading finanzas:', e);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const saveMovimientos = (movs) => {
-    localStorage.setItem('finanzas', JSON.stringify(movs));
-    setMovimientos(movs);
-  };
-
-  const saveCategorias = (cats) => {
-    localStorage.setItem('categoriasFin', JSON.stringify(cats));
-    setCategorias(cats);
-  };
-
-  const saveRegistros = (regs) => {
-    localStorage.setItem('registros', JSON.stringify(regs));
-    setRegistros(regs);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Calculations
   const calcularResumen = () => {
     const hoy = new Date().toISOString().slice(0, 10);
     
     const ingresosHoy = movimientos.reduce((sum, m) => {
-      return sum + ((m.tipo === 'ingreso' && m.fecha?.startsWith(hoy)) ? Number(m.monto || 0) : 0);
+      const fecha = typeof m.fecha === 'string' ? m.fecha : '';
+      return sum + ((m.tipo === 'ingreso' && fecha.startsWith(hoy)) ? Number(m.monto || 0) : 0);
     }, 0);
     
     const egresosHoy = movimientos.reduce((sum, m) => {
-      return sum + (((m.tipo === 'egreso' || m.tipo === 'gasto') && m.fecha?.startsWith(hoy)) ? Number(m.monto || 0) : 0);
+      const fecha = typeof m.fecha === 'string' ? m.fecha : '';
+      return sum + (((m.tipo === 'egreso' || m.tipo === 'gasto') && fecha.startsWith(hoy)) ? Number(m.monto || 0) : 0);
     }, 0);
     
     const equilibrioHoy = ingresosHoy - egresosHoy;
@@ -122,10 +98,10 @@ export default function Finanzas() {
     let porCobrar = 0;
     pedidosCatalogo.forEach(p => {
       const total = Number(p.total || 0);
-      const estadoPago = p.estadoPago || '';
+      const estadoPago = p.estado_pago || p.estadoPago || '';
       if (estadoPago === 'pagado' || estadoPago === 'pagado_total') return;
       if (estadoPago === 'seña_pagada') {
-        const sena = Number(p.senaMonto || p.señaMonto || (total * 0.5));
+        const sena = Number(p.monto_recibido || p.senaMonto || p.señaMonto || (total * 0.5));
         porCobrar += Math.max(0, total - sena);
       } else {
         porCobrar += total;
@@ -138,7 +114,7 @@ export default function Finanzas() {
   const resumen = calcularResumen();
 
   // Handlers
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const monto = parseFloat(formData.monto) || 0;
@@ -149,27 +125,23 @@ export default function Finanzas() {
 
     const hora = formData.hora || new Date().toTimeString().slice(0, 8);
 
-    if (editingId) {
-      // Edit mode
-      const updated = movimientos.map(m => 
-        m.id === editingId 
-          ? { ...m, ...formData, monto, hora } 
-          : m
-      );
-      saveMovimientos(updated);
-    } else {
-      // Create mode
-      const newMov = {
-        id: Date.now() + Math.floor(Math.random() * 100000),
-        ...formData,
-        monto,
-        hora,
-        registrado: false
-      };
-      saveMovimientos([...movimientos, newMov]);
+    setSaving(true);
+    try {
+      if (editingId) {
+        const { error } = await updateMovimiento(editingId, { ...formData, monto, hora });
+        if (error) throw new Error(error);
+      } else {
+        const { error } = await createMovimiento({ ...formData, monto, hora });
+        if (error) throw new Error(error);
+      }
+      await loadData();
+      resetForm();
+    } catch (err) {
+      console.error('Error guardando movimiento:', err);
+      alert('Error al guardar el movimiento: ' + err.message);
+    } finally {
+      setSaving(false);
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -190,99 +162,145 @@ export default function Finanzas() {
     setFormData({
       tipo: mov.tipo || 'ingreso',
       monto: mov.monto || '',
-      fecha: mov.fecha || new Date().toISOString().slice(0, 10),
+      fecha: typeof mov.fecha === 'string' ? mov.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10),
       hora: mov.hora || '',
       categoria: mov.categoria || '',
       descripcion: mov.descripcion || '',
-      metodoPago: mov.metodoPago || 'efectivo'
+      metodoPago: mov.metodo_pago || mov.metodoPago || 'efectivo'
     });
     setEditingId(mov.id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este movimiento?')) return;
-    const updated = movimientos.filter(m => m.id !== id);
-    saveMovimientos(updated);
+    setSaving(true);
+    try {
+      const { error } = await deleteMovimientoApi(id);
+      if (error) throw new Error(error);
+      await loadData();
+    } catch (err) {
+      console.error('Error eliminando movimiento:', err);
+      alert('Error al eliminar: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const name = newCategoryName.trim();
     if (!name) {
       alert('Ingrese el nombre de la categoría');
       return;
     }
-    if (categorias.includes(name)) {
+    if (categorias.some(c => c.nombre === name)) {
       alert('La categoría ya existe');
       return;
     }
-    saveCategorias([...categorias, name]);
-    setNewCategoryName('');
-    setShowAddCategory(false);
+    setSaving(true);
+    try {
+      const { error } = await createCategoria(name);
+      if (error) throw new Error(error);
+      await loadData();
+      setNewCategoryName('');
+      setShowAddCategory(false);
+    } catch (err) {
+      console.error('Error creando categoría:', err);
+      alert('Error al crear categoría: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteCategory = (name) => {
-    if (!confirm(`¿Eliminar categoría "${name}"?`)) return;
-    saveCategorias(categorias.filter(c => c !== name));
+  const handleDeleteCategory = async (cat) => {
+    if (!confirm(`¿Eliminar categoría "${cat.nombre}"?`)) return;
+    setSaving(true);
+    try {
+      const { error } = await deleteCategoria(cat.id);
+      if (error) throw new Error(error);
+      await loadData();
+    } catch (err) {
+      console.error('Error eliminando categoría:', err);
+      alert('Error al eliminar categoría: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleRenameCategory = (oldName) => {
-    const newName = prompt('Renombrar categoría', oldName);
-    if (!newName || newName === oldName) return;
+  const handleRenameCategory = async (cat) => {
+    const newName = prompt('Renombrar categoría', cat.nombre);
+    if (!newName || newName === cat.nombre) return;
     
     const trimmed = newName.trim();
-    if (!trimmed || categorias.includes(trimmed)) {
+    if (!trimmed || categorias.some(c => c.nombre === trimmed)) {
       alert('Nombre inválido o ya existe');
       return;
     }
     
-    const updatedCats = categorias.map(c => c === oldName ? trimmed : c);
-    const updatedMovs = movimientos.map(m => 
-      m.categoria === oldName ? { ...m, categoria: trimmed } : m
-    );
-    
-    saveCategorias(updatedCats);
-    saveMovimientos(updatedMovs);
+    setSaving(true);
+    try {
+      const { error: catError } = await updateCategoria(cat.id, trimmed);
+      if (catError) throw new Error(catError);
+      // Actualizar los movimientos que usan la categoría vieja
+      await bulkUpdateMovimientosCategoria(cat.nombre, trimmed);
+      await loadData();
+    } catch (err) {
+      console.error('Error renombrando categoría:', err);
+      alert('Error al renombrar: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Registros
-  const handleVerRegistros = () => {
-    const regs = registros.filter(r => r.fecha === registroFecha);
-    setRegistrosDelDia(regs);
+  const handleVerRegistros = async () => {
+    const { data } = await getRegistroCierreByFecha(registroFecha);
+    setRegistrosDelDia(data ? [data] : []);
   };
 
-  const handleCerrarCaja = () => {
+  const handleCerrarCaja = async () => {
     if (!confirm(`¿Cerrar caja para ${registroFecha}?`)) return;
     
-    const movsDelDia = movimientos.filter(m => 
-      m.fecha?.startsWith(registroFecha) && !m.registrado
-    );
+    const movsDelDia = movimientos.filter(m => {
+      const fecha = typeof m.fecha === 'string' ? m.fecha : '';
+      return fecha.startsWith(registroFecha);
+    });
     
     if (movsDelDia.length === 0) {
       alert('No hay movimientos para cerrar en esa fecha');
       return;
     }
     
+    const efectivo = movsDelDia
+      .filter(m => (m.metodo_pago || m.metodoPago) === 'efectivo')
+      .reduce((acc, m) => acc + (m.tipo === 'ingreso' ? Number(m.monto) : -Number(m.monto)), 0);
+    
+    const transferencia = movsDelDia
+      .filter(m => (m.metodo_pago || m.metodoPago) === 'transferencia')
+      .reduce((acc, m) => acc + (m.tipo === 'ingreso' ? Number(m.monto) : -Number(m.monto)), 0);
+    
     const total = movsDelDia.reduce((acc, m) => 
-      acc + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
+      acc + (m.tipo === 'ingreso' ? Number(m.monto) : -Number(m.monto)), 0
     );
     
-    const newRegistro = {
-      id: Date.now() + Math.floor(Math.random() * 100000),
-      fecha: registroFecha,
-      total,
-      movimientos: movsDelDia.map(m => m.id),
-      cerradoAt: new Date().toISOString()
-    };
-    
-    saveRegistros([...registros, newRegistro]);
-    
-    const updatedMovs = movimientos.map(m => 
-      m.fecha?.startsWith(registroFecha) ? { ...m, registrado: true } : m
-    );
-    saveMovimientos(updatedMovs);
-    
-    handleVerRegistros();
+    setSaving(true);
+    try {
+      const { error } = await upsertRegistroCierre({
+        fecha: registroFecha,
+        efectivo,
+        transferencia,
+        tarjeta: 0,
+        total,
+      });
+      if (error) throw new Error(error);
+      await loadData();
+      await handleVerRegistros();
+    } catch (err) {
+      console.error('Error cerrando caja:', err);
+      alert('Error al cerrar caja: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleRegistroDetalle = (registroId) => {
@@ -291,7 +309,7 @@ export default function Finanzas() {
 
   // Group by date
   const movimientosAgrupados = movimientos.reduce((acc, mov) => {
-    const fecha = mov.fecha || 'Sin fecha';
+    const fecha = (typeof mov.fecha === 'string' ? mov.fecha.slice(0, 10) : null) || 'Sin fecha';
     if (!acc[fecha]) acc[fecha] = [];
     acc[fecha].push(mov);
     return acc;
@@ -326,19 +344,26 @@ export default function Finanzas() {
           </div>
         </div>
 
+        {loading ? (
+          <div className={styles.empty}>
+            <span className={styles.emptyIcon}>⏳</span>
+            <h3>Cargando datos financieros...</h3>
+          </div>
+        ) : (
+        <>
         {/* Resumen */}
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
             <h3>Movimientos</h3>
             <div className={styles.summaryRow}>
               <div>
-                <div className={styles.summaryLabel}>Ingresos</div>
+                <div className={styles.summaryLabel}>Ingresos Hoy</div>
                 <div className={`${styles.summaryValue} ${styles.ingreso}`}>
                   {formatCurrency(resumen.ingresosHoy)}
                 </div>
               </div>
               <div>
-                <div className={styles.summaryLabel}>Egresos</div>
+                <div className={styles.summaryLabel}>Egresos Hoy</div>
                 <div className={`${styles.summaryValue} ${styles.egreso}`}>
                   {formatCurrency(resumen.egresosHoy)}
                 </div>
@@ -370,6 +395,7 @@ export default function Finanzas() {
           <button 
             className={styles.btnPrimary}
             onClick={() => setShowForm(!showForm)}
+            disabled={saving}
           >
             + Nuevo Movimiento
           </button>
@@ -449,7 +475,7 @@ export default function Finanzas() {
                     >
                       <option value="">-- Sin categoría --</option>
                       {categorias.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
                       ))}
                     </select>
                     <button
@@ -486,13 +512,14 @@ export default function Finanzas() {
                   {showCategoryManager && (
                     <div className={styles.categoryManager}>
                       {categorias.map(cat => (
-                        <div key={cat} className={styles.categoryItem}>
-                          <span>{cat}</span>
+                        <div key={cat.id} className={styles.categoryItem}>
+                          <span>{cat.nombre}</span>
                           <div>
                             <button
                               type="button"
                               className={styles.btnSmall}
                               onClick={() => handleRenameCategory(cat)}
+                              disabled={saving}
                             >
                               Editar
                             </button>
@@ -500,6 +527,7 @@ export default function Finanzas() {
                               type="button"
                               className={styles.btnSmall}
                               onClick={() => handleDeleteCategory(cat)}
+                              disabled={saving}
                             >
                               Eliminar
                             </button>
@@ -537,8 +565,8 @@ export default function Finanzas() {
                 <button type="button" className={styles.btnSecondary} onClick={resetForm}>
                   Cancelar
                 </button>
-                <button type="submit" className={styles.btnPrimary}>
-                  {editingId ? 'Actualizar' : 'Guardar'}
+                <button type="submit" className={styles.btnPrimary} disabled={saving}>
+                  {saving ? 'Guardando...' : (editingId ? 'Actualizar' : 'Guardar')}
                 </button>
               </div>
             </form>
@@ -579,8 +607,8 @@ export default function Finanzas() {
                         <div className={styles.movTop}>
                           <div className={styles.movMeta}>
                             <strong>{mov.categoria || 'Sin categoría'}</strong>
-                            {mov.metodoPago && <span> - {mov.metodoPago}</span>}
-                            <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
+                            {(mov.metodo_pago || mov.metodoPago) && <span> - {mov.metodo_pago || mov.metodoPago}</span>}
+                            <small> {typeof mov.fecha === 'string' ? mov.fecha.slice(0, 10) : mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
                           </div>
                           <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
                             {formatCurrency(mov.monto)}
@@ -594,12 +622,14 @@ export default function Finanzas() {
                           <button
                             className={styles.btnSecondary}
                             onClick={() => handleEdit(mov)}
+                            disabled={saving}
                           >
                             Editar
                           </button>
                           <button
                             className={styles.btnSecondary}
                             onClick={() => handleDelete(mov.id)}
+                            disabled={saving}
                           >
                             Eliminar
                           </button>
@@ -623,11 +653,11 @@ export default function Finanzas() {
               value={registroFecha}
               onChange={(e) => setRegistroFecha(e.target.value)}
             />
-            <button className={styles.btnSecondary} onClick={handleVerRegistros}>
+            <button className={styles.btnSecondary} onClick={handleVerRegistros} disabled={saving}>
               Ver
             </button>
-            <button className={styles.btnPrimary} onClick={handleCerrarCaja}>
-              Cerrar caja
+            <button className={styles.btnPrimary} onClick={handleCerrarCaja} disabled={saving}>
+              {saving ? 'Procesando...' : 'Cerrar caja'}
             </button>
           </div>
           
@@ -645,29 +675,37 @@ export default function Finanzas() {
                     onClick={() => toggleRegistroDetalle(reg.id)}
                   >
                     <div>
-                      <strong>{reg.fecha}</strong> - Total: {formatCurrency(reg.total)}
+                      <strong>{typeof reg.fecha === 'string' ? reg.fecha.slice(0, 10) : reg.fecha}</strong> - Total: {formatCurrency(reg.total)}
                     </div>
-                    <small>Cerrado: {new Date(reg.cerradoAt).toLocaleString()}</small>
+                    <small>Cerrado: {reg.created_at ? new Date(reg.created_at).toLocaleString() : '-'}</small>
                   </div>
                   
                   {expandedRegistro === reg.id && (
                     <div className={styles.registroDetalle}>
-                      {reg.movimientos.map(movId => {
-                        const mov = movimientos.find(m => m.id === movId);
-                        if (!mov) return null;
-                        return (
-                          <div key={movId} className={styles.registroMov}>
-                            <div>
-                              <strong>{mov.categoria || 'Sin categoría'}</strong>
-                              <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
-                              <div>{mov.descripcion}</div>
-                            </div>
-                            <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
-                              {formatCurrency(mov.monto)}
-                            </div>
+                      <div className={styles.registroMov}>
+                        <div>
+                          <strong>Efectivo</strong>
+                        </div>
+                        <div className={styles.movAmount}>
+                          {formatCurrency(reg.efectivo || 0)}
+                        </div>
+                      </div>
+                      <div className={styles.registroMov}>
+                        <div>
+                          <strong>Transferencia</strong>
+                        </div>
+                        <div className={styles.movAmount}>
+                          {formatCurrency(reg.transferencia || 0)}
+                        </div>
+                      </div>
+                      {reg.observaciones && (
+                        <div className={styles.registroMov}>
+                          <div>
+                            <strong>Observaciones:</strong>
+                            <div>{reg.observaciones}</div>
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -675,7 +713,11 @@ export default function Finanzas() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </Layout>
   );
 }
+
+export default withAdminAuth(Finanzas);
