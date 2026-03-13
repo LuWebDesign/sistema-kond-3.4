@@ -9,6 +9,7 @@ import styles from '../../styles/pedidos-catalogo.module.css'
 import { formatCurrency, createToast } from '../../utils/catalogUtils'
 import { getAllPedidosCatalogo, getPedidoCatalogoById, updateMontoRecibido } from '../../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProductos'
+import { createMovimiento } from '../../utils/supabaseFinanzas'
 import dynamic from 'next/dynamic'
 
 // Componente sin SSR para evitar hydration mismatches
@@ -586,11 +587,78 @@ function PedidosCatalogo() {
     setSelectedPedido(updatedPedido)
   }
 
-  // NOTA: Función de movimientos financieros deshabilitada temporalmente
-  // Se reactivará cuando se reconstruya el módulo de finanzas
+  // Registra movimientos financieros en Supabase cuando cambia el estado de pago de un pedido.
+  // Fire-and-forget (no bloquea la UI).
   const actualizarMovimientosPedido = (pedidoActualizado, pedidoAnterior = null) => {
-    // Función deshabilitada - módulo finanzas eliminado
-    console.log('⚠️ Función actualizarMovimientosPedido deshabilitada temporalmente');
+    const prevEstado = pedidoAnterior
+      ? (pedidoAnterior.estadoPago || 'sin_seña')
+      : 'sin_seña'
+    const nuevoEstado = pedidoActualizado.estadoPago || 'sin_seña'
+
+    // Sin cambio de estado de pago → no registrar nada
+    if (prevEstado === nuevoEstado) return
+
+    const total = Number(pedidoActualizado.total || 0)
+    const montoNuevo = Number(pedidoActualizado.montoRecibido || 0)
+    const montoAnterior = Number(pedidoAnterior?.montoRecibido || 0)
+    const clienteNombre = pedidoActualizado.cliente?.nombre || 'Cliente'
+    const clienteApellido = pedidoActualizado.cliente?.apellido || ''
+    const nombreCompleto = [clienteNombre, clienteApellido].filter(Boolean).join(' ')
+    const metodoPago = pedidoActualizado.metodoPago || 'efectivo'
+    const hoy = new Date().toISOString().slice(0, 10)
+    const hora = new Date().toTimeString().slice(0, 8)
+
+    ;(async () => {
+      try {
+        if (nuevoEstado === 'seña_pagada') {
+          // Registrar el monto de la seña recibida
+          const montoSena = montoNuevo > 0 ? montoNuevo : Math.round(total * 0.5)
+          await createMovimiento({
+            tipo: 'ingreso',
+            monto: montoSena,
+            fecha: hoy,
+            hora,
+            categoria: 'Ventas',
+            descripcion: `Seña Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
+            metodoPago,
+            pedido_catalogo_id: pedidoActualizado.id,
+          })
+        } else if (nuevoEstado === 'pagado_total') {
+          if (prevEstado === 'seña_pagada') {
+            // Ya se registró la seña antes → registrar solo el saldo restante
+            const saldo = Math.max(0, total - montoAnterior)
+            if (saldo > 0) {
+              await createMovimiento({
+                tipo: 'ingreso',
+                monto: saldo,
+                fecha: hoy,
+                hora,
+                categoria: 'Ventas',
+                descripcion: `Saldo Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
+                metodoPago,
+                pedido_catalogo_id: pedidoActualizado.id,
+              })
+            }
+          } else {
+            // Pago directo sin seña previa → registrar el total completo
+            if (total > 0) {
+              await createMovimiento({
+                tipo: 'ingreso',
+                monto: total,
+                fecha: hoy,
+                hora,
+                categoria: 'Ventas',
+                descripcion: `Pago total Pedido #${pedidoActualizado.id} - ${nombreCompleto}`,
+                metodoPago,
+                pedido_catalogo_id: pedidoActualizado.id,
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error registrando movimiento financiero:', err)
+      }
+    })()
   }
 
   // Helper para persistir pedidosCatalogo y emitir un evento homogéneo
