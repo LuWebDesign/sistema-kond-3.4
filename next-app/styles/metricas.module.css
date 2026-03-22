@@ -30,21 +30,21 @@
 }
 
 .kpiCard {
-  background: var(--card-bg, #fff);
+  background: var(--bg-card, var(--bg-secondary, #fff));
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: var(--card-shadow, 0 1px 3px rgba(0,0,0,0.06));
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06));
 }
 
 .kpiLabel {
   font-size: 0.8rem;
   text-transform: uppercase;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-tertiary, var(--text-secondary));
   letter-spacing: 0.03em;
 }
 
@@ -56,7 +56,7 @@
 
 .kpiSub {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--text-muted, var(--text-secondary));
 }
 
 /* Sección con título */
@@ -70,7 +70,7 @@
   color: var(--text-primary);
   margin: 0 0 16px 0;
   padding-bottom: 8px;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-input, var(--border-color));
 }
 
 /* Grid de tarjetas de detalle */
@@ -78,21 +78,22 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
+  margin-bottom: 32px;
 }
 
 .detailCard {
-  background: var(--card-bg, #fff);
+  background: var(--bg-card, var(--bg-secondary, #fff));
   border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: var(--card-shadow, 0 1px 3px rgba(0,0,0,0.06));
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06));
 }
 
 .detailCardTitle {
   font-size: 0.85rem;
   text-transform: uppercase;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-tertiary, var(--text-secondary));
   margin: 0 0 12px 0;
 }
 
@@ -100,11 +101,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
+  padding: 8px 0;
 }
 
 .statRow + .statRow {
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-input, var(--border-color));
 }
 
 .statLabel {
@@ -115,12 +116,13 @@
 .statValue {
   font-weight: 600;
   font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
 /* Barra de progreso simple */
 .progressBar {
   height: 8px;
-  background: var(--border-color);
+  background: var(--bg-input, var(--bg-tertiary, #e5e7eb));
   border-radius: 4px;
   overflow: hidden;
   margin-top: 8px;
@@ -140,10 +142,12 @@
 }
 
 .methodCard {
-  background: var(--bg-section, #f9fafb);
-  border-radius: 8px;
-  padding: 14px;
+  background: var(--bg-card, var(--bg-secondary, #f9fafb));
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 18px 14px;
   text-align: center;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06));
 }
 
 .methodIcon {
@@ -153,13 +157,14 @@
 
 .methodLabel {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--text-tertiary, var(--text-secondary));
   margin-bottom: 4px;
 }
 
 .methodValue {
   font-size: 1.3rem;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 /* Loading state */

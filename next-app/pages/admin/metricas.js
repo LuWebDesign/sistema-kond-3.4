@@ -234,7 +234,7 @@ function MetricasPage() {
               <span className={styles.statLabel}>Total recibido</span>
               <span className={styles.statValue} style={{ color: '#3b82f6' }}>{formatCurrency(metrics.totalRecibido)}</span>
             </div>
-            <div className={styles.statRow} style={{ borderTop: '2px solid var(--border-color)', paddingTop: 8 }}>
+            <div className={styles.statRow} style={{ borderTop: '2px solid var(--border-input, var(--border-color))', paddingTop: 8 }}>
               <span className={styles.statLabel} style={{ fontWeight: 600 }}>Pendiente por cobrar</span>
               <span className={styles.statValue} style={{ color: '#f59e0b', fontWeight: 700 }}>{formatCurrency(metrics.pendienteCobrar)}</span>
             </div>
