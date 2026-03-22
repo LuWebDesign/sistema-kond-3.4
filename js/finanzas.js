@@ -115,7 +115,6 @@ function renderFinanzas() {
     container.style.display = 'none';
     empty.style.display = 'block';
     balanceEl.textContent = formatCurrencySimple(0);
-    if (equilibrioEl) equilibrioEl.textContent = 'Equilibrio hoy: $0';
     // Actualizar tarjetas incluso sin movimientos
     updateFinanzasCards();
     return;
@@ -431,12 +430,8 @@ function registrarMovimiento({ tipo = 'ingreso', monto = 0, categoria = '', desc
   if (clienteName) mov.clienteName = clienteName;
   if (pedidoId) mov.pedidoId = pedidoId;
   if (idempotencyKey) mov.idempotencyKey = idempotencyKey;
-  // DEBUG: log para verificar llamadas desde otros módulos
-  try { console.debug('[DEBUG registrarMovimiento] called', { tipo, monto: Number(monto), categoria, descripcion, fecha: fechaFinal, clienteName, pedidoId, idempotencyKey }); } catch(e) {}
   finanzas.push(mov);
-  console.log('[DEBUG] registrarMovimiento -> added', mov);
   guardarFinanzas();
-  console.log('[DEBUG] registrarMovimiento -> saved to localStorage');
 
   // Notificar a UIs React/Next que pueden leer el nuevo movimiento (en la misma pestaña 'storage' no dispara)
   try {
@@ -664,9 +659,7 @@ if (finanzasGuardar) finanzasGuardar.addEventListener('click', () => {
 
   // crear nuevo
   finanzas.push({ id: Date.now() + Math.floor(Math.random()*100000), tipo, monto, fecha, hora, categoria, descripcion, metodoPago });
-  console.log('[DEBUG] finanzas.push ->', finanzas[finanzas.length-1]);
   guardarFinanzas();
-  console.log('[DEBUG] localStorage.finanzas saved, length=', (JSON.parse(localStorage.getItem('finanzas')) || []).length);
   renderFinanzas();
 
   const form = document.getElementById('finanzasForm');
@@ -748,19 +741,19 @@ function updateFinanzasCards() {
 
   if (ingresosEl) ingresosEl.textContent = formatCurrencySimple(ingresos);
   if (egresosEl) egresosEl.textContent = formatCurrencySimple(egresos);
-  if (equilibrioEl) equilibrioEl.textContent = formatCurrencySimple(equilibrio);
-  if (balanceEl) balanceEl.textContent = formatCurrencySimple(balance);
-  if (disponibleEl) disponibleEl.textContent = formatCurrencySimple(dineroDisponible);
+  if (equilibrioEl) {
+    equilibrioEl.textContent = formatCurrencySimple(equilibrio);
+    equilibrioEl.style.color = equilibrio < 0 ? '#e53935' : '#0984e3';
+  }
+  if (balanceEl) {
+    balanceEl.textContent = formatCurrencySimple(balance);
+    balanceEl.style.color = balance < 0 ? '#e53935' : '#4CAF50';
+  }
+  if (disponibleEl) {
+    disponibleEl.textContent = formatCurrencySimple(dineroDisponible);
+    disponibleEl.style.color = dineroDisponible < 0 ? '#e53935' : '';
+  }
   if (porCobrarEl) porCobrarEl.textContent = formatCurrencySimple(porCobrar);
-
-  console.log('Finanzas actualizadas:', {
-    ingresos,
-    egresos,
-    equilibrio,
-    balance,
-    dineroDisponible,
-    porCobrar
-  });
 }
 
 // inicializar
