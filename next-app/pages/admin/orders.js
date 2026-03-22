@@ -4,7 +4,6 @@ import AvailabilityCalendar from '../../components/AvailabilityCalendar'
 import PedidoCard from '../../components/PedidoCard'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import React from 'react'
 import { useRouter } from 'next/router'
 import styles from '../../styles/pedidos-catalogo.module.css'
 import { formatCurrency, createToast } from '../../utils/catalogUtils'
@@ -118,168 +117,6 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   }
 }
 
-const OrdersStats = React.memo(function OrdersStats({ orders, filteredOrders }) {
-  const [isOpen, setIsOpen] = useState(false)
-  
-  // Calcular estadísticas con useMemo (evita recálculos en cada render)
-  const { totalOrders, pendingOrders, confirmedOrders, inProgressOrders, readyOrders, deliveredOrders, thisMonthOrders } = useMemo(() => {
-    let pending = 0, confirmed = 0, inProgress = 0, ready = 0, delivered = 0, thisMonth = 0
-    const now = new Date()
-    const cm = now.getMonth(), cy = now.getFullYear()
-    for (const o of filteredOrders) {
-      if (o.estado === 'pendiente') pending++
-      else if (o.estado === 'confirmado') confirmed++
-      else if (o.estado === 'en_preparacion' || o.estado === 'en_produccion') inProgress++
-      else if (o.estado === 'listo') ready++
-      else if (o.estado === 'entregado') delivered++
-      const d = new Date(o.fechaCreacion)
-      if (d.getMonth() === cm && d.getFullYear() === cy) thisMonth++
-    }
-    return { totalOrders: filteredOrders.length, pendingOrders: pending, confirmedOrders: confirmed, inProgressOrders: inProgress, readyOrders: ready, deliveredOrders: delivered, thisMonthOrders: thisMonth }
-  }, [filteredOrders])
-
-  // Calcular montos basados en TODOS los pedidos (orders), no solo filteredOrders
-  const { totalAmount, deliveredAmount, pendingAmount } = useMemo(() => {
-    let total = 0, deliv = 0
-    for (const o of orders) {
-      const t = o.total || 0
-      total += t
-      if (o.estado === 'entregado') deliv += t
-    }
-    return { totalAmount: total, deliveredAmount: deliv, pendingAmount: total - deliv }
-  }, [orders])
-
-  return (
-    <div className={styles.statsSection}>
-      <button 
-        className={styles.statsToggle}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-      >
-        <h3 className={styles.statsTitle}>
-          📊 Estadísticas de Pedidos
-        </h3>
-        <span className={styles.statsToggleIcon}>{isOpen ? '▼' : '▶'}</span>
-      </button>
-
-      <div className={`${styles.statsContent} ${isOpen ? styles.statsContentOpen : ''}`}>
-        <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px'
-      }}>
-        {/* Pedidos por Estado */}
-        <div style={{
-          background: 'var(--bg-section)',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
-          <h4 style={{ 
-            fontSize: '0.9rem', 
-            color: 'var(--text-secondary)', 
-            marginBottom: '12px',
-            textTransform: 'uppercase',
-            fontWeight: 600
-          }}>
-            Estados
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>⏳ Pendientes:</span>
-              <span style={{ fontWeight: 600, color: '#f59e0b' }}>{pendingOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>✅ Confirmados:</span>
-              <span style={{ fontWeight: 600, color: '#3b82f6' }}>{confirmedOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>🔨 En Preparación:</span>
-              <span style={{ fontWeight: 600, color: '#8b5cf6' }}>{inProgressOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>📦 Listos:</span>
-              <span style={{ fontWeight: 600, color: '#10b981' }}>{readyOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>🎉 Entregados:</span>
-              <span style={{ fontWeight: 600, color: '#059669' }}>{deliveredOrders}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Resumen General */}
-        <div style={{
-          background: 'var(--bg-section)',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
-          <h4 style={{ 
-            fontSize: '0.9rem', 
-            color: 'var(--text-secondary)', 
-            marginBottom: '12px',
-            textTransform: 'uppercase',
-            fontWeight: 600
-          }}>
-            Resumen
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Total pedidos:</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{totalOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Este mes:</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{thisMonthOrders}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Mostrando:</span>
-              <span style={{ fontWeight: 600, color: 'var(--accent-blue)' }}>{filteredOrders.length}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Montos */}
-        <div style={{
-          background: 'var(--bg-section)',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
-          <h4 style={{ 
-            fontSize: '0.9rem', 
-            color: 'var(--text-secondary)', 
-            marginBottom: '12px',
-            textTransform: 'uppercase',
-            fontWeight: 600
-          }}>
-            Montos
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Total general:</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                {formatCurrency(totalAmount)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Entregado:</span>
-              <span style={{ fontWeight: 600, color: '#10b981' }}>
-                {formatCurrency(deliveredAmount)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', borderTop: '1px solid var(--border-color)' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Pendiente por cobrar:</span>
-              <span style={{ fontWeight: 700, color: '#f59e0b' }}>
-                {formatCurrency(pendingAmount)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
-  )
-})
-
 function PedidosCatalogo() {
   // Estados
   const [pedidosCatalogo, setPedidosCatalogo] = useState([])
@@ -324,36 +161,6 @@ function PedidosCatalogo() {
   const [currentPagePendientes, setCurrentPagePendientes] = useState(1)
   const [currentPageEntregados, setCurrentPageEntregados] = useState(1)
   const itemsPerPage = 6
-  
-  // Calcular estadísticas con useMemo (optimización)
-  const stats = useMemo(() => {
-    const now = new Date()
-    const thisMonth = now.getMonth()
-    const thisYear = now.getFullYear()
-
-    const pendientes = pedidosCatalogo.filter(p => p.estado !== 'entregado')
-    const entregados = pedidosCatalogo.filter(p => p.estado === 'entregado')
-
-    const pendientesEsteMes = pendientes.filter(p => {
-      const date = new Date(p.fechaCreacion)
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
-    })
-
-    const entregadosEsteMes = entregados.filter(p => {
-      const date = new Date(p.fechaCreacion)
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear
-    })
-
-    const totalEntregado = entregados.reduce((sum, p) => sum + (p.total || 0), 0)
-
-    return {
-      totalPendientes: pendientes.length,
-      pendientesEsteMes: pendientesEsteMes.length,
-      totalEntregados: entregados.length,
-      entregadosEsteMes: entregadosEsteMes.length,
-      totalEntregado
-    }
-  }, [pedidosCatalogo])
 
   // Cargar datos desde Supabase (y fallback a localStorage)
   useEffect(() => {
@@ -1492,9 +1299,6 @@ function PedidosCatalogo() {
           <h1 className={styles.title}>🛒 Pedidos Catálogo</h1>
           <p className={styles.subtitle}>Gestión de pedidos del catálogo público</p>
         </div>
-
-        {/* Estadísticas */}
-        <OrdersStats orders={pedidosCatalogo} filteredOrders={activeSubtab === 'pendientes' ? filteredPendientes : filteredEntregados} />
 
         {/* Sub-pestañas */}
         <div className={styles.subtabs}>

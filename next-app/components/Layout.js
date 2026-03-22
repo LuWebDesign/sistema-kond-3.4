@@ -178,6 +178,10 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               🛒 Pedidos Catálogo
             </Link>
             
+            <Link href="/admin/metricas" style={linkStyle}>
+              📊 Métricas
+            </Link>
+            
             <Link href="/marketing" style={linkStyle}>
               🎯 Marketing
             </Link>
