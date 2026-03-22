@@ -1,3 +1,4 @@
+import React from 'react'
 import styles from '../styles/pedidos-catalogo.module.css'
 
 // Función auxiliar para convertir tiempo HH:MM:SS a segundos
@@ -18,7 +19,7 @@ const secondsToHHMMSS = (totalSeconds) => {
   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion, createToast }) {
+function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoji, getStatusLabel, getPaymentLabel, getProductThumbnail, formatFechaEntrega, formatFechaProduccion, tiempoProduccion, createToast, productosBase: productosBaseProp, materiales: materialesProp }) {
   // Calcular monto recibido estimado y restante
   const recibido = Number(pedido.montoRecibido || 0) || (pedido.estadoPago === 'seña_pagada' ? (Number(pedido.total || 0) * 0.5) : (pedido.estadoPago === 'pagado_total' ? Number(pedido.total || 0) : 0))
   const seña = pedido.estadoPago === 'seña_pagada' ? recibido : 0
@@ -64,15 +65,8 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
     }
   }
 
-  // Obtener productosBase de localStorage
-  let productosBase = []
-  if (typeof window !== 'undefined') {
-    try {
-      productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
-    } catch (e) {
-      console.warn('Error cargando productosBase:', e)
-    }
-  }
+  // Usar productosBase desde props (evita leer localStorage en cada render)
+  const productosBase = productosBaseProp || []
 
   // Función para obtener thumbnail de un producto específico
   const getProductThumbnailIndividual = (prod) => {
@@ -122,8 +116,7 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
 
   // Función para obtener información completa del material
   const getMaterialInfo = (materialName, materialId) => {
-    // Acceder a materials desde localStorage
-    const materials = JSON.parse(localStorage.getItem('materiales') || '[]')
+    const materials = materialesProp || []
     
     // Primero intentar por materialId
     if (materialId) {
@@ -330,3 +323,5 @@ export default function PedidoCard({ pedido, onClick, formatCurrency, formatDate
     </div>
   )
 }
+
+export default React.memo(PedidoCard)

@@ -4,6 +4,7 @@ import AvailabilityCalendar from '../../components/AvailabilityCalendar'
 import PedidoCard from '../../components/PedidoCard'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React from 'react'
 import { useRouter } from 'next/router'
 import styles from '../../styles/pedidos-catalogo.module.css'
 import { formatCurrency, createToast } from '../../utils/catalogUtils'
@@ -117,31 +118,36 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   }
 }
 
-function OrdersStats({ orders, filteredOrders }) {
+const OrdersStats = React.memo(function OrdersStats({ orders, filteredOrders }) {
   const [isOpen, setIsOpen] = useState(false)
   
-  // Calcular estadísticas
-  const totalOrders = filteredOrders.length
-  const pendingOrders = filteredOrders.filter(o => o.estado === 'pendiente').length
-  const confirmedOrders = filteredOrders.filter(o => o.estado === 'confirmado').length
-  const inProgressOrders = filteredOrders.filter(o => o.estado === 'en_preparacion' || o.estado === 'en_produccion').length
-  const readyOrders = filteredOrders.filter(o => o.estado === 'listo').length
-  const deliveredOrders = filteredOrders.filter(o => o.estado === 'entregado').length
+  // Calcular estadísticas con useMemo (evita recálculos en cada render)
+  const { totalOrders, pendingOrders, confirmedOrders, inProgressOrders, readyOrders, deliveredOrders, thisMonthOrders } = useMemo(() => {
+    let pending = 0, confirmed = 0, inProgress = 0, ready = 0, delivered = 0, thisMonth = 0
+    const now = new Date()
+    const cm = now.getMonth(), cy = now.getFullYear()
+    for (const o of filteredOrders) {
+      if (o.estado === 'pendiente') pending++
+      else if (o.estado === 'confirmado') confirmed++
+      else if (o.estado === 'en_preparacion' || o.estado === 'en_produccion') inProgress++
+      else if (o.estado === 'listo') ready++
+      else if (o.estado === 'entregado') delivered++
+      const d = new Date(o.fechaCreacion)
+      if (d.getMonth() === cm && d.getFullYear() === cy) thisMonth++
+    }
+    return { totalOrders: filteredOrders.length, pendingOrders: pending, confirmedOrders: confirmed, inProgressOrders: inProgress, readyOrders: ready, deliveredOrders: delivered, thisMonthOrders: thisMonth }
+  }, [filteredOrders])
 
   // Calcular montos basados en TODOS los pedidos (orders), no solo filteredOrders
-  const totalAmount = orders.reduce((sum, order) => sum + (order.total || 0), 0)
-  const deliveredAmount = orders.filter(o => o.estado === 'entregado')
-    .reduce((sum, order) => sum + (order.total || 0), 0)
-  const pendingAmount = totalAmount - deliveredAmount
-
-  // Pedidos de este mes
-  const currentDate = new Date()
-  const currentMonth = currentDate.getMonth()
-  const currentYear = currentDate.getFullYear()
-  const thisMonthOrders = filteredOrders.filter(order => {
-    const orderDate = new Date(order.fechaCreacion)
-    return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
-  }).length
+  const { totalAmount, deliveredAmount, pendingAmount } = useMemo(() => {
+    let total = 0, deliv = 0
+    for (const o of orders) {
+      const t = o.total || 0
+      total += t
+      if (o.estado === 'entregado') deliv += t
+    }
+    return { totalAmount: total, deliveredAmount: deliv, pendingAmount: total - deliv }
+  }, [orders])
 
   return (
     <div className={styles.statsSection}>
@@ -272,7 +278,7 @@ function OrdersStats({ orders, filteredOrders }) {
       </div>
     </div>
   )
-}
+})
 
 function PedidosCatalogo() {
   // Estados
@@ -826,17 +832,16 @@ function PedidosCatalogo() {
   const currentEntregados = filteredEntregados.slice(startIndexEntregados, endIndexEntregados)
 
   // Funciones auxiliares
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
       minimumFractionDigits: 0
     }).format(amount || 0)
-  }
+  }, [])
 
-  const formatDate = (dateString) => {
+  const formatDate = useCallback((dateString) => {
     if (!dateString) return 'Sin fecha'
-    // Use client-only formatting to avoid hydration mismatches
     if (typeof window === 'undefined') return dateString
     const date = new Date(dateString)
     return date.toLocaleDateString('es-AR', {
@@ -844,9 +849,9 @@ function PedidosCatalogo() {
       month: '2-digit',
       year: 'numeric'
     })
-  }
+  }, [])
 
-  const getStatusEmoji = (status) => {
+  const getStatusEmoji = useCallback((status) => {
     const emojis = {
       'pendiente': '⏳',
       'confirmado': '✅',
@@ -857,9 +862,9 @@ function PedidosCatalogo() {
       'cancelado': '❌'
     }
     return emojis[status] || '📋'
-  }
+  }, [])
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = useCallback((status) => {
     const labels = {
       'pendiente': 'Pendiente confirmación',
       'confirmado': 'Confirmado',
@@ -870,10 +875,9 @@ function PedidosCatalogo() {
       'cancelado': 'Cancelado'
     }
     return labels[status] || status
-  }
+  }, [])
 
-  const getPaymentLabel = (status, pedido = null) => {
-    // Si tenemos el pedido, calcular porcentaje dinámico según montoRecibido / total
+  const getPaymentLabel = useCallback((status, pedido = null) => {
     if (status === 'seña_pagada') {
       const total = Number(pedido?.total || 0)
       const recibido = Number(pedido?.montoRecibido || 0)
@@ -881,7 +885,6 @@ function PedidosCatalogo() {
         const pct = Math.round((recibido / total) * 100)
         return `Seña pagada (${pct}%)`
       }
-      // fallback histórico
       return 'Seña pagada (50%)'
     }
 
@@ -890,11 +893,10 @@ function PedidosCatalogo() {
       'pagado_total': 'Pagado total'
     }
     return labels[status] || status
-  }
+  }, [])
 
-  const formatFechaEntrega = (pedido) => {
+  const formatFechaEntrega = useCallback((pedido) => {
     if (pedido.fechaConfirmadaEntrega) {
-      // Use client-only formatting to avoid hydration mismatches
       if (typeof window === 'undefined') return pedido.fechaConfirmadaEntrega
       const { parseDateYMD } = require('../../utils/catalogUtils')
       const fecha = parseDateYMD(pedido.fechaConfirmadaEntrega) || new Date(pedido.fechaConfirmadaEntrega + 'T00:00:00')
@@ -905,7 +907,7 @@ function PedidosCatalogo() {
       })
     }
     return 'Sin confirmar'
-  }
+  }, [])
 
   const updateOrderStatus = (orderId, newStatus) => {
     try {
@@ -1027,9 +1029,8 @@ function PedidosCatalogo() {
     link.remove()
   }
 
-  const formatFechaProduccion = (pedido) => {
+  const formatFechaProduccion = useCallback((pedido) => {
     if (pedido.fechaProduccion) {
-      // Use client-only formatting to avoid hydration mismatches
       if (typeof window === 'undefined') return pedido.fechaProduccion
       const { parseDateYMD } = require('../../utils/catalogUtils')
       const fecha = parseDateYMD(pedido.fechaProduccion) || new Date(pedido.fechaProduccion + 'T00:00:00')
@@ -1040,18 +1041,18 @@ function PedidosCatalogo() {
       })
     }
     return 'Sin asignar'
-  }
+  }, [])
 
-  const getProductThumbnail = (pedido) => {
+  const getProductThumbnail = useCallback((pedido) => {
     if (!pedido.productos || pedido.productos.length === 0) return null
     
     const firstProduct = pedido.productos[0]
     const productBase = productosBase.find(p => p.id === firstProduct.productId || p.id === firstProduct.idProducto)
     
     return productBase?.imagen || null
-  }
+  }, [productosBase])
 
-  const handleCardClick = (pedido) => {
+  const handleCardClick = useCallback((pedido) => {
     // Abrir modal y actualizar la URL para que incluya el ID del pedido
     try {
       const asPath = `/admin/orders/detalle-pedido/${pedido.id}`
@@ -1061,7 +1062,7 @@ function PedidosCatalogo() {
     }
     setSelectedPedido(pedido)
     setShowDetailModal(true)
-  }
+  }, [router])
 
   const handleCloseModal = () => {
     isClosingModalRef.current = true
@@ -1536,13 +1537,13 @@ function PedidosCatalogo() {
                     type="text"
                     placeholder="🔍 Buscar por ID, cliente o teléfono..."
                     value={filters.search}
-                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                     className={styles.searchInput}
                   />
                   
                   <select
                     value={filters.estado}
-                    onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, estado: e.target.value }))}
                     className={styles.select}
                   >
                     <option value="all">Todos los estados</option>
@@ -1556,7 +1557,7 @@ function PedidosCatalogo() {
                   
                   <select
                     value={filters.estadoPago}
-                    onChange={(e) => setFilters({ ...filters, estadoPago: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
                     className={styles.select}
                   >
                     <option value="all">Todos los pagos</option>
@@ -1567,7 +1568,7 @@ function PedidosCatalogo() {
 
                   <select
                     value={filters.metodoPago}
-                    onChange={(e) => setFilters({ ...filters, metodoPago: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, metodoPago: e.target.value }))}
                     className={styles.select}
                   >
                     <option value="all">Todos los métodos</option>
@@ -1580,7 +1581,7 @@ function PedidosCatalogo() {
                     type="date"
                     placeholder="Fecha desde"
                     value={filters.dateFrom}
-                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
                     className={styles.dateInput}
                   />
 
@@ -1588,7 +1589,7 @@ function PedidosCatalogo() {
                     type="date"
                     placeholder="Fecha hasta"
                     value={filters.dateTo}
-                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
                     className={styles.dateInput}
                   />
                 </div>
@@ -1619,6 +1620,8 @@ function PedidosCatalogo() {
                       formatFechaEntrega={formatFechaEntrega}
                       formatFechaProduccion={formatFechaProduccion}
                       createToast={createToast}
+                      productosBase={productosBase}
+                      materiales={materiales}
                     />
                   ))}
                 </div>
@@ -1686,13 +1689,13 @@ function PedidosCatalogo() {
                     type="text"
                     placeholder="🔍 Buscar por ID, cliente o teléfono..."
                     value={deliveredFilters.search}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, search: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, search: e.target.value }))}
                     className={styles.searchInput}
                   />
                   
                   <select
                     value={deliveredFilters.estadoPago}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, estadoPago: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
                     className={styles.select}
                   >
                     <option value="all">Todos los pagos</option>
@@ -1703,7 +1706,7 @@ function PedidosCatalogo() {
 
                   <select
                     value={deliveredFilters.metodoPago}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, metodoPago: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, metodoPago: e.target.value }))}
                     className={styles.select}
                   >
                     <option value="all">Todos los métodos</option>
@@ -1715,7 +1718,7 @@ function PedidosCatalogo() {
                   <input
                     type="date"
                     value={deliveredFilters.fecha}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, fecha: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, fecha: e.target.value }))}
                     className={styles.dateInput}
                     placeholder="Fecha específica"
                   />
@@ -1724,7 +1727,7 @@ function PedidosCatalogo() {
                     type="date"
                     placeholder="Fecha desde"
                     value={deliveredFilters.dateFrom}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateFrom: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
                     className={styles.dateInput}
                   />
 
@@ -1732,7 +1735,7 @@ function PedidosCatalogo() {
                     type="date"
                     placeholder="Fecha hasta"
                     value={deliveredFilters.dateTo}
-                    onChange={(e) => setDeliveredFilters({ ...deliveredFilters, dateTo: e.target.value })}
+                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, dateTo: e.target.value }))}
                     className={styles.dateInput}
                   />
                 </div>
@@ -1763,6 +1766,8 @@ function PedidosCatalogo() {
                       formatFechaEntrega={formatFechaEntrega}
                       formatFechaProduccion={formatFechaProduccion}
                       createToast={createToast}
+                      productosBase={productosBase}
+                      materiales={materiales}
                     />
                   ))}
                 </div>
