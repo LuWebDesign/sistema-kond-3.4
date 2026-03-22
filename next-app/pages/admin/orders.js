@@ -9,6 +9,7 @@ import styles from '../../styles/pedidos-catalogo.module.css'
 import { formatCurrency, createToast } from '../../utils/catalogUtils'
 import { getAllPedidosCatalogo, getPedidoCatalogoById, updateMontoRecibido } from '../../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProductos'
+import { createMovimiento } from '../../utils/supabaseFinanzas'
 import dynamic from 'next/dynamic'
 
 // Componente sin SSR para evitar hydration mismatches
@@ -399,11 +400,102 @@ function PedidosCatalogo() {
     setSelectedPedido(updatedPedido)
   }
 
-  // NOTA: Función de movimientos financieros deshabilitada temporalmente
-  // Se reactivará cuando se reconstruya el módulo de finanzas
-  const actualizarMovimientosPedido = (pedidoActualizado, pedidoAnterior = null) => {
-    // Función deshabilitada - módulo finanzas eliminado
-    console.log('⚠️ Función actualizarMovimientosPedido deshabilitada temporalmente');
+  // Crear movimientos financieros automáticamente al cambiar estado de pago
+  const actualizarMovimientosPedido = async (pedidoActualizado, pedidoAnterior = null) => {
+    try {
+      const prevEstadoPago = normalizeEstadoPago(pedidoAnterior?.estadoPago || 'sin_seña')
+      const newEstadoPago = normalizeEstadoPago(pedidoActualizado.estadoPago || 'sin_seña')
+      const prevMonto = Number(pedidoAnterior?.montoRecibido || 0)
+      const newMonto = Number(pedidoActualizado.montoRecibido || 0)
+
+      // Si no cambió el estado de pago ni el monto, no crear movimiento
+      if (prevEstadoPago === newEstadoPago && prevMonto === newMonto) return
+
+      const clienteNombre = `${pedidoActualizado.cliente?.nombre || ''} ${pedidoActualizado.cliente?.apellido || ''}`.trim()
+      const hoy = new Date().toISOString().split('T')[0]
+      const horaActual = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+      const metodo = pedidoActualizado.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo'
+
+      // Caso 1: sin_seña → seña_pagada (nueva seña recibida)
+      if (prevEstadoPago === 'sin_seña' && newEstadoPago === 'seña_pagada' && newMonto > 0) {
+        const { error } = await createMovimiento({
+          tipo: 'ingreso',
+          monto: newMonto,
+          fecha: hoy,
+          hora: horaActual,
+          categoria: 'Seña Pedido',
+          descripcion: `Seña recibida - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+          metodoPago: metodo,
+          pedidoCatalogoId: pedidoActualizado.id
+        })
+        if (!error) createToast('💰 Seña registrada en Finanzas', 'success')
+      }
+
+      // Caso 2: sin_seña → pagado_total (pago completo directo)
+      else if (prevEstadoPago === 'sin_seña' && newEstadoPago === 'pagado_total' && newMonto > 0) {
+        const { error } = await createMovimiento({
+          tipo: 'ingreso',
+          monto: newMonto,
+          fecha: hoy,
+          hora: horaActual,
+          categoria: 'Pago Pedido',
+          descripcion: `Pago total - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+          metodoPago: metodo,
+          pedidoCatalogoId: pedidoActualizado.id
+        })
+        if (!error) createToast('💰 Pago total registrado en Finanzas', 'success')
+      }
+
+      // Caso 3: seña_pagada → pagado_total (pago del restante)
+      else if (prevEstadoPago === 'seña_pagada' && newEstadoPago === 'pagado_total') {
+        const restante = newMonto - prevMonto
+        if (restante > 0) {
+          const { error } = await createMovimiento({
+            tipo: 'ingreso',
+            monto: restante,
+            fecha: hoy,
+            hora: horaActual,
+            categoria: 'Pago Pedido',
+            descripcion: `Pago restante - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+            metodoPago: metodo,
+            pedidoCatalogoId: pedidoActualizado.id
+          })
+          if (!error) createToast('💰 Pago restante registrado en Finanzas', 'success')
+        }
+      }
+
+      // Caso 4: seña_pagada se mantiene pero montoRecibido cambió (ajuste de seña)
+      else if (prevEstadoPago === 'seña_pagada' && newEstadoPago === 'seña_pagada' && newMonto !== prevMonto) {
+        const diferencia = newMonto - prevMonto
+        if (diferencia > 0) {
+          const { error } = await createMovimiento({
+            tipo: 'ingreso',
+            monto: diferencia,
+            fecha: hoy,
+            hora: horaActual,
+            categoria: 'Ajuste Seña',
+            descripcion: `Ajuste de seña (+${formatCurrency(diferencia)}) - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+            metodoPago: metodo,
+            pedidoCatalogoId: pedidoActualizado.id
+          })
+          if (!error) createToast('💰 Ajuste de seña registrado en Finanzas', 'success')
+        } else if (diferencia < 0) {
+          const { error } = await createMovimiento({
+            tipo: 'egreso',
+            monto: Math.abs(diferencia),
+            fecha: hoy,
+            hora: horaActual,
+            categoria: 'Ajuste Seña',
+            descripcion: `Devolución parcial de seña (${formatCurrency(Math.abs(diferencia))}) - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+            metodoPago: metodo,
+            pedidoCatalogoId: pedidoActualizado.id
+          })
+          if (!error) createToast('💰 Devolución parcial registrada en Finanzas', 'success')
+        }
+      }
+    } catch (error) {
+      console.error('Error al registrar movimiento financiero:', error)
+    }
   }
 
   // Helper para persistir pedidosCatalogo y emitir un evento homogéneo
