@@ -1,6 +1,5 @@
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
-import PedidosModal from '../../components/PedidosModal'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { formatCurrency } from '../../utils/catalogUtils'
@@ -861,39 +860,57 @@ function AdminCalendar() {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'flex-start',
-          marginBottom: '24px' 
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div>
             <h1 style={{
               fontSize: '2rem',
               fontWeight: 700,
-              color: 'var(--person-color)',
-              marginBottom: '8px'
+              color: 'var(--text-primary)',
+              marginBottom: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              📅 Calendario de Pedidos Internos
+              <span style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #1a56db, #0a3d91)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem'
+              }}>📅</span>
+              Calendario de Producción
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Gestión y planificación de pedidos internos de producción
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginLeft: '50px' }}>
+              Planificación y seguimiento de pedidos internos y catálogo
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowCreateInternalModal(true)}
               style={{
-                padding: '10px 20px',
-                backgroundColor: 'var(--accent-blue)',
+                padding: '10px 18px',
+                background: 'linear-gradient(135deg, #1a56db 0%, #0a3d91 100%)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 fontWeight: 600,
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(26,86,219,0.3)',
+                transition: 'all 0.2s ease'
               }}
             >
-              ➕ Nuevo Pedido Interno
+              ➕ Nuevo Pedido
             </button>
             <button
               onClick={() => {
@@ -901,23 +918,24 @@ function AdminCalendar() {
                 setPedidosForModal(catalogo || [])
                 setPedidosModalTitle('Todos los pedidos de catálogo')
                 setShowPedidosModal(true)
-                // No agregar parámetro date ya que es vista general
                 router.push('/admin/calendar', undefined, { shallow: true })
               }}
               style={{
-                padding: '10px 16px',
-                backgroundColor: 'var(--bg-secondary)',
+                padding: '10px 18px',
+                backgroundColor: 'var(--bg-card)',
                 color: 'var(--text-primary)',
                 border: '1px solid var(--border-color)',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 fontWeight: 600,
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '6px',
+                transition: 'all 0.2s ease'
               }}
             >
-              📦 Ver Pedidos
+              📦 Ver Catálogo
             </button>
           </div>
         </div>
@@ -933,21 +951,38 @@ function AdminCalendar() {
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px'
           }}>
             <div style={{
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: 'var(--accent-blue)',
-              marginBottom: '4px'
-            }}>
-              {monthStats.totalPedidos}
-            </div>
-            <div style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem'
-            }}>
-              Pedidos en {getMonthName()}
+              width: '44px',
+              height: '44px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(26,86,219,0.15), rgba(26,86,219,0.05))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.2rem',
+              flexShrink: 0
+            }}>📋</div>
+            <div>
+              <div style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: 'var(--accent-blue)',
+                lineHeight: 1.1
+              }}>
+                {monthStats.totalPedidos}
+              </div>
+              <div style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                marginTop: '2px'
+              }}>
+                Pedidos en {getMonthName()}
+              </div>
             </div>
           </div>
 
@@ -955,21 +990,38 @@ function AdminCalendar() {
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px'
           }}>
             <div style={{
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: 'var(--accent-secondary)',
-              marginBottom: '4px'
-            }}>
-              {formatTime(monthStats.totalTiempo)}
-            </div>
-            <div style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem'
-            }}>
-              Tiempo total estimado
+              width: '44px',
+              height: '44px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,107,53,0.05))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.2rem',
+              flexShrink: 0
+            }}>⏱️</div>
+            <div>
+              <div style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: 'var(--accent-secondary, #FF6B35)',
+                lineHeight: 1.1
+              }}>
+                {formatTime(monthStats.totalTiempo)}
+              </div>
+              <div style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                marginTop: '2px'
+              }}>
+                Tiempo estimado
+              </div>
             </div>
           </div>
 
@@ -977,21 +1029,38 @@ function AdminCalendar() {
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px'
           }}>
             <div style={{
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: 'var(--success-color)',
-              marginBottom: '4px'
-            }}>
-              {formatCurrency(monthStats.totalValor)}
-            </div>
-            <div style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem'
-            }}>
-              Valor total estimado
+              width: '44px',
+              height: '44px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(40,167,69,0.15), rgba(40,167,69,0.05))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.2rem',
+              flexShrink: 0
+            }}>💰</div>
+            <div>
+              <div style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: 'var(--success-color, #28A745)',
+                lineHeight: 1.1
+              }}>
+                {formatCurrency(monthStats.totalValor)}
+              </div>
+              <div style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                marginTop: '2px'
+              }}>
+                Valor estimado
+              </div>
             </div>
           </div>
         </div>
@@ -1001,45 +1070,71 @@ function AdminCalendar() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '20px'
+          marginBottom: '16px',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          padding: '10px 16px'
         }}>
           <button
             onClick={() => navigateMonth(-1)}
             style={{
-              padding: '10px 16px',
-              backgroundColor: 'var(--bg-card)',
+              padding: '8px 14px',
+              backgroundColor: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
               borderRadius: '8px',
               cursor: 'pointer',
               color: 'var(--text-secondary)',
-              fontSize: '1.2rem'
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              transition: 'all 0.2s ease'
             }}
           >
-            ← Anterior
+            ◀ Anterior
           </button>
 
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            textTransform: 'capitalize'
-          }}>
-            {getMonthName()}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2 style={{
+              fontSize: '1.3rem',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              textTransform: 'capitalize',
+              margin: 0
+            }}>
+              {getMonthName()}
+            </h2>
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              style={{
+                padding: '4px 10px',
+                backgroundColor: 'var(--accent-blue)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontWeight: 600
+              }}
+            >
+              Hoy
+            </button>
+          </div>
 
           <button
             onClick={() => navigateMonth(1)}
             style={{
-              padding: '10px 16px',
-              backgroundColor: 'var(--bg-card)',
+              padding: '8px 14px',
+              backgroundColor: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
               borderRadius: '8px',
               cursor: 'pointer',
               color: 'var(--text-secondary)',
-              fontSize: '1.2rem'
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              transition: 'all 0.2s ease'
             }}
           >
-            Siguiente →
+            Siguiente ▶
           </button>
         </div>
 
@@ -1049,20 +1144,23 @@ function AdminCalendar() {
           gridTemplateColumns: 'repeat(7, 1fr)',
           gap: '1px',
           backgroundColor: 'var(--border-color)',
-          borderRadius: '8px',
-          overflow: 'hidden'
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '1px solid var(--border-color)'
         }}>
           {/* Encabezados de días */}
-          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day, i) => (
             <div
               key={day}
               style={{
-                padding: '8px 4px',
-                backgroundColor: 'var(--bg-secondary)',
+                padding: '10px 4px',
+                background: i < 5 ? 'linear-gradient(135deg, #1a56db 0%, #0a3d91 100%)' : 'linear-gradient(135deg, #374151, #1f2937)',
                 textAlign: 'center',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                fontSize: '0.8rem'
+                fontWeight: 700,
+                color: 'white',
+                fontSize: '0.78rem',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase'
               }}
             >
               {day}
@@ -1076,117 +1174,173 @@ function AdminCalendar() {
             const pedidosInternos = getPedidosInternosDelDia(dayObj.date)
             const pedidosCatalogo = getPedidosCatalogoDelDia(dayObj.date)
             const totalPedidos = pedidosInternos.length + pedidosCatalogo.length
-
-            // Detectar si hay pedidos marcados como 'listo' (producidos y listos)
-            // (Se manejará per-pedido: mostramos check dentro de la tarjeta producida)
-
-            // ya no marcamos toda la celda en rojo; manejaremos iconos por pedido específico
+            const pedidosProduccion = pedidosCatalogo.filter(p => p.tipo === 'produccion')
+            const pedidosEntrega = pedidosCatalogo.filter(p => p.tipo === 'entrega')
 
             return (
               <div
                 key={index}
                 onClick={() => {
-                        if (totalPedidos > 0) {
-                          const internos = getPedidosInternosDelDia(dayObj.date) || []
-                          const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
-                          const combined = [...internos, ...catalogoDia]
-                          const dateStr = dayObj.date.toISOString().split('T')[0]
-                          setSelectedDate(dayObj.date)
-                          setPedidosForModal(combined)
-                          setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
-                          setShowPedidosModal(true)
-                          // Actualizar URL con el parámetro date
-                          router.push(`/admin/calendar?date=${dateStr}`, undefined, { shallow: true })
-                        }
-                      }}
+                  if (totalPedidos > 0) {
+                    const internos = getPedidosInternosDelDia(dayObj.date) || []
+                    const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
+                    const combined = [...internos, ...catalogoDia]
+                    const dateStr2 = dayObj.date.toISOString().split('T')[0]
+                    setSelectedDate(dayObj.date)
+                    setPedidosForModal(combined)
+                    setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
+                    setShowPedidosModal(true)
+                    router.push(`/admin/calendar?date=${dateStr2}`, undefined, { shallow: true })
+                  }
+                }}
                 style={{
-                  minHeight: '90px',
+                  minHeight: '95px',
                   padding: '6px',
-                  backgroundColor: dayObj.isCurrentMonth ? 'var(--bg-card)' : 'var(--bg-tertiary)',
-                  border: isToday ? '2px solid var(--accent-blue)' : 'none',
+                  backgroundColor: isToday 
+                    ? 'var(--bg-card)' 
+                    : dayObj.isCurrentMonth 
+                      ? 'var(--bg-card)' 
+                      : 'var(--bg-tertiary, var(--bg-secondary))',
+                  borderTop: isToday ? '3px solid var(--accent-blue)' : 'none',
                   cursor: totalPedidos > 0 ? 'pointer' : 'default',
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '3px'
+                  gap: '3px',
+                  opacity: dayObj.isCurrentMonth ? 1 : 0.5,
+                  transition: 'background-color 0.15s ease'
                 }}
               >
+                {/* Número del día */}
                 <div style={{
-                  fontWeight: isToday ? 700 : dayObj.isCurrentMonth ? 600 : 400,
-                  color: isToday ? 'var(--accent-blue)' : dayObj.isCurrentMonth ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontSize: '0.8rem'
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
-                  {dayObj.date.getDate()}
+                  <span style={{
+                    fontWeight: isToday ? 800 : dayObj.isCurrentMonth ? 600 : 400,
+                    color: isToday ? 'white' : dayObj.isCurrentMonth ? 'var(--text-primary)' : 'var(--text-muted)',
+                    fontSize: '0.78rem',
+                    ...(isToday ? {
+                      backgroundColor: 'var(--accent-blue)',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1
+                    } : {})
+                  }}>
+                    {dayObj.date.getDate()}
+                  </span>
+                  {totalPedidos > 0 && (
+                    <span style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      backgroundColor: 'var(--bg-secondary)',
+                      padding: '1px 5px',
+                      borderRadius: '6px'
+                    }}>
+                      {totalPedidos}
+                    </span>
+                  )}
                 </div>
 
-                {/* Resumen compacto de pedidos internos */}
-                {pedidosInternos.length > 0 && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.7rem',
-                    padding: '6px 8px',
-                    backgroundColor: 'var(--accent-blue)',
-                    color: 'white',
-                    borderRadius: '8px',
-                    fontWeight: 600
-                  }}>
-                    <span>🏭</span>
-                    <span>Producir: {pedidosInternos.length}</span>
-                  </div>
-                )}
+                {/* Badges compactos */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+                  {pedidosInternos.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.65rem',
+                      padding: '3px 6px',
+                      backgroundColor: 'var(--accent-blue)',
+                      color: 'white',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      lineHeight: 1.2
+                    }}>
+                      <span style={{ fontSize: '0.7rem' }}>🏭</span>
+                      <span>Interno: {pedidosInternos.length}</span>
+                    </div>
+                  )}
 
-                {/* Resumen compacto de pedidos de catálogo */}
-                {(() => {
-                  const pedidosProduccion = pedidosCatalogo.filter(p => p.tipo === 'produccion')
-                  const pedidosEntrega = pedidosCatalogo.filter(p => p.tipo === 'entrega')
-                  
-                  return (
-                    <>
-                      {pedidosProduccion.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.7rem',
-                          padding: '6px 8px',
-                          backgroundColor: '#FF6B35',
-                          color: 'white',
-                          borderRadius: '8px',
-                          fontWeight: 600
-                        }}>
-                          <span>🏭</span>
-                          <span>Producir: {pedidosProduccion.length}</span>
-                        </div>
-                      )}
+                  {pedidosProduccion.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.65rem',
+                      padding: '3px 6px',
+                      backgroundColor: '#FF6B35',
+                      color: 'white',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      lineHeight: 1.2
+                    }}>
+                      <span style={{ fontSize: '0.7rem' }}>🏭</span>
+                      <span>Producir: {pedidosProduccion.length}</span>
+                    </div>
+                  )}
 
-                      {pedidosEntrega.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.7rem',
-                          padding: '6px 8px',
-                          backgroundColor: '#28A745',
-                          color: 'white',
-                          borderRadius: '8px',
-                          fontWeight: 600
-                        }}>
-                          <span>📦</span>
-                          <span>Entregar: {pedidosEntrega.length}</span>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
+                  {pedidosEntrega.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.65rem',
+                      padding: '3px 6px',
+                      backgroundColor: '#28A745',
+                      color: 'white',
+                      borderRadius: '6px',
+                      fontWeight: 700,
+                      lineHeight: 1.2
+                    }}>
+                      <span style={{ fontSize: '0.7rem' }}>📦</span>
+                      <span>Entregar: {pedidosEntrega.length}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}
         </div>
-      </div>
 
-      {/* PedidosModal es usado también para mostrar pedidos al hacer click en un día */}
+        {/* Leyenda */}
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          marginTop: '12px',
+          justifyContent: 'center',
+          flexWrap: 'wrap'
+        }}>
+          {[
+            { color: 'var(--accent-blue)', label: 'Interno' },
+            { color: '#FF6B35', label: 'Producción Catálogo' },
+            { color: '#28A745', label: 'Entrega Catálogo' }
+          ].map(item => (
+            <div key={item.label} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <span style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '3px',
+                backgroundColor: item.color,
+                display: 'inline-block'
+              }} />
+              {item.label}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Modal Crear Pedido Interno */}
       {showCreateInternalModal && (
@@ -1470,16 +1624,92 @@ function AdminCalendar() {
         </div>
       )}
 
-      <PedidosModal
-        open={showPedidosModal}
-        onClose={() => {
-          setShowPedidosModal(false)
-          // Limpiar parámetro date de la URL
-          router.push('/admin/calendar', undefined, { shallow: true })
-        }}
-        orders={pedidosForModal.length ? pedidosForModal : catalogo}
-        title={pedidosModalTitle || '📦 Pedidos del Catálogo'}
-      />
+      {/* Modal inline de pedidos del día — usa renderPedidoCard */}
+      {showPedidosModal && pedidosForModal.length > 0 && (
+        <div
+          onClick={() => {
+            setShowPedidosModal(false)
+            router.push('/admin/calendar', undefined, { shallow: true })
+          }}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1300,
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '16px',
+              width: '95%',
+              maxWidth: '640px',
+              maxHeight: '85vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.25)'
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a56db 0%, #0a3d91 100%)',
+              color: 'white',
+              padding: '16px 24px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderRadius: '16px 16px 0 0'
+            }}>
+              <div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{pedidosModalTitle}</div>
+                <div style={{ fontSize: '0.78rem', opacity: 0.8, marginTop: '2px' }}>
+                  {pedidosForModal.length} pedido{pedidosForModal.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPedidosModal(false)
+                  router.push('/admin/calendar', undefined, { shallow: true })
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '20px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >×</button>
+            </div>
+            {/* Body con tarjetas */}
+            <div style={{
+              padding: '16px 20px',
+              overflowY: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              {pedidosForModal.map((pedido) => {
+                const tipo = pedido.tipo || (pedido.fechaProduccionCalendario ? 'produccion' : pedido.fechaEntregaCalendario ? 'entrega' : 'interno')
+                return renderPedidoCard(pedido, tipo)
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
