@@ -1,6 +1,6 @@
 import Layout from '../components/Layout'
 import { useAdminOrders } from '../hooks/useAdmin'
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 
 export default function PedidosCatalogo() {
   const { 
@@ -12,7 +12,6 @@ export default function PedidosCatalogo() {
     refreshOrders 
   } = useAdminOrders()
 
-  const [filteredOrders, setFilteredOrders] = useState([])
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -23,13 +22,18 @@ export default function PedidosCatalogo() {
   const [expandedOrders, setExpandedOrders] = useState(new Set())
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Resetear página al cambiar filtros
+  const updateFilter = useCallback((key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+    setCurrentPage(1)
+  }, [])
+
   const itemsPerPage = 10
 
-  // Aplicar filtros
-  useEffect(() => {
-    let filtered = [...orders]
+  // Filtros memoizados — solo recalcula cuando orders o filters cambian
+  const filteredOrders = useMemo(() => {
+    let filtered = orders
 
-    // Filtro por búsqueda
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
       filtered = filtered.filter(order => 
@@ -41,38 +45,25 @@ export default function PedidosCatalogo() {
       )
     }
 
-    // Filtro por estado de pago
     if (filters.paymentStatus !== 'all') {
       filtered = filtered.filter(order => order.estado_pago === filters.paymentStatus)
     }
 
-    // Filtro por método de pago
     if (filters.status !== 'all') {
       filtered = filtered.filter(order => order.metodo_pago === filters.status)
     }
 
-    // Filtro por fecha
     if (filters.dateFrom) {
-      filtered = filtered.filter(order => {
-        const orderDate = new Date(order.fecha_creacion)
-        const fromDate = new Date(filters.dateFrom)
-        return orderDate >= fromDate
-      })
+      const fromDate = new Date(filters.dateFrom)
+      filtered = filtered.filter(order => new Date(order.fecha_creacion) >= fromDate)
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(order => {
-        const orderDate = new Date(order.fecha_creacion)
-        const toDate = new Date(filters.dateTo + 'T23:59:59')
-        return orderDate <= toDate
-      })
+      const toDate = new Date(filters.dateTo + 'T23:59:59')
+      filtered = filtered.filter(order => new Date(order.fecha_creacion) <= toDate)
     }
 
-    // Ordenar por fecha (más recientes primero)
-    filtered.sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
-
-    setFilteredOrders(filtered)
-    setCurrentPage(1)
+    return [...filtered].sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
   }, [orders, filters])
 
   const formatCurrency = (amount) => {
@@ -203,14 +194,17 @@ export default function PedidosCatalogo() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
 
-  // Estadísticas
-  const stats = {
-    total: orders.length,
-    sinSeña: orders.filter(o => o.estado_pago === 'sin_seña').length,
-    señaPagada: orders.filter(o => o.estado_pago === 'seña_pagada').length,
-    pagado: orders.filter(o => o.estado_pago === 'pagado').length,
-    totalAmount: orders.reduce((sum, o) => sum + (o.total || 0), 0)
-  }
+  // Estadísticas memoizadas — solo recalcula cuando orders cambia
+  const stats = useMemo(() => {
+    let sinSeña = 0, señaPagada = 0, pagado = 0, totalAmount = 0
+    for (const o of orders) {
+      if (o.estado_pago === 'sin_seña') sinSeña++
+      else if (o.estado_pago === 'seña_pagada') señaPagada++
+      else if (o.estado_pago === 'pagado') pagado++
+      totalAmount += (o.total || 0)
+    }
+    return { total: orders.length, sinSeña, señaPagada, pagado, totalAmount }
+  }, [orders])
 
   if (loading) {
     return (
@@ -394,7 +388,7 @@ export default function PedidosCatalogo() {
             type="text"
             placeholder="🔍 Buscar por cliente, email, teléfono..."
             value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            onChange={(e) => updateFilter('search', e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid var(--border-color)',
@@ -405,7 +399,7 @@ export default function PedidosCatalogo() {
 
           <select
             value={filters.paymentStatus}
-            onChange={(e) => setFilters(prev => ({ ...prev, paymentStatus: e.target.value }))}
+            onChange={(e) => updateFilter('paymentStatus', e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid var(--border-color)',
@@ -421,7 +415,7 @@ export default function PedidosCatalogo() {
 
           <select
             value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            onChange={(e) => updateFilter('status', e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid var(--border-color)',
@@ -438,7 +432,7 @@ export default function PedidosCatalogo() {
           <input
             type="date"
             value={filters.dateFrom}
-            onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+            onChange={(e) => updateFilter('dateFrom', e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid var(--border-color)',
@@ -450,7 +444,7 @@ export default function PedidosCatalogo() {
           <input
             type="date"
             value={filters.dateTo}
-            onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+            onChange={(e) => updateFilter('dateTo', e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid var(--border-color)',
