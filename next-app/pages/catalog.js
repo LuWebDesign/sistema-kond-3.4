@@ -1655,7 +1655,7 @@ function CheckoutModal({
           </div>
 
           <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
-            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>💰 Elegir método de pago</div>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>� Realizar pedido Mediante</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {paymentConfig?.whatsapp?.enabled && (
                 <button onClick={() => setPaymentMethod('whatsapp')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'whatsapp' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>💬 WhatsApp</button>
