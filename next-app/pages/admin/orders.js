@@ -1882,60 +1882,75 @@ function PedidosCatalogo() {
                 </div>
 
                 {/* Resumen Financiero Elegante */}
-                <div className={styles.financieroSection}>
-                  <div className={styles.financieroGrid}>
-                    <div className={styles.finItem}>
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(selectedPedido.subtotal)}</span>
-                    </div>
-                    {selectedPedido.descuento > 0 && (
-                      <div className={`${styles.finItem} ${styles.descuento}`}>
-                        <span>Descuento</span>
-                        <span>-{formatCurrency(selectedPedido.descuento)}</span>
-                      </div>
-                    )}
-                    <div className={`${styles.finItem} ${styles.total}`}>
-                      <span>Total</span>
-                      <span>{formatCurrency(selectedPedido.total)}</span>
-                    </div>
-                  </div>
+                {(() => {
+                  const savedPedido = pedidosCatalogo.find(p => p.id === selectedPedido.id)
+                  const savedMonto = Number(savedPedido?.montoRecibido || 0)
+                  const total = Number(selectedPedido.total || 0)
+                  const restante = Math.max(0, total - savedMonto)
+                  const pagadoCompleto = savedMonto > 0 && savedMonto >= total
+                  return (
+                    <div className={styles.financieroSection}>
+                      {/* Filas estáticas: Subtotal → Descuento → Total → Seña → Restante */}
+                      <div className={styles.financieroGrid}>
+                        <div className={styles.finItem}>
+                          <span>Subtotal</span>
+                          <span>{formatCurrency(selectedPedido.subtotal)}</span>
+                        </div>
+                        {selectedPedido.descuento > 0 && (
+                          <div className={`${styles.finItem} ${styles.descuento}`}>
+                            <span>Descuento</span>
+                            <span>-{formatCurrency(selectedPedido.descuento)}</span>
+                          </div>
+                        )}
+                        <div className={`${styles.finItem} ${styles.total}`}>
+                          <span>Total</span>
+                          <span>{formatCurrency(total)}</span>
+                        </div>
 
-                  {/* Seña / Monto Recibido — siempre visible */}
-                  <div className={styles.pagosGrid}>
-                    <div className={styles.pagoItem}>
-                      <label>Seña / Monto Recibido</label>
-                      <div className={styles.montoInputWrapper}>
-                        <span className={styles.currencyPrefix}>$</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="0"
-                          value={formatInputNumber(selectedPedido.montoRecibido)}
-                          onChange={(e) => {
-                            const raw = e.target.value
-                            const numeric = parseInputNumber(raw)
-                            setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
-                          }}
-                          className={styles.montoInput}
-                        />
+                        {/* Seña y restante — solo si hay monto ya confirmado */}
+                        {savedMonto > 0 && (
+                          <>
+                            <div className={styles.finItem} style={{ color: '#10b981', fontWeight: 600 }}>
+                              <span>{pagadoCompleto ? '✓ Pagado' : 'Seña recibida'}</span>
+                              <span>{formatCurrency(savedMonto)}</span>
+                            </div>
+                            {!pagadoCompleto && (
+                              <div className={styles.finItem} style={{ color: '#ef4444', fontWeight: 600 }}>
+                                <span>Restante</span>
+                                <span>{formatCurrency(restante)}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Input para registrar / actualizar monto recibido */}
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                        <div className={styles.pagoItem}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
+                            {savedMonto > 0 ? 'Actualizar monto recibido' : 'Registrar seña / monto recibido'}
+                          </label>
+                          <div className={styles.montoInputWrapper}>
+                            <span className={styles.currencyPrefix}>$</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              placeholder="0"
+                              value={formatInputNumber(selectedPedido.montoRecibido)}
+                              onChange={(e) => {
+                                const raw = e.target.value
+                                const numeric = parseInputNumber(raw)
+                                setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
+                              }}
+                              className={styles.montoInput}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.pagoItem}>
-                      <label>Restante</label>
-                      <div className={styles.restanteValue} style={
-                        Number(selectedPedido.montoRecibido || 0) >= Number(selectedPedido.total || 0) && Number(selectedPedido.total || 0) > 0
-                          ? { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }
-                          : {}
-                      }>
-                        {Number(selectedPedido.montoRecibido || 0) >= Number(selectedPedido.total || 0) && Number(selectedPedido.total || 0) > 0
-                          ? '✓ Pagado'
-                          : formatCurrency(Math.max(0, Number(selectedPedido.total || 0) - Number(selectedPedido.montoRecibido || 0)))
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  )
+                })()}
 
                 {/* Comprobante Minimalista */}
                 {selectedPedido.comprobante && (
