@@ -516,14 +516,15 @@ function initUserPage() {
     }
     if (btnRemoveAvatar) {
       btnRemoveAvatar.addEventListener('click', () => {
-        if (!confirm('¿Eliminar la foto de perfil?')) return;
-        const res = window.KONDAuth.updateProfile({ userId: user.id, avatar: '' });
-        if (res && res.ok) {
-          if (avatarEl) avatarEl.textContent = (user.nombre && user.nombre.charAt(0)) ? user.nombre.charAt(0).toUpperCase() : 'U';
-          if (typeof showNotification === 'function') showNotification('Foto eliminada', 'success');
-        } else {
-          alert(res && res.error ? res.error : 'No se pudo eliminar la foto');
-        }
+        showCustomConfirm('Eliminar foto', '¿Eliminar la foto de perfil?', () => {
+          const res = window.KONDAuth.updateProfile({ userId: user.id, avatar: '' });
+          if (res && res.ok) {
+            if (avatarEl) avatarEl.textContent = (user.nombre && user.nombre.charAt(0)) ? user.nombre.charAt(0).toUpperCase() : 'U';
+            if (typeof showNotification === 'function') showNotification('Foto eliminada', 'success');
+          } else {
+            if (typeof showNotification === 'function') showNotification(res && res.error ? res.error : 'No se pudo eliminar la foto', 'error');
+          }
+        });
       });
     }
     if (avatarInput) {

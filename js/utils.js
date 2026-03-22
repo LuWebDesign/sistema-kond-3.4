@@ -313,3 +313,78 @@ async function savePedidoCatalogo(pedido, comprobanteFile = null) {
 // Nota: estas funciones están preparadas para modo dual
 // Para activar Supabase, configurar window.KOND_USE_SUPABASE = true
 // y cargar el cliente desde supabase/client.js
+
+// ============================================
+// MODALES DE CONFIRMACIÓN Y ALERTA
+// ============================================
+
+/**
+ * Reemplaza confirm() nativo con un modal estilizado.
+ * @param {string} title - Título del modal
+ * @param {string} message - Mensaje o pregunta
+ * @param {Function} onConfirm - Callback si el usuario confirma
+ */
+function showCustomConfirm(title, message, onConfirm) {
+  const existing = document.getElementById('_customConfirmOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = '_customConfirmOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#1e2229;border:1px solid #444;border-radius:10px;padding:24px 28px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.6);">
+      <h3 style="margin:0 0 10px;color:#e0e0e0;font-size:1.05rem;font-weight:700;">${escapeHtml(title)}</h3>
+      <p style="margin:0 0 22px;color:#9aa3b2;font-size:0.95rem;line-height:1.55;">${escapeHtml(message)}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="_confirmCancel" class="btn-secondary" style="min-width:90px;">Cancelar</button>
+        <button id="_confirmOk" class="btn-primary" style="min-width:90px;background:#c62828;border-color:#c62828;">Confirmar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#_confirmCancel').addEventListener('click', close);
+  overlay.querySelector('#_confirmOk').addEventListener('click', () => {
+    close();
+    if (typeof onConfirm === 'function') onConfirm();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  setTimeout(() => overlay.querySelector('#_confirmOk')?.focus(), 50);
+}
+
+/**
+ * Reemplaza alert() nativo con un modal estilizado.
+ * @param {string} title - Título del modal
+ * @param {string} message - Mensaje a mostrar
+ * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+ * @param {Function} [onClose] - Callback al cerrar
+ */
+function showCustomAlert(title, message, type = 'info', onClose) {
+  const existing = document.getElementById('_customAlertOverlay');
+  if (existing) existing.remove();
+
+  const iconMap = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const icon = iconMap[type] || 'ℹ️';
+  const overlay = document.createElement('div');
+  overlay.id = '_customAlertOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#1e2229;border:1px solid #444;border-radius:10px;padding:24px 28px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.6);">
+      <h3 style="margin:0 0 10px;color:#e0e0e0;font-size:1.05rem;font-weight:700;">${icon} ${escapeHtml(title)}</h3>
+      <p style="margin:0 0 22px;color:#9aa3b2;font-size:0.95rem;line-height:1.55;">${escapeHtml(message)}</p>
+      <div style="display:flex;justify-content:flex-end;">
+        <button id="_alertOk" class="btn-primary" style="min-width:90px;">Aceptar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.remove();
+    if (typeof onClose === 'function') onClose();
+  };
+  overlay.querySelector('#_alertOk').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  setTimeout(() => overlay.querySelector('#_alertOk')?.focus(), 50);
+}

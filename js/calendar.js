@@ -553,21 +553,21 @@ function updateDaySummary(dateStr) {
 
 // ========== ELIMINAR PEDIDO ==========
 function deletePedido(pedidoId) {
-  if (!confirm('¿Eliminar este pedido del calendario?')) return;
-  
-  // Normalizar tipos (pedidos pueden tener id string o number)
-  pedidos = (Array.isArray(pedidos) ? pedidos : []).filter(p => String(p.id) !== String(pedidoId));
-  localStorage.setItem('pedidos', JSON.stringify(pedidos));
-  if (typeof updateTabBadges === 'function') updateTabBadges();
-  
-  const modal = document.getElementById('calendarModal');
-  const dateStr = modal?.dataset.currentDate;
-  if (dateStr) {
-    renderDayProducts(dateStr);
-    updateDaySummary(dateStr);
-  }
-  renderCalendar();
-  showNotification('Pedido eliminado correctamente');
+  showCustomConfirm('Eliminar pedido', '¿Eliminar este pedido del calendario?', () => {
+    // Normalizar tipos (pedidos pueden tener id string o number)
+    pedidos = (Array.isArray(pedidos) ? pedidos : []).filter(p => String(p.id) !== String(pedidoId));
+    localStorage.setItem('pedidos', JSON.stringify(pedidos));
+    if (typeof updateTabBadges === 'function') updateTabBadges();
+
+    const modal = document.getElementById('calendarModal');
+    const dateStr = modal?.dataset.currentDate;
+    if (dateStr) {
+      renderDayProducts(dateStr);
+      updateDaySummary(dateStr);
+    }
+    renderCalendar();
+    showNotification('Pedido eliminado correctamente');
+  });
 }
 
 // ========== GUARDAR NUEVO PEDIDO ==========

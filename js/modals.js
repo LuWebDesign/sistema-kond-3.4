@@ -249,40 +249,14 @@ function deletePedido(pedidoId, date) {
     const pedido = pedidos[pedidoIndex];
     const producto = productosBase.find(p => p.id === pedido.productoId);
     
-    if (confirm(`¿Eliminar pedido de "${producto ? producto.nombre : 'este producto'}"?`)) {
+    showCustomConfirm('Eliminar pedido', `¿Eliminar pedido de "${producto ? producto.nombre : 'este producto'}"?`, () => {
       pedidos.splice(pedidoIndex, 1);
       guardarProductos();
-      
-      // Actualizar vistas solo si las funciones existen
       if (typeof renderCalendar === 'function') renderCalendar();
-
-    // Helper: mostrar contenido HTML en un modal reutilizable (id: inlineModal)
-    function showInlineModal(htmlContent) {
-      let modal = document.getElementById('inlineModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'inlineModal';
-        modal.className = 'pedido-modal';
-        modal.style.display = 'none';
-        modal.innerHTML = `
-          <div class="modal-content" role="dialog" style="max-width:600px; margin:auto;">
-            <button class="close-modal" aria-label="Cerrar">×</button>
-            <div id="inlineModalBody"></div>
-          </div>`;
-        document.body.appendChild(modal);
-      }
-      const body = modal.querySelector('#inlineModalBody');
-      if (body) body.innerHTML = htmlContent;
-      modal.style.display = 'flex';
-      modal.classList.add('show');
-      modal.style.position='fixed'; modal.style.top='50%'; modal.style.left='50%'; modal.style.transform='translate(-50%, -50%)'; modal.style.zIndex='1200';
-    }
-
       if (typeof renderPedidos === 'function') renderPedidos();
-      
       updateDayView(date);
       showNotification('Pedido eliminado correctamente', 'success');
-    }
+    });
   }
 }
 

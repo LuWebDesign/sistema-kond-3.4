@@ -169,15 +169,16 @@ function renderPedidos() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = parseInt(e.currentTarget.dataset.id);
-      if (!confirm('¿Eliminar este pedido interno?')) return;
-      const idx = pedidos.findIndex(x => x.id === id);
-      if (idx !== -1) {
-        pedidos.splice(idx, 1);
-        guardarProductos();
-        renderPedidos();
-        if (typeof renderCalendar === 'function') renderCalendar();
-        showNotification('Pedido interno eliminado', 'success');
-      }
+      showCustomConfirm('Eliminar pedido', '¿Eliminar este pedido interno?', () => {
+        const idx = pedidos.findIndex(x => x.id === id);
+        if (idx !== -1) {
+          pedidos.splice(idx, 1);
+          guardarProductos();
+          renderPedidos();
+          if (typeof renderCalendar === 'function') renderCalendar();
+          showNotification('Pedido interno eliminado', 'success');
+        }
+      });
     });
   });
 }
@@ -452,16 +453,17 @@ function bindDetallePedidoModalButtons() {
     }
     const id = modal.dataset.pedidoId;
     if (!id) return; 
-    if (!confirm('¿Eliminar este pedido?')) return;
-    const idx = pedidos.findIndex(p => String(p.id) === String(id));
-    if (idx !== -1) {
-      pedidos.splice(idx, 1);
-      guardarProductos();
-      renderPedidos();
-      if (typeof renderCalendar === 'function') renderCalendar();
-      modal.style.display = 'none'; modal.classList.remove('show'); delete modal.dataset.pedidoId;
-      showNotification('Pedido eliminado', 'success');
-    }
+    showCustomConfirm('Eliminar pedido', '¿Eliminar este pedido?', () => {
+      const idx = pedidos.findIndex(p => String(p.id) === String(id));
+      if (idx !== -1) {
+        pedidos.splice(idx, 1);
+        guardarProductos();
+        renderPedidos();
+        if (typeof renderCalendar === 'function') renderCalendar();
+        modal.style.display = 'none'; modal.classList.remove('show'); delete modal.dataset.pedidoId;
+        showNotification('Pedido eliminado', 'success');
+      }
+    });
   });
 
   if (btnGuardar) btnGuardar.addEventListener('click', () => {

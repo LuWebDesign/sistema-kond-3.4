@@ -220,14 +220,15 @@ function renderFinanzas() {
   container.querySelectorAll('.btn-eliminar-mov').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = e.currentTarget.dataset.id;
-      if (!confirm('¿Eliminar este movimiento?')) return;
-      const idx = finanzas.findIndex(x => String(x.id) === String(id));
-      if (idx !== -1) {
-        finanzas.splice(idx, 1);
-        guardarFinanzas();
-        renderFinanzas();
-        showNotification('Movimiento eliminado', 'success');
-      }
+      showCustomConfirm('Eliminar movimiento', '¿Eliminar este movimiento?', () => {
+        const idx = finanzas.findIndex(x => String(x.id) === String(id));
+        if (idx !== -1) {
+          finanzas.splice(idx, 1);
+          guardarFinanzas();
+          renderFinanzas();
+          showNotification('Movimiento eliminado', 'success');
+        }
+      });
     });
   });
 
@@ -312,15 +313,16 @@ function renderCategoriasManager() {
   mgr.querySelectorAll('.btn-delete-cat').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const name = e.currentTarget.dataset.cat;
-      if (!confirm(`Eliminar categoría "${name}"? Esto no eliminará movimientos pero dejará su categoría en blanco para futuros movimientos.`)) return;
-      const idx = categoriasFin.findIndex(x => x === name);
-      if (idx !== -1) {
-        categoriasFin.splice(idx, 1);
-        guardarCategorias();
-        renderCategoriasSelect();
-        renderCategoriasManager();
-        showNotification('Categoría eliminada', 'success');
-      }
+      showCustomConfirm('Eliminar categoría', `¿Eliminar la categoría "${name}"? Los movimientos existentes no se verán afectados.`, () => {
+        const idx = categoriasFin.findIndex(x => x === name);
+        if (idx !== -1) {
+          categoriasFin.splice(idx, 1);
+          guardarCategorias();
+          renderCategoriasSelect();
+          renderCategoriasManager();
+          showNotification('Categoría eliminada', 'success');
+        }
+      });
     });
   });
 
@@ -334,22 +336,22 @@ function renderCategoriasManager() {
       if (categoriasFin.includes(trimmed)) { showNotification('Ya existe una categoría con ese nombre', 'error'); return; }
       const idx = categoriasFin.findIndex(x => x === oldName);
       if (idx !== -1) {
-        // contar movimientos afectados
         const afectados = finanzas.filter(m => m.categoria === oldName).length;
+        const doRename = () => {
+          categoriasFin[idx] = trimmed;
+          finanzas = finanzas.map(m => m.categoria === oldName ? { ...m, categoria: trimmed } : m);
+          guardarCategorias();
+          guardarFinanzas();
+          renderCategoriasSelect();
+          renderFinanzas();
+          renderCategoriasManager();
+          showNotification('Categoría renombrada', 'success');
+        };
         if (afectados > 5) {
-          const ok = confirm(`Se van a actualizar ${afectados} movimientos para usar la nueva categoría "${trimmed}". ¿Continuar?`);
-          if (!ok) { showNotification('Renombrado cancelado', 'info'); return; }
+          showCustomConfirm('Confirmar renombrado', `Se van a actualizar ${afectados} movimientos para usar la nueva categoría "${trimmed}". ¿Continuar?`, doRename);
+        } else {
+          doRename();
         }
-
-        categoriasFin[idx] = trimmed;
-        // actualizar movimientos que tengan la categoría antigua
-        finanzas = finanzas.map(m => m.categoria === oldName ? { ...m, categoria: trimmed } : m);
-        guardarCategorias();
-        guardarFinanzas();
-        renderCategoriasSelect();
-        renderFinanzas();
-        renderCategoriasManager();
-        showNotification('Categoría renombrada', 'success');
       }
     });
   });
@@ -570,15 +572,15 @@ const btnCerrarCaja = document.getElementById('btnCerrarCaja');
 if (btnCerrarCaja) {
   btnCerrarCaja.addEventListener('click', () => {
     const fecha = document.getElementById('registrosFecha')?.value || new Date().toISOString().slice(0,10);
-    if (!confirm(`Cerrar caja para ${fecha}? Esto marcará los movimientos como registrados.`)) return;
-    const registro = cerrarCajaParaFecha(fecha);
-    if (registro) {
-      showNotification('Caja cerrada y registro creado', 'success');
-      // refrescar la vista de registros
-      document.getElementById('btnVerRegistros') && document.getElementById('btnVerRegistros').click();
-    } else {
-      showNotification('No hay movimientos para cerrar en esa fecha', 'error');
-    }
+    showCustomConfirm('Cerrar caja', `¿Cerrar caja para ${fecha}? Esto marcará los movimientos como registrados.`, () => {
+      const registro = cerrarCajaParaFecha(fecha);
+      if (registro) {
+        showNotification('Caja cerrada y registro creado', 'success');
+        document.getElementById('btnVerRegistros') && document.getElementById('btnVerRegistros').click();
+      } else {
+        showNotification('No hay movimientos para cerrar en esa fecha', 'error');
+      }
+    });
   });
 }
 

@@ -681,13 +681,13 @@
       render();
       showNotification(`Promoción ${list[idx].active ? 'activada' : 'desactivada'}`, 'success');
     } else if (action === 'delete'){
-      if (confirm('¿Eliminar esta promoción permanentemente?')){
+      showCustomConfirm('Eliminar promoción', '¿Eliminar esta promoción permanentemente?', () => {
         const title = list[idx].title;
         list.splice(idx,1);
         savePromos(list);
         render();
         showNotification(`Promoción "${title}" eliminada`, 'success');
-      }
+      });
     }
   }
 
@@ -966,13 +966,13 @@
       render();
       showNotification(`Cupón ${list[idx].active ? 'activado' : 'desactivado'}`, 'success');
     } else if (action === 'delete'){
-      if (confirm(`¿Eliminar el cupón "${list[idx].code}" permanentemente?`)){
+      showCustomConfirm('Eliminar cupón', `¿Eliminar el cupón "${list[idx].code}" permanentemente?`, () => {
         const code = list[idx].code;
         list.splice(idx,1);
         saveCoupons(list);
         render();
         showNotification(`Cupón "${code}" eliminado`, 'success');
-      }
+      });
     }
   }
 
