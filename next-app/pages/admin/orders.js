@@ -1007,22 +1007,21 @@ function PedidosCatalogo() {
     const previoMontoRecibido = Number(pedidoAnterior.montoRecibido || 0)
 
     const pedidoActualizado = { ...selectedPedido }
-    let nuevoEstadoPago = normalizeEstadoPago(pedidoActualizado.estadoPago || 'sin_seña')
     const totalPedido = Number(pedidoActualizado.total || 0)
     let nuevoMontoRecibido = Number(pedidoActualizado.montoRecibido || 0)
 
-    if (nuevoEstadoPago === 'pagado_total') {
+    // Auto-detectar estadoPago basado en el monto ingresado
+    if (totalPedido > 0 && nuevoMontoRecibido >= totalPedido) {
+      pedidoActualizado.estadoPago = 'pagado_total'
       pedidoActualizado.montoRecibido = totalPedido
       nuevoMontoRecibido = totalPedido
-    } else if (nuevoEstadoPago === 'seña_pagada' && nuevoMontoRecibido <= 0 && totalPedido > 0) {
-      const senaSugerida = Math.round(totalPedido * 0.5)
-      pedidoActualizado.montoRecibido = senaSugerida
-      nuevoMontoRecibido = senaSugerida
-    } else {
+    } else if (nuevoMontoRecibido > 0) {
+      pedidoActualizado.estadoPago = 'seña_pagada'
       pedidoActualizado.montoRecibido = nuevoMontoRecibido
+    } else {
+      pedidoActualizado.estadoPago = 'sin_seña'
+      pedidoActualizado.montoRecibido = 0
     }
-
-    pedidoActualizado.estadoPago = nuevoEstadoPago
 
     const updatedPedidos = [...pedidosCatalogo]
     updatedPedidos[index] = pedidoActualizado
@@ -1877,34 +1876,41 @@ function PedidosCatalogo() {
                     </div>
                   </div>
 
-                  {(selectedPedido.estadoPago === 'seña_pagada' || selectedPedido.estadoPago === 'pagado_total') && (
-                    <div className={styles.pagosGrid}>
-                      <div className={styles.pagoItem}>
-                        <label>Monto Recibido</label>
-                        <div className={styles.montoInputWrapper}>
-                          <span className={styles.currencyPrefix}>$</span>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={formatInputNumber(selectedPedido.montoRecibido)}
-                            onChange={(e) => {
-                              const raw = e.target.value
-                              const numeric = parseInputNumber(raw)
-                              setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
-                            }}
-                            className={styles.montoInput}
-                          />
-                        </div>
-                      </div>
-                      <div className={styles.pagoItem}>
-                        <label>Restante</label>
-                        <div className={styles.restanteValue}>
-                          {formatCurrency(Math.max(0, Number(selectedPedido.total || 0) - Number(selectedPedido.montoRecibido || 0)))}
-                        </div>
+                  {/* Seña / Monto Recibido — siempre visible */}
+                  <div className={styles.pagosGrid}>
+                    <div className={styles.pagoItem}>
+                      <label>Seña / Monto Recibido</label>
+                      <div className={styles.montoInputWrapper}>
+                        <span className={styles.currencyPrefix}>$</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="0"
+                          value={formatInputNumber(selectedPedido.montoRecibido)}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            const numeric = parseInputNumber(raw)
+                            setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
+                          }}
+                          className={styles.montoInput}
+                        />
                       </div>
                     </div>
-                  )}
+                    <div className={styles.pagoItem}>
+                      <label>Restante</label>
+                      <div className={styles.restanteValue} style={
+                        Number(selectedPedido.montoRecibido || 0) >= Number(selectedPedido.total || 0) && Number(selectedPedido.total || 0) > 0
+                          ? { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }
+                          : {}
+                      }>
+                        {Number(selectedPedido.montoRecibido || 0) >= Number(selectedPedido.total || 0) && Number(selectedPedido.total || 0) > 0
+                          ? '✓ Pagado'
+                          : formatCurrency(Math.max(0, Number(selectedPedido.total || 0) - Number(selectedPedido.montoRecibido || 0)))
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Comprobante Minimalista */}
