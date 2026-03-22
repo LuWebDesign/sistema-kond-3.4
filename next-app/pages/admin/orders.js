@@ -132,6 +132,8 @@ function PedidosCatalogo() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showPaymentConfirmModal, setShowPaymentConfirmModal] = useState(false)
+  const [pendingPaymentData, setPendingPaymentData] = useState(null)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDeliveredFiltersOpen, setIsDeliveredFiltersOpen] = useState(false)
   
@@ -1003,9 +1005,6 @@ function PedidosCatalogo() {
     if (index === -1) return
 
     const pedidoAnterior = pedidosCatalogo[index]
-    const previoEstadoPago = normalizeEstadoPago(pedidoAnterior.estadoPago || 'sin_seña')
-    const previoMontoRecibido = Number(pedidoAnterior.montoRecibido || 0)
-
     const pedidoActualizado = { ...selectedPedido }
     const totalPedido = Number(pedidoActualizado.total || 0)
     let nuevoMontoRecibido = Number(pedidoActualizado.montoRecibido || 0)
@@ -1017,21 +1016,46 @@ function PedidosCatalogo() {
       nuevoMontoRecibido = totalPedido
     } else if (nuevoMontoRecibido > 0) {
       pedidoActualizado.estadoPago = 'seña_pagada'
-      pedidoActualizado.montoRecibido = nuevoMontoRecibido
     } else {
       pedidoActualizado.estadoPago = 'sin_seña'
       pedidoActualizado.montoRecibido = 0
+      nuevoMontoRecibido = 0
     }
 
+    const restante = Math.max(0, totalPedido - nuevoMontoRecibido)
+    const hayPagoCambio = nuevoMontoRecibido !== Number(pedidoAnterior.montoRecibido || 0)
+
+    // Si hay cambio en el monto, mostrar confirmación; si no, guardar directamente
+    if (hayPagoCambio && nuevoMontoRecibido > 0) {
+      setPendingPaymentData({
+        pedidoActualizado,
+        pedidoAnterior,
+        totalPedido,
+        montoRecibido: nuevoMontoRecibido,
+        restante
+      })
+      setShowPaymentConfirmModal(true)
+    } else {
+      doSaveChanges(pedidoActualizado, pedidoAnterior)
+    }
+  }
+
+  const confirmPaymentAndSave = () => {
+    if (!pendingPaymentData) return
+    const { pedidoActualizado, pedidoAnterior } = pendingPaymentData
+    setShowPaymentConfirmModal(false)
+    setPendingPaymentData(null)
+    doSaveChanges(pedidoActualizado, pedidoAnterior)
+  }
+
+  const doSaveChanges = (pedidoActualizado, pedidoAnterior) => {
     const updatedPedidos = [...pedidosCatalogo]
-    updatedPedidos[index] = pedidoActualizado
+    const index = updatedPedidos.findIndex(p => p.id === pedidoActualizado.id)
+    if (index !== -1) updatedPedidos[index] = pedidoActualizado
 
     setPedidosCatalogo(updatedPedidos)
     persistAndEmit(updatedPedidos, pedidoActualizado.id, 'save-changes')
-
     actualizarMovimientosPedido(pedidoActualizado, pedidoAnterior)
-
-    // Cerrar el modal directamente sin mostrar confirmación adicional
     handleCloseModal()
   }
 
@@ -2015,6 +2039,77 @@ function PedidosCatalogo() {
           message="Cambios guardados correctamente"
           type="success"
         />
+
+        {/* Modal de Confirmación de Pago/Seña */}
+        {showPaymentConfirmModal && pendingPaymentData && (
+          <div className={styles.modalOverlay} onClick={() => setShowPaymentConfirmModal(false)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '16px',
+                padding: '28px',
+                maxWidth: '380px',
+                width: '90%',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Confirmar registro de pago</span>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  Pedido #{pendingPaymentData.pedidoActualizado.id} &bull; {pendingPaymentData.pedidoActualizado.cliente?.nombre} {pendingPaymentData.pedidoActualizado.cliente?.apellido || ''}
+                </span>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-section)',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                overflow: 'hidden'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '0.88rem', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                  <span>Total del pedido</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{formatCurrency(pendingPaymentData.totalPedido)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '0.95rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(16,185,129,0.06)' }}>
+                  <span style={{ fontWeight: 700, color: '#10b981' }}>
+                    {pendingPaymentData.restante === 0 ? '✓ Pago completo' : 'Seña recibida'}
+                  </span>
+                  <span style={{ fontWeight: 700, color: '#10b981', fontSize: '1.05rem' }}>{formatCurrency(pendingPaymentData.montoRecibido)}</span>
+                </div>
+                {pendingPaymentData.restante > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                    <span>Restante</span>
+                    <span style={{ fontWeight: 600, color: '#ef4444' }}>{formatCurrency(pendingPaymentData.restante)}</span>
+                  </div>
+                )}
+              </div>
+
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                Se registrará un movimiento de ingreso en Finanzas.
+              </p>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => { setShowPaymentConfirmModal(false); setPendingPaymentData(null) }}
+                  className={styles.btnSecondary}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmPaymentAndSave}
+                  className={styles.btnSave}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal de Validación de Fechas */}
         {showValidationModal && (
