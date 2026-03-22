@@ -392,12 +392,10 @@ function PedidosCatalogo() {
 
     if (newEstadoPago === 'sin_seña') {
       updatedPedido.montoRecibido = 0
-    } else if (newEstadoPago === 'seña_pagada') {
-      const senaSugerida = Math.round(totalPedido * 0.5)
-      updatedPedido.montoRecibido = montoActual > 0 ? montoActual : senaSugerida
     } else if (newEstadoPago === 'pagado_total') {
       updatedPedido.montoRecibido = totalPedido
     }
+    // seña_pagada: no auto-rellenar, el admin ingresa el monto exacto
 
     setSelectedPedido(updatedPedido)
   }
@@ -576,8 +574,6 @@ function PedidosCatalogo() {
     const totalPedido = Number(p.total ?? clone.total ?? 0)
     if (clone.estadoPago === 'pagado_total' && totalPedido > 0) {
       clone.montoRecibido = totalPedido
-    } else if (clone.estadoPago === 'seña_pagada' && totalPedido > 0 && (!clone.montoRecibido || clone.montoRecibido <= 0)) {
-      clone.montoRecibido = Math.round(totalPedido * 0.5)
     }
     // asegurar cliente con nombre/apellido
     if (!clone.cliente) clone.cliente = { nombre: '', apellido: '' }
