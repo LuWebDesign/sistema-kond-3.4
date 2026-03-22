@@ -252,7 +252,6 @@ function initUserPage() {
 
     const totalItems = pedidosList.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-    console.log(`[${tabName}] totalItems=`, totalItems, 'ITEMS_PER_PAGE=', ITEMS_PER_PAGE, 'totalPages=', totalPages);
     page = Math.min(Math.max(1, Number(page) || 1), totalPages);
     const start = (page - 1) * ITEMS_PER_PAGE;
     const slice = pedidosList.slice(start, start + ITEMS_PER_PAGE);

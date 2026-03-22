@@ -31,7 +31,6 @@ const SUPABASE_CONFIG = {
 async function initSupabase() {
   // Verificar si ya está inicializado
   if (window.supabaseClient) {
-    console.log('✅ Supabase ya está inicializado');
     return;
   }
 
@@ -57,21 +56,14 @@ async function initSupabase() {
     window.uploadFileToSupabase = uploadFile;
     window.KOND_USE_SUPABASE = config.useSupabase;
 
-    console.log('✅ Supabase inicializado correctamente');
-    console.log('📊 Modo:', config.useSupabase ? 'Supabase' : 'localStorage (fallback)');
-    
     // Opcional: verificar conexión
     const { data, error } = await supabase.from('productos').select('count');
     if (error) {
       console.warn('⚠️ Error conectando a Supabase:', error.message);
-      console.log('📦 Usando localStorage como fallback');
       window.KOND_USE_SUPABASE = false;
-    } else {
-      console.log('✅ Conexión a Supabase verificada');
     }
   } catch (error) {
     console.error('❌ Error inicializando Supabase:', error);
-    console.log('📦 Usando localStorage como fallback');
     window.KOND_USE_SUPABASE = false;
   }
 }
