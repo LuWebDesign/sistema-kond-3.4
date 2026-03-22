@@ -150,6 +150,19 @@ export async function createMovimiento(movimiento) {
       .select()
       .single();
 
+    // Si falla por columna inexistente (migración pendiente), reintentar sin pedido_catalogo_id
+    if (error && (error.message?.includes('pedido_catalogo_id') || error.code === '42703')) {
+      console.warn('⚠️ Columna pedido_catalogo_id no existe aún — ejecutar migración SQL. Reintentando sin ese campo...');
+      const { pedido_catalogo_id, ...sinReferencia } = movimientoData;
+      const { data: data2, error: error2 } = await supabase
+        .from('movimientos_financieros')
+        .insert([sinReferencia])
+        .select()
+        .single();
+      if (error2) throw error2;
+      return { data: data2, error: null };
+    }
+
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
