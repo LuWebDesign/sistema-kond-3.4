@@ -27,7 +27,7 @@ function fmtRange(a, b) {
   return `${s} → ${e}`;
 }
 
-export default function PromoCard({ promo, products, onEdit, onToggle, onDelete, isLight = false }) {
+export default function PromoCard({ promo, products, onEdit, onToggle, onDelete }) {
   const typeConfig = PROMO_TYPES[promo.tipo] || {};
   
   // Determinar qué productos aplican según aplicaA
@@ -58,8 +58,8 @@ export default function PromoCard({ promo, products, onEdit, onToggle, onDelete,
   }
 
   return (
-    <article className={`${styles.promoCard} ${isLight ? styles.promoCardLight : ''}`}>
-      <div className={`${styles.promoHeader} ${isLight ? styles.promoHeaderLight : ''}`}>
+    <article className={styles.promoCard}>
+      <div className={styles.promoHeader}>
         <span className={styles.promoType}>{typeConfig.label || promo.tipo}</span>
         <span className={`${styles.promoStatus} ${promo.activo ? styles.active : styles.inactive}`}>
           <span className={styles.statusDot}></span>

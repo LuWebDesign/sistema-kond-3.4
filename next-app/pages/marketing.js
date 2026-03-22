@@ -32,7 +32,6 @@ function Marketing() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
-  const [isLight, setIsLight] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -83,20 +82,7 @@ function Marketing() {
     }
   }, [router.query.modal, router.query.id, promotions, coupons]);
 
-  useEffect(() => {
-    const checkTheme = () => {
-      const currentTheme = document.body.getAttribute('data-theme');
-      setIsLight(currentTheme === 'light');
-    };
 
-    checkTheme();
-
-    // Escuchar cambios en el tema
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
-
-    return () => observer.disconnect();
-  }, []);
 
   const loadData = async () => {
     if (typeof window === 'undefined') return;
@@ -370,7 +356,7 @@ function Marketing() {
   return (
     <Layout title="Marketing - Sistema KOND">
       <div className={styles.container}>
-        <header className={`${styles.header} ${isLight ? styles.headerLight : ''}`}>
+        <header className={styles.header}>
           <div>
             <h1 className={styles.title}>🎯 Marketing</h1>
             <nav className={styles.breadcrumbs}>
@@ -436,7 +422,6 @@ function Marketing() {
                     onEdit={() => openPromoModal(promo)}
                     onToggle={() => togglePromo(promo.id)}
                     onDelete={() => deletePromo(promo.id)}
-                    isLight={isLight}
                   />
                 ))}
               </div>
@@ -458,7 +443,6 @@ function Marketing() {
                     onEdit={() => openCouponModal(coupon)}
                     onToggle={() => toggleCoupon(coupon.id)}
                     onDelete={() => deleteCoupon(coupon.id)}
-                    isLight={isLight}
                   />
                 ))}
               </div>
@@ -480,7 +464,6 @@ function Marketing() {
             products={products}
             onSubmit={handlePromoSubmit}
             onClose={closePromoModal}
-            isLight={isLight}
           />
         )}
 
@@ -489,7 +472,6 @@ function Marketing() {
             coupon={editingCoupon}
             onSubmit={handleCouponSubmit}
             onClose={closeCouponModal}
-            isLight={isLight}
           />
         )}
       </div>

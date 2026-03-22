@@ -1,22 +1,19 @@
-/* Marketing - CSS Module para Next.js */
+/* Marketing - CSS Module para Next.js � Variables-based theming */
 
 .container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
+/* Header */
 .header {
   position: sticky;
   top: 0;
   z-index: 10;
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.5);
-  margin-bottom: 24px;
-}
-
-.headerLight {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 28px;
 }
 
 .headerContent {
@@ -29,12 +26,13 @@
 .title {
   margin: 0;
   font-size: 1.6rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
-  color: #e5e7eb;
+  color: var(--text-primary);
 }
 
 .breadcrumbs {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -48,13 +46,13 @@
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  border-bottom: 2px solid #374151;
+  border-bottom: 2px solid var(--border-input);
 }
 
 .tabBtn {
   background: transparent;
   border: none;
-  color: #9ca3af;
+  color: var(--text-muted);
   padding: 12px 24px;
   font-size: 1rem;
   font-weight: 500;
@@ -65,12 +63,13 @@
 }
 
 .tabBtn:hover {
-  color: #e5e7eb;
+  color: var(--text-primary);
 }
 
 .tabBtn.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
+  color: var(--accent-blue, #3b82f6);
+  border-bottom-color: var(--accent-blue, #3b82f6);
+  font-weight: 600;
 }
 
 /* Section */
@@ -89,7 +88,8 @@
 .sectionTitle {
   margin: 0;
   font-size: 1.25rem;
-  color: #e5e7eb;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 /* Toolbar */
@@ -108,28 +108,22 @@
 .input {
   width: 100%;
   padding: 10px 12px;
-  background: linear-gradient(180deg, #0b1220, #111827);
-  color: #e5e7eb;
-  border: 1px solid #273143;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
   border-radius: 10px;
   outline: none;
   font-size: 0.95rem;
-  transition: box-shadow 0.15s, border-color 0.15s, transform 0.06s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.inputLight {
-  background: #ffffff;
-  color: #333333;
-  border: 1px solid #d1d5db;
+.input:focus {
+  border-color: var(--accent-blue, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.inputLight::placeholder {
-  color: #9ca3af;
-}
-
-.inputLight:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.1);
+.input::placeholder {
+  color: var(--text-muted);
 }
 
 .actions {
@@ -137,10 +131,11 @@
   gap: 8px;
 }
 
+/* Buttons */
 .btn {
   background: transparent;
-  color: #e5e7eb;
-  border: 1px solid #374151;
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -149,7 +144,7 @@
 }
 
 .btn:hover {
-  background: #1f2937;
+  background: var(--bg-hover);
 }
 
 .btnPrimary {
@@ -157,7 +152,7 @@
   border: none;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -180,7 +175,7 @@
 
 .btnPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .btnPrimary:active {
@@ -189,58 +184,58 @@
 }
 
 .btnSecondary {
-  background: linear-gradient(135deg, #374151, #4b5563);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e5e7eb;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  color: var(--text-primary);
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
 
 .btnSecondary:hover {
-  background: linear-gradient(135deg, #4b5563, #6b7280);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--bg-hover);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-md);
 }
 
 .btnSecondary:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
 /* Empty state */
 .empty {
   text-align: center;
-  background: rgba(31, 41, 55, 0.6);
-  border: 1px dashed #374151;
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px dashed var(--border-input);
   border-radius: 12px;
-  padding: 40px 32px;
+  padding: 48px 32px;
   margin-top: 12px;
 }
 
-.emptyIllust {
-  font-size: 44px;
-  margin-bottom: 8px;
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 
 .empty h3 {
-  margin: 4px 0 6px;
-  color: #e5e7eb;
+  margin: 4px 0 8px;
+  color: var(--text-primary);
+  font-size: 1.15rem;
 }
 
 .empty p {
-  color: #9ca3af;
+  color: var(--text-muted, var(--text-secondary));
   max-width: 620px;
   margin: 0 auto 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 .emptyActions {
@@ -249,24 +244,17 @@
   justify-content: center;
 }
 
-/* Tarjeta de Promoción */
+/* Tarjeta de Promocion */
 .promoCard {
-  background: #1e1e1e;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 24px;
   transition: all 0.3s ease;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: #e0e0e0;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
   animation: slideIn 0.3s ease-out;
-}
-
-.promoCardLight {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #333333;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .promoCard::before {
@@ -277,13 +265,14 @@
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 12px 12px 0 0;
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .promoCard:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-md);
 }
 
 .promoCard:hover::before {
@@ -296,11 +285,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.promoHeaderLight {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .promoType {
@@ -308,7 +293,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .promoStatus {
@@ -368,20 +353,20 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--text-primary);
   line-height: 1.3;
 }
 
 .promoSummary {
   margin: 0 0 12px;
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
 .promoConfig {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
-  border-left: 3px solid #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08));
+  border-left: 3px solid var(--accent-blue, #3b82f6);
   padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -396,7 +381,7 @@
   gap: 8px;
   margin-bottom: 16px;
   padding: 12px 0;
-  border-top: 1px solid rgba(71, 85, 105, 0.2);
+  border-top: 1px solid var(--border-color);
 }
 
 .promoDetail {
@@ -404,7 +389,7 @@
   align-items: flex-start;
   gap: 8px;
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 .detailIcon {
@@ -421,6 +406,8 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
 }
 
 .cardBtn {
@@ -442,15 +429,15 @@
 }
 
 .btnEdit {
-  background: #334155;
-  color: #e2e8f0;
-  border: 1px solid #475569;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
 }
 
 .btnEdit:hover {
-  background: #475569;
-  border-color: #64748b;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: var(--bg-hover);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-sm);
 }
 
 .btnToggle.activate {
@@ -474,38 +461,34 @@
 }
 
 .btnDelete {
-  background: #7f1d1d;
-  color: white;
+  background: rgba(127, 29, 29, 0.6);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .btnDelete:hover {
-  background: #991b1b;
+  background: rgba(153, 27, 27, 0.8);
+  color: white;
   box-shadow: 0 2px 8px rgba(153, 27, 27, 0.4);
 }
 
-/* Tarjeta de Cupón */
+/* Tarjeta de Cupon */
 .couponCard {
-  background: #1e1e1e;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s ease;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: #e0e0e0;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
   animation: slideIn 0.3s ease-out;
 }
 
 .couponCard:hover {
   border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
-}
-
-.couponCardLight {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #333333;
 }
 
 .couponHeader {
@@ -542,7 +525,7 @@
 
 .couponStatus.expired {
   background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .couponStatus.scheduled {
@@ -550,16 +533,24 @@
   color: #fbbf24;
 }
 
-.couponDescription {
+.couponType {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.couponDescription,
+.couponDesc {
   margin: 0 0 12px;
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
 .couponValue {
   display: inline-block;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1));
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.08));
   border: 1px solid rgba(139, 92, 246, 0.3);
   padding: 8px 12px;
   border-radius: 8px;
@@ -575,17 +566,18 @@
   gap: 6px;
   margin-bottom: 12px;
   padding: 10px 0;
-  border-top: 1px solid rgba(71, 85, 105, 0.2);
+  border-top: 1px solid var(--border-color);
   font-size: 0.8rem;
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
-.couponDates {
+.couponDates,
+.couponDate {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-size: 0.8rem;
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 
@@ -593,6 +585,60 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.couponBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.couponBtn:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.couponBtn.activate {
+  background: #059669;
+  color: white;
+  border-color: transparent;
+}
+
+.couponBtn.activate:hover {
+  background: #047857;
+}
+
+.couponBtn.deactivate {
+  background: #dc2626;
+  color: white;
+  border-color: transparent;
+}
+
+.couponBtn.deactivate:hover {
+  background: #b91c1c;
+}
+
+.couponBtn.delete {
+  background: rgba(127, 29, 29, 0.6);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.couponBtn.delete:hover {
+  background: rgba(153, 27, 27, 0.8);
+  color: white;
 }
 
 /* Modal */
@@ -602,7 +648,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -612,30 +658,20 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modalContent {
-  background: #1e1e1e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card, var(--bg-secondary));
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.4));
   animation: slideUp 0.3s ease-out;
-}
-
-.modalContentLight {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #333333;
 }
 
 @keyframes slideUp {
@@ -655,7 +691,7 @@
   right: 16px;
   background: transparent;
   border: none;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 2rem;
   cursor: pointer;
   line-height: 1;
@@ -670,21 +706,13 @@
 
 .modalHeader {
   padding: 24px 24px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modalHeaderLight {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modalHeader h3 {
   margin: 0;
   font-size: 1.5rem;
-  color: #e5e7eb;
-}
-
-.modalHeaderLight h3 {
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .modalBody {
@@ -706,11 +734,17 @@
 }
 
 .specificFields {
-  background: linear-gradient(180deg, rgba(17,24,39,0.6), rgba(17,24,39,0.5));
-  border: 1px solid rgba(55,65,81,0.6);
-  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  padding: 16px;
   border-radius: 10px;
   grid-column: 1 / -1;
+}
+
+.specificFields h4 {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
 }
 
 .formField {
@@ -719,75 +753,64 @@
   gap: 6px;
 }
 
-.fieldError {
+.fieldError,
+.errorText {
   color: #fca5a5;
-  font-size: 0.85rem;
-  margin-top: 4px;
+  font-size: 0.8rem;
+  margin-top: 2px;
 }
 
 .label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #e5e7eb;
-}
-
-.labelLight {
-  color: #333333;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .select {
   padding: 10px 12px;
-  background: #111827;
-  color: #e5e7eb;
-  border: 1px solid #374151;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   outline: none;
   font-size: 0.95rem;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.selectLight {
-  background: #ffffff;
-  color: #333333;
-  border: 1px solid #d1d5db;
-}
-
-.selectLight:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.select:focus {
+  border-color: var(--accent-blue, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .textarea {
   padding: 10px 12px;
-  background: #111827;
-  color: #e5e7eb;
-  border: 1px solid #374151;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   outline: none;
   font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
   min-height: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.textareaLight {
-  background: #ffffff;
-  color: #333333;
-  border: 1px solid #d1d5db;
-}
-
-.textareaLight:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.textarea:focus {
+  border-color: var(--accent-blue, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .helpText {
-  font-size: 0.8rem;
-  color: #9ca3af;
+  font-size: 0.78rem;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
-/* Lista de productos (para selección en el modal) */
+/* Product List */
 .productList {
   display: flex;
   flex-direction: column;
@@ -796,8 +819,8 @@
   overflow: auto;
   padding: 8px;
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(17,24,39,0.45), rgba(17,24,39,0.5));
-  border: 1px solid rgba(55,65,81,0.5);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
 }
 
 .productItem {
@@ -817,7 +840,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -856,8 +879,8 @@
 
 .colorPreset:hover {
   transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: var(--border-input);
+  box-shadow: var(--shadow-sm);
 }
 
 .colorPreset:active {
@@ -865,7 +888,7 @@
 }
 
 .colorPreset.selected {
-  border-color: #3b82f6;
+  border-color: var(--accent-blue, #3b82f6);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
@@ -878,7 +901,7 @@
 .customColorInput input[type="color"] {
   width: 40px;
   height: 40px;
-  border: 2px solid #374151;
+  border: 2px solid var(--border-input);
   border-radius: 8px;
   cursor: pointer;
   padding: 0;
@@ -894,14 +917,14 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: linear-gradient(180deg, rgba(17,24,39,0.5), rgba(17,24,39,0.55));
-  border: 1px solid rgba(55,65,81,0.5);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: 10px;
 }
 
 .badgePreview span {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .previewBadge {
@@ -912,16 +935,16 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .promoPreview {
   margin-top: 10px;
   padding: 12px;
   border-radius: 10px;
-  background: linear-gradient(180deg, rgba(17,24,39,0.35), rgba(17,24,39,0.25));
-  border: 1px solid rgba(55,65,81,0.18);
-  color: #e5e7eb;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
@@ -929,10 +952,10 @@
 .productSelect {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #374151;
+  border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 8px;
-  background: #111827;
+  background: var(--bg-input);
 }
 
 .productOption {
@@ -946,7 +969,7 @@
 }
 
 .productOption:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--bg-hover);
 }
 
 .productOption input[type="checkbox"] {
@@ -959,7 +982,7 @@
   flex: 1;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: var(--text-primary);
 }
 
 /* Form Actions */
@@ -968,7 +991,17 @@
   gap: 12px;
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Loading */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  font-size: 1rem;
 }
 
 /* Animations */
@@ -985,24 +1018,28 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
-  
+
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search {
     flex: 1 1 auto;
   }
-  
+
   .tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .modalContent {
     max-width: 100%;
     max-height: 95vh;
@@ -1069,5 +1106,17 @@
   .customColorInput input[type="color"] {
     width: 100%;
     height: 50px;
+  }
+
+  .promoActions,
+  .couponActions {
+    flex-direction: column;
+  }
+
+  .promoActions button,
+  .couponActions button,
+  .couponBtn {
+    width: 100%;
+    justify-content: center;
   }
 }
