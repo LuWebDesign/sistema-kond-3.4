@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import styles from '../styles/finanzas.module.css';
 
 export default function Finanzas() {
+  const [mounted, setMounted] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
   const [categorias, setCategorias] = useState(['Ventas', 'Materia Prima', 'Servicios']);
@@ -14,11 +15,11 @@ export default function Finanzas() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   
-  // Form fields
+  // Form fields — inicializar sin new Date() para evitar hidratación SSR/cliente
   const [formData, setFormData] = useState({
     tipo: 'ingreso',
     monto: '',
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: '',
     hora: '',
     categoria: '',
     descripcion: '',
@@ -26,11 +27,15 @@ export default function Finanzas() {
   });
 
   // Registros
-  const [registroFecha, setRegistroFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [registroFecha, setRegistroFecha] = useState('');
   const [registrosDelDia, setRegistrosDelDia] = useState([]);
   const [expandedRegistro, setExpandedRegistro] = useState(null);
 
   useEffect(() => {
+    const hoy = new Date().toISOString().slice(0, 10);
+    setFormData(prev => ({ ...prev, fecha: hoy }));
+    setRegistroFecha(hoy);
+    setMounted(true);
     loadData();
   }, []);
 
@@ -176,7 +181,7 @@ export default function Finanzas() {
     setFormData({
       tipo: 'ingreso',
       monto: '',
-      fecha: new Date().toISOString().slice(0, 10),
+      fecha: typeof window !== 'undefined' ? new Date().toISOString().slice(0, 10) : '',
       hora: '',
       categoria: '',
       descripcion: '',
@@ -201,9 +206,13 @@ export default function Finanzas() {
   };
 
   const handleDelete = (id) => {
-    if (!confirm('¿Eliminar este movimiento?')) return;
-    const updated = movimientos.filter(m => m.id !== id);
-    saveMovimientos(updated);
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Eliminar movimiento', '¿Eliminar este movimiento?', () => {
+        saveMovimientos(movimientos.filter(m => m.id !== id));
+      });
+    } else if (confirm('¿Eliminar este movimiento?')) {
+      saveMovimientos(movimientos.filter(m => m.id !== id));
+    }
   };
 
   const handleAddCategory = () => {
@@ -222,8 +231,13 @@ export default function Finanzas() {
   };
 
   const handleDeleteCategory = (name) => {
-    if (!confirm(`¿Eliminar categoría "${name}"?`)) return;
-    saveCategorias(categorias.filter(c => c !== name));
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Eliminar categoría', `¿Eliminar categoría "${name}"?`, () => {
+        saveCategorias(categorias.filter(c => c !== name));
+      });
+    } else if (confirm(`¿Eliminar categoría "${name}"?`)) {
+      saveCategorias(categorias.filter(c => c !== name));
+    }
   };
 
   const handleRenameCategory = (oldName) => {
@@ -252,37 +266,42 @@ export default function Finanzas() {
   };
 
   const handleCerrarCaja = () => {
-    if (!confirm(`¿Cerrar caja para ${registroFecha}?`)) return;
-    
-    const movsDelDia = movimientos.filter(m => 
-      m.fecha?.startsWith(registroFecha) && !m.registrado
-    );
-    
-    if (movsDelDia.length === 0) {
-      alert('No hay movimientos para cerrar en esa fecha');
-      return;
-    }
-    
-    const total = movsDelDia.reduce((acc, m) => 
-      acc + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
-    );
-    
-    const newRegistro = {
-      id: Date.now() + Math.floor(Math.random() * 100000),
-      fecha: registroFecha,
-      total,
-      movimientos: movsDelDia.map(m => m.id),
-      cerradoAt: new Date().toISOString()
+    const doClose = () => {
+      const movsDelDia = movimientos.filter(m =>
+        m.fecha?.startsWith(registroFecha) && !m.registrado
+      );
+
+      if (movsDelDia.length === 0) {
+        alert('No hay movimientos para cerrar en esa fecha');
+        return;
+      }
+
+      const total = movsDelDia.reduce((acc, m) =>
+        acc + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
+      );
+
+      const newRegistro = {
+        id: Date.now() + Math.floor(Math.random() * 100000),
+        fecha: registroFecha,
+        total,
+        movimientos: movsDelDia.map(m => m.id),
+        cerradoAt: new Date().toISOString()
+      };
+
+      saveRegistros([...registros, newRegistro]);
+
+      const updatedMovs = movimientos.map(m =>
+        m.fecha?.startsWith(registroFecha) ? { ...m, registrado: true } : m
+      );
+      saveMovimientos(updatedMovs);
+      handleVerRegistros();
     };
-    
-    saveRegistros([...registros, newRegistro]);
-    
-    const updatedMovs = movimientos.map(m => 
-      m.fecha?.startsWith(registroFecha) ? { ...m, registrado: true } : m
-    );
-    saveMovimientos(updatedMovs);
-    
-    handleVerRegistros();
+
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Cerrar caja', `¿Cerrar caja para ${registroFecha}? Esto marcará los movimientos como registrados.`, doClose);
+    } else if (confirm(`¿Cerrar caja para ${registroFecha}?`)) {
+      doClose();
+    }
   };
 
   const toggleRegistroDetalle = (registroId) => {
@@ -315,6 +334,8 @@ export default function Finanzas() {
       return dateStr;
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <Layout>
