@@ -1691,13 +1691,19 @@ function PedidosCatalogo() {
           </div>
         )}
 
-        {/* Modal de Detalle - Diseño Minimalista */}
+        {/* Modal de Detalle - Diseño Pro */}
         {showDetailModal && selectedPedido && (
           <div className={styles.modalOverlay} onClick={handleCloseModal}>
             <div className={styles.modalContentNew} onClick={(e) => e.stopPropagation()}>
-              {/* Header Minimalista */}
+              {/* Header con info del pedido */}
               <div className={styles.modalHeaderNew}>
                 <div className={styles.headerTop}>
+                  <div className={styles.headerIdBadge}>
+                    <span className={styles.pedidoIdTag}>#{selectedPedido.id}</span>
+                    <span className={styles.metodoPagoBadge}>
+                      {selectedPedido.metodoPago === 'transferencia' ? '🏦 Transferencia' : selectedPedido.metodoPago === 'envio' ? '🚚 Envío' : selectedPedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : '🏪 Retiro'}
+                    </span>
+                  </div>
                   <button onClick={handleCloseModal} className={styles.closeBtnNew}>×</button>
                 </div>
                 <div className={styles.headerInfo}>
@@ -1721,69 +1727,77 @@ function PedidosCatalogo() {
               </div>
 
               <div className={styles.modalBodyNew}>
-                {/* Estados en Cards Horizontales (editable) */}
+                {/* Estados con iconos visuales */}
                 <div className={styles.estadosGrid}>
                   <div className={styles.estadoCard}>
-                    <label className={styles.estadoLabel}>Estado del Pedido</label>
-                    <div className={styles.estadoValue}>
-                      <select
-                        value={selectedPedido.estado || 'pendiente'}
-                        onChange={(e) => handleChangeEstado(e.target.value)}
-                        className={styles.selectInline}
-                      >
-                        <option value="pendiente">Pendiente</option>
-                        <option value="confirmado">Confirmado</option>
-                        <option value="en_preparacion">En preparación</option>
-                        <option value="en_produccion">En Producción</option>
-                        <option value="listo">Listo</option>
-                        <option value="entregado">Entregado</option>
-                        <option value="cancelado">Cancelado</option>
-                      </select>
+                    <div className={styles.estadoCardHeader}>
+                      <span className={styles.estadoIcon}>📋</span>
+                      <label className={styles.estadoLabel}>Estado del Pedido</label>
                     </div>
+                    <select
+                      value={selectedPedido.estado || 'pendiente'}
+                      onChange={(e) => handleChangeEstado(e.target.value)}
+                      className={styles.selectInline}
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="confirmado">Confirmado</option>
+                      <option value="en_preparacion">En preparación</option>
+                      <option value="en_produccion">En Producción</option>
+                      <option value="listo">Listo</option>
+                      <option value="entregado">Entregado</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
                   </div>
 
                   <div className={styles.estadoCard}>
-                    <label className={styles.estadoLabel}>Estado de Pago</label>
-                    <div className={styles.estadoValue}>
-                      <select
-                        value={selectedPedido.estadoPago || 'sin_seña'}
-                        onChange={(e) => handleChangeEstadoPago(e.target.value)}
-                        className={styles.selectInline}
-                      >
-                        <option value="sin_seña">Sin seña</option>
-                        <option value="seña_pagada">Seña pagada</option>
-                        <option value="pagado_total">Pagado total</option>
-                      </select>
+                    <div className={styles.estadoCardHeader}>
+                      <span className={styles.estadoIcon}>💳</span>
+                      <label className={styles.estadoLabel}>Estado de Pago</label>
                     </div>
+                    <select
+                      value={selectedPedido.estadoPago || 'sin_seña'}
+                      onChange={(e) => handleChangeEstadoPago(e.target.value)}
+                      className={styles.selectInline}
+                    >
+                      <option value="sin_seña">Sin seña</option>
+                      <option value="seña_pagada">Seña pagada</option>
+                      <option value="pagado_total">Pagado total</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Fechas en Grid Limpio */}
-                <div className={styles.fechasGrid}>
-                  <div className={styles.fechaItem}>
-                    <label>Fecha Solicitada</label>
-                    <div className={styles.fechaValue}>{formatDate(selectedPedido.fechaSolicitudEntrega)}</div>
+                {/* Fechas con iconos */}
+                <div className={styles.fechasSection}>
+                  <div className={styles.sectionTitleRow}>
+                    <span className={styles.sectionIcon}>📅</span>
+                    <span className={styles.sectionTitle}>Fechas</span>
                   </div>
-                  <div className={styles.fechaItem}>
-                    <label>Fecha Producción</label>
-                    <div className={styles.fechaValue}>
-                      <input
-                        type="date"
-                        value={selectedPedido.fechaProduccion || ''}
-                        onChange={handleChangeFechaProduccion}
-                        className={styles.dateInput}
-                      />
+                  <div className={styles.fechasGrid}>
+                    <div className={styles.fechaItem}>
+                      <label>Solicitada</label>
+                      <div className={styles.fechaValue}>{formatDate(selectedPedido.fechaSolicitudEntrega)}</div>
                     </div>
-                  </div>
-                  <div className={styles.fechaItem}>
-                    <label>Fecha de entrega confirmada</label>
-                    <div className={styles.fechaValue}>
-                      <input
-                        type="date"
-                        value={selectedPedido.fechaConfirmadaEntrega || ''}
-                        onChange={handleChangeFechaConfirmada}
-                        className={styles.dateInput}
-                      />
+                    <div className={styles.fechaItem}>
+                      <label>Producción</label>
+                      <div className={styles.fechaValue}>
+                        <input
+                          type="date"
+                          value={selectedPedido.fechaProduccion || ''}
+                          onChange={handleChangeFechaProduccion}
+                          className={styles.dateInput}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.fechaItem}>
+                      <label>Entrega confirmada</label>
+                      <div className={styles.fechaValue}>
+                        <input
+                          type="date"
+                          value={selectedPedido.fechaConfirmadaEntrega || ''}
+                          onChange={handleChangeFechaConfirmada}
+                          className={styles.dateInput}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1801,9 +1815,12 @@ function PedidosCatalogo() {
                   </div>
                 )}
 
-                {/* Productos - Lista Minimalista */}
+                {/* Productos */}
                 <div className={styles.productosSection}>
-                  <div className={styles.sectionTitle}>Productos</div>
+                  <div className={styles.sectionTitleRow}>
+                    <span className={styles.sectionIcon}>📦</span>
+                    <span className={styles.sectionTitle}>Productos ({selectedPedido.productos.length})</span>
+                  </div>
                   <div className={styles.productosListNew}>
                     {selectedPedido.productos.map((prod, idx) => {
                       const productData = getProductData(prod)
@@ -1813,8 +1830,8 @@ function PedidosCatalogo() {
                           <div className={styles.productoLeft}>
                             <div className={styles.productoNombreNew}>{prod.nombre}</div>
                             <div className={styles.productoMetaNew}>
-                              {prod.medidas && <span>{prod.medidas}</span>}
-                              <span>×{prod.cantidad}</span>
+                              {prod.medidas && <span className={styles.metaTag}>{prod.medidas}</span>}
+                              <span className={styles.metaTag}>×{prod.cantidad}</span>
                               {productData.tiempoUnitario && (
                                 <span className={styles.tiempoTag}>⏱ {productData.tiempoUnitario}</span>
                               )}
@@ -1829,7 +1846,7 @@ function PedidosCatalogo() {
                             )}
                           </div>
                           <div className={styles.productoRight}>
-                            <div className={styles.precioUnit}>{formatCurrency(prod.precioUnitario)}</div>
+                            <div className={styles.precioUnit}>{formatCurrency(prod.precioUnitario)} c/u</div>
                             <div className={styles.subtotalProd}>{formatCurrency(prod.subtotal)}</div>
                           </div>
                         </div>
@@ -1838,16 +1855,20 @@ function PedidosCatalogo() {
                   </div>
                 </div>
 
-                {/* Resumen Financiero Elegante */}
+                {/* Resumen Financiero con barra de progreso */}
                 {(() => {
                   const savedPedido = pedidosCatalogo.find(p => p.id === selectedPedido.id)
                   const savedMonto = Number(savedPedido?.montoRecibido || 0)
                   const total = Number(selectedPedido.total || 0)
                   const restante = Math.max(0, total - savedMonto)
                   const pagadoCompleto = savedMonto > 0 && savedMonto >= total
+                  const porcentajePago = total > 0 ? Math.min(100, Math.round((savedMonto / total) * 100)) : 0
                   return (
                     <div className={styles.financieroSection}>
-                      {/* Filas estáticas: Subtotal → Descuento → Total → Seña → Restante */}
+                      <div className={styles.sectionTitleRow}>
+                        <span className={styles.sectionIcon}>💰</span>
+                        <span className={styles.sectionTitle}>Resumen Financiero</span>
+                      </div>
                       <div className={styles.financieroGrid}>
                         <div className={styles.finItem}>
                           <span>Subtotal</span>
@@ -1863,82 +1884,96 @@ function PedidosCatalogo() {
                           <span>Total</span>
                           <span>{formatCurrency(total)}</span>
                         </div>
-
-                        {/* Seña y restante — solo si hay monto ya confirmado */}
-                        {savedMonto > 0 && (
-                          <>
-                            <div className={styles.finItem} style={{ color: '#10b981', fontWeight: 600 }}>
-                              <span>{pagadoCompleto ? '✓ Pagado' : 'Seña recibida'}</span>
-                              <span>{formatCurrency(savedMonto)}</span>
-                            </div>
-                            {!pagadoCompleto && (
-                              <div className={styles.finItem} style={{ color: '#ef4444', fontWeight: 600 }}>
-                                <span>Restante</span>
-                                <span>{formatCurrency(restante)}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
                       </div>
 
-                      {/* Input para registrar / actualizar monto recibido */}
-                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
-                        <div className={styles.pagoItem}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
-                            {savedMonto > 0 ? 'Actualizar monto recibido' : 'Registrar seña / monto recibido'}
-                          </label>
-                          <div className={styles.montoInputWrapper}>
-                            <span className={styles.currencyPrefix}>$</span>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              placeholder="0"
-                              value={formatInputNumber(selectedPedido.montoRecibido)}
-                              onChange={(e) => {
-                                const raw = e.target.value
-                                const numeric = parseInputNumber(raw)
-                                setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
-                              }}
-                              className={styles.montoInput}
+                      {/* Barra de progreso de pago */}
+                      {total > 0 && (
+                        <div className={styles.pagoProgressSection}>
+                          <div className={styles.pagoProgressHeader}>
+                            <span className={styles.pagoProgressLabel}>
+                              {pagadoCompleto ? '✓ Pagado completo' : savedMonto > 0 ? 'Pago parcial' : 'Sin pagos'}
+                            </span>
+                            <span className={styles.pagoProgressPercent}>{porcentajePago}%</span>
+                          </div>
+                          <div className={styles.pagoProgressBar}>
+                            <div
+                              className={`${styles.pagoProgressFill} ${pagadoCompleto ? styles.pagoComplete : savedMonto > 0 ? styles.pagoPartial : ''}`}
+                              style={{ width: `${porcentajePago}%` }}
                             />
                           </div>
+                          <div className={styles.pagoProgressDetails}>
+                            {savedMonto > 0 && (
+                              <span className={styles.pagoRecibido}>Recibido: {formatCurrency(savedMonto)}</span>
+                            )}
+                            {!pagadoCompleto && savedMonto > 0 && (
+                              <span className={styles.pagoRestante}>Restante: {formatCurrency(restante)}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Input para registrar / actualizar monto recibido */}
+                      <div className={styles.montoInputSection}>
+                        <label className={styles.montoInputLabel}>
+                          {savedMonto > 0 ? 'Actualizar monto recibido' : 'Registrar seña / monto recibido'}
+                        </label>
+                        <div className={styles.montoInputWrapper}>
+                          <span className={styles.currencyPrefix}>$</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="0"
+                            value={formatInputNumber(selectedPedido.montoRecibido)}
+                            onChange={(e) => {
+                              const raw = e.target.value
+                              const numeric = parseInputNumber(raw)
+                              setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
+                            }}
+                            className={styles.montoInput}
+                          />
                         </div>
                       </div>
                     </div>
                   )
                 })()}
 
-                {/* Comprobante Minimalista */}
+                {/* Comprobante */}
                 {selectedPedido.comprobante && (
                   <div className={styles.comprobanteSection}>
-                    <div className={styles.sectionTitle}>Comprobante de Pago</div>
+                    <div className={styles.sectionTitleRow}>
+                      <span className={styles.sectionIcon}>🧾</span>
+                      <span className={styles.sectionTitle}>Comprobante de Pago</span>
+                    </div>
                     <div className={styles.comprobanteWrapper}>
                       <img src={selectedPedido.comprobante} alt="Comprobante" className={styles.comprobanteImgNew} />
                       <button onClick={() => downloadComprobante(selectedPedido)} className={styles.btnDownloadNew}>
-                        ⬇ Descargar
+                        ⬇ Descargar comprobante
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Mostrar dirección SOLO para pedidos con envío (evita mostrar dirección por defecto en pedidos catálogo) */}
+                {/* Dirección de Entrega */}
                 {selectedPedido.metodoPago === 'envio' && selectedPedido.cliente?.direccion && selectedPedido.cliente.direccion !== 'No proporcionada' && (
                   <div className={styles.direccionSection}>
-                    <label>Dirección de Entrega</label>
+                    <div className={styles.sectionTitleRow}>
+                      <span className={styles.sectionIcon}>📍</span>
+                      <label>Dirección de Entrega</label>
+                    </div>
                     <p>{selectedPedido.cliente.direccion}</p>
                   </div>
                 )}
               </div>
 
-              {/* Footer con acciones de edición */}
+              {/* Footer con acciones */}
               <div className={styles.modalFooterNew}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className={styles.btnDanger} onClick={handleDelete}>Eliminar</button>
+                <button className={styles.btnDanger} onClick={handleDelete}>
+                  🗑 Eliminar
+                </button>
+                <div className={styles.footerActions}>
                   <button className={styles.btnSecondary} onClick={handleCloseModal}>Cerrar</button>
-                </div>
-                <div>
-                  <button className={styles.btnSave} onClick={handleSaveChanges}>Guardar cambios</button>
+                  <button className={styles.btnSave} onClick={handleSaveChanges}>💾 Guardar cambios</button>
                 </div>
               </div>
             </div>

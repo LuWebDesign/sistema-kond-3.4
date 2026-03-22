@@ -1764,54 +1764,81 @@
   }
 }
 /* ========================================
-   MODAL MINIMALISTA - DISEÑO SIMPLE Y LIMPIO
+   MODAL PRO - DISEÑO DETALLE PEDIDO
    ======================================== */
 
 /* Modal Content */
 .modalContentNew {
   background: var(--bg-card);
-  border-radius: 20px;
+  border-radius: 16px;
   width: 95%;
-  max-width: 750px;
+  max-width: 720px;
   max-height: 92vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.25s ease-out;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0,0,0,0.05);
+  animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateY(12px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
-/* Header Simple */
+/* Header */
 .modalHeaderNew {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, #0a6edb 100%);
+  background: linear-gradient(135deg, #1a56db 0%, #0a3d91 100%);
   color: white;
-  padding: 5px 24px; /* Reducido de 12px a 5px */
-  border-radius: 20px 20px 0 0;
+  padding: 16px 24px 14px;
+  border-radius: 16px 16px 0 0;
+  position: relative;
 }
 
 .headerTop {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 6px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.headerIdBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pedidoIdTag {
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: rgba(255,255,255,0.2);
+  padding: 3px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+}
+
+.metodoPagoBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  opacity: 0.9;
 }
 
 .closeBtnNew {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
-  font-size: 22px;
+  font-size: 20px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1821,6 +1848,7 @@
   justify-content: center;
   transition: all 0.2s ease;
   line-height: 1;
+  backdrop-filter: blur(4px);
 }
 
 .closeBtnNew:hover {
@@ -1832,108 +1860,140 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px; /* Reducido de 16px a 8px */
+  gap: 12px;
 }
 
 .clienteMain {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .clienteNombre {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  margin-bottom: -10px; /* Margen negativo de 10px */
   letter-spacing: -0.3px;
 }
 
 .clienteContacto {
-  font-size: 0.82rem;
-  opacity: 0.88;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  letter-spacing: 0.2px;
 }
 
 .contactActions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btnWhatsApp,
 .btnEmail {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
-  font-size: 18px;
-  width: 34px;
-  height: 34px;
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
 }
 
-.btnWhatsApp:hover,
-.btnEmail:hover {
-  background: rgba(255, 255, 255, 0.35);
+.btnWhatsApp:hover {
+  background: rgba(37, 211, 102, 0.35);
   transform: translateY(-2px);
 }
 
-/* Body Simple */
+.btnEmail:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Body */
 .modalBodyNew {
-  padding: 28px;
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* Estados - Diseño Horizontal Limpio */
+/* Section Title Row (reusable) */
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sectionIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Estados */
 .estadosGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .estadoCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+  gap: 6px;
+  padding: 14px;
   background: var(--bg-section);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
+  transition: border-color 0.2s ease;
+}
+
+.estadoCard:hover {
+  border-color: var(--accent-blue);
+}
+
+.estadoCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.estadoIcon {
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .estadoLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--text-secondary);
-  margin-bottom: 2px;
-}
-
-.estadoValue {
-  position: relative;
 }
 
 .selectInline {
   width: 100%;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-radius: 8px;
   border: 1.5px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
-  padding-right: 36px;
+  padding-right: 34px;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 10px center;
   background-size: 14px 14px;
 }
 
@@ -1947,44 +2007,51 @@
   box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.1);
 }
 
-/* Fechas - Grid Simple */
+/* Fechas Section */
+.fechasSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .fechasGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px;
   background: var(--bg-section);
-  border-radius: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
 }
 
 .fechaItem {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .fechaItem label {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--text-secondary);
 }
 
 .fechaValue {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .dateInput {
   width: 100%;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: 6px;
   border: 1.5px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
   transition: all 0.2s ease;
 }
@@ -2032,29 +2099,28 @@
 .productosSection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .sectionTitle {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   color: var(--text-secondary);
-  padding-left: 4px;
 }
 
 .productosListNew {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .productoItemNew {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: var(--bg-section);
   border-radius: 10px;
   border: 1px solid var(--border-color);
@@ -2062,19 +2128,19 @@
 }
 
 .productoItemNew:hover {
-  border-color: rgba(9, 132, 227, 0.4);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: rgba(9, 132, 227, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .productoLeft {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .productoNombreNew {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -2082,8 +2148,8 @@
 .productoMetaNew {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 6px;
+  font-size: 0.78rem;
   color: var(--text-secondary);
 }
 
@@ -2093,29 +2159,39 @@
   gap: 3px;
 }
 
+.metaTag {
+  padding: 2px 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.73rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .tiempoTag {
-  padding: 3px 8px;
-  background: rgba(168, 85, 247, 0.12);
+  padding: 2px 7px;
+  background: rgba(168, 85, 247, 0.1);
   color: #a855f7;
-  border-radius: 5px;
+  border-radius: 4px;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
 }
 
 .precioMinTag {
-  padding: 3px 8px;
-  background: rgba(245, 158, 11, 0.12);
+  padding: 2px 7px;
+  background: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
-  border-radius: 5px;
+  border-radius: 4px;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
 }
 
 .productoMaterial {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--text-secondary);
   font-style: italic;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .productoRight {
@@ -2126,22 +2202,22 @@
 }
 
 .precioUnit {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
 }
 
 .subtotalProd {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--accent-blue);
 }
 
-/* Financiero - Diseño Compacto */
+/* Financiero Section */
 .financieroSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 16px;
   background: var(--bg-section);
   border-radius: 10px;
   border: 1px solid var(--border-color);
@@ -2150,14 +2226,14 @@
 .financieroGrid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .finItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 0;
+  padding: 4px 0;
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
@@ -2171,10 +2247,96 @@
 .finItem.total {
   padding-top: 8px;
   margin-top: 4px;
-  border-top: 1px solid var(--border-color);
-  font-size: 1.05rem;
+  border-top: 1.5px solid var(--border-color);
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-blue);
+}
+
+/* Barra de progreso de pago */
+.pagoProgressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.pagoProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagoProgressLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pagoProgressPercent {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pagoProgressBar {
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.pagoProgressFill {
+  height: 100%;
+  border-radius: 10px;
+  background: var(--border-color);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+}
+
+.pagoProgressFill.pagoPartial {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.pagoProgressFill.pagoComplete {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.pagoProgressDetails {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagoRecibido {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.pagoRestante {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+/* Monto Input Section */
+.montoInputSection {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.montoInputLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
 .pagosGrid {
@@ -2247,11 +2409,11 @@
   border: 1.5px solid rgba(239, 68, 68, 0.2);
 }
 
-/* Comprobante - Simple */
+/* Comprobante */
 .comprobanteSection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .comprobanteWrapper {
@@ -2263,20 +2425,20 @@
 
 .comprobanteImgNew {
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   border-radius: 10px;
-  border: 2px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1.5px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .btnDownloadNew {
-  padding: 8px 18px;
+  padding: 8px 20px;
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1.5px solid var(--border-color);
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -2293,12 +2455,13 @@
   padding: 14px 16px;
   background: var(--bg-section);
   border-radius: 10px;
+  border: 1px solid var(--border-color);
   border-left: 3px solid var(--accent-blue);
 }
 
 .direccionSection label {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--text-secondary);
@@ -2308,30 +2471,35 @@
 
 .direccionSection p {
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin: 0;
   line-height: 1.5;
 }
 
-/* Footer - Botones Limpios */
+/* Footer */
 .modalFooterNew {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
+  padding: 14px 24px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-section);
-  border-radius: 0 0 20px 20px;
+  border-radius: 0 0 16px 16px;
+}
+
+.footerActions {
+  display: flex;
+  gap: 8px;
 }
 
 .btnDanger {
-  padding: 10px 16px;
+  padding: 9px 14px;
   background: transparent;
   color: #dc2626;
   border: 1.5px solid rgba(220, 38, 38, 0.2);
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -2344,13 +2512,13 @@
 }
 
 .btnSecondary {
-  padding: 10px 16px;
+  padding: 9px 16px;
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1.5px solid var(--border-color);
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -2361,20 +2529,21 @@
 }
 
 .btnSave {
-  padding: 11px 20px;
-  background: linear-gradient(135deg, var(--accent-blue), #0a6edb);
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #1a56db, #0a3d91);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(9, 132, 227, 0.15);
 }
 
 .btnSave:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(9, 132, 227, 0.25);
+  box-shadow: 0 6px 20px rgba(9, 132, 227, 0.3);
 }
 
 /* Dark mode ajustes */
@@ -2414,526 +2583,7 @@
   }
 }
 
-/* Estados Cards */
-.estadosGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-}
-
-.estadoCard {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.estadoLabel {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-}
-
-.selectNew {
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid var(--border-color);
-  background: var(--bg-section);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding-right: 40px; /* espacio para el caret */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px 16px;
-}
-
-.selectNew:hover {
-  border-color: var(--accent-blue);
-}
-
-.selectNew:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 6px 18px rgba(9,132,227,0.12), 0 0 0 4px rgba(9,132,227,0.08);
-}
-
-/* Fechas Grid */
-.fechasGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.fechaItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.fechaItem label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-}
-
-.fechaValue {
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--bg-section);
-  color: var(--text-primary);
-  font-weight: 500;
-  border: 2px solid var(--border-color);
-}
-
-.inputNew {
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid var(--border-color);
-  background: var(--bg-section);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.inputNew:hover {
-  border-color: var(--accent-blue);
-}
-
-.inputNew:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.1);
-}
-
-/* Botón Calendario */
-.btnCalendarNew {
-  padding: 14px 24px;
-  background: linear-gradient(135deg, var(--accent-blue), #0652b3);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btnCalendarNew:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(9, 132, 227, 0.4);
-}
-
-.alertSuccessNew {
-  padding: 12px 20px;
-  background: rgba(16, 185, 129, 0.1);
-  border-left: 4px solid #10b981;
-  border-radius: 8px;
-  color: #10b981;
-  font-weight: 500;
-}
-
-/* Productos Section */
-.productosSection {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.sectionTitle {
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-secondary);
-}
-
-.productosListNew {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.productoItemNew {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  background: var(--bg-section);
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.productoItemNew:hover {
-  border-color: var(--accent-blue);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.productoLeft {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.productoNombreNew {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.productoMetaNew {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.productoMetaNew span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tiempoTag {
-  padding: 4px 10px;
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-.precioMinTag {
-  padding: 4px 10px;
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-.productoRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.precioUnit {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.subtotalProd {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--accent-blue);
-}
-
-/* Financiero Section */
-.financieroSection {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-section);
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-}
-
-.financieroGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.finItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 0.95rem; /* ligeramente más compacto */
-  color: var(--text-secondary);
-}
-
-.finItem.descuento {
-  color: #ef4444;
-  font-weight: 500;
-}
-
-.finItem.total {
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
-  font-size: 1.25rem; /* menos grande y más equilibrado */
-  font-weight: 700;
-  color: var(--accent-blue);
-}
-
-.pagosGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color);
-}
-
-.pagoItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pagoItem label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-}
-
-.restanteValue {
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  font-weight: 700;
-  font-size: 1.1rem;
-  text-align: center;
-  border: 2px solid rgba(239, 68, 68, 0.2);
-}
-
-/* Comprobante Section */
-.comprobanteSection {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.comprobanteWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-}
-
-.comprobanteImgNew {
-  width: 100%;
-  max-width: 400px;
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btnDownloadNew {
-  padding: 10px 20px;
-  background: var(--bg-section);
-  color: var(--text-primary);
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btnDownloadNew:hover {
-  background: var(--accent-blue);
-  color: white;
-  border-color: var(--accent-blue);
-}
-
-/* Dirección Section */
-.direccionSection {
-  padding: 16px;
-  background: var(--bg-section);
-  border-radius: 8px;
-  border-left: 4px solid var(--accent-blue);
-}
-
-.direccionSection label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  display: block;
-  margin-bottom: 8px;
-}
-
-.direccionSection p {
-  color: var(--text-primary);
-  font-size: 1rem;
-  margin: 0;
-}
-
-/* Elementos de solo lectura */
-.estadoValue {
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--bg-section);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 500;
-  border: 2px solid var(--border-color);
-  display: flex;
-  align-items: center;
-}
-
-.estadoValue select {
-  background-image: none;
-  background-color: var(--bg-section);
-  padding-right: 30px;
-  position: relative;
-
-  &::after {
-    content: "▼";
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    font-size: 12px;
-    pointer-events: none;
-    transition: color 0.2s ease;
-  }
-
-  &:hover::after {
-    color: var(--accent-blue);
-  }
-}
-
-.montoValue {
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--bg-section);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 500;
-  border: 2px solid var(--border-color);
-  display: flex;
-  align-items: center;
-}
-
-/* Nuevo estilo para input de monto recibido */
-.montoInputWrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, var(--bg-section), rgba(0,0,0,0.01));
-  border: 1px solid var(--border-color);
-}
-
-.currencyPrefix {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.03);
-  color: var(--text-secondary);
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  border: 1px solid transparent;
-}
-
-.montoInput {
-  -webkit-appearance: none;
-  -moz-appearance: textfield;
-  appearance: textfield;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px dashed rgba(0,0,0,0.06);
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 1rem;
-  width: 140px;
-  text-align: right;
-}
-
-.montoInput:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 4px 12px rgba(9,132,227,0.12);
-}
-
-
-
-.btnCloseNew {
-  padding: 12px 24px;
-  background: var(--accent-blue);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btnCloseNew:hover {
-  background: #0652b3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(9, 132, 227, 0.3);
-}
-
-/* Footer */
-.modalFooterNew {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 24px 32px;
-  background: var(--bg-section);
-  border-top: 1px solid var(--border-color);
-  border-radius: 0 0 16px 16px;
-}
-
-.btnDeleteNew {
-  padding: 12px 24px;
-  background: transparent;
-  color: #ef4444;
-  border: 2px solid #ef4444;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btnDeleteNew:hover {
-  background: #ef4444;
-  color: white;
-}
-
-.btnSaveNew {
-  padding: 12px 32px;
-  background: linear-gradient(135deg, var(--accent-blue), #0652b3);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
-  max-width: 200px;
-}
-
-.btnSaveNew:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(9, 132, 227, 0.4);
-}
-
-/* Responsive - Mobile */
+/* Responsive Modal - Mobile */
 @media (max-width: 768px) {
   .modalContentNew {
     width: 100%;
@@ -2943,36 +2593,33 @@
   }
 
   .modalHeaderNew {
-    padding: 5px; /* Reducido de 20px a 5px en mobile */
+    padding: 12px 16px 10px;
     border-radius: 0;
   }
 
   .clienteNombre {
-    font-size: 1.25rem;
-  }
-
-  .clienteContacto {
-    font-size: 0.85rem;
+    font-size: 1.05rem;
   }
 
   .modalBodyNew {
-    padding: 20px;
-    gap: 16px;
+    padding: 16px;
+    gap: 14px;
   }
 
   .modalFooterNew {
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-radius: 0;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column-reverse;
+    gap: 8px;
   }
 
-  .modalFooterNew > div {
+  .footerActions {
     width: 100%;
   }
 
-  .modalFooterNew button {
-    width: 100%;
+  .footerActions button,
+  .btnDanger {
+    flex: 1;
   }
 
   .estadosGrid {
@@ -2983,14 +2630,10 @@
     grid-template-columns: 1fr;
   }
 
-  .pagosGrid {
-    grid-template-columns: 1fr;
-  }
-
   .headerInfo {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
   }
 
   .contactActions {
@@ -3001,8 +2644,8 @@
   .productoItemNew {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .productoRight {
@@ -3012,12 +2655,8 @@
     align-items: center;
   }
 
-  .sectionTitle {
-    font-size: 0.75rem;
-  }
-
   .financieroSection {
-    padding: 14px 16px;
+    padding: 12px;
   }
 
   .comprobanteImgNew {
