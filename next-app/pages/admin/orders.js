@@ -466,35 +466,23 @@ function PedidosCatalogo() {
         }
       }
 
-      // Caso 4: seña_pagada se mantiene pero montoRecibido cambió (ajuste de seña)
-      else if (prevEstadoPago === 'seña_pagada' && newEstadoPago === 'seña_pagada' && newMonto !== prevMonto) {
+      // Caso 4: seña_pagada se mantiene pero montoRecibido aumentó (pago adicional)
+      else if (prevEstadoPago === 'seña_pagada' && newEstadoPago === 'seña_pagada' && newMonto > prevMonto) {
         const diferencia = newMonto - prevMonto
-        if (diferencia > 0) {
-          const { error } = await createMovimiento({
-            tipo: 'ingreso',
-            monto: diferencia,
-            fecha: hoy,
-            hora: horaActual,
-            categoria: 'Ajuste Seña',
-            descripcion: `Ajuste de seña (+${formatCurrency(diferencia)}) - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
-            metodoPago: metodo,
-            pedidoCatalogoId: pedidoActualizado.id
-          })
-          if (!error) createToast('💰 Ajuste de seña registrado en Finanzas', 'success')
-        } else if (diferencia < 0) {
-          const { error } = await createMovimiento({
-            tipo: 'egreso',
-            monto: Math.abs(diferencia),
-            fecha: hoy,
-            hora: horaActual,
-            categoria: 'Ajuste Seña',
-            descripcion: `Devolución parcial de seña (${formatCurrency(Math.abs(diferencia))}) - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
-            metodoPago: metodo,
-            pedidoCatalogoId: pedidoActualizado.id
-          })
-          if (!error) createToast('💰 Devolución parcial registrada en Finanzas', 'success')
-        }
+        const { error } = await createMovimiento({
+          tipo: 'ingreso',
+          monto: diferencia,
+          fecha: hoy,
+          hora: horaActual,
+          categoria: 'Ajuste Seña',
+          descripcion: `Pago adicional (+${formatCurrency(diferencia)}) - Pedido #${pedidoActualizado.id} - ${clienteNombre}`,
+          metodoPago: metodo,
+          pedidoCatalogoId: pedidoActualizado.id
+        })
+        if (!error) createToast('💰 Pago adicional registrado en Finanzas', 'success')
       }
+      // Corrección de monto hacia abajo: solo actualiza el dato, sin registrar movimiento
+      // Si hay una devolución real, debe registrarse manualmente en Finanzas
     } catch (error) {
       console.error('Error al registrar movimiento financiero:', error)
     }
