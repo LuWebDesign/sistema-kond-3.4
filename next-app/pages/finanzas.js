@@ -279,59 +279,20 @@ export default function Finanzas() {
 
   if (!mounted) return null;
 
-  if (loading) return <Layout><div style={{padding:'2rem'}}>Cargando...</div></Layout>;
+  if (loading) return (
+    <Layout>
+      <div className={styles.loadingContainer}>Cargando finanzas...</div>
+    </Layout>
+  );
 
   return (
     <Layout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div>
+          <div className={styles.headerLeft}>
             <h1 className={styles.title}>Finanzas</h1>
-            <p className={styles.subtitle}>Gestión de ingresos y gastos</p>
+            <p className={styles.subtitle}>Gestión de ingresos, egresos e inversiones</p>
           </div>
-        </div>
-
-        {/* Resumen */}
-        <div className={styles.summaryGrid}>
-          <div className={styles.summaryCard}>
-            <h3>Movimientos</h3>
-            <div className={styles.summaryRow}>
-              <div>
-                <div className={styles.summaryLabel}>Ingresos</div>
-                <div className={`${styles.summaryValue} ${styles.ingreso}`}>
-                  {formatCurrency(resumen.ingresosHoy)}
-                </div>
-              </div>
-              <div>
-                <div className={styles.summaryLabel}>Egresos</div>
-                <div className={`${styles.summaryValue} ${styles.egreso}`}>
-                  {formatCurrency(resumen.egresosHoy)}
-                </div>
-              </div>
-            </div>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Balance Total</div>
-              <div className={`${styles.summaryValue} ${styles.balance}`}>
-                {formatCurrency(resumen.balance)}
-              </div>
-            </div>
-            <div className={styles.summaryItem}>
-              <div className={styles.summaryLabel}>Equilibrio Hoy</div>
-              <div className={`${styles.summaryValue} ${styles.equilibrio}`}>
-                {formatCurrency(resumen.equilibrioHoy)}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryLabel}>Dinero disponible</div>
-            <div className={styles.summaryValue}>{formatCurrency(resumen.balance)}</div>
-            <div className={styles.summaryLabel}>Por cobrar</div>
-            <div className={`${styles.summaryValue} ${styles.porCobrar}`}>
-              {formatCurrency(resumen.porCobrar)}
-            </div>
-          </div>
-
           <button 
             className={styles.btnPrimary}
             onClick={() => setShowForm(!showForm)}
@@ -340,9 +301,49 @@ export default function Finanzas() {
           </button>
         </div>
 
+        {/* KPI Cards */}
+        <div className={styles.kpiGrid}>
+          <div className={styles.kpiCard}>
+            <span className={styles.kpiIcon}>📈</span>
+            <span className={styles.kpiLabel}>Ingresos hoy</span>
+            <span className={`${styles.kpiValue} ${styles.ingreso}`}>
+              {formatCurrency(resumen.ingresosHoy)}
+            </span>
+          </div>
+          <div className={styles.kpiCard}>
+            <span className={styles.kpiIcon}>📉</span>
+            <span className={styles.kpiLabel}>Egresos hoy</span>
+            <span className={`${styles.kpiValue} ${styles.egreso}`}>
+              {formatCurrency(resumen.egresosHoy)}
+            </span>
+          </div>
+          <div className={styles.kpiCard}>
+            <span className={styles.kpiIcon}>⚖️</span>
+            <span className={styles.kpiLabel}>Equilibrio hoy</span>
+            <span className={`${styles.kpiValue} ${resumen.equilibrioHoy >= 0 ? styles.equilibrio : styles.negative}`}>
+              {formatCurrency(resumen.equilibrioHoy)}
+            </span>
+          </div>
+          <div className={styles.kpiCard}>
+            <span className={styles.kpiIcon}>💰</span>
+            <span className={styles.kpiLabel}>Balance total</span>
+            <span className={`${styles.kpiValue} ${resumen.balance >= 0 ? styles.balance : styles.negative}`}>
+              {formatCurrency(resumen.balance)}
+            </span>
+          </div>
+          <div className={styles.kpiCard}>
+            <span className={styles.kpiIcon}>🧾</span>
+            <span className={styles.kpiLabel}>Por cobrar</span>
+            <span className={`${styles.kpiValue} ${styles.porCobrar}`}>
+              {formatCurrency(resumen.porCobrar)}
+            </span>
+          </div>
+        </div>
+
         {/* Form */}
         {showForm && (
           <div className={styles.formContainer}>
+            <h3 className={styles.formTitle}>{editingId ? '✏️ Editar Movimiento' : '➕ Nuevo Movimiento'}</h3>
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.formGrid}>
                 <div className={styles.formField}>
@@ -511,6 +512,7 @@ export default function Finanzas() {
         )}
 
         {/* Movimientos */}
+        <h3 className={styles.sectionTitle}>Movimientos</h3>
         <div className={styles.movimientos}>
           {fechasOrdenadas.length === 0 ? (
             <div className={styles.empty}>
@@ -543,9 +545,10 @@ export default function Finanzas() {
                       <div key={mov.id} className={styles.movCard}>
                         <div className={styles.movTop}>
                           <div className={styles.movMeta}>
+                            <span className={`${styles.movBadge} ${styles[mov.tipo]}`}>{mov.tipo}</span>
                             <strong>{mov.categoria || 'Sin categoría'}</strong>
-                            {mov.metodoPago && <span> - {mov.metodoPago}</span>}
-                            <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
+                            {mov.metodoPago && <span> · {mov.metodoPago}</span>}
+                            <small>{mov.hora && `${mov.hora}`}</small>
                           </div>
                           <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
                             {formatCurrency(mov.monto)}
@@ -580,7 +583,7 @@ export default function Finanzas() {
 
         {/* Registros */}
         <div className={styles.registrosSection}>
-          <h3>Registros (Cierre de caja)</h3>
+          <h3 className={styles.sectionTitle}>Registros (Cierre de caja)</h3>
           <div className={styles.registrosControls}>
             <input
               type="date"
