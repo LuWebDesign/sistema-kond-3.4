@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import styles from '../styles/finanzas.module.css';
+import {
+  getMovimientos, createMovimiento, updateMovimiento, deleteMovimiento,
+  getCategorias, createCategoria, deleteCategoria, updateCategoria, bulkUpdateMovimientosCategoria,
+  getRegistrosCierre, upsertRegistroCierre
+} from '../utils/supabaseFinanzas';
+import { getPedidosCatalogoParaCalendario } from '../utils/supabasePedidos';
 
 export default function Finanzas() {
   const [mounted, setMounted] = useState(false);
   const [movimientos, setMovimientos] = useState([]);
   const [registros, setRegistros] = useState([]);
-  const [categorias, setCategorias] = useState(['Ventas', 'Materia Prima', 'Servicios']);
+  const [categorias, setCategorias] = useState([]);
   const [pedidosCatalogo, setPedidosCatalogo] = useState([]);
   
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -37,72 +44,43 @@ export default function Finanzas() {
     setRegistroFecha(hoy);
     setMounted(true);
     loadData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Escuchar cambios externos (otra pestaña o módulos que registren movimientos)
+  // Recargar cuando otro módulo registre un movimiento o cambie pedidos
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const handleStorage = (e) => {
-      if (!e.key) return;
-      if (e.key === 'finanzas' || e.key === 'pedidosCatalogo' || e.key === 'pedidosCatalogo_updated') {
-        loadData();
-      }
-    };
-
-    const handleFinanzasUpdated = () => {
-      // Un movimiento nuevo fue registrado desde otro módulo
-      loadData();
-    };
-
-    const handlePedidosCatalogoUpdated = () => {
-      // Cuando un pedido cambia, el porCobrar puede variar
-      loadData();
-    };
-
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('finanzasUpdated', handleFinanzasUpdated);
-    window.addEventListener('pedidosCatalogo:updated', handlePedidosCatalogoUpdated);
-
+    const handleUpdate = () => loadData();
+    window.addEventListener('finanzasUpdated', handleUpdate);
+    window.addEventListener('pedidosCatalogo:updated', handleUpdate);
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('finanzasUpdated', handleFinanzasUpdated);
-      window.removeEventListener('pedidosCatalogo:updated', handlePedidosCatalogoUpdated);
+      window.removeEventListener('finanzasUpdated', handleUpdate);
+      window.removeEventListener('pedidosCatalogo:updated', handleUpdate);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadData = () => {
-    if (typeof window === 'undefined') return;
-    
+  const mapMov = (m) => ({ ...m, metodoPago: m.metodo_pago || 'efectivo' });
+
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const movs = JSON.parse(localStorage.getItem('finanzas') || '[]');
-      const regs = JSON.parse(localStorage.getItem('registros') || '[]');
-      const cats = JSON.parse(localStorage.getItem('categoriasFin') || '["Ventas", "Materia Prima", "Servicios"]');
-      const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]');
-      
-      setMovimientos(movs);
-      setRegistros(regs);
-      setCategorias(cats);
-      setPedidosCatalogo(pedidos);
+      const [movsResult, catsResult, regsResult, pedidosResult] = await Promise.all([
+        getMovimientos(),
+        getCategorias(),
+        getRegistrosCierre(),
+        getPedidosCatalogoParaCalendario()
+      ]);
+      if (movsResult.data) setMovimientos(movsResult.data.map(mapMov));
+      if (catsResult.data) setCategorias(catsResult.data);
+      if (regsResult.data) setRegistros(regsResult.data);
+      if (pedidosResult.data) setPedidosCatalogo(pedidosResult.data);
     } catch (e) {
       console.error('Error loading finanzas:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const saveMovimientos = (movs) => {
-    localStorage.setItem('finanzas', JSON.stringify(movs));
-    setMovimientos(movs);
-  };
 
-  const saveCategorias = (cats) => {
-    localStorage.setItem('categoriasFin', JSON.stringify(cats));
-    setCategorias(cats);
-  };
-
-  const saveRegistros = (regs) => {
-    localStorage.setItem('registros', JSON.stringify(regs));
-    setRegistros(regs);
-  };
 
   // Calculations
   const calcularResumen = () => {
@@ -143,37 +121,19 @@ export default function Finanzas() {
   const resumen = calcularResumen();
 
   // Handlers
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const monto = parseFloat(formData.monto) || 0;
-    if (monto <= 0) {
-      alert('Ingrese un monto válido');
-      return;
-    }
-
+    if (monto <= 0) { alert('Ingrese un monto válido'); return; }
     const hora = formData.hora || new Date().toTimeString().slice(0, 8);
 
     if (editingId) {
-      // Edit mode
-      const updated = movimientos.map(m => 
-        m.id === editingId 
-          ? { ...m, ...formData, monto, hora } 
-          : m
-      );
-      saveMovimientos(updated);
+      const { data } = await updateMovimiento(editingId, { ...formData, monto, hora });
+      if (data) setMovimientos(movimientos.map(m => m.id === editingId ? mapMov(data) : m));
     } else {
-      // Create mode
-      const newMov = {
-        id: Date.now() + Math.floor(Math.random() * 100000),
-        ...formData,
-        monto,
-        hora,
-        registrado: false
-      };
-      saveMovimientos([...movimientos, newMov]);
+      const { data } = await createMovimiento({ ...formData, monto, hora });
+      if (data) setMovimientos([mapMov(data), ...movimientos]);
     }
-
     resetForm();
   };
 
@@ -206,57 +166,54 @@ export default function Finanzas() {
   };
 
   const handleDelete = (id) => {
+    const doDelete = async () => {
+      const { error } = await deleteMovimiento(id);
+      if (!error) setMovimientos(movimientos.filter(m => m.id !== id));
+    };
     if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Eliminar movimiento', '¿Eliminar este movimiento?', () => {
-        saveMovimientos(movimientos.filter(m => m.id !== id));
-      });
-    } else if (confirm('¿Eliminar este movimiento?')) {
-      saveMovimientos(movimientos.filter(m => m.id !== id));
+      window.showCustomConfirm('Eliminar movimiento', '¿Eliminar este movimiento?', doDelete);
+    } else {
+      doDelete();
     }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const name = newCategoryName.trim();
-    if (!name) {
-      alert('Ingrese el nombre de la categoría');
-      return;
-    }
-    if (categorias.includes(name)) {
-      alert('La categoría ya existe');
-      return;
-    }
-    saveCategorias([...categorias, name]);
+    if (!name) { alert('Ingrese el nombre de la categoría'); return; }
+    if (categorias.some(c => c.nombre === name)) { alert('La categoría ya existe'); return; }
+    const { data } = await createCategoria(name);
+    if (data) setCategorias([...categorias, data]);
     setNewCategoryName('');
     setShowAddCategory(false);
   };
 
-  const handleDeleteCategory = (name) => {
+  const handleDeleteCategory = (cat) => {
+    const doDelete = async () => {
+      const { error } = await deleteCategoria(cat.id);
+      if (!error) setCategorias(categorias.filter(c => c.id !== cat.id));
+    };
     if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Eliminar categoría', `¿Eliminar categoría "${name}"?`, () => {
-        saveCategorias(categorias.filter(c => c !== name));
-      });
-    } else if (confirm(`¿Eliminar categoría "${name}"?`)) {
-      saveCategorias(categorias.filter(c => c !== name));
+      window.showCustomConfirm('Eliminar categoría', `¿Eliminar categoría "${cat.nombre}"?`, doDelete);
+    } else {
+      doDelete();
     }
   };
 
-  const handleRenameCategory = (oldName) => {
-    const newName = prompt('Renombrar categoría', oldName);
-    if (!newName || newName === oldName) return;
-    
+  const handleRenameCategory = async (cat) => {
+    const newName = prompt('Renombrar categoría', cat.nombre);
+    if (!newName || newName === cat.nombre) return;
     const trimmed = newName.trim();
-    if (!trimmed || categorias.includes(trimmed)) {
+    if (!trimmed || categorias.some(c => c.nombre === trimmed)) {
       alert('Nombre inválido o ya existe');
       return;
     }
-    
-    const updatedCats = categorias.map(c => c === oldName ? trimmed : c);
-    const updatedMovs = movimientos.map(m => 
-      m.categoria === oldName ? { ...m, categoria: trimmed } : m
-    );
-    
-    saveCategorias(updatedCats);
-    saveMovimientos(updatedMovs);
+    const { data: updatedCat } = await updateCategoria(cat.id, trimmed);
+    if (updatedCat) {
+      setCategorias(categorias.map(c => c.id === cat.id ? updatedCat : c));
+      await bulkUpdateMovimientosCategoria(cat.nombre, trimmed);
+      const { data: movsData } = await getMovimientos();
+      if (movsData) setMovimientos(movsData.map(mapMov));
+    }
   };
 
   // Registros
@@ -266,40 +223,25 @@ export default function Finanzas() {
   };
 
   const handleCerrarCaja = () => {
-    const doClose = () => {
-      const movsDelDia = movimientos.filter(m =>
-        m.fecha?.startsWith(registroFecha) && !m.registrado
-      );
-
+    const doClose = async () => {
+      const movsDelDia = movimientos.filter(m => m.fecha === registroFecha);
       if (movsDelDia.length === 0) {
-        alert('No hay movimientos para cerrar en esa fecha');
+        alert('No hay movimientos para la fecha seleccionada');
         return;
       }
-
       const total = movsDelDia.reduce((acc, m) =>
-        acc + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
+        acc + (m.tipo === 'ingreso' ? Number(m.monto) : -Number(m.monto)), 0
       );
-
-      const newRegistro = {
-        id: Date.now() + Math.floor(Math.random() * 100000),
-        fecha: registroFecha,
-        total,
-        movimientos: movsDelDia.map(m => m.id),
-        cerradoAt: new Date().toISOString()
-      };
-
-      saveRegistros([...registros, newRegistro]);
-
-      const updatedMovs = movimientos.map(m =>
-        m.fecha?.startsWith(registroFecha) ? { ...m, registrado: true } : m
-      );
-      saveMovimientos(updatedMovs);
-      handleVerRegistros();
+      const { data } = await upsertRegistroCierre({ fecha: registroFecha, total });
+      if (data) {
+        const { data: regsData } = await getRegistrosCierre();
+        if (regsData) setRegistros(regsData);
+        handleVerRegistros();
+      }
     };
-
     if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Cerrar caja', `¿Cerrar caja para ${registroFecha}? Esto marcará los movimientos como registrados.`, doClose);
-    } else if (confirm(`¿Cerrar caja para ${registroFecha}?`)) {
+      window.showCustomConfirm('Cerrar caja', `¿Registrar cierre de caja para ${registroFecha}?`, doClose);
+    } else {
       doClose();
     }
   };
@@ -336,6 +278,8 @@ export default function Finanzas() {
   };
 
   if (!mounted) return null;
+
+  if (loading) return <Layout><div style={{padding:'2rem'}}>Cargando...</div></Layout>;
 
   return (
     <Layout>
@@ -470,7 +414,7 @@ export default function Finanzas() {
                     >
                       <option value="">-- Sin categoría --</option>
                       {categorias.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
                       ))}
                     </select>
                     <button
@@ -507,8 +451,8 @@ export default function Finanzas() {
                   {showCategoryManager && (
                     <div className={styles.categoryManager}>
                       {categorias.map(cat => (
-                        <div key={cat} className={styles.categoryItem}>
-                          <span>{cat}</span>
+                        <div key={cat.id} className={styles.categoryItem}>
+                          <span>{cat.nombre}</span>
                           <div>
                             <button
                               type="button"
@@ -673,22 +617,18 @@ export default function Finanzas() {
                   
                   {expandedRegistro === reg.id && (
                     <div className={styles.registroDetalle}>
-                      {reg.movimientos.map(movId => {
-                        const mov = movimientos.find(m => m.id === movId);
-                        if (!mov) return null;
-                        return (
-                          <div key={movId} className={styles.registroMov}>
-                            <div>
-                              <strong>{mov.categoria || 'Sin categoría'}</strong>
-                              <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
-                              <div>{mov.descripcion}</div>
-                            </div>
-                            <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
-                              {formatCurrency(mov.monto)}
-                            </div>
+                      {movimientos.filter(m => m.fecha === reg.fecha).map(mov => (
+                        <div key={mov.id} className={styles.registroMov}>
+                          <div>
+                            <strong>{mov.categoria || 'Sin categoría'}</strong>
+                            <small> {mov.fecha} {mov.hora && `- ${mov.hora}`}</small>
+                            <div>{mov.descripcion}</div>
                           </div>
-                        );
-                      })}
+                          <div className={`${styles.movAmount} ${styles[mov.tipo]}`}>
+                            {formatCurrency(mov.monto)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

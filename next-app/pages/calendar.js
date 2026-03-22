@@ -1,6 +1,9 @@
 import Layout from '../components/Layout'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
+import { getAllPedidosInternos, createPedidoInterno } from '../utils/supabasePedidosInternos'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import { getPedidosCatalogoParaCalendario, updatePedidoCatalogo } from '../utils/supabasePedidos'
 
 // Util de tiempo a nivel de módulo para uso en todos los componentes
 const timeToMinutes = (timeStr = '00:00:00') => {
@@ -61,18 +64,17 @@ export default function Calendar() {
     return map
   }, [pedidosCatalogo])
 
-  // Cargar datos del localStorage
-  const loadData = useCallback(() => {
-    if (typeof window === 'undefined') return
-    
+  // Cargar datos desde Supabase
+  const loadData = useCallback(async () => {
     try {
-      const storedPedidos = localStorage.getItem('pedidos')
-      const storedProducts = localStorage.getItem('productosBase')
-      const storedPedidosCatalogo = localStorage.getItem('pedidosCatalogo')
-      
-      setPedidos(storedPedidos ? JSON.parse(storedPedidos) : [])
-      setProducts(storedProducts ? JSON.parse(storedProducts) : [])
-      setPedidosCatalogo(storedPedidosCatalogo ? JSON.parse(storedPedidosCatalogo) : [])
+      const [pedidosResult, productsResult, catalogoResult] = await Promise.all([
+        getAllPedidosInternos(),
+        getAllProductos(),
+        getPedidosCatalogoParaCalendario()
+      ])
+      setPedidos(pedidosResult.data || [])
+      setProducts(productsResult.data ? productsResult.data.map(mapProductoToFrontend) : [])
+      setPedidosCatalogo(catalogoResult.data || [])
     } catch (error) {
       console.error('Error loading calendar data:', error)
       setPedidos([])
@@ -249,46 +251,30 @@ export default function Calendar() {
   }
 
   // Confirmar asignación de pedido al calendario
-  const handleConfirmAssign = () => {
+  const handleConfirmAssign = async () => {
     if (!selectedPedidoToAssign || !selectedAssignDate) return
 
     try {
-      // Crear pedido interno desde el pedido de catálogo
-      const newInternalOrder = {
-        id: Date.now(),
-        fecha: new Date().toISOString().slice(0, 10),
+      const clienteNombre = typeof selectedPedidoToAssign.cliente === 'string'
+        ? selectedPedidoToAssign.cliente
+        : `${selectedPedidoToAssign.cliente?.nombre || ''} ${selectedPedidoToAssign.cliente?.apellido || ''}`.trim()
+
+      // Crear pedido interno en Supabase
+      const { data: newInterno } = await createPedidoInterno({
         fechaEntrega: selectedAssignDate,
-        cliente: typeof selectedPedidoToAssign.cliente === 'string' 
-          ? selectedPedidoToAssign.cliente
-          : `${selectedPedidoToAssign.cliente?.nombre || ''} ${selectedPedidoToAssign.cliente?.apellido || ''}`.trim(),
-        productos: selectedPedidoToAssign.productos || [],
+        cliente: clienteNombre,
         estado: 'en_produccion',
-        source: 'catalogo',
-        pedidoCatalogoId: selectedPedidoToAssign.id,
-        total: selectedPedidoToAssign.total
-      }
-
-      // Actualizar pedidos internos
-      const updatedPedidos = [...pedidos, newInternalOrder]
-      setPedidos(updatedPedidos)
-      localStorage.setItem('pedidos', JSON.stringify(updatedPedidos))
-
-      // Marcar pedido de catálogo como asignado
-      const updatedPedidosCatalogo = pedidosCatalogo.map(p => {
-        if (p.id === selectedPedidoToAssign.id) {
-          return {
-            ...p,
-            asignadoAlCalendario: true,
-            fechaConfirmadaEntrega: selectedAssignDate,
-            fechaProduccionCalendario: selectedAssignDate,
-            estado: 'en_produccion'
-          }
-        }
-        return p
+        asignadoAlCalendario: true,
+        fechaAsignadaCalendario: selectedAssignDate
       })
-      
-      setPedidosCatalogo(updatedPedidosCatalogo)
-      localStorage.setItem('pedidosCatalogo', JSON.stringify(updatedPedidosCatalogo))
+
+      // Marcar pedido de catálogo como asignado en Supabase
+      await updatePedidoCatalogo(selectedPedidoToAssign.id, {
+        asignadoAlCalendario: true,
+        fechaConfirmadaEntrega: selectedAssignDate,
+        fechaProduccionCalendario: selectedAssignDate,
+        estado: 'en_produccion'
+      })
 
       // Disparar eventos para sincronizar otras páginas
       window.dispatchEvent(new CustomEvent('pedidos:updated'))
@@ -296,9 +282,9 @@ export default function Calendar() {
 
       handleCloseAssignModal()
       alert(`Pedido #${selectedPedidoToAssign.id} asignado correctamente para ${selectedAssignDate}`)
-      
-      // Recargar datos
-      loadData()
+
+      // Recargar datos desde Supabase
+      await loadData()
     } catch (error) {
       console.error('Error al asignar pedido:', error)
       alert('Error al asignar pedido. Intenta nuevamente.')

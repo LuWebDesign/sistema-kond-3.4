@@ -97,35 +97,21 @@ export default function MisPedidos() {
         // Cargar productos desde Supabase primero, fallback a localStorage
         let productosBase = []
         const { data: productosDB, error: productosError } = await getAllProductos()
-        
         if (!productosError && productosDB && productosDB.length > 0) {
-          // console.log('✅ Productos cargados desde Supabase:', productosDB.length)
           productosBase = productosDB.map(mapProductoToFrontend)
-        } else {
-          console.log('⚠️ Cargando productos desde localStorage como fallback')
-          productosBase = JSON.parse(localStorage.getItem('productosBase') || '[]')
         }
         
         // Intentar cargar pedidos desde Supabase
         const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
-        
-        if (!error && pedidosDB && pedidosDB.length > 0) {
-          // console.log('✅ Pedidos del usuario cargados desde Supabase:', pedidosDB.length)
-          // Mapear de snake_case a camelCase con productos para imágenes
-          const pedidosMapped = pedidosDB.map(pedidoDB => 
+
+        if (!error && pedidosDB) {
+          const pedidosMapped = pedidosDB.map(pedidoDB =>
             mapSupabasePedidoToFrontend(pedidoDB, productosBase)
           )
-          // Ordenar por fecha (más recientes primero)
           pedidosMapped.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
           setUserOrders(pedidosMapped)
         } else {
-          // Fallback a localStorage
-          const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
-          const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
-            pedido.cliente && pedido.cliente.email === user.email
-          )
-          userOrdersFiltered.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-          setUserOrders(userOrdersFiltered)
+          setUserOrders([])
         }
       } else {
         setUserOrders([])
@@ -136,19 +122,7 @@ export default function MisPedidos() {
       console.error('❌ Error cargando pedidos:', error)
       setCurrentUserState(null)
       setIsLoading(false)
-      // Fallback final a localStorage
-      try {
-        const user = getCurrentUser()
-        if (user && user.email) {
-          const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')
-          const userOrdersFiltered = pedidosCatalogo.filter(pedido =>
-            pedido.cliente && pedido.cliente.email === user.email
-          )
-          setUserOrders(userOrdersFiltered)
-        }
-      } catch (fallbackError) {
-        console.error('❌ Error en fallback:', fallbackError)
-      }
+      setUserOrders([])
       createToast('Error al cargar los pedidos', 'error')
     }
   }

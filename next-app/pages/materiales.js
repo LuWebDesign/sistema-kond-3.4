@@ -169,16 +169,8 @@ function Materiales() {
   }, [loadData])
 
   const save = useCallback(async (items, skipReload = false) => {
-    // Esta función ahora es un wrapper de compatibilidad
     setMateriales(items)
-    try { 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) 
-    } catch (e) { 
-      console.error('save materiales to localStorage', e) 
-    }
-    
     if (!skipReload) {
-      // Recargar desde Supabase para sincronizar
       await loadData()
     }
   }, [loadData])
@@ -256,24 +248,24 @@ function Materiales() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Eliminar material?')) return
-    
-    try {
-      // 🆕 ELIMINAR de Supabase
-      const { deleteMaterial } = await import('../utils/supabaseMateriales')
-      const { error } = await deleteMaterial(id)
-      
-      if (!error) {
-        // console.log('✅ Material eliminado de Supabase')
-        await loadData() // Recargar desde Supabase
-      } else {
-        throw new Error('Supabase delete failed')
+    const doDelete = async () => {
+      try {
+        const { deleteMaterial } = await import('../utils/supabaseMateriales')
+        const { error } = await deleteMaterial(id)
+        if (!error) {
+          await loadData()
+        } else {
+          throw new Error('Supabase delete failed')
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Fallback a localStorage para eliminar')
+        save(materiales.filter(m => m.id !== id))
       }
-    } catch (supabaseError) {
-      console.warn('⚠️ Fallback a localStorage para eliminar')
-      
-      // Fallback: localStorage
-      save(materiales.filter(m => m.id !== id))
+    }
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Eliminar material', '¿Eliminar este material?', doDelete)
+    } else {
+      doDelete()
     }
   }
 

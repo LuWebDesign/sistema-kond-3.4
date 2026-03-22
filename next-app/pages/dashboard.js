@@ -1,6 +1,9 @@
 import Layout from '../components/Layout'
 import { useState, useEffect } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import { getAllPedidosInternos } from '../utils/supabasePedidosInternos'
+import { getAllPedidosCatalogo } from '../utils/supabasePedidos'
 
 export default function Dashboard() {
   const [products, setProducts] = useState([])
@@ -18,35 +21,29 @@ export default function Dashboard() {
     loadDashboardData()
   }, [])
 
-  const loadDashboardData = () => {
-    if (typeof window === 'undefined') return
+  const loadDashboardData = async () => {
+    const [prodResult, pedidosResult, catalogoResult] = await Promise.all([
+      getAllProductos(),
+      getAllPedidosInternos(),
+      getAllPedidosCatalogo()
+    ])
 
-    // Cargar productos
-    const productosBase = JSON.parse(localStorage.getItem('productosBase')) || []
+    const productosBase = prodResult.data ? prodResult.data.map(mapProductoToFrontend) : []
+    const pedidos = pedidosResult.data || []
+    const pedidosCatalogo = catalogoResult.data || []
+
     setProducts(productosBase)
-
-    // Cargar pedidos administrativos
-    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || []
     setOrders(pedidos)
-
-    // Cargar pedidos del catálogo
-    const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
     setCatalogOrders(pedidosCatalogo)
 
-    // Calcular estadísticas
     const totalProducts = productosBase.filter(p => p.active).length
     const totalOrders = pedidos.length + pedidosCatalogo.length
     const totalRevenue = pedidosCatalogo.reduce((sum, order) => sum + (order.total || 0), 0)
-    const pendingOrders = pedidosCatalogo.filter(order => 
-      order.estadoPago === 'sin_seña' || order.estadoPago === 'seña_pagada'
+    const pendingOrders = pedidosCatalogo.filter(order =>
+      order.estado_pago === 'sin_seña' || order.estado_pago === 'seña_pagada'
     ).length
 
-    setStats({
-      totalProducts,
-      totalOrders,
-      totalRevenue,
-      pendingOrders
-    })
+    setStats({ totalProducts, totalOrders, totalRevenue, pendingOrders })
   }
 
   // Obtener pedidos recientes

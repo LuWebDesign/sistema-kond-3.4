@@ -1,6 +1,7 @@
 import Layout from '../components/Layout'
 import { useState, useEffect, useCallback } from 'react'
 import { formatCurrency } from '../utils/catalogUtils'
+import { getAllProductos, mapProductoToFrontend, updateProducto, deleteProducto } from '../utils/supabaseProductos'
 
 export default function Database() {
   const [products, setProducts] = useState([])
@@ -13,26 +14,14 @@ export default function Database() {
   })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
 
-  // Cargar productos del localStorage
-  const loadProducts = useCallback(() => {
-    if (typeof window === 'undefined') return
-    
+  // Cargar productos desde Supabase
+  const loadProducts = useCallback(async () => {
     try {
-      const stored = localStorage.getItem('productosBase')
-      const productList = stored ? JSON.parse(stored) : []
-      setProducts(productList)
+      const { data } = await getAllProductos()
+      setProducts(data ? data.map(mapProductoToFrontend) : [])
     } catch (error) {
       console.error('Error loading products:', error)
       setProducts([])
-    }
-  }, [])
-
-  // Guardar productos al localStorage
-  const saveProducts = useCallback((productList) => {
-    try {
-      localStorage.setItem('productosBase', JSON.stringify(productList))
-    } catch (error) {
-      console.error('Error saving products:', error)
     }
   }, [])
 
@@ -108,29 +97,33 @@ export default function Database() {
   }
 
   // Cambiar visibilidad del producto
-  const toggleProductVisibility = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, active: !p.active } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductVisibility = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+    const newActive = !product.active
+    await updateProducto(id, { active: newActive })
+    setProducts(products.map(p => p.id === id ? { ...p, active: newActive } : p))
   }
 
   // Cambiar estado de publicación
-  const toggleProductPublished = (id) => {
-    const updatedProducts = products.map(p => 
-      p.id === id ? { ...p, publicado: !p.publicado } : p
-    )
-    setProducts(updatedProducts)
-    saveProducts(updatedProducts)
+  const toggleProductPublished = async (id) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+    const newPublicado = !product.publicado
+    await updateProducto(id, { publicado: newPublicado })
+    setProducts(products.map(p => p.id === id ? { ...p, publicado: newPublicado } : p))
   }
 
   // Eliminar producto
   const deleteProduct = (id) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      const updatedProducts = products.filter(p => p.id !== id)
-      setProducts(updatedProducts)
-      saveProducts(updatedProducts)
+    const doDelete = async () => {
+      await deleteProducto(id)
+      setProducts(products.filter(p => p.id !== id))
+    }
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Eliminar producto', '¿Eliminar este producto permanentemente?', doDelete)
+    } else {
+      doDelete()
     }
   }
 

@@ -164,6 +164,7 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.medidas !== undefined) updateData.medidas = productoUpdate.medidas;
     if (productoUpdate.tiempoUnitario !== undefined) updateData.tiempo_unitario = productoUpdate.tiempoUnitario;
     if (productoUpdate.publicado !== undefined) updateData.publicado = productoUpdate.publicado;
+    if (productoUpdate.active !== undefined) updateData.active = productoUpdate.active;
     if (productoUpdate.hiddenInProductos !== undefined) updateData.hidden_in_productos = productoUpdate.hiddenInProductos;
     if (productoUpdate.unidadesPorPlaca !== undefined) updateData.unidades_por_placa = productoUpdate.unidadesPorPlaca;
     if (productoUpdate.usoPlacas !== undefined) updateData.uso_placas = productoUpdate.usoPlacas;

@@ -4,6 +4,9 @@ import withAdminAuth from '../components/withAdminAuth'
 import PedidoCard from '../components/PedidoCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
+import { getAllPedidosInternos, updatePedidoInterno, deletePedidoInterno } from '../utils/supabasePedidosInternos'
+import { getAllProductos, mapProductoToFrontend } from '../utils/supabaseProductos'
+import { getPedidosCatalogoParaCalendario } from '../utils/supabasePedidos'
 
 function OrdersStats({ orders, filteredOrders }) {
   // Calcular estadísticas
@@ -184,19 +187,14 @@ function InternalOrders() {
 
   useEffect(() => {
     ;(async () => {
-      try {
-        const { getAllPedidosInternos } = await import('../utils/supabasePedidosInternos')
-        const { data, error } = await getAllPedidosInternos()
-        if (!error && Array.isArray(data)) {
-          setPedidos(data)
-        } else {
-          setPedidos(JSON.parse(localStorage.getItem('pedidos') || '[]'))
-        }
-      } catch (e) {
-        setPedidos(JSON.parse(localStorage.getItem('pedidos') || '[]'))
-      }
-      setProductosBase(JSON.parse(localStorage.getItem('productosBase') || '[]'))
-      setPedidosCatalogo(JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]'))
+      const [pedidosResult, productosResult, catalogoResult] = await Promise.all([
+        getAllPedidosInternos(),
+        getAllProductos(),
+        getPedidosCatalogoParaCalendario()
+      ])
+      if (pedidosResult.data) setPedidos(pedidosResult.data)
+      if (productosResult.data) setProductosBase(productosResult.data.map(mapProductoToFrontend))
+      if (catalogoResult.data) setPedidosCatalogo(catalogoResult.data)
     })()
   }, [])
 
@@ -306,7 +304,7 @@ function InternalOrders() {
     setSelectedPedido(null)
   }
 
-  const updatePedido = useCallback(() => {
+  const updatePedido = useCallback(async () => {
     if (!selectedPedido) return
 
     const estado = document.getElementById('detailEstadoSelect')?.value || selectedPedido.estado
@@ -315,50 +313,41 @@ function InternalOrders() {
     const fechaConfirmada = document.getElementById('detailFechaConfirmada')?.value || selectedPedido.fecha
 
     const totalPedido = Number(selectedPedido.total || selectedPedido.pedidoTotal || selectedPedido.precioTotal || 0)
+    if (estadoPago === 'pagado_total') montoRecibido = totalPedido
 
-    if (estadoPago === 'pagado_total') {
-      montoRecibido = totalPedido
+    const updates = { estado, estadoPago, montoRecibido, fechaEntrega: fechaConfirmada }
+    const { data } = await updatePedidoInterno(selectedPedido.id, updates)
+    if (data) {
+      setPedidos(pedidos.map(p => String(p.id) === String(selectedPedido.id) ? { ...p, ...updates } : p))
     }
-
-    const updatedPedidos = pedidos.map(p => 
-      String(p.id) === String(selectedPedido.id) 
-        ? { ...p, estado, estadoPago, montoRecibido, fechaConfirmada }
-        : p
-    )
-
-    setPedidos(updatedPedidos)
-    localStorage.setItem('pedidos', JSON.stringify(updatedPedidos))
-    
     closeModal()
   }, [selectedPedido, pedidos])
 
   const deletePedido = useCallback(() => {
     if (!selectedPedido) return
-    if (!confirm('¿Eliminar este pedido?')) return
-
-    const updatedPedidos = pedidos.filter(p => String(p.id) !== String(selectedPedido.id))
-    setPedidos(updatedPedidos)
-    localStorage.setItem('pedidos', JSON.stringify(updatedPedidos))
-    
-    closeModal()
+    const doDelete = async () => {
+      await deletePedidoInterno(selectedPedido.id)
+      setPedidos(pedidos.filter(p => String(p.id) !== String(selectedPedido.id)))
+      closeModal()
+    }
+    if (typeof window !== 'undefined' && window.showCustomConfirm) {
+      window.showCustomConfirm('Eliminar pedido', '¿Eliminar este pedido?', doDelete)
+    } else {
+      doDelete()
+    }
   }, [selectedPedido, pedidos])
 
   const handleAssignToCalendar = () => {
     setShowAssignModal(true)
   }
 
-  const handleAssignDateSelect = (date) => {
+  const handleAssignDateSelect = async (date) => {
     if (!selectedPedido || !date) return
-
-    const updatedPedidos = pedidos.map(p => 
-      String(p.id) === String(selectedPedido.id) 
-        ? { ...p, asignadoAlCalendario: true, fechaAsignadaCalendario: date }
-        : p
-    )
-
-    setPedidos(updatedPedidos)
-    localStorage.setItem('pedidos', JSON.stringify(updatedPedidos))
-    
+    const updates = { asignadoAlCalendario: true, fechaAsignadaCalendario: date }
+    await updatePedidoInterno(selectedPedido.id, updates)
+    setPedidos(pedidos.map(p =>
+      String(p.id) === String(selectedPedido.id) ? { ...p, ...updates } : p
+    ))
     setShowAssignModal(false)
     setSelectedAssignDate(null)
     closeModal()

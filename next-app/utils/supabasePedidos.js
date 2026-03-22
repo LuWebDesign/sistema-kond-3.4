@@ -255,6 +255,11 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (pedidoUpdate.cliente?.direccion) updateData.cliente_direccion = pedidoUpdate.cliente.direccion;
     if (pedidoUpdate.metodoPago) updateData.metodo_pago = pedidoUpdate.metodoPago;
     if (pedidoUpdate.estadoPago) updateData.estado_pago = pedidoUpdate.estadoPago;
+    if (pedidoUpdate.estado) updateData.estado = pedidoUpdate.estado;
+    if (pedidoUpdate.asignadoAlCalendario !== undefined) updateData.asignado_al_calendario = pedidoUpdate.asignadoAlCalendario;
+    if (pedidoUpdate.fechaProduccionCalendario !== undefined) updateData.fecha_produccion_calendario = pedidoUpdate.fechaProduccionCalendario;
+    if (pedidoUpdate.fechaEntregaCalendario !== undefined) updateData.fecha_entrega_calendario = pedidoUpdate.fechaEntregaCalendario;
+    if (pedidoUpdate.fechaConfirmadaEntrega !== undefined) updateData.fecha_confirmada_entrega = pedidoUpdate.fechaConfirmadaEntrega;
     if (pedidoUpdate.comprobante !== undefined) updateData.comprobante_url = pedidoUpdate.comprobante;
     if (pedidoUpdate.comprobanteOmitido !== undefined) updateData.comprobante_omitido = pedidoUpdate.comprobanteOmitido;
     if (pedidoUpdate.fechaSolicitudEntrega) updateData.fecha_solicitud_entrega = pedidoUpdate.fechaSolicitudEntrega;
