@@ -122,6 +122,13 @@ export default function User() {
       let user = result?.user
       const supabaseError = result?.error
 
+      // No permitir que un admin se loguee como comprador
+      if (user && (user.rol === 'admin' || user.rol === 'super_admin' || user.isAdmin)) {
+        createToast('Esta cuenta es de administrador. Usá el panel de admin para iniciar sesión.', 'error')
+        setIsLoading(false)
+        return
+      }
+
       // Si Supabase falla, intentar con el usuario guardado en localStorage
       // (para compradores registrados localmente)
       if (supabaseError || !user) {
@@ -177,10 +184,14 @@ export default function User() {
 
     try {
       if (formData.email && formData.password && formData.nombre) {
+        // No guardar password en localStorage por seguridad
+        const { password, ...safeData } = formData
         const user = {
           id: Date.now(),
-          ...formData,
+          ...safeData,
+          password: password, // se mantiene para login local
           avatar: null,
+          rol: 'cliente',
           fechaRegistro: new Date().toISOString()
         }
         

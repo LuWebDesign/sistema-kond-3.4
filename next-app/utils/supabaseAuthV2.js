@@ -356,13 +356,14 @@ export async function getCurrentSession() {
           };
           
           // Si estamos en página pública y el usuario es ADMIN, no retornar sesión
-          if (isPublicPage && usuario.rol === 'admin') {
+          if (isPublicPage && (usuario.rol === 'admin' || usuario.rol === 'super_admin')) {
             // console.log('Sesión de admin detectada en página pública - ignorando');
             return null;
           }
           
           // Guardar en la clave correcta según el contexto
           if (isPublicPage) {
+            // Solo guardar en currentUser si NO es admin
             localStorage.setItem('currentUser', JSON.stringify(userData));
           } else {
             localStorage.setItem('kond-user', JSON.stringify(userData));
