@@ -14,16 +14,21 @@ export default function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false)
   const [currentBuyerEmail, setCurrentBuyerEmail] = useState(null)
 
+  // Función reutilizable para leer email del comprador
+  const refreshBuyerEmail = () => {
+    try {
+      const u = localStorage.getItem('currentUser')
+      setCurrentBuyerEmail(u ? JSON.parse(u)?.email || null : null)
+    } catch {}
+  }
+
   useEffect(() => {
     // Establecer tema por defecto
     const savedTheme = localStorage.getItem('theme') || 'dark'
     document.body.setAttribute('data-theme', savedTheme)
 
     // Cargar email del comprador si está logueado
-    try {
-      const u = localStorage.getItem('currentUser')
-      if (u) setCurrentBuyerEmail(JSON.parse(u)?.email || null)
-    } catch {}
+    refreshBuyerEmail()
 
     setMounted(true)
 
@@ -38,6 +43,12 @@ export default function MyApp({ Component, pageProps }) {
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
   }, [])
+
+  // Re-verificar el email del comprador en cada cambio de ruta
+  // (cubre el caso donde login ocurre en la misma pestaña)
+  useEffect(() => {
+    refreshBuyerEmail()
+  }, [router.pathname])
 
   // Siempre renderizar el mismo árbol en SSR y en el cliente hasta que esté montado
   // Esto evita el error de hidratación #418
