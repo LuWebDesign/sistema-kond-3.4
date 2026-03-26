@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import ConfirmDialog from '../components/ConfirmDialog';
 import styles from '../styles/finanzas.module.css';
 import {
   getMovimientos, createMovimiento, updateMovimiento, deleteMovimiento,
@@ -37,6 +38,14 @@ export default function Finanzas() {
   const [registroFecha, setRegistroFecha] = useState('');
   const [registrosDelDia, setRegistrosDelDia] = useState([]);
   const [expandedRegistro, setExpandedRegistro] = useState(null);
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: null });
+
+  const showConfirm = (title, message, onConfirm) => {
+    setConfirmState({ open: true, title, message, onConfirm });
+  };
+  const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false, onConfirm: null }));
 
   useEffect(() => {
     const hoy = new Date().toISOString().slice(0, 10);
@@ -170,11 +179,7 @@ export default function Finanzas() {
       const { error } = await deleteMovimiento(id);
       if (!error) setMovimientos(movimientos.filter(m => m.id !== id));
     };
-    if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Eliminar movimiento', '¿Eliminar este movimiento?', doDelete);
-    } else {
-      doDelete();
-    }
+    showConfirm('Eliminar movimiento', '¿Eliminar este movimiento? Esta acción no se puede deshacer.', doDelete);
   };
 
   const handleAddCategory = async () => {
@@ -192,11 +197,7 @@ export default function Finanzas() {
       const { error } = await deleteCategoria(cat.id);
       if (!error) setCategorias(categorias.filter(c => c.id !== cat.id));
     };
-    if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Eliminar categoría', `¿Eliminar categoría "${cat.nombre}"?`, doDelete);
-    } else {
-      doDelete();
-    }
+    showConfirm('Eliminar categoría', `¿Eliminar la categoría "${cat.nombre}"? Los movimientos existentes no se verán afectados.`, doDelete);
   };
 
   const handleRenameCategory = async (cat) => {
@@ -239,11 +240,7 @@ export default function Finanzas() {
         handleVerRegistros();
       }
     };
-    if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Cerrar caja', `¿Registrar cierre de caja para ${registroFecha}?`, doClose);
-    } else {
-      doClose();
-    }
+    showConfirm('Cerrar caja', `¿Registrar cierre de caja para ${registroFecha}?`, doClose);
   };
 
   const toggleRegistroDetalle = (registroId) => {
@@ -640,6 +637,15 @@ export default function Finanzas() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={confirmState.onConfirm}
+        onClose={closeConfirm}
+        type="error"
+        confirmText="Eliminar"
+      />
     </Layout>
   );
 }
