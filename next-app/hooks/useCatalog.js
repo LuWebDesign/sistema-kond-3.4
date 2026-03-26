@@ -685,6 +685,9 @@ export function useOrders() {
         onSuccess(data.pedido, items)
       }
 
+      // Notificar a mis-pedidos que hay un pedido nuevo
+      window.dispatchEvent(new CustomEvent('pedidosCatalogo:updated', { detail: { type: 'new', orderId: data.pedido.id } }))
+
       // Guardar también en localStorage como respaldo
       try {
         const existingOrders = JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]')

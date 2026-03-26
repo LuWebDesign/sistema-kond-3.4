@@ -101,10 +101,28 @@ export default function MisPedidos() {
           productosBase = productosDB.map(mapProductoToFrontend)
         }
         
-        // Intentar cargar pedidos desde Supabase
-        const { data: pedidosDB, error } = await getPedidosByEmail(user.email)
+        // Intentar cargar pedidos desde API server-side (bypass RLS)
+        let pedidosDB = null
+        let fetchError = null
+        try {
+          const resp = await fetch(`/api/pedidos-catalogo/by-email?email=${encodeURIComponent(user.email)}`)
+          if (resp.ok) {
+            const json = await resp.json()
+            pedidosDB = json.data
+          } else {
+            fetchError = true
+          }
+        } catch (e) {
+          fetchError = true
+        }
 
-        if (!error && pedidosDB) {
+        // Fallback: cliente anon (puede fallar por RLS)
+        if (fetchError || !pedidosDB) {
+          const { data, error } = await getPedidosByEmail(user.email)
+          if (!error && data) pedidosDB = data
+        }
+
+        if (pedidosDB) {
           const pedidosMapped = pedidosDB.map(pedidoDB =>
             mapSupabasePedidoToFrontend(pedidoDB, productosBase)
           )
