@@ -11,7 +11,14 @@ function PaymentConfigAdmin() {
     whatsapp: { enabled: true, numero: '', mensaje: '' },
     retiro: { enabled: true, direccion: '', horarios: '' },
     calendario: { enabled: true },
-    textos: { infoTransferencia: 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.' }
+    textos: {
+      infoTransferencia: 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.',
+      infoTransferenciaEnabled: true,
+      infoWhatsapp: 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.',
+      infoWhatsappEnabled: true,
+      infoRetiro: '',
+      infoRetiroEnabled: true,
+    }
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -48,7 +55,7 @@ function PaymentConfigAdmin() {
           ...prev,
           ...config,
           calendario: { ...prev.calendario, ...config.calendario },
-          textos: { ...prev.textos, ...config.textos },
+          textos: { ...prev.textos, ...(config.textos || {}) },
         }))
       }
     } catch (error) {
@@ -243,18 +250,69 @@ function PaymentConfigAdmin() {
 
           {/* Textos informativos del checkout */}
           <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
-            <div style={{ marginBottom: 12 }}>
-              <h3 style={{ margin: '0 0 4px 0' }}>📝 Textos del Checkout</h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Texto informativo que ve el cliente al elegir Transferencia o WhatsApp</p>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>ℹ️ Información sobre Transferencia</label>
+            <h3 style={{ margin: '0 0 4px 0' }}>📝 Textos del Checkout</h3>
+            <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)' }}>Bloques informativos que ve el cliente al finalizar la compra</p>
+
+            {/* Info Transferencia */}
+            <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>ℹ️ Información sobre Transferencia</label>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferenciaEnabled: !prev.textos?.infoTransferenciaEnabled } }))}
+                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                >
+                  {paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'Visible' : 'No visible'}
+                </button>
+              </div>
               <textarea
-                rows={4}
-                placeholder="Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario."
+                rows={3}
+                placeholder="Nota sobre transferencia..."
                 value={paymentConfig.textos?.infoTransferencia || ''}
                 onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferencia: e.target.value } }))}
-                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Info WhatsApp */}
+            <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>💬 WhatsApp</label>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsappEnabled: !prev.textos?.infoWhatsappEnabled } }))}
+                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                >
+                  {paymentConfig.textos?.infoWhatsappEnabled !== false ? 'Visible' : 'No visible'}
+                </button>
+              </div>
+              <textarea
+                rows={3}
+                placeholder="Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega."
+                value={paymentConfig.textos?.infoWhatsapp || ''}
+                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsapp: e.target.value } }))}
+                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Info Retiro */}
+            <div style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>📍 Retiro en local</label>
+                <button
+                  type="button"
+                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiroEnabled: !prev.textos?.infoRetiroEnabled } }))}
+                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoRetiroEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoRetiroEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                >
+                  {paymentConfig.textos?.infoRetiroEnabled !== false ? 'Visible' : 'No visible'}
+                </button>
+              </div>
+              <textarea
+                rows={3}
+                placeholder="Nota adicional sobre el retiro en local..."
+                value={paymentConfig.textos?.infoRetiro || ''}
+                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiro: e.target.value } }))}
+                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
               />
             </div>
           </div>

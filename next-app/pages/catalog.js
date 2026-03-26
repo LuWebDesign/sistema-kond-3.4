@@ -1662,21 +1662,21 @@ function CheckoutModal({
               )}
 
               {paymentConfig?.transferencia?.enabled && (
-                <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia (Seña 50%)</button>
+                <button onClick={() => setPaymentMethod('transferencia')} style={{ padding: '10px 12px', borderRadius: 8, border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease' }}>🏦 Transferencia</button>
               )}
             </div>
             <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{paymentMethod === 'transferencia' ? `Seña: ${formatCurrency(total * 0.5)} — Total: ${formatCurrency(total)}` : ''}</div>
-            {paymentMethod === 'whatsapp' && (
+            {paymentMethod === 'whatsapp' && paymentConfig?.textos?.infoWhatsappEnabled !== false && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>💬 Solicitar pedido por WhatsApp</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  {paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
+                  {paymentConfig?.textos?.infoWhatsapp || paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
                 </div>
               </div>
             )}
 
             {/* Bloque independiente de información sobre Transferencia (solo visible si el método Transferencia está habilitado y el usuario selecciona Transferencia o WhatsApp) */}
-            {paymentConfig?.transferencia?.enabled && (paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && (
+            {paymentConfig?.transferencia?.enabled && (paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && paymentConfig?.textos?.infoTransferenciaEnabled !== false && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>ℹ️ Información sobre Transferencia</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -1697,7 +1697,7 @@ function CheckoutModal({
             )}
 
             {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
-            {deliveryMethod === 'retiro' && (
+            {deliveryMethod === 'retiro' && paymentConfig?.textos?.infoRetiroEnabled !== false && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
                 {(paymentConfig?.retiro?.direccion || paymentConfig?.retiro?.horarios) ? (
@@ -1708,10 +1708,13 @@ function CheckoutModal({
                     {paymentConfig.retiro.horarios && (
                       <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
                     )}
+                    {paymentConfig?.textos?.infoRetiro && (
+                      <div style={{ marginTop: 6 }}>{paymentConfig.textos.infoRetiro}</div>
+                    )}
                   </div>
                 ) : (
                   <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Podés pasar a retirar tu pedido por el local durante nuestros horarios de atención.
+                    {paymentConfig?.textos?.infoRetiro || 'Podés pasar a retirar tu pedido por el local durante nuestros horarios de atención.'}
                   </div>
                 )}
               </div>
