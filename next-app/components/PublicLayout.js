@@ -127,7 +127,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               
               {/* Solo mostrar Mi Cuenta/Iniciar sesión si no estamos en esa página */}
               {title !== 'Mi Cuenta - KOND' && (
-                <Link href="/user" style={{
+                <Link href="/catalog/user" style={{
                   color: 'var(--text-primary)',
                   textDecoration: 'none',
                   fontWeight: 500,
@@ -150,7 +150,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           }}>
             {/* Mi cuenta visible en la derecha (útil en móvil) - solo mostrar si no estamos en la página de usuario */}
             {title !== 'Mi Cuenta - KOND' && (
-              <Link href="/user" style={{
+              <Link href="/catalog/user" style={{
                 color: 'var(--text-primary)',
                 textDecoration: 'none',
                 padding: '8px 12px',
@@ -261,7 +261,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   
                   {/* Solo mostrar Mi cuenta en menú móvil si no estamos en esa página */}
                   {title !== 'Mi Cuenta - KOND' && (
-                    <Link href="/user" style={{
+                    <Link href="/catalog/user" style={{
                       color: 'var(--text-secondary)',
                       textDecoration: 'none',
                       fontSize: '0.9rem',

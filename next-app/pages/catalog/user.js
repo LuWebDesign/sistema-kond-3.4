@@ -1,8 +1,8 @@
-import PublicLayout from '../components/PublicLayout'
+import PublicLayout from '../../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getCurrentUser, createToast, formatCurrency, formatDate } from '../utils/catalogUtils'
-import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback } from '../utils/supabaseAuthV2'
+import { getCurrentUser, createToast, formatCurrency, formatDate } from '../../utils/catalogUtils'
+import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback } from '../../utils/supabaseAuthV2'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -79,21 +79,29 @@ export default function User() {
         }))
       } else {
         // Si no hay sesión Supabase o es admin, usar localStorage (currentUser - clientes del catálogo)
-        const localUser = getCurrentUser()
-        if (localUser) {
-          setCurrentUser(localUser)
-          setFormData(prev => ({
-            ...prev,
-            email: localUser.email || prev.email,
-            nombre: localUser.nombre || localUser.username || prev.nombre,
-            apellido: localUser.apellido || prev.apellido,
-            telefono: localUser.telefono || prev.telefono,
-            direccion: localUser.direccion || prev.direccion,
-            localidad: localUser.localidad || prev.localidad,
-            cp: localUser.cp || prev.cp,
-            provincia: localUser.provincia || prev.provincia,
-            observaciones: localUser.observaciones || prev.observaciones
-          }))
+        try {
+          const stored = localStorage.getItem('currentUser')
+          if (stored) {
+            const localUser = JSON.parse(stored)
+            // Solo restaurar si es un comprador (no admin)
+            if (localUser && localUser.rol !== 'admin' && !localUser.isAdmin) {
+              setCurrentUser(localUser)
+              setFormData(prev => ({
+                ...prev,
+                email: localUser.email || prev.email,
+                nombre: localUser.nombre || localUser.username || prev.nombre,
+                apellido: localUser.apellido || prev.apellido,
+                telefono: localUser.telefono || prev.telefono,
+                direccion: localUser.direccion || prev.direccion,
+                localidad: localUser.localidad || prev.localidad,
+                cp: localUser.cp || prev.cp,
+                provincia: localUser.provincia || prev.provincia,
+                observaciones: localUser.observaciones || prev.observaciones
+              }))
+            }
+          }
+        } catch {
+          // noop
         }
       }
     }

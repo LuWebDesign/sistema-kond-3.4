@@ -328,7 +328,7 @@ export async function getCurrentSession() {
       // Si no hay datos en localStorage, intentar obtenerlos de la BD
       const isPublicPage = typeof window !== 'undefined' && 
         (window.location.pathname === '/catalog' || 
-         window.location.pathname === '/user' || 
+         window.location.pathname === '/catalog/user' || 
          window.location.pathname.startsWith('/tracking'));
       
       try {

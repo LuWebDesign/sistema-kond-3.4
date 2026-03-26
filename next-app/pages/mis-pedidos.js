@@ -266,7 +266,7 @@ export default function MisPedidos() {
               Debes iniciar sesión para ver tus pedidos
             </p>
             <Link
-              href="/user"
+              href="/catalog/user"
               style={{
                 background: 'var(--accent-blue)',
                 color: 'white',
