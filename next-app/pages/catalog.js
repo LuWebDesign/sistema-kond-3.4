@@ -1467,7 +1467,7 @@ function CheckoutModal({
     const validationErrors = validateCheckoutForm(customerData, paymentMethod)
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
     if (deliveryMethod === 'envio' && (!customerData.address || customerData.address.trim() === '')) return createToast('La dirección es requerida para envío', 'error')
-    if (paymentMethod === 'transferencia' && !selectedDeliveryDate) return createToast('Selecciona una fecha de entrega para transferencia', 'error')
+    if (paymentMethod === 'transferencia' && paymentConfig?.calendario?.enabled !== false && !selectedDeliveryDate) return createToast('Selecciona una fecha de entrega para transferencia', 'error')
     if (paymentMethod === 'transferencia' && !comprobante) return createToast('Sube el comprobante de transferencia', 'error')
 
     setIsSubmitting(true)
@@ -1706,67 +1706,71 @@ function CheckoutModal({
                     <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
                   </div>
                 )}
-
-                <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
-                  {/* input escondido y botón visible para mejor UX en mobile */}
-                  <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                    <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #7dd3fc', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
-                    {comprobante && (
-                      <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
-                    )}
-                  </div>
-
-                  {comprobante && <div className="comprobante-saved" style={{ marginTop: 8, padding: '6px 8px', borderRadius: 6, background: 'var(--accent-secondary)', color: '#fff', fontSize: 12 }}>✓ Comprobante cargado</div>}
-                </div>
               </div>
 
               <div className="transfer-payment-info" style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
-                {paymentConfig?.transferencia?.cbu && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div><strong>CBU:</strong> {paymentConfig.transferencia.cbu}</div>
-                    <div>
-                      <button className="btn-copy" onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>Copiar</button>
-                    </div>
-                  </div>
-                )}
-
-                {paymentConfig?.transferencia?.alias && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 }}>
-                    <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>{paymentConfig.transferencia.alias}</span></div>
-                    <div>
-                      <button
-                        className="btn-copy"
-                        onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }}
-                        aria-label="Copiar alias"
-                        title="Copiar alias"
-                        style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        {/* clipboard icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {paymentConfig?.transferencia?.titular && (
-                  <div style={{ marginTop: 8 }}>
+                  <div style={{ marginBottom: 8 }}>
                     <div><strong>Titular:</strong> {paymentConfig.transferencia.titular}</div>
                   </div>
                 )}
 
                 {paymentConfig?.transferencia?.banco && (
-                  <div style={{ marginTop: 8 }}>
+                  <div style={{ marginBottom: 8 }}>
                     <div><strong>Banco:</strong> {paymentConfig.transferencia.banco}</div>
                   </div>
                 )}
 
-                <div style={{ marginTop: 10 }}>
+                {paymentConfig?.transferencia?.cbu && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                    <div><strong>CBU:</strong> {paymentConfig.transferencia.cbu}</div>
+                    <button
+                      className="btn-copy"
+                      onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }}
+                      aria-label="Copiar CBU"
+                      title="Copiar CBU"
+                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 8 }}>
                   <div><strong>Seña (50%):</strong> {formatCurrency(total * 0.5)}</div>
                 </div>
+
+                {paymentConfig?.transferencia?.alias && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>{paymentConfig.transferencia.alias}</span></div>
+                    <button
+                      className="btn-copy"
+                      onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }}
+                      aria-label="Copiar alias"
+                      title="Copiar alias"
+                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="comprobante-upload" style={{ marginTop: 12 }}>
+                <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                  <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #7dd3fc', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
+                  {comprobante && (
+                    <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
+                  )}
+                </div>
+                {comprobante && <div className="comprobante-saved" style={{ marginTop: 8, padding: '6px 8px', borderRadius: 6, background: 'var(--accent-secondary)', color: '#fff', fontSize: 12 }}>✓ Comprobante cargado</div>}
               </div>
 
               {/* Retiro en local debajo de los datos de transferencia */}
