@@ -186,10 +186,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               🎯 Marketing
             </Link>
 
-            <Link href="/admin/payment-config" style={linkStyle}>
-              💳 Métodos de Pago
-            </Link>
-
             {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
             
             <Link href="/finanzas" style={linkStyle}>

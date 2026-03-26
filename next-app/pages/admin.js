@@ -724,6 +724,28 @@ function Admin() {
                 Ver métricas generales
               </div>
             </button>
+
+            <button
+              onClick={() => router.push('/admin/payment-config')}
+              style={{
+                background: 'var(--bg-section)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '16px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                color: 'var(--text-primary)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
+              onMouseLeave={(e) => e.target.style.background = 'var(--bg-section)'}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>💳</div>
+              <div style={{ fontWeight: 600, marginBottom: '4px' }}>Métodos de Pago</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Configurar transferencia, WhatsApp y retiro
+              </div>
+            </button>
           </div>
         </div>
       </div>
