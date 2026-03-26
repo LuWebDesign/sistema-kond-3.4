@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import styles from '../../styles/materiales.module.css'
+import { createToast } from '../../utils/catalogUtils'
 
 const STORAGE_KEY = 'materiales'
 
@@ -196,7 +197,7 @@ function Materiales() {
           // console.log('✅ Material actualizado en Supabase')
           await loadData() // Recargar desde Supabase
           resetForm(false)
-          alert('Material actualizado correctamente')
+          createToast('✅ Material actualizado correctamente', 'success')
         } else {
           throw new Error('Supabase update failed')
         }
@@ -209,8 +210,7 @@ function Materiales() {
           // console.log('✅ Material creado en Supabase')
           await loadData() // Recargar desde Supabase
           resetForm(true) // Mantener form abierto para crear más
-          
-          // focus the nombre input for quick entry
+          createToast('✅ Material creado correctamente', 'success')
           setTimeout(() => { 
             try { 
               nombreRef.current && nombreRef.current.focus()
@@ -229,9 +229,11 @@ function Materiales() {
       if (editingId) {
         save(materiales.map(m => m.id === editingId ? payload : m))
         resetForm(false)
+        createToast('✅ Material actualizado (local)', 'success')
       } else {
         save([ ...materiales, payload ])
         resetForm(true)
+        createToast('✅ Material creado (local)', 'success')
         setTimeout(() => { 
           try { 
             nombreRef.current && nombreRef.current.focus()
@@ -242,44 +244,51 @@ function Materiales() {
     }
   }
 
+  const [confirmModal, setConfirmModal] = useState(null)
+
+  const showConfirm = useCallback((title, message, onConfirm) => {
+    setConfirmModal({ title, message, onConfirm })
+  }, [])
+
   const handleEdit = (m) => {
-    setForm({ ...m })
-    setEditingId(m.id)
-    setShowForm(true)
+    showConfirm(
+      'Editar material',
+      `¿Querés editar "${m.nombre}"?`,
+      () => {
+        setForm({ ...m })
+        setEditingId(m.id)
+        setShowForm(true)
+      }
+    )
   }
 
-  const handleDelete = async (id) => {
-    const doDelete = async () => {
-      try {
-        const { deleteMaterial } = await import('../../utils/supabaseMateriales')
-        const { error } = await deleteMaterial(id)
-        if (!error) {
-          await loadData()
-        } else {
-          throw new Error('Supabase delete failed')
+  const handleDelete = (id) => {
+    const material = materiales.find(m => m.id === id)
+    const nombre = material ? material.nombre : 'este material'
+    showConfirm(
+      'Eliminar material',
+      `¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`,
+      async () => {
+        try {
+          const { deleteMaterial } = await import('../../utils/supabaseMateriales')
+          const { error } = await deleteMaterial(id)
+          if (!error) {
+            await loadData()
+          } else {
+            throw new Error('Supabase delete failed')
+          }
+        } catch (supabaseError) {
+          console.warn('⚠️ Fallback a localStorage para eliminar')
+          save(materiales.filter(m => m.id !== id))
         }
-      } catch (supabaseError) {
-        console.warn('⚠️ Fallback a localStorage para eliminar')
-        save(materiales.filter(m => m.id !== id))
       }
-    }
-    if (typeof window !== 'undefined' && window.showCustomConfirm) {
-      window.showCustomConfirm('Eliminar material', '¿Eliminar este material?', doDelete)
-    } else {
-      doDelete()
-    }
+    )
   }
 
   const formatCurrency = (v) => {
     const n = Number(v || 0)
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
   }
-
-  const handleToggleDark = useCallback(() => {
-    const next = !darkMode
-    setDarkMode(next)
-    try { localStorage.setItem('finanzas_dark', JSON.stringify(next)) } catch {}
-  }, [darkMode])
 
   const tipoColor = (tipo) => {
     const map = { mdf: '#2563eb', melamina: '#7c3aed', 'acrílico': '#059669', acrilico: '#059669', vidrio: '#0891b2', madera: '#d97706', aluminio: '#64748b', metal: '#64748b', pvc: '#db2777' }
@@ -294,10 +303,7 @@ function Materiales() {
             <h1 className={styles.title}>Materiales</h1>
             <p className={styles.subtitle}>Gestión de materiales: costos, tamaños, espesor y proveedores</p>
           </div>
-          <div className={styles.headerActions}>
-            <button className={styles.darkToggle} onClick={handleToggleDark} title="Alternar modo oscuro">
-              {darkMode ? '☀️' : '🌙'}
-            </button>
+          <div>
             <button className={styles.btnPrimary} onClick={() => { setShowForm(true); setEditingId(null); setForm({ nombre: '', tipo: '', tamano: '', espesor: '', costoUnitario: '', proveedor: '', stock: '', unidad: 'cm', notas: '' }) }}>
               + Nuevo material
             </button>
@@ -624,7 +630,7 @@ function Materiales() {
                 </div>
 
                 <div className={styles.formActions}>
-                  <button type="button" className={styles.btnSecondary} onClick={resetForm}>Cancelar</button>
+                  <button type="button" className={styles.btnSecondary} onClick={() => resetForm(false)}>Cancelar</button>
                   <button type="submit" className={styles.btnPrimary}>{editingId ? 'Guardar cambios' : 'Crear'}</button>
                 </div>
               </form>
@@ -632,6 +638,22 @@ function Materiales() {
           )}
         </div>
       </div>
+
+      {confirmModal && (
+        <div className={`${styles.confirmOverlay} ${darkMode ? styles.dark : ''}`} onClick={() => setConfirmModal(null)}>
+          <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
+            <h4 className={styles.confirmTitle}>{confirmModal.title}</h4>
+            <p className={styles.confirmMsg}>{confirmModal.message}</p>
+            <div className={styles.confirmActions}>
+              <button className={styles.btnSecondary} onClick={() => setConfirmModal(null)}>Cancelar</button>
+              <button
+                className={styles.btnDanger}
+                onClick={() => { confirmModal.onConfirm(); setConfirmModal(null) }}
+              >Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
