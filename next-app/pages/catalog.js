@@ -1792,6 +1792,24 @@ function CheckoutModal({
                   <div><strong>Seña (50%):</strong> {formatCurrency(total * 0.5)}</div>
                 </div>
               </div>
+
+              {/* Retiro en local debajo de los datos de transferencia */}
+              {paymentConfig?.retiro?.enabled && paymentConfig?.textos?.infoRetiroEnabled !== false && (
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+                  <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
+                  <div style={{ marginTop: 8, fontSize: 13 }}>
+                    {paymentConfig.retiro.direccion && (
+                      <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>
+                    )}
+                    {paymentConfig.retiro.horarios && (
+                      <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
+                    )}
+                    {paymentConfig?.textos?.infoRetiro && (
+                      <div style={{ marginTop: 6 }}>{paymentConfig.textos.infoRetiro}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </div>
