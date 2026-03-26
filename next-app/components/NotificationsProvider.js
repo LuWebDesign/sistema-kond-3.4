@@ -21,7 +21,18 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   const [error, setError] = useState(null)
   const realtimeChannelRef = useRef(null)
 
-  // Cargar notificaciones desde Supabase
+  // Helpers para llamadas a la API de usuario (bypass de RLS)
+  const userApiCall = useCallback(async (action, extra = {}) => {
+    const resp = await fetch('/api/notifications/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, userEmail: userId, ...extra })
+    })
+    if (!resp.ok) throw new Error(`API error: ${resp.status}`)
+    return resp.json()
+  }, [userId])
+
+  // Cargar notificaciones desde Supabase (o API para compradores)
   const loadNotifications = useCallback(async () => {
     if (typeof window === 'undefined') return
 
@@ -29,10 +40,21 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
     setError(null)
 
     try {
-      const [notificationsData, unreadCountData] = await Promise.all([
-        getNotifications(targetUser, userId),
-        getUnreadCount(targetUser, userId)
-      ])
+      let notificationsData, unreadCountData
+
+      if (targetUser === 'user' && userId) {
+        // Usar API server-side para compradores (bypass RLS)
+        const resp = await fetch(`/api/notifications/user?email=${encodeURIComponent(userId)}`)
+        if (!resp.ok) throw new Error(`API error: ${resp.status}`)
+        const json = await resp.json()
+        notificationsData = json.data || []
+        unreadCountData = notificationsData.filter(n => !n.read).length
+      } else {
+        ;[notificationsData, unreadCountData] = await Promise.all([
+          getNotifications(targetUser, userId),
+          getUnreadCount(targetUser, userId)
+        ])
+      }
 
       setNotifications(notificationsData)
       setUnreadCount(unreadCountData)
@@ -116,7 +138,12 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   // Marcar notificación como leída
   const markAsRead = useCallback(async (id) => {
     try {
-      const success = await markNotificationAsRead(id)
+      if (targetUser === 'user') {
+        await userApiCall('markRead', { id })
+      } else {
+        await markNotificationAsRead(id)
+      }
+      const success = true
       if (success) {
         // Actualizar estado local inmediatamente
         const updatedList = notifications.map(n =>
@@ -140,7 +167,12 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   // Marcar todas como leídas
   const markAllAsRead = useCallback(async () => {
     try {
-      const success = await markAllNotificationsAsRead(targetUser, userId)
+      if (targetUser === 'user' && userId) {
+        await userApiCall('markAllRead')
+      } else {
+        await markAllNotificationsAsRead(targetUser, userId)
+      }
+      const success = true
       if (success) {
         // Actualizar estado local
         const updatedList = notifications.map(n => ({ ...n, read: true }))
@@ -160,7 +192,12 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   // Eliminar notificación
   const deleteNotification = useCallback(async (id) => {
     try {
-      const success = await deleteNotificationFromDB(id)
+      if (targetUser === 'user') {
+        await userApiCall('delete', { id })
+      } else {
+        await deleteNotificationFromDB(id)
+      }
+      const success = true
       if (success) {
         // Actualizar estado local
         const updatedList = notifications.filter(n => String(n.id) !== String(id))
@@ -180,10 +217,12 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
   // Limpiar todas las notificaciones
   const clearAll = useCallback(async () => {
     try {
-      // Para limpiar todas, marcamos todas como leídas y luego las eliminamos
-      // Nota: En una implementación real, podríamos tener un endpoint para eliminar todas
-      const deletePromises = notifications.map(n => deleteNotificationFromDB(n.id))
-      await Promise.all(deletePromises)
+      if (targetUser === 'user' && userId) {
+        await userApiCall('deleteAll')
+      } else {
+        const deletePromises = notifications.map(n => deleteNotificationFromDB(n.id))
+        await Promise.all(deletePromises)
+      }
 
       setNotifications([])
       setUnreadCount(0)
