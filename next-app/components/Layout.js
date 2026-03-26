@@ -135,7 +135,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onClick={() => setSidebarOpen(false)}>
             {/* Dashboard - Panel administrativo principal */}
             <Link href="/admin/dashboard" style={linkStyle}>
-              🏠 Dashboard
+              Dashboard
             </Link>
             
             {/* Sección: Gestión Interna */}
@@ -144,15 +144,15 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             </div>
             
             <Link href="/admin/products" style={linkStyle}>
-              🏷️ Productos
+              Productos
             </Link>
             
             <Link href="/admin/calendar" style={linkStyle}>
-              📅 Calendario
+              Calendario
             </Link>
             
             <Link href="/admin/database" style={linkStyle}>
-              🗄️ Base de Datos
+              Base de Datos
             </Link>
             
             {/* Sección: Catálogo y Ventas */}
@@ -166,30 +166,30 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               rel="noopener noreferrer"
               style={{...linkStyle, display: 'flex', alignItems: 'center', gap: '8px'}}
             >
-              🛍️ Catálogo Público
+              Catálogo Público
               <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
             </a>
             
             <Link href="/admin/pedidos" style={linkStyle}>
-              📦 Pedidos Internos
+              Pedidos Internos
             </Link>
             
             <Link href="/admin/orders" style={linkStyle}>
-              🛒 Pedidos Catálogo
+              Pedidos Catálogo
             </Link>
             
             <Link href="/admin/metricas" style={linkStyle}>
-              📊 Métricas
+              Métricas
             </Link>
             
             <Link href="/admin/marketing" style={linkStyle}>
-              🎯 Marketing
+              Marketing
             </Link>
 
             {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
             
             <Link href="/admin/finanzas" style={linkStyle}>
-              💰 Finanzas
+              Finanzas
             </Link>
             
             {/* Sección: Administración */}
@@ -198,11 +198,11 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             </div>
             
             <Link href="/admin" style={linkStyle}>
-              � Panel Admin
+              Panel Admin
             </Link>
             
             <Link href="/admin/mi-cuenta" style={linkStyle}>
-              👤 Mi Cuenta
+              Mi Cuenta
             </Link>
             <div style={{ marginTop: 8 }}>
               {userInfo && (
@@ -227,7 +227,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-red)11' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  🚪 Cerrar Sesión
+                  Cerrar Sesión
                 </button>
               )}
             </div>

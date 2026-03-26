@@ -384,35 +384,35 @@ export default function Finanzas() {
         {/* KPI Cards */}
         <div className={styles.kpiGrid}>
           <div className={styles.kpiCard}>
-            <span className={styles.kpiIcon}>📈</span>
+            
             <span className={styles.kpiLabel}>Ingresos hoy</span>
             <span className={`${styles.kpiValue} ${styles.ingreso}`}>
               {formatCurrency(resumen.ingresosHoy)}
             </span>
           </div>
           <div className={styles.kpiCard}>
-            <span className={styles.kpiIcon}>📉</span>
+            
             <span className={styles.kpiLabel}>Egresos hoy</span>
             <span className={`${styles.kpiValue} ${styles.egreso}`}>
               {formatCurrency(resumen.egresosHoy)}
             </span>
           </div>
           <div className={styles.kpiCard}>
-            <span className={styles.kpiIcon}>⚖️</span>
+            
             <span className={styles.kpiLabel}>Equilibrio hoy</span>
             <span className={`${styles.kpiValue} ${resumen.equilibrioHoy >= 0 ? styles.equilibrio : styles.negative}`}>
               {formatCurrency(resumen.equilibrioHoy)}
             </span>
           </div>
           <div className={styles.kpiCard}>
-            <span className={styles.kpiIcon}>💰</span>
+            
             <span className={styles.kpiLabel}>Balance total</span>
             <span className={`${styles.kpiValue} ${resumen.balance >= 0 ? styles.balance : styles.negative}`}>
               {formatCurrency(resumen.balance)}
             </span>
           </div>
           <div className={styles.kpiCard}>
-            <span className={styles.kpiIcon}>🧾</span>
+            
             <span className={styles.kpiLabel}>Por cobrar</span>
             <span className={`${styles.kpiValue} ${styles.porCobrar}`}>
               {formatCurrency(resumen.porCobrar)}
@@ -423,7 +423,7 @@ export default function Finanzas() {
         {/* Form */}
         {showForm && (
           <div className={styles.formContainer}>
-            <h3 className={styles.formTitle}>{editingId ? '✏️ Editar Movimiento' : '➕ Nuevo Movimiento'}</h3>
+            <h3 className={styles.formTitle}>{editingId ? 'Editar Movimiento' : 'Nuevo Movimiento'}</h3>
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.formGrid}>
                 <div className={styles.formField}>
