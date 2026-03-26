@@ -12,115 +12,53 @@ function Admin() {
     totalClientes: 0,
     balanceTotal: 0
   })
-
-  useEffect(() => {
-    // Cargar estadísticas del sistema (simuladas por ahora)
-    setSystemStats({
-      totalProductos: 45,
-      totalPedidos: 127,
-      totalClientes: 89,
-      balanceTotal: 245000
-    })
-  }, [])
-
-  const handleLogout = () => {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-      // Limpiar datos de sesión si los hay
-      localStorage.removeItem('adminSession')
-      // Redirigir a la página home para requerir login
-      router.push('/home')
-    }
-  }
-
-  const openMainSystem = () => {
-    // Abrir el sistema principal (index.html) en nueva pestaña
-    // Ahora abrimos la ruta raíz manejada por Next
-    window.open('/', '_blank', 'noopener,noreferrer')
-  }
-
-  const openHomePage = () => {
-    // Ir a la página de inicio pública
-    window.open('/home', '_blank', 'noopener,noreferrer')
-  }
-
-  return (
-    <Layout title="Panel Administrativo - Sistema KOND">
-      <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
-        <div className="admin-header-section" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '32px',
-          gap: '16px'
+        {/* Accesos Rápidos reducido: solo Métodos de Pago */}
+        <div style={{
+          background: 'var(--bg-card)',
+          padding: '24px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)'
         }}>
-          <div>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'var(--person-color)',
-              marginBottom: '8px'
-            }}>
-              👤 Panel Administrativo
-            </h1>
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '1rem'
-            }}>
-              Información del usuario y configuraciones del sistema
-            </p>
-          </div>
+          <h3 style={{
+            color: 'var(--text-primary)',
+            margin: '0 0 20px 0',
+            fontSize: '1.1rem'
+          }}>
+            🚀 Accesos Rápidos
+          </h3>
 
-          <div className="admin-header-buttons" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              onClick={openHomePage}
-              style={{
-                background: 'var(--accent-secondary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.9rem',
-                fontWeight: 600
-              }}
-            >
-              🏠 Home
-              <span style={{ fontSize: '0.7rem' }}>↗</span>
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{
+              padding: '16px',
+              borderRadius: '8px',
+              border: '1px dashed var(--border-color)',
+              background: 'var(--bg-section)'
+            }}>
+              <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>💳 Métodos de Pago</h4>
+              <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                Espacio para configurar transferencia, WhatsApp y retiro.
+              </p>
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={() => router.push('/admin/payment-config')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--accent-blue)',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Configurar Métodos de Pago
+                </button>
+              </div>
+            </div>
 
-            <button
-              onClick={openMainSystem}
-              style={{
-                background: 'var(--accent-blue)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.9rem',
-                fontWeight: 600
-              }}
-            >
-              🏭 Sistema Principal
-              <span style={{ fontSize: '0.7rem' }}>↗</span>
-            </button>
+            {/* Placeholder: espacio reservado para futuro contenido relacionado */}
+            <div style={{ height: 120, borderRadius: 8, background: 'transparent' }} />
           </div>
         </div>
-
-        {/* Grid principal */}
-        <div className="admin-grid-main" style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '24px',
-          marginBottom: '32px'
-        }}>
           {/* Información del Usuario */}
           <div className="admin-card" style={{
             background: 'var(--bg-card)',
