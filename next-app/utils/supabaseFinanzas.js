@@ -1,62 +1,50 @@
 // ============================================
 // SUPABASE FINANZAS - CRUD OPERATIONS
-// Funciones para gestión de finanzas
+// Usa API route /api/admin/finanzas con supabaseAdmin
+// para bypass de RLS
 // ============================================
 
-import supabase from './supabaseClient';
+const API_URL = '/api/admin/finanzas';
+
+async function apiCall(method, body = null, queryParams = '') {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const url = queryParams ? `${API_URL}?${queryParams}` : API_URL;
+  const resp = await fetch(url, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || 'Error en API finanzas');
+  }
+  return resp.json();
+}
 
 // ============================================
 // CATEGORÍAS FINANCIERAS
 // ============================================
 
-/**
- * Obtener todas las categorías financieras
- */
 export async function getCategorias() {
   try {
-    const { data, error } = await supabase
-      .from('categorias_financieras')
-      .select('*')
-      .order('nombre', { ascending: true });
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('GET', null, 'type=categorias');
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al obtener categorías:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Crear una nueva categoría
- */
 export async function createCategoria(nombre) {
   try {
-    const { data, error } = await supabase
-      .from('categorias_financieras')
-      .insert([{ nombre }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('POST', { action: 'createCategoria', nombre });
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al crear categoría:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Eliminar una categoría
- */
 export async function deleteCategoria(id) {
   try {
-    const { error } = await supabase
-      .from('categorias_financieras')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    await apiCall('DELETE', { type: 'categoria', id });
     return { error: null };
   } catch (error) {
     console.error('Error al eliminar categoría:', error);
@@ -64,22 +52,22 @@ export async function deleteCategoria(id) {
   }
 }
 
-/**
- * Actualizar una categoría (renombrar)
- */
 export async function updateCategoria(id, nombre) {
   try {
-    const { data, error } = await supabase
-      .from('categorias_financieras')
-      .update({ nombre })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('PUT', { action: 'updateCategoria', id, nombre });
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al actualizar categoría:', error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function bulkUpdateMovimientosCategoria(oldName, newName) {
+  try {
+    const result = await apiCall('PUT', { action: 'bulkUpdateCategoria', oldName, newName });
+    return { data: result.data, error: null };
+  } catch (error) {
+    console.error('Error al actualizar categoría en movimientos:', error);
     return { data: null, error: error.message };
   }
 }
@@ -88,131 +76,53 @@ export async function updateCategoria(id, nombre) {
 // MOVIMIENTOS FINANCIEROS
 // ============================================
 
-/**
- * Obtener todos los movimientos financieros
- */
 export async function getMovimientos() {
   try {
-    const { data, error } = await supabase
-      .from('movimientos_financieros')
-      .select('*')
-      .order('fecha', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('GET', null, 'type=movimientos');
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al obtener movimientos:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Obtener movimientos por rango de fechas
- */
 export async function getMovimientosByDateRange(fechaInicio, fechaFin) {
+  // Para rangos de fecha, obtenemos todos y filtramos client-side
   try {
-    const { data, error } = await supabase
-      .from('movimientos_financieros')
-      .select('*')
-      .gte('fecha', fechaInicio)
-      .lte('fecha', fechaFin)
-      .order('fecha', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('GET', null, 'type=movimientos');
+    const filtered = (result.data || []).filter(m =>
+      m.fecha >= fechaInicio && m.fecha <= fechaFin
+    );
+    return { data: filtered, error: null };
   } catch (error) {
     console.error('Error al obtener movimientos por fecha:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Crear un nuevo movimiento financiero
- */
 export async function createMovimiento(movimiento) {
   try {
-    const movimientoData = {
-      tipo: movimiento.tipo,
-      monto: parseFloat(movimiento.monto),
-      fecha: movimiento.fecha,
-      hora: movimiento.hora || null,
-      categoria: movimiento.categoria || null,
-      descripcion: movimiento.descripcion || null,
-      metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo',
-      pedido_catalogo_id: movimiento.pedidoCatalogoId || movimiento.pedido_catalogo_id || null
-    };
-
-    const { data, error } = await supabase
-      .from('movimientos_financieros')
-      .insert([movimientoData])
-      .select()
-      .single();
-
-    // Si falla por columna inexistente (migración pendiente), reintentar sin pedido_catalogo_id
-    if (error && (error.message?.includes('pedido_catalogo_id') || error.code === '42703')) {
-      console.warn('⚠️ Columna pedido_catalogo_id no existe aún — ejecutar migración SQL. Reintentando sin ese campo...');
-      const { pedido_catalogo_id, ...sinReferencia } = movimientoData;
-      const { data: data2, error: error2 } = await supabase
-        .from('movimientos_financieros')
-        .insert([sinReferencia])
-        .select()
-        .single();
-      if (error2) throw error2;
-      return { data: data2, error: null };
-    }
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('POST', { action: 'createMovimiento', movimiento });
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al crear movimiento:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Actualizar un movimiento financiero
- */
 export async function updateMovimiento(id, movimiento) {
   try {
-    const updateData = {};
-    
-    if (movimiento.tipo !== undefined) updateData.tipo = movimiento.tipo;
-    if (movimiento.monto !== undefined) updateData.monto = parseFloat(movimiento.monto);
-    if (movimiento.fecha !== undefined) updateData.fecha = movimiento.fecha;
-    if (movimiento.hora !== undefined) updateData.hora = movimiento.hora;
-    if (movimiento.categoria !== undefined) updateData.categoria = movimiento.categoria;
-    if (movimiento.descripcion !== undefined) updateData.descripcion = movimiento.descripcion;
-    if (movimiento.metodoPago !== undefined) updateData.metodo_pago = movimiento.metodoPago;
-    if (movimiento.metodo_pago !== undefined) updateData.metodo_pago = movimiento.metodo_pago;
-
-    const { data, error } = await supabase
-      .from('movimientos_financieros')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('PUT', { action: 'updateMovimiento', id, movimiento });
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al actualizar movimiento:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Eliminar un movimiento financiero
- */
 export async function deleteMovimiento(id) {
   try {
-    const { error } = await supabase
-      .from('movimientos_financieros')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    await apiCall('DELETE', { type: 'movimiento', id });
     return { error: null };
   } catch (error) {
     console.error('Error al eliminar movimiento:', error);
@@ -220,105 +130,44 @@ export async function deleteMovimiento(id) {
   }
 }
 
-/**
- * Actualiza en bloque la categoría de movimientos que coincidan por nombre
- */
-export async function bulkUpdateMovimientosCategoria(oldName, newName) {
-  try {
-    const { data, error } = await supabase
-      .from('movimientos_financieros')
-      .update({ categoria: newName })
-      .eq('categoria', oldName)
-      .select();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error al actualizar categoría en movimientos:', error);
-    return { data: null, error: error.message };
-  }
-}
-
 // ============================================
 // REGISTROS DE CIERRE
 // ============================================
 
-/**
- * Obtener todos los registros de cierre
- */
 export async function getRegistrosCierre() {
   try {
-    const { data, error } = await supabase
-      .from('registros_cierre')
-      .select('*')
-      .order('fecha', { ascending: false });
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('GET', null, 'type=registros');
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al obtener registros de cierre:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Obtener registro de cierre por fecha
- */
 export async function getRegistroCierreByFecha(fecha) {
   try {
-    const { data, error } = await supabase
-      .from('registros_cierre')
-      .select('*')
-      .eq('fecha', fecha)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
-    return { data, error: null };
+    const result = await apiCall('GET', null, 'type=registros');
+    const registro = (result.data || []).find(r => r.fecha === fecha) || null;
+    return { data: registro, error: null };
   } catch (error) {
     console.error('Error al obtener registro de cierre:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Crear o actualizar un registro de cierre
- */
 export async function upsertRegistroCierre(registro) {
   try {
-    const registroData = {
-      fecha: registro.fecha,
-      efectivo: parseFloat(registro.efectivo || 0),
-      transferencia: parseFloat(registro.transferencia || 0),
-      tarjeta: parseFloat(registro.tarjeta || 0),
-      total: parseFloat(registro.total || 0),
-      observaciones: registro.observaciones || null
-    };
-
-    const { data, error } = await supabase
-      .from('registros_cierre')
-      .upsert([registroData], { onConflict: 'fecha' })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    const result = await apiCall('POST', { action: 'upsertRegistroCierre', registro });
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al guardar registro de cierre:', error);
     return { data: null, error: error.message };
   }
 }
 
-/**
- * Eliminar un registro de cierre
- */
 export async function deleteRegistroCierre(id) {
   try {
-    const { error } = await supabase
-      .from('registros_cierre')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    await apiCall('DELETE', { type: 'registroCierre', id });
     return { error: null };
   } catch (error) {
     console.error('Error al eliminar registro de cierre:', error);

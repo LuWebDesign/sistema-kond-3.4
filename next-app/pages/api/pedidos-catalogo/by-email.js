@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     const supabase = supabaseAdmin()
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('pedidos_catalogo')
       .select(`
         *,
