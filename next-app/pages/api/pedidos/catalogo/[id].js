@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
+import { createNotification } from '../../../../utils/supabaseNotifications'
 
 export default async function handler(req, res) {
   const { id } = req.query
@@ -81,6 +82,33 @@ export default async function handler(req, res) {
       if (error) throw error
 
       console.log('✅ Pedido actualizado exitosamente en Supabase')
+
+      // Notificar al comprador si el pedido pasó a 'listo'
+      if (payload.estado === 'listo') {
+        const clienteEmail = payload.cliente?.email || data?.cliente_email
+        if (clienteEmail) {
+          try {
+            await createNotification({
+              title: '🎉 Tu pedido está listo',
+              body: `Tu pedido #${id} está listo para ser entregado o retirado. ¡Gracias por tu compra!`,
+              type: 'success',
+              meta: {
+                tipo: 'pedido_listo',
+                target: 'user',
+                pedidoId: id,
+                userId: clienteEmail,
+                createdAt: new Date().toISOString()
+              },
+              targetUser: 'user'
+            })
+            console.log('🔔 Notificación enviada al comprador:', clienteEmail)
+          } catch (notifError) {
+            // No bloquear la respuesta si falla la notificación
+            console.warn('⚠️ No se pudo crear notificación para el comprador:', notifError.message)
+          }
+        }
+      }
+
       return res.status(200).json({ success: true, pedido: data })
     } catch (error) {
       console.error('❌ Error actualizando pedido catalogo:', error)
