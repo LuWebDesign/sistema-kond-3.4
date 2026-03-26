@@ -156,24 +156,18 @@ export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
 }
 
 // Obtener datos del usuario logueado (si existe)
+// Solo lee 'currentUser' (comprador del catálogo), NO lee 'kond-user' (admin)
 export const getCurrentUser = () => {
   if (typeof window === 'undefined') return null
   
   try {
-    // Intentar obtener usuario de diferentes fuentes
-    if (window.KONDAuth && typeof window.KONDAuth.currentUser === 'function') {
-      return window.KONDAuth.currentUser()
-    }
-    
-    // Fallback: buscar en localStorage (primero 'currentUser' para clientes del catálogo)
+    // Buscar en localStorage solo 'currentUser' para clientes del catálogo
     const currentUser = localStorage.getItem('currentUser')
     if (currentUser) {
       return JSON.parse(currentUser)
     }
     
-    // Si no hay currentUser, verificar kond-user (usuarios admin del sistema interno)
-    const kondUser = localStorage.getItem('kond-user')
-    return kondUser ? JSON.parse(kondUser) : null
+    return null
   } catch (error) {
     console.warn('Error getting current user:', error)
     return null
