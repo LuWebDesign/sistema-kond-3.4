@@ -41,6 +41,8 @@ export default function Catalog() {
   // imageModal: { productId: Number, index: Number } or null
   const [imageModal, setImageModal] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 12
 
   // Debounce para la búsqueda (300ms)
   useEffect(() => {
@@ -209,6 +211,18 @@ export default function Catalog() {
       return 0
     })
   }, [products, debouncedSearchTerm, selectedCategory])
+
+  // Resetear página al cambiar filtros o categoría
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm, selectedCategory])
+
+  // Paginar solo cuando "Todas las categorías" está seleccionada
+  const showPagination = !selectedCategory
+  const totalPages = showPagination ? Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)) : 1
+  const displayedProducts = showPagination
+    ? filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    : filteredProducts
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
@@ -428,9 +442,9 @@ export default function Catalog() {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '24px',
-          marginBottom: '40px'
+          marginBottom: '24px'
         }}>
-          {filteredProducts.map(product => (
+          {displayedProducts.map(product => (
             <ProductCard 
               key={product.id} 
               product={product} 
@@ -441,6 +455,109 @@ export default function Catalog() {
             />
           ))}
         </div>
+
+        {/* Paginación */}
+        {showPagination && totalPages > 1 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            marginBottom: '40px',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              style={{
+                background: currentPage === 1 ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                width: '38px', height: '38px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.4 : 1,
+                fontSize: '1rem'
+              }}
+            >«</button>
+            <button
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1}
+              style={{
+                background: currentPage === 1 ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                width: '38px', height: '38px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.4 : 1,
+                fontSize: '1rem'
+              }}
+            >‹</button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...')
+                acc.push(p)
+                return acc
+              }, [])
+              .map((item, idx) =>
+                item === '...' ? (
+                  <span key={`dots-${idx}`} style={{ color: 'var(--text-muted)', padding: '0 4px' }}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setCurrentPage(item)}
+                    style={{
+                      background: item === currentPage ? 'var(--accent-blue)' : 'var(--bg-card)',
+                      color: item === currentPage ? 'white' : 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      width: '38px', height: '38px',
+                      cursor: 'pointer',
+                      fontWeight: item === currentPage ? 700 : 400,
+                      fontSize: '0.95rem'
+                    }}
+                  >{item}</button>
+                )
+              )
+            }
+
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                background: currentPage === totalPages ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                width: '38px', height: '38px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === totalPages ? 0.4 : 1,
+                fontSize: '1rem'
+              }}
+            >›</button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                background: currentPage === totalPages ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                width: '38px', height: '38px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === totalPages ? 0.4 : 1,
+                fontSize: '1rem'
+              }}
+            >»</button>
+
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginLeft: '8px' }}>
+              Página {currentPage} de {totalPages}
+            </span>
+          </div>
+        )}
 
         {filteredProducts.length === 0 && (
           <div style={{
