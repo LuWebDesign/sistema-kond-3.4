@@ -12,6 +12,10 @@ function Admin() {
     totalClientes: 0,
     balanceTotal: 0
   })
+  
+  return (
+    <Layout title="Panel Administrativo - Sistema KOND">
+      <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Accesos Rápidos reducido: solo Métodos de Pago */}
         <div style={{
           background: 'var(--bg-card)',
