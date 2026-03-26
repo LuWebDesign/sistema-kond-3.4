@@ -52,7 +52,7 @@ function Materiales() {
     
     try {
       // 🆕 Intentar cargar materiales desde Supabase primero
-      const { getAllMateriales, getAllProveedores, getAllTamanos, getAllEspesores } = await import('../utils/supabaseMateriales')
+      const { getAllMateriales, getAllProveedores, getAllTamanos, getAllEspesores } = await import('../../utils/supabaseMateriales')
       
       // Cargar materiales
       const { data: materialesSupabase, error: errorMateriales } = await getAllMateriales()
@@ -170,6 +170,7 @@ function Materiales() {
 
   const save = useCallback(async (items, skipReload = false) => {
     setMateriales(items)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch (err) {}
     if (!skipReload) {
       await loadData()
     }
@@ -188,7 +189,7 @@ function Materiales() {
     try {
       if (editingId) {
         // 🆕 ACTUALIZAR en Supabase
-        const { updateMaterial } = await import('../utils/supabaseMateriales')
+        const { updateMaterial } = await import('../../utils/supabaseMateriales')
         const { data, error } = await updateMaterial(editingId, form)
         
         if (data && !error) {
@@ -201,7 +202,7 @@ function Materiales() {
         }
       } else {
         // 🆕 CREAR en Supabase
-        const { createMaterial } = await import('../utils/supabaseMateriales')
+        const { createMaterial } = await import('../../utils/supabaseMateriales')
         const { data, error } = await createMaterial(form)
         
         if (data && !error) {
@@ -250,7 +251,7 @@ function Materiales() {
   const handleDelete = async (id) => {
     const doDelete = async () => {
       try {
-        const { deleteMaterial } = await import('../utils/supabaseMateriales')
+        const { deleteMaterial } = await import('../../utils/supabaseMateriales')
         const { error } = await deleteMaterial(id)
         if (!error) {
           await loadData()
@@ -382,7 +383,7 @@ function Materiales() {
                           
                           // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createTamano } = await import('../utils/supabaseMateriales')
+                            const { createTamano } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createTamano(v)
                             
                             if (data && !error) {
@@ -450,7 +451,7 @@ function Materiales() {
                           
                           // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createEspesor } = await import('../utils/supabaseMateriales')
+                            const { createEspesor } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createEspesor(v)
                             
                             if (data && !error) {
@@ -513,7 +514,7 @@ function Materiales() {
                           
                           // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createProveedor } = await import('../utils/supabaseMateriales')
+                            const { createProveedor } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createProveedor({ nombre: v })
                             
                             if (data && !error) {
