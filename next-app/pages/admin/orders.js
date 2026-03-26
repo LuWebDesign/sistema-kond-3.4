@@ -407,12 +407,23 @@ function PedidosCatalogo() {
       const newMonto = Number(pedidoActualizado.montoRecibido || 0)
       const totalPedido = Number(pedidoActualizado.total || 0)
 
+      console.log('💰 actualizarMovimientosPedido:', { prevMonto, newMonto, totalPedido, estadoPago: pedidoActualizado.estadoPago })
+
       // Si no cambió el monto, no crear movimiento
-      if (prevMonto === newMonto) return
+      if (prevMonto === newMonto) {
+        console.log('💰 Monto no cambió, no se registra movimiento')
+        return
+      }
       // Si el monto bajó, es una corrección, no crear movimiento
-      if (newMonto < prevMonto) return
+      if (newMonto < prevMonto) {
+        console.log('💰 Monto bajó, no se registra movimiento')
+        return
+      }
       // Si el nuevo monto es 0, nada que registrar
-      if (newMonto <= 0) return
+      if (newMonto <= 0) {
+        console.log('💰 Monto es 0, no se registra movimiento')
+        return
+      }
 
       const clienteNombre = `${pedidoActualizado.cliente?.nombre || ''} ${pedidoActualizado.cliente?.apellido || ''}`.trim()
       const hoy = new Date().toISOString().split('T')[0]
@@ -422,7 +433,8 @@ function PedidosCatalogo() {
       // Primera vez que se registra un monto (prevMonto era 0)
       if (prevMonto === 0 && newMonto > 0) {
         const esPagoTotal = totalPedido > 0 && newMonto >= totalPedido
-        const { error } = await createMovimiento({
+        console.log('💰 Registrando primer pago:', { esPagoTotal, monto: newMonto })
+        const { data, error } = await createMovimiento({
           tipo: 'ingreso',
           monto: newMonto,
           fecha: hoy,
@@ -434,13 +446,20 @@ function PedidosCatalogo() {
           metodoPago: metodo,
           pedidoCatalogoId: pedidoActualizado.id
         })
-        if (!error) createToast(esPagoTotal ? '💰 Pago total registrado en Finanzas' : '💰 Seña registrada en Finanzas', 'success')
+        if (error) {
+          console.error('💰 Error al crear movimiento:', error)
+          createToast('❌ Error al registrar en Finanzas: ' + error, 'error')
+        } else {
+          console.log('💰 Movimiento creado:', data)
+          createToast(esPagoTotal ? '💰 Pago total registrado en Finanzas' : '💰 Seña registrada en Finanzas', 'success')
+        }
       }
       // Monto aumentó (ya había un pago previo)
       else if (newMonto > prevMonto) {
         const diferencia = newMonto - prevMonto
         const completaPago = totalPedido > 0 && newMonto >= totalPedido
-        const { error } = await createMovimiento({
+        console.log('💰 Registrando pago adicional:', { diferencia, completaPago })
+        const { data, error } = await createMovimiento({
           tipo: 'ingreso',
           monto: diferencia,
           fecha: hoy,
@@ -452,10 +471,17 @@ function PedidosCatalogo() {
           metodoPago: metodo,
           pedidoCatalogoId: pedidoActualizado.id
         })
-        if (!error) createToast(completaPago ? '💰 Pago restante registrado en Finanzas' : '💰 Pago adicional registrado en Finanzas', 'success')
+        if (error) {
+          console.error('💰 Error al crear movimiento:', error)
+          createToast('❌ Error al registrar en Finanzas: ' + error, 'error')
+        } else {
+          console.log('💰 Movimiento creado:', data)
+          createToast(completaPago ? '💰 Pago restante registrado en Finanzas' : '💰 Pago adicional registrado en Finanzas', 'success')
+        }
       }
     } catch (error) {
       console.error('Error al registrar movimiento financiero:', error)
+      createToast('❌ Error al registrar movimiento financiero', 'error')
     }
   }
 
@@ -1005,14 +1031,14 @@ function PedidosCatalogo() {
     doSaveChanges(pedidoActualizado, pedidoAnterior)
   }
 
-  const doSaveChanges = (pedidoActualizado, pedidoAnterior) => {
+  const doSaveChanges = async (pedidoActualizado, pedidoAnterior) => {
     const updatedPedidos = [...pedidosCatalogo]
     const index = updatedPedidos.findIndex(p => p.id === pedidoActualizado.id)
     if (index !== -1) updatedPedidos[index] = pedidoActualizado
 
     setPedidosCatalogo(updatedPedidos)
     persistAndEmit(updatedPedidos, pedidoActualizado.id, 'save-changes')
-    actualizarMovimientosPedido(pedidoActualizado, pedidoAnterior)
+    await actualizarMovimientosPedido(pedidoActualizado, pedidoAnterior)
     handleCloseModal()
   }
 
