@@ -261,15 +261,10 @@ export default function User() {
     } finally {
       setIsLoading(false)
     }
-  }  // Cerrar sesión
+  }  // Cerrar sesión (solo del catálogo público, sin tocar sesión admin)
   const handleLogout = async () => {
-    const { error } = await supabaseLogout()
-    if (error) {
-      createToast('Error al cerrar sesión', 'error')
-      return
-    }
-    
-    // Limpiar también localStorage (currentUser)
+    // Solo limpiar la sesión del comprador (localStorage)
+    // NO llamar supabase.auth.signOut() porque destruiría la sesión del admin
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser')
     }
