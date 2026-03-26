@@ -9,7 +9,9 @@ function PaymentConfigAdmin() {
   const [paymentConfig, setPaymentConfig] = useState({
     transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
     whatsapp: { enabled: true, numero: '', mensaje: '' },
-    retiro: { enabled: true, direccion: '', horarios: '' }
+    retiro: { enabled: true, direccion: '', horarios: '' },
+    calendario: { enabled: true },
+    textos: { infoTransferencia: 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.' }
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -205,6 +207,49 @@ function PaymentConfigAdmin() {
                 <input placeholder="Horarios" value={paymentConfig.retiro.horarios} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, horarios: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
               </div>
             )}
+          </div>
+
+          {/* Calendario de Fecha de Entrega */}
+          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>📅 Fecha de entrega solicitada</h3>
+                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Permite al cliente seleccionar una fecha de entrega al finalizar la compra con transferencia</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaymentConfig(prev => ({ ...prev, calendario: { ...prev.calendario, enabled: !prev.calendario.enabled } }))}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 6,
+                  border: '1px solid var(--border-color)',
+                  background: paymentConfig.calendario?.enabled ? 'rgba(16,185,129,0.08)' : 'transparent',
+                  color: paymentConfig.calendario?.enabled ? 'var(--color-success)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {paymentConfig.calendario?.enabled ? '✅ Activado' : '⛔ Desactivado'}
+              </button>
+            </div>
+          </div>
+
+          {/* Textos informativos del checkout */}
+          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ margin: '0 0 4px 0' }}>📝 Textos del Checkout</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Texto informativo que ve el cliente al elegir Transferencia o WhatsApp</p>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>ℹ️ Información sobre Transferencia</label>
+              <textarea
+                rows={4}
+                placeholder="Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario."
+                value={paymentConfig.textos?.infoTransferencia || ''}
+                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferencia: e.target.value } }))}
+                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>

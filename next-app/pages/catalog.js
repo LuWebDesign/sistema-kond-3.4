@@ -1680,7 +1680,7 @@ function CheckoutModal({
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700 }}>ℹ️ Información sobre Transferencia</div>
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Nota: si elegís el método <strong>Transferencia</strong> y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.
+                  {paymentConfig?.textos?.infoTransferencia || 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.'}
                 </div>
               </div>
             )}
@@ -1721,10 +1721,12 @@ function CheckoutModal({
           {paymentMethod === 'transferencia' && (
             <section style={{ marginBottom: 18 }}>
               <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
-                  <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
-                </div>
+                {paymentConfig?.calendario?.enabled !== false && (
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
+                    <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
+                  </div>
+                )}
 
                 <div className="comprobante-upload" style={{ width: 220, minWidth: 0 }}>
                   {/* input escondido y botón visible para mejor UX en mobile */}
