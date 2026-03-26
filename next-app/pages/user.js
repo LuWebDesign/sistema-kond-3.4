@@ -116,43 +116,52 @@ export default function User() {
 
     try {
       console.log('🔐 Intentando login con:', formData.email)
-      // Login con Supabase Auth
+      // Primero intentar login con Supabase Auth
       const result = await loginWithEmail(formData.email, formData.password)
-      console.log('📝 Resultado del login:', result)
       
-      const { user, error } = result
-      
-      if (error) {
-        console.error('❌ Error en login:', error)
-        createToast(error, 'error')
+      let user = result?.user
+      const supabaseError = result?.error
+
+      // Si Supabase falla, intentar con el usuario guardado en localStorage
+      // (para compradores registrados localmente)
+      if (supabaseError || !user) {
+        try {
+          const stored = localStorage.getItem('currentUser')
+          if (stored) {
+            const localUser = JSON.parse(stored)
+            if (
+              localUser.email === formData.email &&
+              localUser.password === formData.password
+            ) {
+              user = localUser
+              console.log('✅ Login local exitoso para comprador')
+            }
+          }
+        } catch {
+          // noop
+        }
+      }
+
+      if (!user) {
+        createToast('Email o contraseña incorrectos', 'error')
         setIsLoading(false)
         return
       }
       
-      if (user) {
-        setCurrentUser(user)
-        // Informar otras partes de la app que el usuario cambió
-        try { 
-          window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) 
-        } catch (e) { 
-          /* noop */ 
-        }
-        createToast('Sesión iniciada correctamente', 'success')
-        
-        // Reset form
-        setFormData({
-          email: '',
-          password: '',
-          nombre: '',
-          apellido: '',
-          telefono: '',
-          direccion: '',
-          localidad: '',
-          cp: '',
-          provincia: '',
-          observaciones: ''
-        })
+      // Guardar en localStorage y actualizar estado
+      try { localStorage.setItem('currentUser', JSON.stringify(user)) } catch {}
+      setCurrentUser(user)
+      try {
+        window.dispatchEvent(new CustomEvent('user:updated', { detail: user }))
+      } catch {
+        // noop
       }
+      createToast('Sesión iniciada correctamente', 'success')
+      
+      setFormData({
+        email: '', password: '', nombre: '', apellido: '', telefono: '',
+        direccion: '', localidad: '', cp: '', provincia: '', observaciones: ''
+      })
     } catch (error) {
       console.error('Error en login:', error)
       createToast('Error al iniciar sesión', 'error')
@@ -1107,8 +1116,8 @@ export default function User() {
             </p>
           </div>
 
-          {/* Botón de Google Login - solo en modo login */}
-          {isLoginMode && (
+          {/* Botón de Google Login deshabilitado - proveedor no configurado */}
+          {false && isLoginMode && (
             <>
               <button
                 type="button"
