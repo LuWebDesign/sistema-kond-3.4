@@ -982,7 +982,7 @@ function ProductsComponent() {
                 {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
               </button>
 
-              <Link href="/materiales" style={{
+              <Link href="/admin/materiales" style={{
                 background: '#e5e7eb',
                 color: '#374151',
                 border: '1px solid #d1d5db',

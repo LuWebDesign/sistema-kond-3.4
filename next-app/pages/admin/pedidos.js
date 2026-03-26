@@ -1,8 +1,8 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
-import { useInternalOrders } from '../hooks/useCatalog'
-import { formatCurrency, formatDate } from '../utils/catalogUtils'
+import { useInternalOrders } from '../../hooks/useCatalog'
+import { formatCurrency, formatDate } from '../../utils/catalogUtils'
 
 function Pedidos() {
   // Estados para pestañas principales

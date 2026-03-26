@@ -1,8 +1,8 @@
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
-import { createToast } from '../utils/catalogUtils'
-import { getCurrentSession, updateUserProfile } from '../utils/supabaseAuthV2'
+import { createToast } from '../../utils/catalogUtils'
+import { getCurrentSession, updateUserProfile } from '../../utils/supabaseAuthV2'
 
 function MiCuenta() {
   const [currentUser, setCurrentUser] = useState(null)

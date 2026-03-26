@@ -319,7 +319,7 @@ export default function Catalog() {
 
             <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: '8px', marginLeft: '12px' }}>
               <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Catálogo</button>
-              {currentUserState && <button onClick={() => router.push('/mis-pedidos')} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Mis Pedidos</button>}
+              {currentUserState && <button onClick={() => router.push('/catalog/mis-pedidos')} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Mis Pedidos</button>}
             </div>
           </div>
 
@@ -1691,7 +1691,7 @@ function CheckoutModal({
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>🚚 Completa tus datos de envío</div>
                 <div>Para facilitar la cotización y coordinación del envío, por favor completa tu dirección, localidad y código postal en <strong>Mi Cuenta → Información de perfil</strong>. Con esos datos podremos calcular el costo y tiempo de entrega con mayor precisión.</div>
                 <div style={{ marginTop: 8 }}>
-                  <button onClick={() => router.push('/mi-cuenta')} style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--accent-blue)', color: '#fff', border: 'none', cursor: 'pointer' }}>Ir a Mi Cuenta</button>
+                  <button onClick={() => router.push('/catalog/user')} style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--accent-blue)', color: '#fff', border: 'none', cursor: 'pointer' }}>Ir a Mi Cuenta</button>
                 </div>
               </div>
             )}

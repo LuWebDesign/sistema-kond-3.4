@@ -5,9 +5,9 @@ import '../styles/catalog-next.css'
 import { NotificationsProvider } from '../components/NotificationsProvider'
 
 // Rutas que son del catálogo público (compradores)
-const BUYER_ROUTES = ['/catalog', '/catalog/user', '/mis-pedidos']
+const BUYER_ROUTES = ['/catalog', '/catalog/user', '/catalog/mis-pedidos']
 const isBuyerRoute = (pathname) =>
-  BUYER_ROUTES.includes(pathname) || pathname.startsWith('/tracking')
+  BUYER_ROUTES.includes(pathname) || pathname.startsWith('/tracking') || pathname.startsWith('/catalog/')
 
 export default function MyApp({ Component, pageProps }) {
   const router = useRouter()

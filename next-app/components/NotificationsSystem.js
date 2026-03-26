@@ -113,7 +113,7 @@ export const NotificationsPanel = ({ target = undefined, isPublic = false }) => 
     // Navegar al pedido si es una notificación de pedido
     if (notification.meta?.pedidoId || notification.meta?.orderId) {
       if (isPublic) {
-        router.push('/mis-pedidos')
+        router.push('/catalog/mis-pedidos')
       } else {
         const pedidoId = notification.meta.pedidoId || notification.meta.orderId
         router.push(`/admin/orders/detalle-pedido/${pedidoId}`)

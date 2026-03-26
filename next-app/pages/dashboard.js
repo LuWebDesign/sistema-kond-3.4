@@ -175,7 +175,7 @@ export default function Dashboard() {
                 subtitle="Gestionar órdenes"
               />
               <QuickActionButton
-                href="/marketing"
+                href="/admin/marketing"
                 icon="🎯"
                 title="Marketing"
                 subtitle="Promociones"

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { applyPromotionsToProduct } from '../utils/promoEngine'
-import Layout from '../components/Layout';
-import withAdminAuth from '../components/withAdminAuth';
-import PromoCard from '../components/marketing/PromoCard';
-import CouponCard from '../components/marketing/CouponCard';
-import PromoModal from '../components/marketing/PromoModal';
-import CouponModal from '../components/marketing/CouponModal';
-import EmptyState from '../components/marketing/EmptyState';
-import styles from '../styles/marketing.module.css';
-import { getAllProductos } from '../utils/supabaseProducts';
+import { applyPromotionsToProduct } from '../../utils/promoEngine'
+import Layout from '../../components/Layout';
+import withAdminAuth from '../../components/withAdminAuth';
+import PromoCard from '../../components/marketing/PromoCard';
+import CouponCard from '../../components/marketing/CouponCard';
+import PromoModal from '../../components/marketing/PromoModal';
+import CouponModal from '../../components/marketing/CouponModal';
+import EmptyState from '../../components/marketing/EmptyState';
+import styles from '../../styles/marketing.module.css';
+import { getAllProductos } from '../../utils/supabaseProducts';
 import { 
   getPromociones, 
   createPromocion, 
@@ -19,7 +19,7 @@ import {
   createCupon,
   updateCupon,
   deleteCupon
-} from '../utils/supabaseMarketing';
+} from '../../utils/supabaseMarketing';
 
 function Marketing() {
   const router = useRouter();
@@ -179,30 +179,30 @@ function Marketing() {
   const openPromoModal = (promo = null, tipoEspecifico = null) => {
     if (promo && typeof promo === 'object' && promo.id) {
       // Editar promoción existente
-      router.push(`/marketing?modal=editar-promocion&id=${promo.id}`);
+      router.push(`/admin/marketing?modal=editar-promocion&id=${promo.id}`);
     } else if (tipoEspecifico) {
       // Nueva promoción con tipo específico
-      router.push(`/marketing?modal=promo-${tipoEspecifico}`);
+      router.push(`/admin/marketing?modal=promo-${tipoEspecifico}`);
     } else {
       // Nueva promoción sin tipo predefinido
-      router.push('/marketing?modal=nueva-promocion');
+      router.push('/admin/marketing?modal=nueva-promocion');
     }
   };
 
   const openCouponModal = (coupon = null) => {
     if (coupon) {
-      router.push(`/marketing?modal=editar-cupon&id=${coupon.id}`);
+      router.push(`/admin/marketing?modal=editar-cupon&id=${coupon.id}`);
     } else {
-      router.push('/marketing?modal=nuevo-cupon');
+      router.push('/admin/marketing?modal=nuevo-cupon');
     }
   };
 
   const closePromoModal = () => {
-    router.push('/marketing');
+    router.push('/admin/marketing');
   };
 
   const closeCouponModal = () => {
-    router.push('/marketing');
+    router.push('/admin/marketing');
   };
 
   const handlePromoSubmit = async (promoData) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
-import styles from '../styles/materiales.module.css'
+import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
+import styles from '../../styles/materiales.module.css'
 
 const STORAGE_KEY = 'materiales'
 

@@ -170,7 +170,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
             </a>
             
-            <Link href="/pedidos" style={linkStyle}>
+            <Link href="/admin/pedidos" style={linkStyle}>
               📦 Pedidos Internos
             </Link>
             
@@ -182,13 +182,13 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               📊 Métricas
             </Link>
             
-            <Link href="/marketing" style={linkStyle}>
+            <Link href="/admin/marketing" style={linkStyle}>
               🎯 Marketing
             </Link>
 
             {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
             
-            <Link href="/finanzas" style={linkStyle}>
+            <Link href="/admin/finanzas" style={linkStyle}>
               💰 Finanzas
             </Link>
             
@@ -201,7 +201,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               � Panel Admin
             </Link>
             
-            <Link href="/mi-cuenta" style={linkStyle}>
+            <Link href="/admin/mi-cuenta" style={linkStyle}>
               👤 Mi Cuenta
             </Link>
             <div style={{ marginTop: 8 }}>

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
-import ConfirmDialog from '../components/ConfirmDialog';
-import styles from '../styles/finanzas.module.css';
+import Layout from '../../components/Layout';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import styles from '../../styles/finanzas.module.css';
 import {
   getMovimientos, createMovimiento, updateMovimiento, deleteMovimiento,
   getCategorias, createCategoria, deleteCategoria, updateCategoria, bulkUpdateMovimientosCategoria,
   getRegistrosCierre, upsertRegistroCierre
-} from '../utils/supabaseFinanzas';
-import { getPedidosCatalogoParaCalendario } from '../utils/supabasePedidos';
+} from '../../utils/supabaseFinanzas';
+import { getPedidosCatalogoParaCalendario } from '../../utils/supabasePedidos';
 
 export default function Finanzas() {
   const [mounted, setMounted] = useState(false);
