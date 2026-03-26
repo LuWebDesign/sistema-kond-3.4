@@ -1695,30 +1695,6 @@ function CheckoutModal({
                 </div>
               </div>
             )}
-
-            {/* Bloque independiente de información sobre Retiro (visible solo si el usuario selecciona Retiro) */}
-            {deliveryMethod === 'retiro' && paymentConfig?.textos?.infoRetiroEnabled !== false && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700 }}>📍 Retiro en local</div>
-                {(paymentConfig?.retiro?.direccion || paymentConfig?.retiro?.horarios) ? (
-                  <div style={{ marginTop: 8, fontSize: 13 }}>
-                    {paymentConfig.retiro.direccion && (
-                      <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>
-                    )}
-                    {paymentConfig.retiro.horarios && (
-                      <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>
-                    )}
-                    {paymentConfig?.textos?.infoRetiro && (
-                      <div style={{ marginTop: 6 }}>{paymentConfig.textos.infoRetiro}</div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                    {paymentConfig?.textos?.infoRetiro || 'Podés pasar a retirar tu pedido por el local durante nuestros horarios de atención.'}
-                  </div>
-                )}
-              </div>
-            )}
           </section>
 
           {paymentMethod === 'transferencia' && (
