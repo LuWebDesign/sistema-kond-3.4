@@ -43,7 +43,14 @@ function PaymentConfigAdmin() {
     setIsLoading(true)
     try {
       const config = await getPaymentConfig()
-      if (config) setPaymentConfig(config)
+      if (config) {
+        setPaymentConfig(prev => ({
+          ...prev,
+          ...config,
+          calendario: { ...prev.calendario, ...config.calendario },
+          textos: { ...prev.textos, ...config.textos },
+        }))
+      }
     } catch (error) {
       console.error('Error al cargar configuración:', error)
       setSaveMessage('❌ Error al cargar la configuración')
