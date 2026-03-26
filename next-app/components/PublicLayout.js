@@ -41,6 +41,19 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     }
   }
 
+  // Sincronizar currentUser cuando cambia en la misma pestaña (ej: login/logout)
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'currentUser') {
+        try {
+          setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null)
+        } catch {}
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
@@ -168,12 +181,14 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
 
+            {/* Campanita de notificaciones (solo si el comprador está logueado) */}
+            {currentUser && <NotificationsButton />}
 
           </div>
         </header>
 
-        {/* Panel de notificaciones para usuario */}
-        {/* <NotificationsPanel target="user" /> */}
+        {/* Panel de notificaciones para el comprador */}
+        {currentUser && <NotificationsPanel target="user" isPublic={true} />}
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">

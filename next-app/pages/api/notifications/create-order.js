@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     })
 
-    // Crear la notificación
+    // Crear notificación para el admin
     const notification = await createNotification({
       title: '🛒 Nuevo pedido recibido',
       body: `${cliente.nombre || cliente.name} ${cliente.apellido} realizó un pedido por ${formatCurrency ? formatCurrency(total) : total} (${items.length} producto${items.length !== 1 ? 's' : ''})`,
@@ -44,6 +44,23 @@ export default async function handler(req, res) {
       },
       targetUser: 'admin'
     })
+
+    // Crear notificación para el comprador (si tiene email)
+    if (cliente?.email) {
+      await createNotification({
+        title: '✅ Pedido recibido',
+        body: `Tu pedido fue recibido y está pendiente de confirmación. Total: ${formatCurrency ? formatCurrency(total) : total}`,
+        type: 'success',
+        meta: {
+          tipo: 'pedido_recibido',
+          target: 'user',
+          pedidoId: pedidoId,
+          userId: cliente.email,
+          createdAt: new Date().toISOString()
+        },
+        targetUser: 'user'
+      })
+    }
 
     console.log('✅ [API] Notificación creada exitosamente:', {
       notificationId: notification.id,

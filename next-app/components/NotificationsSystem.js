@@ -64,7 +64,7 @@ export const NotificationsButton = ({ className = '', target = undefined }) => {
 }
 
 // Componente del panel de notificaciones
-export const NotificationsPanel = ({ target = undefined }) => {
+export const NotificationsPanel = ({ target = undefined, isPublic = false }) => {
   const notificationsContext = useNotifications()
   const notifications = notificationsContext?.notifications || []
   const isOpen = notificationsContext?.isOpen || false
@@ -112,8 +112,12 @@ export const NotificationsPanel = ({ target = undefined }) => {
     
     // Navegar al pedido si es una notificación de pedido
     if (notification.meta?.pedidoId || notification.meta?.orderId) {
-      const pedidoId = notification.meta.pedidoId || notification.meta.orderId
-      router.push(`/admin/orders/detalle-pedido/${pedidoId}`)
+      if (isPublic) {
+        router.push('/mis-pedidos')
+      } else {
+        const pedidoId = notification.meta.pedidoId || notification.meta.orderId
+        router.push(`/admin/orders/detalle-pedido/${pedidoId}`)
+      }
     }
   }
 
