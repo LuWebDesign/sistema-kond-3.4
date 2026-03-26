@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import styles from '../../styles/finanzas.module.css';
@@ -38,6 +38,17 @@ export default function Finanzas() {
   const [registroFecha, setRegistroFecha] = useState('');
   const [registrosDelDia, setRegistrosDelDia] = useState([]);
   const [expandedRegistro, setExpandedRegistro] = useState(null);
+
+  // Filtros de movimientos
+  const [filterText, setFilterText] = useState('');
+  const [filterPedido, setFilterPedido] = useState('');
+  const [filterMonto, setFilterMonto] = useState('');
+  const [filterFechaDesde, setFilterFechaDesde] = useState('');
+  const [filterFechaHasta, setFilterFechaHasta] = useState('');
+
+  // Paginación
+  const ITEMS_PER_PAGE = 12;
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Confirm dialog state
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: null });
@@ -247,8 +258,70 @@ export default function Finanzas() {
     setExpandedRegistro(expandedRegistro === registroId ? null : registroId);
   };
 
-  // Group by date
-  const movimientosAgrupados = movimientos.reduce((acc, mov) => {
+  // Filtrar, ordenar y paginar movimientos
+  const movimientosFiltrados = useMemo(() => {
+    let filtered = [...movimientos];
+
+    // Filtro por texto (nombre/descripción/categoría)
+    if (filterText.trim()) {
+      const term = filterText.toLowerCase();
+      filtered = filtered.filter(m =>
+        (m.descripcion || '').toLowerCase().includes(term) ||
+        (m.categoria || '').toLowerCase().includes(term) ||
+        (m.clienteName || '').toLowerCase().includes(term)
+      );
+    }
+
+    // Filtro por número de pedido
+    if (filterPedido.trim()) {
+      const pedidoTerm = filterPedido.trim();
+      filtered = filtered.filter(m =>
+        (m.descripcion || '').includes(`#${pedidoTerm}`) ||
+        String(m.pedido_catalogo_id || '') === pedidoTerm
+      );
+    }
+
+    // Filtro por monto
+    if (filterMonto.trim()) {
+      const montoNum = parseFloat(filterMonto);
+      if (!isNaN(montoNum)) {
+        filtered = filtered.filter(m => Number(m.monto) === montoNum);
+      }
+    }
+
+    // Filtro por rango de fechas
+    if (filterFechaDesde) {
+      filtered = filtered.filter(m => (m.fecha || '') >= filterFechaDesde);
+    }
+    if (filterFechaHasta) {
+      filtered = filtered.filter(m => (m.fecha || '') <= filterFechaHasta);
+    }
+
+    // Ordenar: más reciente primero (fecha DESC, hora DESC, created_at DESC)
+    filtered.sort((a, b) => {
+      const fechaCmp = (b.fecha || '').localeCompare(a.fecha || '');
+      if (fechaCmp !== 0) return fechaCmp;
+      const horaCmp = (b.hora || '00:00:00').localeCompare(a.hora || '00:00:00');
+      if (horaCmp !== 0) return horaCmp;
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+
+    return filtered;
+  }, [movimientos, filterText, filterPedido, filterMonto, filterFechaDesde, filterFechaHasta]);
+
+  // Resetear página al cambiar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterText, filterPedido, filterMonto, filterFechaDesde, filterFechaHasta]);
+
+  const totalPages = Math.max(1, Math.ceil(movimientosFiltrados.length / ITEMS_PER_PAGE));
+  const movimientosPaginados = movimientosFiltrados.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Agrupar los movimientos paginados por fecha para mostrar
+  const movimientosAgrupados = movimientosPaginados.reduce((acc, mov) => {
     const fecha = mov.fecha || 'Sin fecha';
     if (!acc[fecha]) acc[fecha] = [];
     acc[fecha].push(mov);
@@ -510,6 +583,63 @@ export default function Finanzas() {
 
         {/* Movimientos */}
         <h3 className={styles.sectionTitle}>Movimientos</h3>
+
+        {/* Filtros */}
+        <div className={styles.filtersBar}>
+          <input
+            type="text"
+            className={styles.filterInput}
+            placeholder="Buscar por nombre o descripción..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+          />
+          <input
+            type="text"
+            className={styles.filterInputSmall}
+            placeholder="N° pedido"
+            value={filterPedido}
+            onChange={(e) => setFilterPedido(e.target.value)}
+          />
+          <input
+            type="number"
+            className={styles.filterInputSmall}
+            placeholder="Monto exacto"
+            value={filterMonto}
+            onChange={(e) => setFilterMonto(e.target.value)}
+          />
+          <div className={styles.filterDateRange}>
+            <input
+              type="date"
+              className={styles.filterInputSmall}
+              value={filterFechaDesde}
+              onChange={(e) => setFilterFechaDesde(e.target.value)}
+              title="Desde"
+            />
+            <span className={styles.filterDateSep}>—</span>
+            <input
+              type="date"
+              className={styles.filterInputSmall}
+              value={filterFechaHasta}
+              onChange={(e) => setFilterFechaHasta(e.target.value)}
+              title="Hasta"
+            />
+          </div>
+          {(filterText || filterPedido || filterMonto || filterFechaDesde || filterFechaHasta) && (
+            <button
+              className={styles.btnSmall}
+              onClick={() => { setFilterText(''); setFilterPedido(''); setFilterMonto(''); setFilterFechaDesde(''); setFilterFechaHasta(''); }}
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+
+        {movimientosFiltrados.length !== movimientos.length && (
+          <div className={styles.filterCount}>
+            Mostrando {movimientosFiltrados.length} de {movimientos.length} movimientos
+          </div>
+        )}
+
         <div className={styles.movimientos}>
           {fechasOrdenadas.length === 0 ? (
             <div className={styles.empty}>
@@ -519,11 +649,7 @@ export default function Finanzas() {
             </div>
           ) : (
             fechasOrdenadas.map(fecha => {
-              const movsDelDia = movimientosAgrupados[fecha].sort((a, b) => {
-                const timeA = a.hora || '00:00:00';
-                const timeB = b.hora || '00:00:00';
-                return timeB.localeCompare(timeA);
-              });
+              const movsDelDia = movimientosAgrupados[fecha];
               
               const subtotal = movsDelDia.reduce((sum, m) => 
                 sum + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0
@@ -577,6 +703,43 @@ export default function Finanzas() {
             })
           )}
         </div>
+
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.pageBtn}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(1)}
+            >
+              «
+            </button>
+            <button
+              className={styles.pageBtn}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => p - 1)}
+            >
+              ‹
+            </button>
+            <span className={styles.pageInfo}>
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              className={styles.pageBtn}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
+            >
+              ›
+            </button>
+            <button
+              className={styles.pageBtn}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+            >
+              »
+            </button>
+          </div>
+        )}
 
         {/* Registros */}
         <div className={styles.registrosSection}>
