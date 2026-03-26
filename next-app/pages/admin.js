@@ -190,9 +190,9 @@ function Admin() {
           background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
           border: '1px solid var(--border-color)'
         }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>💳 Métodos de Pago</h3>
+          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>� Configuración de Carrito</h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
-            Configurá los métodos de pago disponibles en el catálogo público: transferencia bancaria, WhatsApp y retiro en local.
+            Configurá los métodos de pago, datos de retiro y contacto disponibles en el catálogo público.
           </p>
           <button
             onClick={() => router.push('/admin/payment-config')}
