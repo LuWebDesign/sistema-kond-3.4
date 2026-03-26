@@ -299,9 +299,19 @@ export default function Finanzas() {
 
     // Ordenar: más reciente primero (fecha DESC, hora DESC, created_at DESC)
     filtered.sort((a, b) => {
-      const fechaCmp = (b.fecha || '').localeCompare(a.fecha || '');
+      const fechaCmp = (b.fecha || '0000-00-00').localeCompare(a.fecha || '0000-00-00');
       if (fechaCmp !== 0) return fechaCmp;
-      const horaCmp = (b.hora || '00:00:00').localeCompare(a.hora || '00:00:00');
+      // Normalizar hora a HH:MM:SS para comparación consistente
+      const normHora = (h) => {
+        if (!h) return '00:00:00';
+        const parts = h.split(':');
+        return [
+          (parts[0] || '00').padStart(2, '0'),
+          (parts[1] || '00').padStart(2, '0'),
+          (parts[2] || '00').padStart(2, '0')
+        ].join(':');
+      };
+      const horaCmp = normHora(b.hora).localeCompare(normHora(a.hora));
       if (horaCmp !== 0) return horaCmp;
       return (b.created_at || '').localeCompare(a.created_at || '');
     });

@@ -14,6 +14,7 @@ export default async function handler(req, res) {
           .from('movimientos_financieros')
           .select('*')
           .order('fecha', { ascending: false })
+          .order('hora', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
         if (error) throw error
         return res.status(200).json({ data })
