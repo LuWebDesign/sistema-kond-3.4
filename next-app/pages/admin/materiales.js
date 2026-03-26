@@ -275,6 +275,17 @@ function Materiales() {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
   }
 
+  const handleToggleDark = useCallback(() => {
+    const next = !darkMode
+    setDarkMode(next)
+    try { localStorage.setItem('finanzas_dark', JSON.stringify(next)) } catch {}
+  }, [darkMode])
+
+  const tipoColor = (tipo) => {
+    const map = { mdf: '#2563eb', melamina: '#7c3aed', 'acrílico': '#059669', acrilico: '#059669', vidrio: '#0891b2', madera: '#d97706', aluminio: '#64748b', metal: '#64748b', pvc: '#db2777' }
+    return map[(tipo || '').toLowerCase()] || '#64748b'
+  }
+
   return (
     <Layout>
   <div className={`${styles.container} ${darkMode ? styles.dark : ''}`}>
@@ -283,24 +294,61 @@ function Materiales() {
             <h1 className={styles.title}>Materiales</h1>
             <p className={styles.subtitle}>Gestión de materiales: costos, tamaños, espesor y proveedores</p>
           </div>
-          <div>
+          <div className={styles.headerActions}>
+            <button className={styles.darkToggle} onClick={handleToggleDark} title="Alternar modo oscuro">
+              {darkMode ? '☀️' : '🌙'}
+            </button>
             <button className={styles.btnPrimary} onClick={() => { setShowForm(true); setEditingId(null); setForm({ nombre: '', tipo: '', tamano: '', espesor: '', costoUnitario: '', proveedor: '', stock: '', unidad: 'cm', notas: '' }) }}>
-              Nuevo material
+              + Nuevo material
             </button>
           </div>
         </div>
 
+        {!isLoading && materiales.length > 0 && (
+          <div className={styles.kpiStrip}>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiIcon}>📦</span>
+              <div>
+                <div className={styles.kpiLabel}>Materiales</div>
+                <div className={styles.kpiValue}>{materiales.length}</div>
+              </div>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiIcon}>🗂️</span>
+              <div>
+                <div className={styles.kpiLabel}>Tipos</div>
+                <div className={styles.kpiValue}>{[...new Set(materiales.filter(m => m.tipo).map(m => m.tipo))].length}</div>
+              </div>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiIcon}>⚠️</span>
+              <div>
+                <div className={styles.kpiLabel}>Sin stock</div>
+                <div className={`${styles.kpiValue} ${materiales.filter(m => !m.stock || Number(m.stock) <= 0).length > 0 ? styles.kpiAlert : ''}`}>
+                  {materiales.filter(m => !m.stock || Number(m.stock) <= 0).length}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className={styles.grid}>
           <div className={styles.list}>
-            {materiales.length === 0 ? (
-              <div className={styles.empty}>No hay materiales definidos</div>
+            {isLoading ? (
+              <div className={styles.loading}>Cargando materiales…</div>
+            ) : materiales.length === 0 ? (
+              <div className={styles.empty}>
+                <div className={styles.emptyIcon}>📦</div>
+                <div className={styles.emptyText}>No hay materiales definidos</div>
+                <div className={styles.emptyHint}>Usá el botón «+ Nuevo material» para agregar el primero</div>
+              </div>
             ) : (
               materiales.map(m => (
-                <div key={m.id} className={styles.card}>
+                <div key={m.id} className={styles.card} style={{ borderLeftColor: tipoColor(m.tipo) }}>
                   <div className={styles.cardHeader}>
-                    <div>
+                    <div className={styles.cardTitleRow}>
                       <strong className={styles.name}>{m.nombre}</strong>
-                      <div className={styles.meta}>ID: {m.id} • {m.tipo} • {m.tamano} {m.unidad} • Espesor: {m.espesor}</div>
+                      {m.tipo && <span className={styles.tipoBadge} style={{ background: tipoColor(m.tipo) + '18', color: tipoColor(m.tipo) }}>{m.tipo}</span>}
                     </div>
                     <div className={styles.actions}>
                       <button className={styles.btnSmall} onClick={() => handleEdit(m)}>Editar</button>
@@ -308,12 +356,31 @@ function Materiales() {
                     </div>
                   </div>
 
-                  <div className={styles.cardBody}>
-                    <div>Proveedor: <strong>{m.proveedor || '—'}</strong></div>
-                    <div>Stock: <strong>{m.stock || 0} {m.unidad}</strong></div>
-                    <div>Costo unitario: <strong>{formatCurrency(m.costoUnitario)}</strong></div>
-                    {m.notas && <div className={styles.notas}>Notas: {m.notas}</div>}
+                  <div className={styles.cardInfo}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Costo</span>
+                      <span className={`${styles.infoValue} ${styles.infoCost}`}>{formatCurrency(m.costoUnitario)}</span>
+                    </div>
+                    {m.tamano && <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Tamaño</span>
+                      <span className={styles.infoValue}>{m.tamano} {m.unidad}</span>
+                    </div>}
+                    {m.espesor && <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Espesor</span>
+                      <span className={styles.infoValue}>{m.espesor}</span>
+                    </div>}
+                    {m.proveedor && <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Proveedor</span>
+                      <span className={styles.infoValue}>{m.proveedor}</span>
+                    </div>}
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Stock</span>
+                      <span className={`${styles.stockPill} ${!m.stock || Number(m.stock) <= 0 ? styles.stockCero : Number(m.stock) <= 5 ? styles.stockBajo : styles.stockOk}`}>
+                        {m.stock || 0} {m.unidad}
+                      </span>
+                    </div>
                   </div>
+                  {m.notas && <div className={styles.notas}>{m.notas}</div>}
                 </div>
               ))
             )}
