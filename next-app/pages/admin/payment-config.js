@@ -27,6 +27,9 @@ function PaymentConfigAdmin() {
   const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(false)
   const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(false)
   const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(false)
+  const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(false)
+  const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(false)
+  const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(false)
 
   useEffect(() => {
     loadConfig()
@@ -42,6 +45,15 @@ function PaymentConfigAdmin() {
       }
       if (paymentConfig.retiro.direccion) {
         setIsRetiroCollapsed(true)
+      }
+      if (paymentConfig.textos?.infoTransferencia) {
+        setIsTextoTransferenciaCollapsed(true)
+      }
+      if (paymentConfig.textos?.infoWhatsapp) {
+        setIsTextoWhatsappCollapsed(true)
+      }
+      if (paymentConfig.textos?.infoRetiro) {
+        setIsTextoRetiroCollapsed(true)
       }
     }
   }, [isLoading, paymentConfig.transferencia.alias, paymentConfig.transferencia.cbu, paymentConfig.whatsapp.numero, paymentConfig.retiro.direccion])
@@ -254,66 +266,90 @@ function PaymentConfigAdmin() {
             <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)' }}>Bloques informativos que ve el cliente al finalizar la compra</p>
 
             {/* Info Transferencia */}
-            <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>ℹ️ Información sobre Transferencia</label>
-                <button
-                  type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferenciaEnabled: !prev.textos?.infoTransferenciaEnabled } }))}
-                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
-                >
-                  {paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'Visible' : 'No visible'}
-                </button>
+            <div style={{ marginBottom: 12, padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14 }}>🏦 Transferencia Bancaria</h3>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>Texto informativo que ve el cliente</p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferenciaEnabled: !prev.textos?.infoTransferenciaEnabled } }))}
+                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                  >
+                    {paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'Visible' : 'No visible'}
+                  </button>
+                  <button type="button" onClick={() => setIsTextoTransferenciaCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12 }}>{isTextoTransferenciaCollapsed ? 'Editar' : 'Ocultar'}</button>
+                </div>
               </div>
-              <textarea
-                rows={3}
-                placeholder="Nota sobre transferencia..."
-                value={paymentConfig.textos?.infoTransferencia || ''}
-                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferencia: e.target.value } }))}
-                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
-              />
+              {!isTextoTransferenciaCollapsed && (
+                <textarea
+                  rows={3}
+                  placeholder="Nota sobre transferencia..."
+                  value={paymentConfig.textos?.infoTransferencia || ''}
+                  onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferencia: e.target.value } }))}
+                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box', marginTop: 12 }}
+                />
+              )}
             </div>
 
             {/* Info WhatsApp */}
-            <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>💬 WhatsApp</label>
-                <button
-                  type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsappEnabled: !prev.textos?.infoWhatsappEnabled } }))}
-                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
-                >
-                  {paymentConfig.textos?.infoWhatsappEnabled !== false ? 'Visible' : 'No visible'}
-                </button>
+            <div style={{ marginBottom: 12, padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14 }}>💬 WhatsApp</h3>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>Texto informativo que ve el cliente</p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsappEnabled: !prev.textos?.infoWhatsappEnabled } }))}
+                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                  >
+                    {paymentConfig.textos?.infoWhatsappEnabled !== false ? 'Visible' : 'No visible'}
+                  </button>
+                  <button type="button" onClick={() => setIsTextoWhatsappCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12 }}>{isTextoWhatsappCollapsed ? 'Editar' : 'Ocultar'}</button>
+                </div>
               </div>
-              <textarea
-                rows={3}
-                placeholder="Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega."
-                value={paymentConfig.textos?.infoWhatsapp || ''}
-                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsapp: e.target.value } }))}
-                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
-              />
+              {!isTextoWhatsappCollapsed && (
+                <textarea
+                  rows={3}
+                  placeholder="Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega."
+                  value={paymentConfig.textos?.infoWhatsapp || ''}
+                  onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsapp: e.target.value } }))}
+                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box', marginTop: 12 }}
+                />
+              )}
             </div>
 
             {/* Info Retiro */}
-            <div style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>📍 Retiro en local</label>
-                <button
-                  type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiroEnabled: !prev.textos?.infoRetiroEnabled } }))}
-                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoRetiroEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoRetiroEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
-                >
-                  {paymentConfig.textos?.infoRetiroEnabled !== false ? 'Visible' : 'No visible'}
-                </button>
+            <div style={{ padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14 }}>📦 Retiro</h3>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>Texto informativo que ve el cliente</p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiroEnabled: !prev.textos?.infoRetiroEnabled } }))}
+                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoRetiroEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoRetiroEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
+                  >
+                    {paymentConfig.textos?.infoRetiroEnabled !== false ? 'Visible' : 'No visible'}
+                  </button>
+                  <button type="button" onClick={() => setIsTextoRetiroCollapsed(prev => !prev)} style={{ padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12 }}>{isTextoRetiroCollapsed ? 'Editar' : 'Ocultar'}</button>
+                </div>
               </div>
-              <textarea
-                rows={3}
-                placeholder="Nota adicional sobre el retiro en local..."
-                value={paymentConfig.textos?.infoRetiro || ''}
-                onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiro: e.target.value } }))}
-                style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box' }}
-              />
+              {!isTextoRetiroCollapsed && (
+                <textarea
+                  rows={3}
+                  placeholder="Nota adicional sobre el retiro en local..."
+                  value={paymentConfig.textos?.infoRetiro || ''}
+                  onChange={(e) => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiro: e.target.value } }))}
+                  style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', resize: 'vertical', boxSizing: 'border-box', marginTop: 12 }}
+                />
+              )}
             </div>
           </div>
 
