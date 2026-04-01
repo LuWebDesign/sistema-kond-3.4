@@ -1050,342 +1050,552 @@ function ProductsComponent() {
           {/* Formulario Agregar Producto */}
           {showAddForm && (
             <div style={{
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '20px',
-              marginTop: '16px'
+              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)',
+              border: '2px solid var(--border-color)',
+              borderRadius: '16px',
+              padding: '32px',
+              marginTop: '20px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)'
             }}>
-              <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>
-                Agregar Nuevo Producto
-              </h3>
-              
+              {/* Header del formulario */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '16px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '32px',
+                paddingBottom: '20px',
+                borderBottom: '2px solid var(--border-color)'
               }}>
-                {/* Nombre */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Nombre *
-                  </label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'categoria')}
-                    placeholder="Ej: Llavero Corazón"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
+                <div style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '28px',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                }}>
+                  ✨
                 </div>
-
-                {/* Categoría */}
                 <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Categoría
-                  </label>
-                  <select
-                    name="categoria"
-                    value={formData.categoria}
-                    onChange={(e) => {
-                      handleInputChange(e)
-                      // Si selecciona "nueva", mostrar campo personalizado
-                      if (e.target.value === '__nueva__') {
-                        setFormData(prev => ({ ...prev, categoria: '', categoriaPersonalizada: '' }))
-                        setTimeout(() => {
-                          const input = document.querySelector('[name="categoriaPersonalizada"]')
-                          if (input) input.focus()
-                        }, 100)
-                      }
-                    }}
-                    onKeyDown={(e) => handleKeyDown(e, formData.categoria === '' && formData.categoriaPersonalizada === '' ? 'categoriaPersonalizada' : 'tipo')}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="">Seleccionar categoría</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                    <option value="__nueva__">✏️ Crear nueva categoría...</option>
-                  </select>
-                  
-                  {/* Campo para categoría personalizada */}
-                  {(formData.categoria === '' && formData.categoriaPersonalizada !== undefined) && (
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Agregar Nuevo Producto
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Completa los campos para crear un nuevo producto
+                  </p>
+                </div>
+              </div>
+              
+              {/* Sección: Información Básica */}
+              <div style={{
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>📋</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Información Básica
+                  </h4>
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {/* Nombre */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Nombre <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
                     <input
                       type="text"
-                      name="categoriaPersonalizada"
-                      value={formData.categoriaPersonalizada}
+                      name="nombre"
+                      value={formData.nombre}
                       onChange={handleInputChange}
-                      onKeyDown={(e) => handleKeyDown(e, 'tipo')}
-                      placeholder="Ingrese nueva categoría"
+                      onKeyDown={(e) => handleKeyDown(e, 'categoria')}
+                      placeholder="Ej: Llavero Corazón"
                       style={{
                         width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
                         background: 'var(--bg-secondary)',
                         color: 'var(--text-primary)',
-                        marginTop: '8px'
+                        fontSize: '0.95rem',
+                        transition: 'all 0.2s',
+                        outline: 'none'
                       }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                     />
-                  )}
-                </div>
-
-                {/* Tipo */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Tipo *
-                  </label>
-                  <select
-                    name="tipo"
-                    value={formData.tipo}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'medidas')}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="Venta">Venta</option>
-                    <option value="Presupuesto">Presupuesto</option>
-                    <option value="Stock">Stock</option>
-                  </select>
-                </div>
-
-                {/* Medidas */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Medidas *
-                  </label>
-                  <input
-                    type="text"
-                    name="medidas"
-                    value={formData.medidas}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'tiempoUnitario')}
-                    placeholder="Ej: 5x3 cm"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Tiempo Unitario */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Tiempo Unitario (HH:MM:SS) *
-                  </label>
-                  <input
-                    type="text"
-                    name="tiempoUnitario"
-                    value={formData.tiempoUnitario}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'unidades')}
-                    placeholder="00:13:00"
-                    pattern="^[0-9]{2}:[0-9]{2}:[0-9]{2}$"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Unidades */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Unidades a producir *
-                  </label>
-                  <input
-                    type="number"
-                    name="unidades"
-                    value={formData.unidades}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
-                    min="1"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Stock */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Stock
-                  </label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
-                    min="0"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Unidades por Placa */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Unidades por Placa
-                  </label>
-                  <input
-                    type="number"
-                    name="unidadesPorPlaca"
-                    value={formData.unidadesPorPlaca}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'usoPlacas')}
-                    min="1"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Uso de Placas */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Uso de Placas
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input
-                      type="number"
-                      name="usoPlacas"
-                      value={formData.usoPlacas}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => handleKeyDown(e, 'materialId')}
-                      readOnly={!calculatedFields.isUsoPlacasManual}
-                      min="0"
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: calculatedFields.isUsoPlacasManual ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        cursor: calculatedFields.isUsoPlacasManual ? 'text' : 'not-allowed'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => toggleFieldMode('isUsoPlacasManual')}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      {calculatedFields.isUsoPlacasManual ? 'Auto' : 'Manual'}
-                    </button>
                   </div>
-                </div>
 
-                {/* Material (selección desde Materiales) */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Material
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {/* Categoría */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Categoría
+                    </label>
                     <select
-                      name="materialId"
-                      value={formData.materialId || ''}
+                      name="categoria"
+                      value={formData.categoria}
                       onChange={(e) => {
-                        const id = e.target.value
-                        const sel = materials.find(x => String(x.id) === String(id))
-                        if (sel) {
-                          setFormData(prev => ({ ...prev, materialId: id, costoMaterial: Number(sel.costoUnitario || 0), costoPlaca: Number(sel.costoUnitario || 0) }))
-                        } else {
-                          setFormData(prev => ({ ...prev, materialId: '', costoMaterial: 0, costoPlaca: 0 }))
+                        handleInputChange(e)
+                        if (e.target.value === '__nueva__') {
+                          setFormData(prev => ({ ...prev, categoria: '', categoriaPersonalizada: '' }))
+                          setTimeout(() => {
+                            const input = document.querySelector('[name="categoriaPersonalizada"]')
+                            if (input) input.focus()
+                          }, 100)
                         }
                       }}
-                      onKeyDown={(e) => handleKeyDown(e, 'ensamble')}
+                      onKeyDown={(e) => handleKeyDown(e, formData.categoria === '' && formData.categoriaPersonalizada === '' ? 'categoriaPersonalizada' : 'tipo')}
                       style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
                         background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)'
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer'
                       }}
                     >
-                      <option value="">-- Seleccionar material --</option>
-                      {materials.map(m => (
-                        <option key={m.id} value={m.id}>
-                          {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
-                        </option>
+                      <option value="">Seleccionar categoría</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
+                      <option value="__nueva__">✏️ Crear nueva categoría...</option>
                     </select>
                     
-                    {formData.materialId && (
-                      <button
-                        type="button"
-                        onClick={() => startEditingMaterial(formData.materialId)}
+                    {(formData.categoria === '' && formData.categoriaPersonalizada !== undefined) && (
+                      <input
+                        type="text"
+                        name="categoriaPersonalizada"
+                        value={formData.categoriaPersonalizada}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => handleKeyDown(e, 'tipo')}
+                        placeholder="Ingrese nueva categoría"
                         style={{
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--accent-blue)',
-                          color: 'white',
-                          cursor: 'pointer',
-                          fontSize: '0.7rem'
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid #3b82f6',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          marginTop: '12px'
                         }}
-                      >
-                        ✏️ Editar
-                      </button>
+                      />
                     )}
                   </div>
-                  
-                  {/* Formulario de edición de material */}
-                  {editingMaterial && (
+
+                  {/* Tipo */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Tipo <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      name="tipo"
+                      value={formData.tipo}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'medidas')}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Venta">Venta</option>
+                      <option value="Presupuesto">Presupuesto</option>
+                      <option value="Stock">Stock</option>
+                    </select>
+                  </div>
+
+                  {/* Medidas */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Medidas <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="medidas"
+                      value={formData.medidas}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'tiempoUnitario')}
+                      placeholder="Ej: 5x3 cm"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        transition: 'all 0.2s',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sección: Producción y Tiempos */}
+              <div style={{
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>⏱️</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Producción y Tiempos
+                  </h4>
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {/* Tiempo Unitario */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Tiempo Unitario <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        name="tiempoUnitario"
+                        value={formData.tiempoUnitario}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => handleKeyDown(e, 'unidades')}
+                        placeholder="00:13:00"
+                        pattern="^[0-9]{2}:[0-9]{2}:[0-9]{2}$"
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem'
+                        }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.85rem',
+                        pointerEvents: 'none'
+                      }}>
+                        HH:MM:SS
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Unidades */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Unidades a producir <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="unidades"
+                      value={formData.unidades}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Stock */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      value={formData.stock}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'unidadesPorPlaca')}
+                      min="0"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Tiempo Total (calculado) */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Tiempo Total
+                    </label>
+                    <div style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '2px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: '#10b981',
+                      fontSize: '0.95rem',
+                      fontWeight: 600
+                    }}>
+                      {calculatedFields.tiempoTotal}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sección: Material y Placas */}
+              <div style={{
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>🎨</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Material y Placas
+                  </h4>
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {/* Unidades por Placa */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Unidades por Placa
+                    </label>
+                    <input
+                      type="number"
+                      name="unidadesPorPlaca"
+                      value={formData.unidadesPorPlaca}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'usoPlacas')}
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Uso de Placas */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Uso de Placas
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        type="number"
+                        name="usoPlacas"
+                        value={formData.usoPlacas}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => handleKeyDown(e, 'materialId')}
+                        readOnly={!calculatedFields.isUsoPlacasManual}
+                        min="0"
+                        style={{
+                          flex: 1,
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: calculatedFields.isUsoPlacasManual ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          cursor: calculatedFields.isUsoPlacasManual ? 'text' : 'not-allowed'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => toggleFieldMode('isUsoPlacasManual')}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: calculatedFields.isUsoPlacasManual ? '#3b82f6' : 'var(--bg-secondary)',
+                          color: calculatedFields.isUsoPlacasManual ? 'white' : 'var(--text-primary)',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          minWidth: '80px'
+                        }}
+                      >
+                        {calculatedFields.isUsoPlacasManual ? 'Manual' : 'Auto'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Material (selección desde Materiales) */}
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Material
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <select
+                        name="materialId"
+                        value={formData.materialId || ''}
+                        onChange={(e) => {
+                          const id = e.target.value
+                          const sel = materials.find(x => String(x.id) === String(id))
+                          if (sel) {
+                            setFormData(prev => ({ ...prev, materialId: id, costoMaterial: Number(sel.costoUnitario || 0), costoPlaca: Number(sel.costoUnitario || 0) }))
+                          } else {
+                            setFormData(prev => ({ ...prev, materialId: '', costoMaterial: 0, costoPlaca: 0 }))
+                          }
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, 'ensamble')}
+                        style={{
+                          flex: 1,
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="">-- Seleccionar material --</option>
+                        {materials.map(m => (
+                          <option key={m.id} value={m.id}>
+                            {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {formData.materialId && (
+                        <button
+                          type="button"
+                          onClick={() => startEditingMaterial(formData.materialId)}
+                          style={{
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: '#3b82f6',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          ✏️ Editar
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Formulario de edición de material */}
+                    {editingMaterial && (
                     <div style={{
                       marginTop: '12px',
                       padding: '16px',
@@ -1509,123 +1719,199 @@ function ProductsComponent() {
                   )}
                 </div>
 
-                {/* Ensamble */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Ensamble
-                  </label>
-                  <select
-                    name="ensamble"
-                    value={formData.ensamble}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'costoPlaca')}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="Sin ensamble">Sin ensamble</option>
-                    <option value="Manual">Manual</option>
-                    <option value="Automático">Automático</option>
-                  </select>
-                </div>
+                  {/* Ensamble */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Ensamble
+                    </label>
+                    <select
+                      name="ensamble"
+                      value={formData.ensamble}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'costoPlaca')}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Sin ensamble">Sin ensamble</option>
+                      <option value="Manual">Manual</option>
+                      <option value="Automático">Automático</option>
+                    </select>
+                  </div>
 
-                {/* Costo Placa */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Costo Placa ($)
-                  </label>
-                  <input
-                    type="number"
-                    name="costoPlaca"
-                    value={formData.costoPlaca}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
-                    min="0"
-                    step="0.01"
-                    readOnly
-                    title="Este valor se extrae del material seleccionado"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-primary)',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
+                  {/* Costo Placa */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Costo Placa ($)
+                    </label>
+                    <input
+                      type="number"
+                      name="costoPlaca"
+                      value={formData.costoPlaca}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
+                      min="0"
+                      step="0.01"
+                      readOnly
+                      title="Este valor se extrae del material seleccionado"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-tertiary)',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.95rem',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                  </div>
 
-                {/* Margen Material */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Margen Material (%)
-                  </label>
-                  <input
-                    type="number"
-                    name="margenMaterial"
-                    value={formData.margenMaterial}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'precioUnitario')}
-                    min="0"
-                    step="0.1"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
+                  {/* Margen Material */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Margen Material (%)
+                    </label>
+                    <input
+                      type="number"
+                      name="margenMaterial"
+                      value={formData.margenMaterial}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => handleKeyDown(e, 'precioUnitario')}
+                      min="0"
+                      step="0.1"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
 
-                {/* Precio Unitario */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Precio Unitario *
-                  </label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                  {/* Precio por Minuto (calculado) */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Precio por Minuto
+                    </label>
                     <div style={{
                       width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '2px solid var(--border-color)',
                       background: 'var(--bg-tertiary)',
-                      color: '#2563eb',
-                      fontSize: '1.05rem',
-                      fontWeight: 700,
-                      textAlign: 'center'
+                      color: '#10b981',
+                      fontSize: '0.95rem',
+                      fontWeight: 600
                     }}>
-                      {formatCurrency(formData.precioUnitario)}
+                      {formatCurrency(calculatedFields.precioPorMinuto)}
                     </div>
+                  </div>
+                </div>
+              </div>
 
-                    {calculatedFields.isPrecioUnitarioManual && (
-                      <input
-                        type="number"
-                        name="precioUnitario"
-                        value={formData.precioUnitario}
-                        onChange={handleInputChange}
-                        onKeyDown={(e) => handleKeyDown(e, null)}
-                        min="0"
-                        step="0.01"
-                        style={{
-                          width: '100%',
-                          padding: '10px 14px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          color: '#2563eb',
-                          fontSize: '1.05rem',
-                          fontWeight: 700
-                        }}
-                      />
-                    )}
+              {/* Sección: Precios */}
+              <div style={{
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>💰</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Gestión de Precios
+                  </h4>
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {/* Precio Unitario */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Precio Unitario <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{
+                        width: '100%',
+                        padding: '16px 20px',
+                        borderRadius: '12px',
+                        border: '3px solid #3b82f6',
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%)',
+                        color: '#2563eb',
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+                      }}>
+                        {formatCurrency(formData.precioUnitario)}
+                      </div>
+
+                      {calculatedFields.isPrecioUnitarioManual && (
+                        <input
+                          type="number"
+                          name="precioUnitario"
+                          value={formData.precioUnitario}
+                          onChange={handleInputChange}
+                          onKeyDown={(e) => handleKeyDown(e, null)}
+                          min="0"
+                          step="0.01"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid #3b82f6',
+                            background: 'var(--bg-secondary)',
+                            color: '#2563eb',
+                            fontSize: '1.05rem',
+                            fontWeight: 700
+                          }}
+                        />
+                      )}
 
                     {/* Precio Promos (opcional) */}
                     <div style={{ width: '100%', marginTop: '8px' }}>
@@ -1649,90 +1935,148 @@ function ProductsComponent() {
                       />
                     </div>
 
-                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+
                       <button
                         type="button"
                         onClick={() => toggleFieldMode('isPrecioUnitarioManual')}
                         style={{
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
+                          padding: '10px 20px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: calculatedFields.isPrecioUnitarioManual ? '#3b82f6' : 'var(--bg-secondary)',
+                          color: calculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)',
                           cursor: 'pointer',
-                          fontSize: '0.9rem'
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          minWidth: '100px'
                         }}
                       >
-                        {calculatedFields.isPrecioUnitarioManual ? 'Auto' : 'Manual'}
+                        {calculatedFields.isPrecioUnitarioManual ? 'Manual' : 'Auto'}
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Campos calculados */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Tiempo Total
-                  </label>
-                  <input
-                    type="text"
-                    value={calculatedFields.tiempoTotal}
-                    readOnly
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-muted)',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Precio por Minuto
-                  </label>
-                  <input
-                    type="text"
-                    value={formatCurrency(calculatedFields.precioPorMinuto)}
-                    readOnly
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-muted)',
-                      cursor: 'not-allowed'
-                    }}
-                  />
+                  {/* Precio Promos */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '8px', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600,
+                      color: 'var(--text-primary)' 
+                    }}>
+                      Precio Promociones (opcional)
+                    </label>
+                    <input
+                      type="number"
+                      name="precioPromos"
+                      value={formData.precioPromos}
+                      onChange={handleInputChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="Dejar vacío para precio por defecto"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                    <small style={{ 
+                      display: 'block', 
+                      marginTop: '6px', 
+                      fontSize: '0.8rem', 
+                      color: 'var(--text-secondary)' 
+                    }}>
+                      Precio afectado por cupones y promociones
+                    </small>
+                  </div>
                 </div>
               </div>
 
-              {/* Imagen del producto */}
+              {/* Sección: Imágenes */}
               <div style={{
-                marginTop: '12px'
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)'
               }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  Imágenes (opcional, hasta 5)
-                </label>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>📸</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Imágenes del Producto
+                  </h4>
+                </div>
+                
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '12px', 
+                    fontSize: '0.9rem', 
+                    fontWeight: 600,
+                    color: 'var(--text-primary)' 
+                  }}>
+                    Subir imágenes (hasta 5)
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleImageChange}
                     style={{
-                      flex: 1
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '2px dashed var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
                     }}
                   />
+                  
                   {imagePreviews.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{
+                      marginTop: '16px',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                      gap: '12px'
+                    }}>
                       {imagePreviews.map((preview, index) => (
-                        <div key={index} style={{ width: 72, height: 48, borderRadius: 6, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                          <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Preview ${index + 1}`} />
+                        <div key={index} style={{
+                          width: '100%',
+                          aspectRatio: '1',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          border: '2px solid var(--border-color)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          position: 'relative'
+                        }}>
+                          <img 
+                            src={preview} 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover' 
+                            }} 
+                            alt={`Preview ${index + 1}`} 
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            color: 'white',
+                            fontSize: '0.75rem',
+                            padding: '4px',
+                            textAlign: 'center'
+                          }}>
+                            {index + 1}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1740,55 +2084,126 @@ function ProductsComponent() {
                 </div>
               </div>
 
-              {/* Opciones adicionales */}
+              {/* Sección: Visibilidad */}
               <div style={{
-                background: 'var(--bg-tertiary)',
-                borderRadius: '8px',
-                padding: '16px',
-                marginTop: '20px'
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '2px solid var(--border-color)'
               }}>
-                <h4 style={{ 
-                  margin: '0 0 12px 0', 
-                  fontSize: '0.95rem', 
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600 
-                }}>
-                  Opciones de Visibilidad
-                </h4>
-                
-                <div style={{ padding: '8px', border: '1px solid #e6e6e6', borderRadius: 8, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', maxWidth: '520px' }}>
-                  <div>
-                    <div className="vis-title">Publicar en catálogo público</div>
-                    <div style={{ fontSize:'0.82rem', color:'#6b7280' }}>Visible para clientes en el catálogo público</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.publicado || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, publicado: e.target.checked }))}
-                    aria-label="Publicar en catálogo público"
-                    style={{ width: 18, height: 18, cursor: 'pointer' }}
-                  />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '20px' }}>👁️</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Opciones de Visibilidad
+                  </h4>
                 </div>
-                <style jsx>{`
-                  .vis-title { font-weight:700; font-size:0.95rem; color: var(--text-primary); }
-                  @media (prefers-color-scheme: dark) {
-                    .vis-title { color: #374151; }
-                  }
-                `}</style>
+                
+                <div style={{
+                  padding: '16px',
+                  border: '2px solid var(--border-color)',
+                  borderRadius: '10px',
+                  background: 'var(--bg-card)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      fontWeight: 700, 
+                      fontSize: '1rem', 
+                      color: 'var(--text-primary)',
+                      marginBottom: '4px'
+                    }}>
+                      Publicar en catálogo público
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      color: 'var(--text-secondary)' 
+                    }}>
+                      Visible para clientes en el catálogo público
+                    </div>
+                  </div>
+                  <label style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    width: '56px',
+                    height: '30px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.publicado || false}
+                      onChange={(e) => setFormData(prev => ({ ...prev, publicado: e.target.checked }))}
+                      style={{ display: 'none' }}
+                    />
+                    <span style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: formData.publicado ? '#10b981' : '#ccc',
+                      borderRadius: '30px',
+                      transition: 'background 0.3s'
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        content: '',
+                        height: '22px',
+                        width: '22px',
+                        left: formData.publicado ? '30px' : '4px',
+                        bottom: '4px',
+                        background: 'white',
+                        borderRadius: '50%',
+                        transition: 'left 0.3s',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              {/* Botones de Acción */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '2px solid var(--border-color)'
+              }}>
                 <button
                   onClick={handleAddProduct}
                   disabled={!formData.nombre || !formData.medidas}
                   style={{
-                    background: (formData.nombre && formData.medidas) ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    flex: 1,
+                    background: (formData.nombre && formData.medidas) 
+                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                      : 'var(--text-secondary)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    padding: '16px 32px',
                     cursor: (formData.nombre && formData.medidas) ? 'pointer' : 'not-allowed',
-                    fontWeight: '600'
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    boxShadow: (formData.nombre && formData.medidas) 
+                      ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
+                      : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (formData.nombre && formData.medidas) {
+                      e.target.style.transform = 'translateY(-2px)'
+                      e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)'
+                    e.target.style.boxShadow = formData.nombre && formData.medidas 
+                      ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
+                      : 'none'
                   }}
                 >
                   ✅ Agregar Producto
@@ -1826,15 +2241,27 @@ function ProductsComponent() {
                     })
                   }}
                   style={{
+                    flex: 0.6,
                     background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    cursor: 'pointer'
+                    color: 'var(--text-primary)',
+                    border: '2px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '16px 32px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'var(--bg-secondary)'
+                    e.target.style.borderColor = 'var(--text-secondary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'transparent'
+                    e.target.style.borderColor = 'var(--border-color)'
                   }}
                 >
-                  Cancelar
+                  ✕ Cancelar
                 </button>
               </div>
             </div>
