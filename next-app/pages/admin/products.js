@@ -2051,7 +2051,7 @@ function ProductsComponent() {
                     </div>
                   </div>
 
-                  {/* Precio Promos */}
+                  {/* Precio Promos - Solo informativo, gestionado desde Marketing */}
                   <div>
                     <label style={{ 
                       display: 'block', 
@@ -2060,33 +2060,30 @@ function ProductsComponent() {
                       fontWeight: 600,
                       color: 'var(--text-primary)' 
                     }}>
-                      Precio Promociones (opcional)
+                      Precio Promociones
                     </label>
-                    <input
-                      type="number"
-                      name="precioPromos"
-                      value={formData.precioPromos}
-                      onChange={handleInputChange}
-                      min="0"
-                      step="0.01"
-                      placeholder="Dejar vacío para precio por defecto"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '8px',
-                        border: '2px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.95rem'
-                      }}
-                    />
+                    <div style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '2px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.95rem',
+                      fontStyle: 'italic'
+                    }}>
+                      {formData.precioPromos > 0 
+                        ? `${formatCurrency(formData.precioPromos)} (activo desde Marketing)`
+                        : 'Sin promoción activa'
+                      }
+                    </div>
                     <small style={{ 
                       display: 'block', 
                       marginTop: '6px', 
                       fontSize: '0.8rem', 
                       color: 'var(--text-secondary)' 
                     }}>
-                      Precio afectado por cupones y promociones
+                      Los precios promocionales se gestionan desde el módulo de Marketing
                     </small>
                   </div>
                 </div>
