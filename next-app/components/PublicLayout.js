@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
+import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [currentUser, setCurrentUser] = useState(null)
+  const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,6 +28,12 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     } catch (e) {
       // ignore
     }
+    // Cargar estilos personalizados del catálogo
+    getCatalogStyles().then(s => { if (s) setCatalogStyles(s) }).catch(() => {})
+    // Escuchar actualizaciones en tiempo real desde el admin
+    const onStylesUpdate = (e) => { if (e.detail) setCatalogStyles(prev => ({ ...prev, ...e.detail })) }
+    window.addEventListener('catalogStyles:updated', onStylesUpdate)
+    return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
 
   const handleLogout = () => {
@@ -70,16 +78,32 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   return (
     <>
       <title>{title}</title>
+
+      {/* Banner superior personalizable */}
+      {catalogStyles.bannerEnabled && catalogStyles.bannerText && (
+        <div style={{
+          padding: '8px 16px',
+          background: catalogStyles.bannerBg || '#3b82f6',
+          color: catalogStyles.bannerTextColor || '#ffffff',
+          textAlign: 'center',
+          fontWeight: 500,
+          fontSize: '0.9rem',
+          zIndex: 200,
+          position: 'relative'
+        }}>
+          {catalogStyles.bannerText}
+        </div>
+      )}
       
       <div style={{
         minHeight: '100vh',
-        background: 'var(--bg-primary)',
-        color: 'var(--text-primary)',
+        background: catalogStyles.catalogBg || 'var(--bg-primary)',
+        color: catalogStyles.catalogTextColor || 'var(--text-primary)',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
         {/* Header público */}
         <header style={{
-          background: 'var(--bg-card)',
+          background: catalogStyles.headerBg || 'var(--bg-card)',
           borderBottom: '1px solid var(--border-color)',
           padding: '16px 20px',
           display: 'flex',
@@ -97,13 +121,16 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             <Link href="/catalog" style={{
               fontSize: '1.5rem',
               fontWeight: 700,
-              color: 'var(--accent-blue)',
+              color: catalogStyles.headerTextColor || 'var(--accent-blue)',
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
-              KOND
+              {catalogStyles.logoUrl && (
+                <img src={catalogStyles.logoUrl} alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+              )}
+              {catalogStyles.logoText || 'KOND'}
             </Link>
             
             <nav style={{
@@ -202,11 +229,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
           {/* Footer público */}
           <footer style={{
-            background: 'var(--bg-card)',
+            background: catalogStyles.footerBg || 'var(--bg-card)',
             borderTop: '1px solid var(--border-color)',
             padding: '32px 20px',
             textAlign: 'center',
-            color: 'var(--text-secondary)'
+            color: catalogStyles.footerTextColor || 'var(--text-secondary)'
           }}>
           <div style={{
             maxWidth: '1200px',
@@ -220,19 +247,18 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             }}>
               <div>
                 <h3 style={{
-                  color: 'var(--text-primary)',
+                  color: catalogStyles.footerTextColor || 'var(--text-primary)',
                   marginBottom: '16px',
                   fontSize: '1.1rem',
                   fontWeight: 600
                 }}>
-                  KOND
+                  {catalogStyles.logoText || 'KOND'}
                 </h3>
                 <p style={{
                   fontSize: '0.9rem',
                   lineHeight: 1.6
                 }}>
-                  Tu tienda de confianza para productos de calidad. 
-                  Comprá fácil y seguro desde la comodidad de tu hogar.
+                  {catalogStyles.footerDescription || 'Tu tienda de confianza para productos de calidad. Comprá fácil y seguro desde la comodidad de tu hogar.'}
                 </p>
               </div>
               
@@ -290,9 +316,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   gap: '8px',
                   fontSize: '0.9rem'
                 }}>
-                  <div>📱 +54 11 1234-5678</div>
-                  <div>📧 info@kond.com</div>
-                  <div>📍 Buenos Aires, Argentina</div>
+                  <div>📱 {catalogStyles.footerPhone || '+54 11 1234-5678'}</div>
+                  <div>📧 {catalogStyles.footerEmail || 'info@kond.com'}</div>
+                  <div>📍 {catalogStyles.footerAddress || 'Buenos Aires, Argentina'}</div>
                 </div>
               </div>
             </div>
@@ -379,6 +405,27 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           }
         }
       `}</style>
+
+      {/* Override dinámico de variables CSS según estilos del admin */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        :root {
+          ${catalogStyles.accentColor ? `--accent-blue: ${catalogStyles.accentColor};` : ''}
+          ${catalogStyles.accentColor ? `--accent-color: ${catalogStyles.accentColor};` : ''}
+          ${catalogStyles.buttonBg ? `--kond-btn-bg: ${catalogStyles.buttonBg};` : ''}
+          ${catalogStyles.buttonTextColor ? `--kond-btn-color: ${catalogStyles.buttonTextColor};` : ''}
+          ${catalogStyles.buttonRadius ? `--kond-btn-radius: ${catalogStyles.buttonRadius}px;` : ''}
+          ${catalogStyles.cardBg ? `--kond-card-bg: ${catalogStyles.cardBg};` : ''}
+          ${catalogStyles.cardBorderColor ? `--kond-card-border: ${catalogStyles.cardBorderColor};` : ''}
+          ${catalogStyles.cardRadius ? `--kond-card-radius: ${catalogStyles.cardRadius}px;` : ''}
+          ${catalogStyles.badgeBg ? `--kond-badge-bg: ${catalogStyles.badgeBg};` : ''}
+          ${catalogStyles.badgeTextColor ? `--kond-badge-color: ${catalogStyles.badgeTextColor};` : ''}
+        }
+        ${catalogStyles.cardBg ? `.product-card { background: ${catalogStyles.cardBg} !important; }` : ''}
+        ${catalogStyles.cardBorderColor ? `.product-card { border-color: ${catalogStyles.cardBorderColor} !important; }` : ''}
+        ${catalogStyles.cardRadius ? `.product-card { border-radius: ${catalogStyles.cardRadius}px !important; }` : ''}
+        ${catalogStyles.badgeBg ? `.category-badge { background: ${catalogStyles.badgeBg} !important; border: none !important; }` : ''}
+        ${catalogStyles.badgeTextColor ? `.category-badge, .category-badge span { color: ${catalogStyles.badgeTextColor} !important; }` : ''}
+      ` }} />
     </>
   )
 }
