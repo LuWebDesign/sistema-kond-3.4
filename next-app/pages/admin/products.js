@@ -991,7 +991,6 @@ function ProductsComponent() {
                 cursor: 'pointer',
                 fontWeight: '600',
                 textDecoration: 'none',
-                display: 'inline-block',
                 height: '44px',
                 boxSizing: 'border-box',
                 display: 'flex',
@@ -1717,7 +1716,7 @@ function ProductsComponent() {
                       </div>
                     </div>
                   )}
-                </div>
+                  </div>
 
                   {/* Ensamble */}
                   <div>
@@ -1912,29 +1911,6 @@ function ProductsComponent() {
                           }}
                         />
                       )}
-
-                    {/* Precio Promos (opcional) */}
-                    <div style={{ width: '100%', marginTop: '8px' }}>
-                      <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Precio Promos (opcional)</label>
-                      <input
-                        type="number"
-                        name="precioPromos"
-                        value={formData.precioPromos}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        placeholder="Dejar vacío para usar precio unitario o precio promocional"
-                        style={{
-                          width: '100%',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
-                    </div>
-
 
                       <button
                         type="button"
