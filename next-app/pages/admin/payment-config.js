@@ -30,6 +30,15 @@ function PaymentConfigAdmin() {
   const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(false)
   const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(false)
   const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(false)
+  
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    tipo: '',
+    campo: '',
+    actual: false,
+    icon: '',
+    description: ''
+  })
 
   useEffect(() => {
     loadConfig()
@@ -101,26 +110,65 @@ function PaymentConfigAdmin() {
     }
   }
 
-  const handleToggleVisibility = (tipo, campo, actual) => {
-    const nuevoEstado = !actual
-    const mensaje = nuevoEstado 
-      ? `¿Confirmar que querés hacer VISIBLE "${tipo}"?`
-      : `¿Confirmar que querés OCULTAR "${tipo}"?`
-    
-    if (window.confirm(mensaje)) {
-      if (campo.includes('.')) {
-        const [parent, child] = campo.split('.')
-        setPaymentConfig(prev => ({
-          ...prev,
-          [parent]: { ...prev[parent], [child]: nuevoEstado }
-        }))
-      } else {
-        setPaymentConfig(prev => ({
-          ...prev,
-          textos: { ...prev.textos, [campo]: nuevoEstado }
-        }))
-      }
+  const getDescriptionForType = (tipo) => {
+    const descriptions = {
+      'Transferencia Bancaria': 'Los datos de tu cuenta bancaria (alias, CBU/CVU, titular y banco) estarán visibles para que los clientes puedan realizar transferencias. Si lo ocultás, este método de pago no estará disponible en el checkout.',
+      'WhatsApp': 'El botón de contacto por WhatsApp estará disponible para que los clientes puedan coordinar su pedido directamente. Si lo ocultás, este método no estará disponible en el checkout.',
+      'Retiro en Local': 'La opción de retiro en local con tu dirección y horarios estará disponible para los clientes. Si lo ocultás, este método no estará disponible en el checkout.',
+      'Calendario de Fecha de Entrega': 'Los clientes podrán seleccionar una fecha de entrega disponible cuando elijan transferencia. Si lo desactivás, no verán el calendario de fechas.',
+      'Texto Transferencia': 'Este texto informativo aparecerá en el método de transferencia para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.',
+      'Texto WhatsApp': 'Este texto informativo aparecerá en el método de WhatsApp para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.',
+      'Texto Retiro': 'Este texto informativo aparecerá en el método de retiro para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.'
     }
+    return descriptions[tipo] || 'Esta sección será visible u oculta para los clientes en el checkout.'
+  }
+
+  const getIconForType = (tipo) => {
+    const icons = {
+      'Transferencia Bancaria': '🏦',
+      'WhatsApp': '💬',
+      'Retiro en Local': '📦',
+      'Calendario de Fecha de Entrega': '📅',
+      'Texto Transferencia': '🏦',
+      'Texto WhatsApp': '💬',
+      'Texto Retiro': '📦'
+    }
+    return icons[tipo] || '⚙️'
+  }
+
+  const handleToggleVisibility = (tipo, campo, actual) => {
+    setConfirmModal({
+      isOpen: true,
+      tipo,
+      campo,
+      actual,
+      icon: getIconForType(tipo),
+      description: getDescriptionForType(tipo)
+    })
+  }
+
+  const confirmToggle = () => {
+    const nuevoEstado = !confirmModal.actual
+    const campo = confirmModal.campo
+    
+    if (campo.includes('.')) {
+      const [parent, child] = campo.split('.')
+      setPaymentConfig(prev => ({
+        ...prev,
+        [parent]: { ...prev[parent], [child]: nuevoEstado }
+      }))
+    } else {
+      setPaymentConfig(prev => ({
+        ...prev,
+        textos: { ...prev.textos, [campo]: nuevoEstado }
+      }))
+    }
+    
+    setConfirmModal({ ...confirmModal, isOpen: false })
+  }
+
+  const cancelToggle = () => {
+    setConfirmModal({ ...confirmModal, isOpen: false })
   }
 
   if (isLoading) {
@@ -380,6 +428,152 @@ function PaymentConfigAdmin() {
             <button onClick={() => router.back()} style={{ padding: '12px 24px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancelar</button>
           </div>
         </div>
+
+        {/* Modal de confirmación personalizado */}
+        {confirmModal.isOpen && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(4px)'
+          }} onClick={cancelToggle}>
+            <div style={{
+              background: 'var(--bg-card)',
+              borderRadius: 16,
+              padding: 32,
+              maxWidth: 500,
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              border: '1px solid var(--border-color)'
+            }} onClick={(e) => e.stopPropagation()}>
+              {/* Icono y título */}
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>{confirmModal.icon}</div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {confirmModal.tipo}
+                </h2>
+              </div>
+
+              {/* Estado actual/nuevo */}
+              <div style={{
+                background: 'var(--bg-secondary)',
+                padding: 16,
+                borderRadius: 12,
+                marginBottom: 20,
+                border: '2px solid ' + (confirmModal.actual
+                  ? 'rgba(239, 68, 68, 0.3)'
+                  : 'rgba(16, 185, 129, 0.3)')
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Estado actual:</span>
+                  <span style={{
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    background: confirmModal.actual ? 'rgba(16, 185, 129, 0.15)' : 'rgba(107, 114, 128, 0.15)',
+                    color: confirmModal.actual ? '#10b981' : '#6b7280'
+                  }}>
+                    {confirmModal.actual ? '✅ Visible' : '⛔ No visible'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 24 }}>→</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginRight: 8 }}>Cambiar a:</span>
+                    <span style={{
+                      padding: '4px 12px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      background: !confirmModal.actual ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: !confirmModal.actual ? '#10b981' : '#ef4444'
+                    }}>
+                      {!confirmModal.actual ? '✅ Visible' : '⛔ No visible'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 24
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={{ fontSize: 18, marginTop: 2 }}>ℹ️</span>
+                  <p style={{
+                    margin: 0,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: 'var(--text-primary)'
+                  }}>
+                    {confirmModal.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  onClick={confirmToggle}
+                  style={{
+                    flex: 1,
+                    padding: '14px 24px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: !confirmModal.actual ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px ' + (!confirmModal.actual ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'),
+                    transition: 'transform 0.1s, box-shadow 0.1s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  {!confirmModal.actual ? '✅ Hacer Visible' : '⛔ Ocultar'}
+                </button>
+                <button
+                  onClick={cancelToggle}
+                  style={{
+                    flex: 1,
+                    padding: '14px 24px',
+                    borderRadius: 10,
+                    border: '2px solid var(--border-color)',
+                    background: 'transparent',
+                    color: 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    transition: 'all 0.1s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-secondary)'
+                    e.currentTarget.style.borderColor = 'var(--text-secondary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'var(--border-color)'
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )
