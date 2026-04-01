@@ -39,6 +39,7 @@ function ProductsComponent() {
   const [expandedCards, setExpandedCards] = useState(new Set()) // Estado para tarjetas expandidas
   const [editingCards, setEditingCards] = useState(new Set()) // Estado para tarjetas en modo edición
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, nombre } del producto a eliminar
+  const [publishConfirm, setPublishConfirm] = useState(null) // { id, nombre, publicado } del producto a publicar/despublicar
   const [filters, setFilters] = useState({
     search: '',
     type: 'all'
