@@ -791,12 +791,21 @@ function ProductsComponent() {
     await loadProducts()
   }
 
-  // Alternar publicación en catálogo
+  // Alternar publicación en catálogo (solicita confirmación)
   const toggleProductPublication = async (id) => {
     const product = products.find(p => p.id === id)
     if (!product) return
 
-    const { error } = await toggleProductoPublicado(id, !product.publicado)
+    setPublishConfirm({ id, nombre: product.nombre, publicado: product.publicado })
+  }
+
+  // Confirmar cambio de publicación
+  const confirmTogglePublication = async () => {
+    if (!publishConfirm) return
+    const { id, publicado } = publishConfirm
+    setPublishConfirm(null)
+
+    const { error } = await toggleProductoPublicado(id, !publicado)
     
     if (error) {
       console.error('Error toggling publication:', error)
@@ -998,6 +1007,128 @@ function ProductsComponent() {
                 }}
               >
                 Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de publicación */}
+      {publishConfirm && (
+        <div
+          onClick={() => setPublishConfirm(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-secondary, #fff)',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '420px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              textAlign: 'center',
+              animation: 'slideUp 0.2s ease'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: publishConfirm.publicado 
+                ? 'rgba(239, 68, 68, 0.1)' 
+                : 'rgba(16, 185, 129, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '1.5rem'
+            }}>
+              {publishConfirm.publicado ? '🔒' : '🌐'}
+            </div>
+            <h3 style={{
+              margin: '0 0 8px',
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              color: 'var(--text-primary, #111)'
+            }}>
+              {publishConfirm.publicado ? 'Despublicar producto' : 'Publicar producto'}
+            </h3>
+            <p style={{
+              margin: '0 0 8px',
+              color: 'var(--text-secondary, #666)',
+              fontSize: '0.95rem',
+              lineHeight: 1.5
+            }}>
+              {publishConfirm.publicado ? (
+                <>
+                  ¿Deseas ocultar{' '}
+                  <strong style={{ color: 'var(--text-primary, #111)' }}>{publishConfirm.nombre}</strong>
+                  {' '}del catálogo público?
+                </>
+              ) : (
+                <>
+                  ¿Deseas publicar{' '}
+                  <strong style={{ color: 'var(--text-primary, #111)' }}>{publishConfirm.nombre}</strong>
+                  {' '}en el catálogo público?
+                </>
+              )}
+            </p>
+            <p style={{
+              margin: '0 0 24px',
+              color: publishConfirm.publicado ? '#ef4444' : '#10b981',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}>
+              {publishConfirm.publicado 
+                ? 'Los clientes no podrán ver este producto.' 
+                : 'Los clientes podrán ver y solicitar este producto.'}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setPublishConfirm(null)}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color, #ddd)',
+                  background: 'var(--bg-primary, #f5f5f5)',
+                  color: 'var(--text-primary, #333)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmTogglePublication}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: publishConfirm.publicado ? '#ef4444' : '#10b981',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {publishConfirm.publicado ? 'Sí, despublicar' : 'Sí, publicar'}
               </button>
             </div>
           </div>
