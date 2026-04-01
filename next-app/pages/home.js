@@ -499,7 +499,6 @@ export default function Home() {
             <button className="hp-nav-link" onClick={() => scrollToSection('sobre')}>Sobre KOND</button>
             <button className="hp-nav-link" onClick={() => scrollToSection('precios')}>Precios</button>
             <button className="hp-nav-link" onClick={() => scrollToSection('contacto')}>Contacto</button>
-            <Link href="/catalog" className="hp-nav-link">Catálogo</Link>
             <button className="hp-btn-admin" onClick={() => router.push('/admin/login')}>Acceso Admin</button>
           </nav>
           <button className="hp-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menú">
@@ -520,7 +519,6 @@ export default function Home() {
         <button className="hp-nav-link" onClick={() => scrollToSection('sobre')}>Sobre KOND</button>
         <button className="hp-nav-link" onClick={() => scrollToSection('precios')}>Precios</button>
         <button className="hp-nav-link" onClick={() => scrollToSection('contacto')}>Contacto</button>
-        <Link href="/catalog" className="hp-nav-link" onClick={() => setMenuOpen(false)}>Catálogo</Link>
         <button className="hp-btn-admin" onClick={() => { setMenuOpen(false); router.push('/admin/login'); }}>Acceso Admin</button>
       </div>
 
