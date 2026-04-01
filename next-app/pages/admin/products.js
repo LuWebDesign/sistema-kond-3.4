@@ -822,7 +822,6 @@ function ProductsComponent() {
 
   // Alternar modo de edición de tarjeta
   const toggleCardEditing = (id) => {
-    console.log('🔀 toggleCardEditing llamado para producto:', id)
     setEditingCards(prev => {
       const newSet = new Set(prev)
       if (newSet.has(id)) {
@@ -2536,12 +2535,7 @@ function ProductCard({
   // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
   // NO resetear si el usuario está editando, para no perder imágenes/datos no guardados
   useEffect(() => {
-    console.log('🔄 useEffect disparado - isEditing:', isEditing, 'product.id:', product.id)
-    if (isEditing) {
-      console.log('⏸️ Saltando actualización: producto en modo edición')
-      return;
-    }
-    console.log('🔄 Reseteando estado a valores del producto')
+    if (isEditing) return;
     setEditData({
       nombre: product.nombre || '',
       categoria: product.categoria || '',
@@ -2561,7 +2555,6 @@ function ProductCard({
       stock: product.stock || 0
     })
     const initial = product.imagenes || [product.imagen].filter(Boolean) || []
-    console.log('🖼️ Reseteando imágenes a:', initial.length)
     setImagePreviews(initial)
     setImageFiles(initial.map(() => null))
   }, [product, isEditing])
@@ -2670,19 +2663,13 @@ function ProductCard({
   // Manejar cambio de imagen (agregar nuevas manteniendo las existentes)
   const handleImageChange = (e) => {
     const incoming = Array.from(e.target.files || [])
-    console.log('🖼️ handleImageChange - Archivos recibidos:', incoming.length)
-    console.log('📊 Estado actual - imagePreviews:', imagePreviews.length, 'imageFiles:', imageFiles.length)
     if (incoming.length === 0) return
 
     // calcular cuántos slots quedan (max 5)
     const remaining = Math.max(0, 5 - imagePreviews.length)
     const toTake = incoming.slice(0, remaining)
-    console.log('✅ Archivos a agregar:', toTake.length, 'Slots disponibles:', remaining)
 
-    if (toTake.length === 0) {
-      // no hay espacio para más imágenes
-      return
-    }
+    if (toTake.length === 0) return
 
     // Generar previews para los nuevos files
     const previewPromises = toTake.map(file => new Promise((resolve) => {
@@ -2694,9 +2681,6 @@ function ProductCard({
     Promise.all(previewPromises).then(newPreviews => {
       const updatedPreviews = [...imagePreviews, ...newPreviews].slice(0, 5)
       const updatedFiles = [...imageFiles, ...toTake].slice(0, 5)
-      console.log('💾 Guardando nuevo estado:')
-      console.log('   - updatedPreviews:', updatedPreviews.length)
-      console.log('   - updatedFiles:', updatedFiles.length)
       setImagePreviews(updatedPreviews)
       setImageFiles(updatedFiles)
     })
