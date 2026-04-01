@@ -38,6 +38,7 @@ function ProductsComponent() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [expandedCards, setExpandedCards] = useState(new Set()) // Estado para tarjetas expandidas
   const [editingCards, setEditingCards] = useState(new Set()) // Estado para tarjetas en modo edición
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, nombre } del producto a eliminar
   const [filters, setFilters] = useState({
     search: '',
     type: 'all'
@@ -728,46 +729,49 @@ function ProductsComponent() {
     }
   }
 
-  // Eliminar producto
-  const handleDeleteProduct = async (id) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      try {
-        const res = await deleteProducto(id)
+  // Eliminar producto - abre modal de confirmación
+  const handleDeleteProduct = (id) => {
+    const product = products.find(p => p.id === id)
+    setDeleteConfirm({ id, nombre: product?.nombre || 'este producto' })
+  }
 
-          if (res.error) {
-            console.error('Error deleting product:', res.error)
-            alert('Error al eliminar el producto')
-            return
-          }
+  // Confirmar eliminación
+  const confirmDeleteProduct = async () => {
+    if (!deleteConfirm) return
+    const { id } = deleteConfirm
+    setDeleteConfirm(null)
+    try {
+      const res = await deleteProducto(id)
 
-          // Caso exitoso: res.deleted === true
-          if (res.deleted) {
-            // Recargar lista y disparar evento de actualización
-            await loadProducts()
-            try {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new Event('productos:updated'))
-                localStorage.setItem('productos_updated', Date.now().toString())
-              }
-            } catch (e) {}
-
-            // Mensaje informativo: si se limpiaron referencias, el backend ya lo hizo
-            alert('Producto eliminado. Se eliminaron referencias en pedidos no entregados y se preservó el historial de pedidos entregados.')
-            return
-          }
-
-          // Fallback: recargar productos por seguridad
-          await loadProducts()
-          try {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new Event('productos:updated'))
-              localStorage.setItem('productos_updated', Date.now().toString())
-            }
-          } catch (e) {}
-      } catch (error) {
-        console.error('Error deleting product:', error)
+      if (res.error) {
+        console.error('Error deleting product:', res.error)
         alert('Error al eliminar el producto')
+        return
       }
+
+      // Caso exitoso: res.deleted === true
+      if (res.deleted) {
+        await loadProducts()
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('productos:updated'))
+            localStorage.setItem('productos_updated', Date.now().toString())
+          }
+        } catch (e) {}
+        return
+      }
+
+      // Fallback: recargar productos por seguridad
+      await loadProducts()
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('productos:updated'))
+          localStorage.setItem('productos_updated', Date.now().toString())
+        }
+      } catch (e) {}
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      alert('Error al eliminar el producto')
     }
   }
 
@@ -818,6 +822,7 @@ function ProductsComponent() {
 
   // Alternar modo de edición de tarjeta
   const toggleCardEditing = (id) => {
+    console.log('🔀 toggleCardEditing llamado para producto:', id)
     setEditingCards(prev => {
       const newSet = new Set(prev)
       if (newSet.has(id)) {
@@ -893,6 +898,117 @@ function ProductsComponent() {
 
   return (
     <Layout title="Productos - Sistema KOND">
+      {/* Modal de confirmación de eliminación */}
+      {deleteConfirm && (
+        <div
+          onClick={() => setDeleteConfirm(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-secondary, #fff)',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '420px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              textAlign: 'center',
+              animation: 'slideUp 0.2s ease'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '1.5rem'
+            }}>
+              🗑️
+            </div>
+            <h3 style={{
+              margin: '0 0 8px',
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              color: 'var(--text-primary, #111)'
+            }}>
+              Eliminar producto
+            </h3>
+            <p style={{
+              margin: '0 0 8px',
+              color: 'var(--text-secondary, #666)',
+              fontSize: '0.95rem',
+              lineHeight: 1.5
+            }}>
+              ¿Estás seguro de que quieres eliminar{' '}
+              <strong style={{ color: 'var(--text-primary, #111)' }}>{deleteConfirm.nombre}</strong>?
+            </p>
+            <p style={{
+              margin: '0 0 24px',
+              color: '#ef4444',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}>
+              Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color, #ddd)',
+                  background: 'var(--bg-primary, #f5f5f5)',
+                  color: 'var(--text-primary, #333)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteProduct}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#ef4444',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+      `}</style>
+
       <div style={{ padding: '20px' }}>
         {/* Header */}
         <div style={{ marginBottom: '24px' }}>
@@ -2418,7 +2534,14 @@ function ProductCard({
   const [imageFiles, setImageFiles] = useState(initialPreviews.map(() => null))
 
   // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
+  // NO resetear si el usuario está editando, para no perder imágenes/datos no guardados
   useEffect(() => {
+    console.log('🔄 useEffect disparado - isEditing:', isEditing, 'product.id:', product.id)
+    if (isEditing) {
+      console.log('⏸️ Saltando actualización: producto en modo edición')
+      return;
+    }
+    console.log('🔄 Reseteando estado a valores del producto')
     setEditData({
       nombre: product.nombre || '',
       categoria: product.categoria || '',
@@ -2438,9 +2561,10 @@ function ProductCard({
       stock: product.stock || 0
     })
     const initial = product.imagenes || [product.imagen].filter(Boolean) || []
+    console.log('🖼️ Reseteando imágenes a:', initial.length)
     setImagePreviews(initial)
     setImageFiles(initial.map(() => null))
-  }, [product])
+  }, [product, isEditing])
 
   // Estados para controlar modos manuales en edición
   const [editCalculatedFields, setEditCalculatedFields] = useState({
@@ -2485,35 +2609,16 @@ function ProductCard({
     }
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
-  // Actualizar datos de edición cuando cambia el producto
+  // Resetear modos manuales cuando sale de edición
+  // (La sincronización de editData/imagePreviews/imageFiles ya se maneja en el useEffect anterior)
   useEffect(() => {
     if (!isEditing) {
-      setEditData({
-        nombre: product.nombre || '',
-        categoria: product.categoria || '',
-        medidas: product.medidas || '',
-  tipo: product.tipo || 'Stock',
-        tiempoUnitario: product.tiempoUnitario || '00:00:30',
-        unidades: product.unidades || 1,
-        unidadesPorPlaca: product.unidadesPorPlaca || 1,
-        usoPlacas: product.usoPlacas || 0,
-        costoPlaca: product.costoPlaca || 0,
-        costoMaterial: product.costoMaterial || 0,
-        materialId: product.materialId || '',
-        margenMaterial: product.margenMaterial || 0,
-        precioUnitario: product.precioUnitario || 0,
-        ensamble: product.ensamble || 'Sin ensamble',
-        imagenes: product.imagenes || [product.imagen].filter(Boolean) || []
-      })
-      setImagePreviews(product.imagenes || [product.imagen].filter(Boolean) || [])
-      setImageFiles([])
-      // Resetear modos manuales
       setEditCalculatedFields({
         isCostoMaterialManual: false,
         isPrecioUnitarioManual: false
       })
     }
-  }, [product, isEditing])
+  }, [isEditing])
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -2565,11 +2670,14 @@ function ProductCard({
   // Manejar cambio de imagen (agregar nuevas manteniendo las existentes)
   const handleImageChange = (e) => {
     const incoming = Array.from(e.target.files || [])
+    console.log('🖼️ handleImageChange - Archivos recibidos:', incoming.length)
+    console.log('📊 Estado actual - imagePreviews:', imagePreviews.length, 'imageFiles:', imageFiles.length)
     if (incoming.length === 0) return
 
     // calcular cuántos slots quedan (max 5)
     const remaining = Math.max(0, 5 - imagePreviews.length)
     const toTake = incoming.slice(0, remaining)
+    console.log('✅ Archivos a agregar:', toTake.length, 'Slots disponibles:', remaining)
 
     if (toTake.length === 0) {
       // no hay espacio para más imágenes
@@ -2586,6 +2694,9 @@ function ProductCard({
     Promise.all(previewPromises).then(newPreviews => {
       const updatedPreviews = [...imagePreviews, ...newPreviews].slice(0, 5)
       const updatedFiles = [...imageFiles, ...toTake].slice(0, 5)
+      console.log('💾 Guardando nuevo estado:')
+      console.log('   - updatedPreviews:', updatedPreviews.length)
+      console.log('   - updatedFiles:', updatedFiles.length)
       setImagePreviews(updatedPreviews)
       setImageFiles(updatedFiles)
     })
@@ -2667,6 +2778,12 @@ function ProductCard({
 
         const uploadResults = await Promise.all(uploadPromises)
 
+        // Verificar si hubo errores en las subidas
+        const failedUploads = uploadResults.filter(r => r.res && r.res.error)
+        if (failedUploads.length > 0) {
+          console.error('Errores al subir imágenes:', failedUploads.map(f => f.res.error))
+        }
+
         // Construir arreglo final de URLs según el orden actual en imagePreviews
         const finalUrls = []
         for (let i = 0; i < imagePreviews.length; i++) {
@@ -2676,22 +2793,38 @@ function ProductCard({
             if (result && result.res && !result.res.error && result.res.data && result.res.data.url) {
               finalUrls.push(result.res.data.url)
             } else {
-              // si falló la subida, omitimos esa entrada
+              // Si falló la subida, intentar guardar como base64 como fallback
+              try {
+                const base64 = await new Promise((resolve, reject) => {
+                  const reader = new FileReader()
+                  reader.onload = () => resolve(reader.result)
+                  reader.onerror = reject
+                  reader.readAsDataURL(fileEntry)
+                })
+                if (base64) finalUrls.push(base64)
+              } catch (b64Err) {
+                console.warn('No se pudo convertir imagen a base64:', b64Err)
+              }
             }
           } else {
-            // mantener la URL existente (asegurarse que sea URL pública)
+            // mantener la URL existente (asegurarse que sea URL pública o base64)
             const preview = imagePreviews[i]
-            if (typeof preview === 'string' && preview.startsWith('http')) {
+            if (typeof preview === 'string' && (preview.startsWith('http') || preview.startsWith('data:'))) {
               finalUrls.push(preview)
             }
           }
         }
 
-        if (finalUrls.length > 0) {
-          finalData.imagenes = finalUrls.slice(0, 5)
+        // Siempre asignar (incluso si está vacío, para permitir eliminar todas las imágenes)
+        finalData.imagenes = finalUrls.slice(0, 5)
+
+        // Avisar al usuario si algunas imágenes no se pudieron subir al storage
+        if (failedUploads.length > 0) {
+          alert(`⚠️ ${failedUploads.length} imagen(es) no se pudieron subir al almacenamiento. Se guardaron como respaldo local.`)
         }
       } catch (uploadErr) {
-        console.warn('No se pudieron subir algunas imágenes:', uploadErr)
+        console.error('Error general al procesar imágenes:', uploadErr)
+        alert('⚠️ Hubo un error al subir las imágenes. Los demás cambios se guardarán.')
       }
 
       // Validaciones básicas
