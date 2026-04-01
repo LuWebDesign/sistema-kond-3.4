@@ -11,13 +11,51 @@ export default function ConfirmEmail() {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // Obtener el hash de la URL
+        const searchParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const code = searchParams.get('code');
+        const tokenHash = searchParams.get('token_hash');
+        const queryType = searchParams.get('type');
+        const errorDescription = searchParams.get('error_description');
         const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
+        const hashType = hashParams.get('type');
 
-        if (type === 'signup' && accessToken) {
-          // El usuario confirmó su email
+        if (errorDescription) {
+          throw new Error(decodeURIComponent(errorDescription));
+        }
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) throw error;
+
+          setStatus('success');
+          setMessage('¡Email confirmado exitosamente!');
+
+          setTimeout(() => {
+            router.push('/catalog/user');
+          }, 3000);
+          return;
+        }
+
+        if (tokenHash && queryType) {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: queryType,
+          });
+
+          if (error) throw error;
+
+          setStatus('success');
+          setMessage('¡Email confirmado exitosamente!');
+
+          setTimeout(() => {
+            router.push('/catalog/user');
+          }, 3000);
+          return;
+        }
+
+        if (hashType === 'signup' && accessToken) {
           const { data, error } = await supabase.auth.getUser(accessToken);
 
           if (error) throw error;
@@ -26,20 +64,19 @@ export default function ConfirmEmail() {
             setStatus('success');
             setMessage('¡Email confirmado exitosamente!');
             
-            // Redirigir a login después de 3 segundos
             setTimeout(() => {
-              router.push('/user');
+              router.push('/catalog/user');
             }, 3000);
+            return;
           }
-        } else {
-          // No hay parámetros de confirmación válidos
-          setStatus('error');
-          setMessage('Link de confirmación inválido o expirado');
         }
+
+        setStatus('error');
+        setMessage('Link de confirmación inválido o expirado');
       } catch (error) {
         console.error('Error confirmando email:', error);
         setStatus('error');
-        setMessage('Error al confirmar el email. Por favor intenta nuevamente.');
+        setMessage(error?.message || 'Error al confirmar el email. Por favor intenta nuevamente.');
       }
     };
 
@@ -63,7 +100,7 @@ export default function ConfirmEmail() {
             <h1>¡Email Confirmado!</h1>
             <p>Tu cuenta ha sido activada exitosamente.</p>
             <p className="redirect-text">Serás redirigido al login en 3 segundos...</p>
-            <Link href="/user">
+            <Link href="/catalog/user">
               <a className="btn-primary">Ir a iniciar sesión ahora</a>
             </Link>
           </>
@@ -78,7 +115,7 @@ export default function ConfirmEmail() {
               <Link href="/catalog/register">
                 <a className="btn-secondary">Registrarme nuevamente</a>
               </Link>
-              <Link href="/user">
+              <Link href="/catalog/user">
                 <a className="btn-primary">Ir a login</a>
               </Link>
             </div>
