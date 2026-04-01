@@ -1394,12 +1394,12 @@ function ProductsComponent() {
 
               {/* Sección: Producción y Tiempos */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(251, 191, 36, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid rgba(251, 146, 60, 0.2)',
-                boxShadow: '0 2px 8px rgba(251, 146, 60, 0.08)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>⏱️</span>
@@ -1546,12 +1546,12 @@ function ProductsComponent() {
 
               {/* Sección: Material y Placas */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(217, 70, 239, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid rgba(168, 85, 247, 0.2)',
-                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.08)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>🎨</span>
@@ -1963,12 +1963,12 @@ function ProductsComponent() {
 
               {/* Sección: Precios */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>💰</span>
@@ -2094,12 +2094,12 @@ function ProductsComponent() {
 
               {/* Sección: Imágenes */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(34, 211, 238, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid rgba(6, 182, 212, 0.2)',
-                boxShadow: '0 2px 8px rgba(6, 182, 212, 0.08)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>📸</span>
@@ -2182,12 +2182,12 @@ function ProductsComponent() {
 
               {/* Sección: Visibilidad */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '20px' }}>👁️</span>
@@ -2280,26 +2280,26 @@ function ProductsComponent() {
                       : 'var(--text-secondary)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '16px 32px',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
                     cursor: (formData.nombre && formData.medidas) ? 'pointer' : 'not-allowed',
-                    fontWeight: 700,
-                    fontSize: '1rem',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
                     boxShadow: (formData.nombre && formData.medidas) 
-                      ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
+                      ? '0 2px 8px rgba(16, 185, 129, 0.25)' 
                       : 'none',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
                     if (formData.nombre && formData.medidas) {
-                      e.target.style.transform = 'translateY(-2px)'
-                      e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)'
+                      e.target.style.transform = 'translateY(-1px)'
+                      e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
                     }
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.transform = 'translateY(0)'
                     e.target.style.boxShadow = formData.nombre && formData.medidas 
-                      ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
+                      ? '0 2px 8px rgba(16, 185, 129, 0.25)' 
                       : 'none'
                   }}
                 >
@@ -2341,12 +2341,12 @@ function ProductsComponent() {
                     flex: 0.6,
                     background: 'transparent',
                     color: 'var(--text-primary)',
-                    border: '2px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '16px 32px',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
                     cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '1rem',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={(e) => {
