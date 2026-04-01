@@ -1205,11 +1205,12 @@ function ProductsComponent() {
               
               {/* Sección: Información Básica */}
               <div style={{
-                background: 'var(--bg-card)',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>📋</span>
@@ -1393,11 +1394,12 @@ function ProductsComponent() {
 
               {/* Sección: Producción y Tiempos */}
               <div style={{
-                background: 'var(--bg-card)',
+                background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(251, 191, 36, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid rgba(251, 146, 60, 0.2)',
+                boxShadow: '0 2px 8px rgba(251, 146, 60, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>⏱️</span>
@@ -1544,11 +1546,12 @@ function ProductsComponent() {
 
               {/* Sección: Material y Placas */}
               <div style={{
-                background: 'var(--bg-card)',
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(217, 70, 239, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid rgba(168, 85, 247, 0.2)',
+                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>🎨</span>
@@ -1960,11 +1963,12 @@ function ProductsComponent() {
 
               {/* Sección: Precios */}
               <div style={{
-                background: 'var(--bg-card)',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>💰</span>
@@ -2090,11 +2094,12 @@ function ProductsComponent() {
 
               {/* Sección: Imágenes */}
               <div style={{
-                background: 'var(--bg-card)',
+                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(34, 211, 238, 0.08) 100%)',
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid rgba(6, 182, 212, 0.2)',
+                boxShadow: '0 2px 8px rgba(6, 182, 212, 0.08)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <span style={{ fontSize: '20px' }}>📸</span>
@@ -2181,7 +2186,8 @@ function ProductsComponent() {
                 borderRadius: '12px',
                 padding: '24px',
                 marginBottom: '24px',
-                border: '2px solid var(--border-color)'
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '20px' }}>👁️</span>
