@@ -101,6 +101,28 @@ function PaymentConfigAdmin() {
     }
   }
 
+  const handleToggleVisibility = (tipo, campo, actual) => {
+    const nuevoEstado = !actual
+    const mensaje = nuevoEstado 
+      ? `¿Confirmar que querés hacer VISIBLE "${tipo}"?`
+      : `¿Confirmar que querés OCULTAR "${tipo}"?`
+    
+    if (window.confirm(mensaje)) {
+      if (campo.includes('.')) {
+        const [parent, child] = campo.split('.')
+        setPaymentConfig(prev => ({
+          ...prev,
+          [parent]: { ...prev[parent], [child]: nuevoEstado }
+        }))
+      } else {
+        setPaymentConfig(prev => ({
+          ...prev,
+          textos: { ...prev.textos, [campo]: nuevoEstado }
+        }))
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <Layout title="Configuración de Métodos de Pago - Sistema KOND">
@@ -144,7 +166,7 @@ function PaymentConfigAdmin() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, transferencia: { ...prev.transferencia, enabled: !prev.transferencia.enabled } }))}
+                  onClick={() => handleToggleVisibility('Transferencia Bancaria', 'transferencia.enabled', paymentConfig.transferencia.enabled)}
                   style={{
                     padding: '6px 10px',
                     borderRadius: 6,
@@ -179,7 +201,7 @@ function PaymentConfigAdmin() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: !prev.whatsapp.enabled } }))}
+                  onClick={() => handleToggleVisibility('WhatsApp', 'whatsapp.enabled', paymentConfig.whatsapp.enabled)}
                   style={{
                     padding: '6px 10px',
                     borderRadius: 6,
@@ -211,7 +233,7 @@ function PaymentConfigAdmin() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, enabled: !prev.retiro.enabled } }))}
+                  onClick={() => handleToggleVisibility('Retiro en Local', 'retiro.enabled', paymentConfig.retiro.enabled)}
                   style={{
                     padding: '6px 10px',
                     borderRadius: 6,
@@ -244,7 +266,7 @@ function PaymentConfigAdmin() {
               </div>
               <button
                 type="button"
-                onClick={() => setPaymentConfig(prev => ({ ...prev, calendario: { ...prev.calendario, enabled: !prev.calendario.enabled } }))}
+                onClick={() => handleToggleVisibility('Calendario de Fecha de Entrega', 'calendario.enabled', paymentConfig.calendario?.enabled)}
                 style={{
                   padding: '6px 16px',
                   borderRadius: 6,
@@ -275,7 +297,7 @@ function PaymentConfigAdmin() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoTransferenciaEnabled: !prev.textos?.infoTransferenciaEnabled } }))}
+                    onClick={() => handleToggleVisibility('Texto Transferencia', 'infoTransferenciaEnabled', paymentConfig.textos?.infoTransferenciaEnabled !== false)}
                     style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
                   >
                     {paymentConfig.textos?.infoTransferenciaEnabled !== false ? 'Visible' : 'No visible'}
@@ -304,7 +326,7 @@ function PaymentConfigAdmin() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoWhatsappEnabled: !prev.textos?.infoWhatsappEnabled } }))}
+                    onClick={() => handleToggleVisibility('Texto WhatsApp', 'infoWhatsappEnabled', paymentConfig.textos?.infoWhatsappEnabled !== false)}
                     style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoWhatsappEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
                   >
                     {paymentConfig.textos?.infoWhatsappEnabled !== false ? 'Visible' : 'No visible'}
@@ -333,7 +355,7 @@ function PaymentConfigAdmin() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setPaymentConfig(prev => ({ ...prev, textos: { ...prev.textos, infoRetiroEnabled: !prev.textos?.infoRetiroEnabled } }))}
+                    onClick={() => handleToggleVisibility('Texto Retiro', 'infoRetiroEnabled', paymentConfig.textos?.infoRetiroEnabled !== false)}
                     style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: paymentConfig.textos?.infoRetiroEnabled !== false ? 'rgba(16,185,129,0.08)' : 'transparent', color: paymentConfig.textos?.infoRetiroEnabled !== false ? 'var(--color-success)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
                   >
                     {paymentConfig.textos?.infoRetiroEnabled !== false ? 'Visible' : 'No visible'}
