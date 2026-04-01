@@ -356,60 +356,56 @@ function Marketing() {
   return (
     <Layout title="Marketing - Sistema KOND">
       <div className={styles.container}>
+        {/* Header simplificado */}
         <header className={styles.header}>
-          <div>
-            <h1 className={styles.title}>🎯 Marketing</h1>
-            <nav className={styles.breadcrumbs}>
-              <span>Inicio</span>
-              <span className={styles.sep}>/</span>
-              <span className={styles.current}>Marketing</span>
-            </nav>
-          </div>
+          <h1 className={styles.title}>🎯 Marketing</h1>
+          <p className={styles.subtitle}>Gestiona promociones y cupones de descuento</p>
         </header>
 
         <main className={styles.main}>
-          {/* Toolbar arriba */}
+          {/* Tabs modernos */}
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tabBtn} ${currentTab === 'promotions' ? styles.active : ''}`}
+              onClick={() => setCurrentTab('promotions')}
+            >
+              <span className={styles.tabIcon}>🎯</span>
+              <span className={styles.tabLabel}>Promociones</span>
+              <span className={styles.tabCount}>{promotions.length}</span>
+            </button>
+            <button
+              className={`${styles.tabBtn} ${currentTab === 'coupons' ? styles.active : ''}`}
+              onClick={() => setCurrentTab('coupons')}
+            >
+              <span className={styles.tabIcon}>🎫</span>
+              <span className={styles.tabLabel}>Cupones</span>
+              <span className={styles.tabCount}>{coupons.length}</span>
+            </button>
+          </div>
+
+          {/* Toolbar optimizado */}
           <div className={styles.toolbar}>
-            <div className={styles.search}>
+            <div className={styles.searchWrapper}>
+              <span className={styles.searchIcon}>🔍</span>
               <input
                 type="search"
-                className={styles.input}
-                placeholder="Buscar..."
+                className={styles.searchInput}
+                placeholder={currentTab === 'promotions' ? 'Buscar promociones...' : 'Buscar cupones...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className={styles.actions}>
-              {currentTab === 'promotions' ? (
-                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openPromoModal()}>
-                  + Nueva promoción
-                </button>
-              ) : (
-                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openCouponModal()}>
-                  + Nuevo cupón
-                </button>
-              )}
-            </div>
+            <button 
+              className={styles.btnCreate} 
+              onClick={() => currentTab === 'promotions' ? openPromoModal() : openCouponModal()}
+            >
+              <span className={styles.btnIcon}>+</span>
+              <span className={styles.btnLabel}>
+                {currentTab === 'promotions' ? 'Nueva Promoción' : 'Nuevo Cupón'}
+              </span>
+            </button>
           </div>
           
-          {/* Tabs */}
-          <div className={styles.sectionHead}>
-            <div className={styles.tabs}>
-              <button
-                className={`${styles.tabBtn} ${currentTab === 'promotions' ? styles.active : ''}`}
-                onClick={() => setCurrentTab('promotions')}
-              >
-                🎯 Promociones
-              </button>
-              <button
-                className={`${styles.tabBtn} ${currentTab === 'coupons' ? styles.active : ''}`}
-                onClick={() => setCurrentTab('coupons')}
-              >
-                🎫 Cupones
-              </button>
-            </div>
-          </div>
-
           {/* Content */}
           {currentTab === 'promotions' ? (
             filteredPromotions.length > 0 ? (
