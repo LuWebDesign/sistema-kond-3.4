@@ -124,6 +124,11 @@ function MetricasProductosPage() {
       .sort((a, b) => b.tiempoMin - a.tiempoMin)
       .slice(0, 5)
 
+    const bottom5TiempoProduccion = [...productosConRentabilidad]
+      .filter(p => p.tiempoMin > 0)
+      .sort((a, b) => a.tiempoMin - b.tiempoMin)
+      .slice(0, 5)
+
     // Distribución por categoría
     const categorias = {}
     for (const p of productosConRentabilidad) {
@@ -163,9 +168,10 @@ function MetricasProductosPage() {
     return {
       total, publicados, noPublicados,
       margenPromedio, rentabilidadTotal, precioPorMinutoPromedio, costoMaterialTotal,
-      top5Rentables, bottom5Rentables, top5Eficientes, top5TiempoProduccion,
+      top5Rentables, bottom5Rentables, top5Eficientes, top5TiempoProduccion, bottom5TiempoProduccion,
       categoriasArray, tipos,
-      conPromo: conPromo.length, descuentoPromedio
+      conPromo: conPromo.length, descuentoPromedio,
+      productosConRentabilidad
     }
   }, [productos])
 
@@ -277,29 +283,104 @@ function MetricasProductosPage() {
         </div>
 
         {/* Tiempos de producción */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>⏱️ Mayor Tiempo de Producción</h2>
-          <div className={styles.detailGrid} style={{ gridTemplateColumns: '1fr' }}>
-            <div className={styles.detailCard}>
-              {metrics.top5TiempoProduccion.map((p, i) => (
-                <div className={styles.statRow} key={p.id || i}>
-                  <span className={styles.statLabel}>
-                    {i + 1}. {p.nombre || 'Sin nombre'}
+        <div className={styles.detailGrid}>
+          <div className={styles.detailCard}>
+            <h3 className={styles.detailCardTitle}>⏱️ Mayor Tiempo de Producción</h3>
+            {metrics.top5TiempoProduccion.map((p, i) => (
+              <div className={styles.statRow} key={p.id || i}>
+                <span className={styles.statLabel} style={{ fontSize: '0.85rem' }}>
+                  {i + 1}. {p.nombre || 'Sin nombre'}
+                </span>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    {p.tiempo_unitario || '—'}
                   </span>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      {p.tiempo_unitario || '—'}
-                    </span>
-                    <span className={styles.statValue} style={{ color: '#3b82f6' }}>
-                      {p.tiempoMin.toFixed(0)} min
-                    </span>
-                  </div>
+                  <span className={styles.statValue} style={{ color: '#3b82f6', fontSize: '0.85rem' }}>
+                    {p.tiempoMin.toFixed(0)} min
+                  </span>
                 </div>
-              ))}
-              {metrics.top5TiempoProduccion.length === 0 && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Sin datos de tiempo</p>
-              )}
-            </div>
+              </div>
+            ))}
+            {metrics.top5TiempoProduccion.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Sin datos de tiempo</p>
+            )}
+          </div>
+
+          <div className={styles.detailCard}>
+            <h3 className={styles.detailCardTitle}>⚡ Menor Tiempo de Producción</h3>
+            {metrics.bottom5TiempoProduccion.map((p, i) => (
+              <div className={styles.statRow} key={p.id || i}>
+                <span className={styles.statLabel} style={{ fontSize: '0.85rem' }}>
+                  {i + 1}. {p.nombre || 'Sin nombre'}
+                </span>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    {p.tiempo_unitario || '—'}
+                  </span>
+                  <span className={styles.statValue} style={{ color: '#10b981', fontSize: '0.85rem' }}>
+                    {p.tiempoMin.toFixed(0)} min
+                  </span>
+                </div>
+              </div>
+            ))}
+            {metrics.bottom5TiempoProduccion.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Sin datos de tiempo</p>
+            )}
+          </div>
+        </div>
+
+        {/* Tabla completa de productos */}
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>📋 Detalle Completo de Productos</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: '0.85rem',
+              background: 'var(--bg-card)',
+              borderRadius: '12px',
+              overflow: 'hidden'
+            }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-hover)' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-secondary)' }}>Producto</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>Tiempo</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Margen %</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>$/min</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Precio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.productosConRentabilidad
+                  .filter(p => p.precio_unitario > 0)
+                  .sort((a, b) => b.gananciaPorMinuto - a.gananciaPorMinuto)
+                  .map((p, i) => (
+                  <tr key={p.id || i} style={{ borderTop: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                      {p.nombre || 'Sin nombre'}
+                      {!p.publicado && <span style={{ marginLeft: 8, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>🔒</span>}
+                    </td>
+                    <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      {p.tiempo_unitario || '—'}
+                      {p.tiempoMin > 0 && (
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          ({p.tiempoMin.toFixed(0)} min)
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: p.margen >= 40 ? '#10b981' : p.margen >= 20 ? '#f59e0b' : '#ef4444', fontWeight: 500 }}>
+                      {p.margen.toFixed(1)}%
+                    </td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#8b5cf6', fontWeight: 500 }}>
+                      {p.gananciaPorMinuto > 0 ? formatCurrency(p.gananciaPorMinuto) : '—'}
+                    </td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-primary)', fontWeight: 500 }}>
+                      {formatCurrency(p.precio_unitario)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
