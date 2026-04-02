@@ -43,6 +43,7 @@ function ProductsComponent() {
   const [editingCards, setEditingCards] = useState(new Set()) // Estado para tarjetas en modo edición
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, nombre } del producto a eliminar
   const [publishConfirm, setPublishConfirm] = useState(null) // { id, nombre, publicado } del producto a publicar/despublicar
+  const [editConfirm, setEditConfirm] = useState(null) // { id, nombre } del producto a editar
   const [filters, setFilters] = useState({
     search: '',
     type: 'all'
@@ -855,6 +856,14 @@ function ProductsComponent() {
     })
   }
 
+  // Confirmar inicio de edición (llamado desde el modal de confirmación)
+  const confirmStartEditing = () => {
+    if (!editConfirm) return
+    const { id } = editConfirm
+    setEditConfirm(null)
+    toggleCardEditing(id)
+  }
+
   // Alternar modo de edición de tarjeta
   const toggleCardEditing = (id) => {
     setEditingCards(prev => {
@@ -1159,6 +1168,102 @@ function ProductsComponent() {
                 }}
               >
                 {publishConfirm.publicado ? 'Sí, despublicar' : 'Sí, publicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de confirmación de edición */}
+      {editConfirm && (
+        <div
+          onClick={() => setEditConfirm(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-secondary, #fff)',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '420px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              textAlign: 'center',
+              animation: 'slideUp 0.2s ease'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(59, 130, 246, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '1.5rem'
+            }}>
+              ✏️
+            </div>
+            <h3 style={{
+              margin: '0 0 8px',
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              color: 'var(--text-primary, #111)'
+            }}>
+              Editar producto
+            </h3>
+            <p style={{
+              margin: '0 0 24px',
+              color: 'var(--text-secondary, #666)',
+              fontSize: '0.95rem',
+              lineHeight: 1.5
+            }}>
+              ¿Deseas editar{' '}
+              <strong style={{ color: 'var(--text-primary, #111)' }}>{editConfirm.nombre}</strong>?
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setEditConfirm(null)}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color, #ddd)',
+                  background: 'var(--bg-primary, #f5f5f5)',
+                  color: 'var(--text-primary, #333)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmStartEditing}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#3b82f6',
+                  color: 'white',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Sí, editar
               </button>
             </div>
           </div>
@@ -2549,6 +2654,10 @@ function ProductsComponent() {
                   onTogglePublication={toggleProductPublication}
                   onToggleExpansion={toggleCardExpansion}
                   onToggleEditing={toggleCardEditing}
+                  onRequestEditing={(id) => {
+                    const p = products.find(x => x.id === id)
+                    setEditConfirm({ id, nombre: p?.nombre || 'este producto' })
+                  }}
                   onSaveChanges={saveProductChanges}
                 />
               ))}
@@ -2671,6 +2780,7 @@ function ProductCard({
   onTogglePublication, 
   onToggleExpansion,
   onToggleEditing,
+  onRequestEditing,
   onSaveChanges 
 }) {
   const [editData, setEditData] = useState({
@@ -3077,7 +3187,7 @@ function ProductCard({
           ) : (
             <>
               <button
-                onClick={() => onToggleEditing(product.id)}
+                onClick={() => onRequestEditing(product.id)}
                 style={{
                   background: 'transparent',
                   border: '1px solid var(--border-color)',
@@ -3303,7 +3413,7 @@ function ProductCard({
         }}>
           {isEditing ? (
             // Modo edición
-            <EditForm 
+            <EditFormV2 
               editData={editData}
               setEditData={setEditData}
               imagePreviews={imagePreviews}
@@ -4066,6 +4176,251 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" checked={editData.publicado || false} onChange={(e) => handleInputChange('publicado', e.target.checked)} />
           <span style={{ color: 'var(--text-primary)' }}>Publicar en catálogo público</span>
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// Componente de formulario de edición mejorado (estilo formulario de agregar)
+function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+  const handleInputChange = (field, value) => {
+    setEditData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const [showCustomCategory, setShowCustomCategory] = useState(false)
+
+  useEffect(() => {
+    if (editData.categoria && !categories.includes(editData.categoria)) {
+      setShowCustomCategory(true)
+    } else {
+      setShowCustomCategory(false)
+    }
+  }, [editData.categoria, categories])
+
+  const getCurrentMaterialData = () => {
+    const materialId = editData.materialId || currentMaterialId
+    if (materialId && materials.length > 0) {
+      return materials.find(m => String(m.id) === String(materialId)) || null
+    }
+    return null
+  }
+  const currentMaterialData = getCurrentMaterialData()
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    border: '2px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: '0.95rem',
+    outline: 'none',
+    boxSizing: 'border-box'
+  }
+
+  const sectionStyle = {
+    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '16px',
+    border: '1px solid rgba(59, 130, 246, 0.2)',
+    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.06)'
+  }
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    color: 'var(--text-primary)'
+  }
+
+  return (
+    <div style={{ marginTop: '8px' }}>
+
+      {/* Información Básica */}
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>📋</span>
+          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Información Básica</h4>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+          <div>
+            <label style={labelStyle}>Nombre</label>
+            <input type="text" value={editData.nombre} onChange={e => handleInputChange('nombre', e.target.value)} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Categoría</label>
+            <select
+              value={categories.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
+              onChange={e => {
+                const v = e.target.value
+                if (v === '__nueva__') {
+                  handleInputChange('categoria', '')
+                  setShowCustomCategory(true)
+                  setTimeout(() => { const el = document.querySelector('[name="editCatPersonalizada"]'); if (el) el.focus() }, 50)
+                } else {
+                  handleInputChange('categoria', v)
+                  setShowCustomCategory(false)
+                }
+              }}
+              style={inputStyle}
+            >
+              <option value="">Seleccionar categoría</option>
+              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              <option value="__nueva__">✏️ Crear nueva categoría...</option>
+            </select>
+            {showCustomCategory && (
+              <input type="text" name="editCatPersonalizada" value={editData.categoria || ''} onChange={e => handleInputChange('categoria', e.target.value)} placeholder="Nueva categoría" style={{ ...inputStyle, marginTop: '8px', borderColor: '#3b82f6' }} />
+            )}
+          </div>
+          <div>
+            <label style={labelStyle}>Medidas</label>
+            <input type="text" value={editData.medidas} onChange={e => handleInputChange('medidas', e.target.value)} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Tipo</label>
+            <select value={editData.tipo} onChange={e => handleInputChange('tipo', e.target.value)} style={inputStyle}>
+              <option value="Venta">Venta</option>
+              <option value="Presupuesto">Presupuesto</option>
+              <option value="Stock">Stock</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Material */}
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>🧱</span>
+          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Material</h4>
+        </div>
+        {currentMaterialData && (
+          <div style={{ padding: '10px 14px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            <span style={{ fontWeight: 600 }}>{currentMaterialData.nombre}</span>
+            {currentMaterialData.tipo && <span style={{ color: 'var(--text-secondary)' }}> — {currentMaterialData.tipo}</span>}
+            {currentMaterialData.espesor && <span style={{ color: 'var(--text-secondary)' }}> — {currentMaterialData.espesor}</span>}
+          </div>
+        )}
+        <select
+          value={editData.materialId || ''}
+          onChange={e => {
+            const id = e.target.value
+            const sel = materials.find(x => String(x.id) === String(id))
+            if (sel) {
+              handleInputChange('materialId', id)
+              handleInputChange('costoMaterial', Number(sel.costoUnitario || 0))
+              handleInputChange('costoPlaca', Number(sel.costoUnitario || 0))
+            } else {
+              handleInputChange('materialId', '')
+              handleInputChange('costoMaterial', 0)
+              handleInputChange('costoPlaca', 0)
+            }
+          }}
+          style={inputStyle}
+        >
+          <option value="">-- Seleccionar material --</option>
+          {materials.map(m => (
+            <option key={m.id} value={m.id}>{m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Producción y Tiempos */}
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>⏱️</span>
+          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Producción y Tiempos</h4>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+          <div>
+            <label style={labelStyle}>Unidades a producir</label>
+            <input type="number" value={editData.unidades} onChange={e => handleInputChange('unidades', Number(e.target.value))} min="0" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Stock</label>
+            <input type="number" value={editData.stock} onChange={e => handleInputChange('stock', Number(e.target.value))} min="0" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Tiempo Unitario (HH:MM:SS)</label>
+            <input type="text" value={editData.tiempoUnitario} onChange={e => handleInputChange('tiempoUnitario', e.target.value)} placeholder="00:13:00" style={inputStyle} />
+          </div>
+        </div>
+      </div>
+
+      {/* Costos y Precios */}
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>💰</span>
+          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Costos y Precios</h4>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+          <div>
+            <label style={labelStyle}>Costo Material</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input type="number" value={editData.costoMaterial} onChange={e => handleInputChange('costoMaterial', Number(e.target.value))} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <button type="button" onClick={() => toggleEditFieldMode('isCostoMaterialManual')} title={editCalculatedFields.isCostoMaterialManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isCostoMaterialManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isCostoMaterialManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {editCalculatedFields.isCostoMaterialManual ? 'MAN' : 'AUTO'}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Costo Placa</label>
+            <input type="number" value={editData.costoPlaca} readOnly title="Se extrae del material seleccionado" style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Margen Material (%)</label>
+            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} min="0" step="0.1" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Precio Unitario</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input type="number" value={editData.precioUnitario} onChange={e => handleInputChange('precioUnitario', Number(e.target.value))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); try { onSave && onSave() } catch (err) { console.error(err) } } }} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <button type="button" onClick={() => toggleEditFieldMode('isPrecioUnitarioManual')} title={editCalculatedFields.isPrecioUnitarioManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isPrecioUnitarioManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {editCalculatedFields.isPrecioUnitarioManual ? 'MAN' : 'AUTO'}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Unidades por Placa</label>
+            <input type="number" value={editData.unidadesPorPlaca} onChange={e => handleInputChange('unidadesPorPlaca', Number(e.target.value))} min="0" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Uso de Placas</label>
+            <input type="number" value={editData.usoPlacas} onChange={e => handleInputChange('usoPlacas', Number(e.target.value))} min="0" style={inputStyle} />
+          </div>
+        </div>
+      </div>
+
+      {/* Imágenes */}
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>🖼️</span>
+          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Imágenes (hasta 5)</h4>
+        </div>
+        <input type="file" accept="image/*" multiple onChange={onImageChange} style={{ ...inputStyle, marginBottom: imagePreviews.length > 0 ? '12px' : '0' }} />
+        {imagePreviews.length > 0 && (
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+            {imagePreviews.map((preview, index) => (
+              <div key={index} style={{ position: 'relative', width: '90px', height: '90px', borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <img src={preview} alt={`Preview ${index + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 4 }}>
+                  <button type="button" onClick={() => onReorderImage(index, Math.max(0, index - 1))} title="Mover izquierda" style={{ background: '#ffffffdd', border: 'none', padding: '3px 5px', borderRadius: 4, cursor: 'pointer', fontSize: '0.75rem' }}>◀</button>
+                  <button type="button" onClick={() => onReorderImage(index, Math.min(imagePreviews.length - 1, index + 1))} title="Mover derecha" style={{ background: '#ffffffdd', border: 'none', padding: '3px 5px', borderRadius: 4, cursor: 'pointer', fontSize: '0.75rem' }}>▶</button>
+                  <button type="button" onClick={() => onRemoveImage(index)} title="Eliminar" style={{ background: '#ef4444cc', border: 'none', padding: '3px 5px', borderRadius: 4, cursor: 'pointer', color: 'white', fontSize: '0.75rem', fontWeight: 700 }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Visibilidad */}
+      <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={editData.publicado || false} onChange={e => handleInputChange('publicado', e.target.checked)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+          <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.95rem' }}>Publicar en catálogo público</span>
         </label>
       </div>
     </div>
