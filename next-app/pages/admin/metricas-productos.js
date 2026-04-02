@@ -331,7 +331,10 @@ function MetricasProductosPage() {
 
         {/* Tabla completa de productos */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>📋 Detalle Completo de Productos</h2>
+          <h2 className={styles.sectionTitle}>🏆 Top 10 Mejores Productos</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
+            Ordenados por rentabilidad: combina ganancia por minuto y margen
+          </p>
           <div style={{ overflowX: 'auto' }}>
             <table style={{
               width: '100%',
@@ -352,11 +355,17 @@ function MetricasProductosPage() {
               </thead>
               <tbody>
                 {metrics.productosConRentabilidad
-                  .filter(p => p.precio_unitario > 0)
-                  .sort((a, b) => b.gananciaPorMinuto - a.gananciaPorMinuto)
+                  .filter(p => p.precio_unitario > 0 && p.tiempoMin > 0)
+                  .map(p => ({
+                    ...p,
+                    score: p.gananciaPorMinuto * (1 + p.margen / 100)
+                  }))
+                  .sort((a, b) => b.score - a.score)
+                  .slice(0, 10)
                   .map((p, i) => (
                   <tr key={p.id || i} style={{ borderTop: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                      <span style={{ color: '#f59e0b', marginRight: 8, fontWeight: 700 }}>#{i + 1}</span>
                       {p.nombre || 'Sin nombre'}
                       {!p.publicado && <span style={{ marginLeft: 8, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>🔒</span>}
                     </td>
