@@ -8,7 +8,7 @@ function CatalogStylesAdmin() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
-  const [activeSection, setActiveSection] = useState('general')
+  const [activeSection, setActiveSection] = useState('header')
   const logoInputRef = useRef(null)
 
   useEffect(() => {
@@ -81,10 +81,7 @@ function CatalogStylesAdmin() {
   }
 
   const sections = [
-    { id: 'general', label: '🎨 General', icon: '🎨' },
     { id: 'header', label: '📌 Header y Logo', icon: '📌' },
-    { id: 'buttons', label: '🔘 Botones', icon: '🔘' },
-    { id: 'cards', label: '🃏 Cards de Producto', icon: '🃏' },
     { id: 'footer', label: '📝 Footer', icon: '📝' },
     { id: 'banner', label: '📢 Banner', icon: '📢' },
   ]
@@ -183,38 +180,6 @@ function CatalogStylesAdmin() {
               ))}
             </div>
 
-            {/* Sección General */}
-            {activeSection === 'general' && (
-              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
-                <h3 style={{ margin: '0 0 20px', fontSize: '1.1rem' }}>🎨 Colores Generales</h3>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color de acento principal</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.accentColor || '#3b82f6'} onChange={(e) => updateStyle('accentColor', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.accentColor || ''} onChange={(e) => updateStyle('accentColor', e.target.value)} placeholder="#3b82f6" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Se usa en enlaces, botones y elementos destacados</span>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Fondo del catálogo</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.catalogBg || '#0f172a'} onChange={(e) => updateStyle('catalogBg', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.catalogBg || ''} onChange={(e) => updateStyle('catalogBg', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color de texto general</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.catalogTextColor || '#e2e8f0'} onChange={(e) => updateStyle('catalogTextColor', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.catalogTextColor || ''} onChange={(e) => updateStyle('catalogTextColor', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Sección Header */}
             {activeSection === 'header' && (
               <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
@@ -256,94 +221,6 @@ function CatalogStylesAdmin() {
                   <div style={colorFieldStyle}>
                     <input type="color" value={styles.headerTextColor || '#ffffff'} onChange={(e) => updateStyle('headerTextColor', e.target.value)} style={colorInputStyle} />
                     <input type="text" value={styles.headerTextColor || ''} onChange={(e) => updateStyle('headerTextColor', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sección Botones */}
-            {activeSection === 'buttons' && (
-              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
-                <h3 style={{ margin: '0 0 20px', fontSize: '1.1rem' }}>🔘 Botones</h3>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color de fondo del botón</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.buttonBg || '#3b82f6'} onChange={(e) => updateStyle('buttonBg', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.buttonBg || ''} onChange={(e) => updateStyle('buttonBg', e.target.value)} placeholder="#3b82f6" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color del texto del botón</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.buttonTextColor || '#ffffff'} onChange={(e) => updateStyle('buttonTextColor', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.buttonTextColor || ''} onChange={(e) => updateStyle('buttonTextColor', e.target.value)} placeholder="#ffffff" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Radio de borde (px)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <input type="range" min="0" max="24" value={styles.buttonRadius || 12} onChange={(e) => updateStyle('buttonRadius', e.target.value)} style={{ flex: 1 }} />
-                    <span style={{ minWidth: '40px', textAlign: 'center', fontWeight: 600, color: 'var(--text-primary)' }}>{styles.buttonRadius || 12}px</span>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Vista previa:</span>
-                  <button style={{ padding: '10px 20px', background: previewBtnBg, color: previewBtnColor, border: 'none', borderRadius: `${styles.buttonRadius || 12}px`, fontWeight: 600, cursor: 'default' }}>
-                    Agregar al carrito
-                  </button>
-                  <button style={{ padding: '10px 20px', background: previewBtnBg, color: previewBtnColor, border: 'none', borderRadius: `${styles.buttonRadius || 12}px`, fontWeight: 600, cursor: 'default' }}>
-                    🛒 Carrito
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Sección Cards */}
-            {activeSection === 'cards' && (
-              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
-                <h3 style={{ margin: '0 0 20px', fontSize: '1.1rem' }}>🃏 Cards de Producto</h3>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color de fondo de la card</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.cardBg || '#1e293b'} onChange={(e) => updateStyle('cardBg', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.cardBg || ''} onChange={(e) => updateStyle('cardBg', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color del borde de la card</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.cardBorderColor || '#334155'} onChange={(e) => updateStyle('cardBorderColor', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.cardBorderColor || ''} onChange={(e) => updateStyle('cardBorderColor', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Radio de borde (px)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <input type="range" min="0" max="24" value={styles.cardRadius || 12} onChange={(e) => updateStyle('cardRadius', e.target.value)} style={{ flex: 1 }} />
-                    <span style={{ minWidth: '40px', textAlign: 'center', fontWeight: 600, color: 'var(--text-primary)' }}>{styles.cardRadius || 12}px</span>
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color de fondo del badge de categoría</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.badgeBg || '#6366f1'} onChange={(e) => updateStyle('badgeBg', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.badgeBg || ''} onChange={(e) => updateStyle('badgeBg', e.target.value)} placeholder="Vacío = tema por defecto" style={{ ...inputStyle, flex: 1 }} />
-                  </div>
-                </div>
-
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Color del texto del badge</label>
-                  <div style={colorFieldStyle}>
-                    <input type="color" value={styles.badgeTextColor || '#ffffff'} onChange={(e) => updateStyle('badgeTextColor', e.target.value)} style={colorInputStyle} />
-                    <input type="text" value={styles.badgeTextColor || ''} onChange={(e) => updateStyle('badgeTextColor', e.target.value)} placeholder="#ffffff" style={{ ...inputStyle, flex: 1 }} />
                   </div>
                 </div>
               </div>
