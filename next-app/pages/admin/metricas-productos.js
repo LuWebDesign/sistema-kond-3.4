@@ -129,17 +129,18 @@ function MetricasProductosPage() {
       .sort((a, b) => a.tiempoMin - b.tiempoMin)
       .slice(0, 5)
 
-    // Distribución por categoría
+    // Distribución por categoría (solo publicados)
     const categorias = {}
     for (const p of productosConRentabilidad) {
+      if (!p.publicado) continue // Solo productos publicados
       const cat = p.categoria || 'Sin categoría'
       if (!categorias[cat]) {
-        categorias[cat] = { count: 0, gananciaTotal: 0, margenSum: 0, publicados: 0 }
+        categorias[cat] = { count: 0, gananciaTotal: 0, valorTotal: 0, margenSum: 0 }
       }
       categorias[cat].count++
       categorias[cat].gananciaTotal += p.ganancia
+      categorias[cat].valorTotal += Number(p.precio_unitario || 0)
       categorias[cat].margenSum += p.margen
-      if (p.publicado) categorias[cat].publicados++
     }
 
     const categoriasArray = Object.entries(categorias).map(([nombre, data]) => ({
@@ -409,7 +410,7 @@ function MetricasProductosPage() {
                 <tr style={{ background: 'var(--bg-hover)' }}>
                   <th style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-secondary)' }}>Categoría</th>
                   <th style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>Productos</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>Publicados</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Valor Total</th>
                   <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Ganancia</th>
                   <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Margen Prom.</th>
                 </tr>
@@ -419,7 +420,9 @@ function MetricasProductosPage() {
                   <tr key={i} style={{ borderTop: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text-primary)' }}>{cat.nombre}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>{cat.count}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>{cat.publicados}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#3b82f6', fontWeight: 500 }}>
+                      {formatCurrency(cat.valorTotal)}
+                    </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: cat.gananciaTotal >= 0 ? '#10b981' : '#ef4444', fontWeight: 500 }}>
                       {formatCurrency(cat.gananciaTotal)}
                     </td>
