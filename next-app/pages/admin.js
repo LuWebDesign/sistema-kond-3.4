@@ -185,12 +185,36 @@ function Admin() {
           </div>
         </div>
 
+        {/* Personalizar Catálogo */}
+        <div style={{
+          background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
+          border: '1px solid var(--border-color)', marginBottom: '24px'
+        }}>
+          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>🎨 Personalizar Catálogo</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+            Personalizá los colores, textos y estilos del catálogo público, incluyendo el header, footer y banner.
+          </p>
+          <button
+            onClick={() => router.push('/admin/catalog-styles')}
+            style={{
+              padding: '12px 24px', borderRadius: '8px', border: 'none',
+              background: 'var(--accent-blue)', color: 'white',
+              cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600,
+              display: 'inline-flex', alignItems: 'center', gap: '8px'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            🎨 Personalizar Estilos
+          </button>
+        </div>
+
         {/* Métodos de Pago */}
         <div style={{
           background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
           border: '1px solid var(--border-color)'
         }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>� Configuración de Carrito</h3>
+          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>🛒 Configuración de Carrito</h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
             Configurá los métodos de pago, datos de retiro y contacto disponibles en el catálogo público.
           </p>

@@ -169,10 +169,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               Catálogo Público
               <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
             </a>
-
-            <Link href="/admin/catalog-styles" style={linkStyle}>
-              Personalizar Catálogo
-            </Link>
             
             <Link href="/admin/pedidos" style={linkStyle}>
               Pedidos Internos
