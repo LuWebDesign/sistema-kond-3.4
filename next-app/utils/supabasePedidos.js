@@ -198,6 +198,7 @@ export async function createPedidoCatalogo(pedido, items) {
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
         total: Number(pedido.total) || 0,
+        monto_recibido: Number(pedido.montoRecibido) || 0,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
       }])
       .select()

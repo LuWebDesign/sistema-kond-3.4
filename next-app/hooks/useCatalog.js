@@ -590,7 +590,8 @@ export function useOrders() {
         comprobante: orderData.comprobante || null,
         comprobanteOmitido: orderData._comprobanteOmitted || false,
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
-        total: orderData.total
+        total: orderData.total,
+        montoRecibido: orderData.montoRecibido || 0
       }
 
       // Determinar si aplica envío gratis a todo el carrito
@@ -678,6 +679,38 @@ export function useOrders() {
       } catch (notificationError) {
         // No fallar el pedido si la notificación falla
         console.error('Error creando notificación:', notificationError)
+      }
+
+      // ============================================
+      // REGISTRAR MOVIMIENTO FINANCIERO (seña/pago)
+      // ============================================
+      const montoRecibido = Number(orderData.montoRecibido || 0)
+      if (montoRecibido > 0) {
+        try {
+          const { createMovimiento } = await import('../utils/supabaseFinanzas')
+          const clienteNombre = `${(orderData.cliente?.nombre || '').trim()} ${(orderData.cliente?.apellido || '').trim()}`.trim()
+          const hoy = new Date().toISOString().split('T')[0]
+          const horaActual = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+          const totalPedido = Number(orderData.total || 0)
+          const esPagoTotal = totalPedido > 0 && montoRecibido >= totalPedido
+          const metodo = orderData.metodoPago === 'transferencia' ? 'transferencia' : 'efectivo'
+
+          await createMovimiento({
+            tipo: 'ingreso',
+            monto: montoRecibido,
+            fecha: hoy,
+            hora: horaActual,
+            categoria: esPagoTotal ? 'Pago Pedido' : 'Seña Pedido',
+            descripcion: esPagoTotal
+              ? `Pago total - Pedido #${data.pedido.id} - ${clienteNombre}`
+              : `Seña recibida - Pedido #${data.pedido.id} - ${clienteNombre}`,
+            metodoPago: metodo,
+            pedidoCatalogoId: data.pedido.id
+          })
+          console.log('💰 Movimiento financiero registrado para pedido #' + data.pedido.id)
+        } catch (finError) {
+          console.error('Error registrando movimiento financiero:', finError)
+        }
       }
 
       // Llamar al callback de éxito si existe
