@@ -1,6 +1,7 @@
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../utils/catalogUtils'
 import { 
@@ -31,6 +32,8 @@ const Products = dynamic(() => Promise.resolve(ProductsComponent), {
 });
 
 function ProductsComponent() {
+  const router = useRouter()
+
   // Estados principales
   const [products, setProducts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -482,6 +485,28 @@ function ProductsComponent() {
     loadProducts()
   }, [loadProducts])
 
+  // Abrir modo edición automáticamente si la URL contiene ?edit=[id]
+  useEffect(() => {
+    if (products.length === 0 || !router.isReady) return
+    const editId = router.query.edit
+    if (!editId) return
+    const id = isNaN(editId) ? editId : Number(editId)
+    const exists = products.some(p => p.id === id)
+    if (!exists) return
+    setEditingCards(prev => {
+      if (prev.has(id)) return prev
+      const newSet = new Set(prev)
+      newSet.add(id)
+      return newSet
+    })
+    setExpandedCards(prev => {
+      if (prev.has(id)) return prev
+      const newSet = new Set(prev)
+      newSet.add(id)
+      return newSet
+    })
+  }, [products, router.isReady, router.query.edit])
+
   // Escuchar cambios en productos desde otras páginas (como database)
   useEffect(() => {
     const handleProductosUpdated = () => {
@@ -836,6 +861,8 @@ function ProductsComponent() {
       const newSet = new Set(prev)
       if (newSet.has(id)) {
         newSet.delete(id)
+        // Limpiar el query param de la URL al cerrar edición
+        router.replace('/admin/products', undefined, { shallow: true })
       } else {
         newSet.add(id)
         // Expandir automáticamente cuando se entra en modo edición
@@ -844,6 +871,8 @@ function ProductsComponent() {
           newExpSet.add(id)
           return newExpSet
         })
+        // Reflejar el producto en edición en la URL
+        router.replace(`/admin/products?edit=${id}`, undefined, { shallow: true })
       }
       return newSet
     })
