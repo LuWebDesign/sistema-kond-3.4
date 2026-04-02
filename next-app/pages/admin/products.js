@@ -2839,28 +2839,33 @@ function ProductCard({
     isPrecioUnitarioManual: false
   })
 
-  // Actualizar costo material cuando cambia el material
+  // Actualizar costo material cuando el usuario CAMBIA el material
   useEffect(() => {
     if (editData.materialId && materials.length > 0 && !editCalculatedFields.isCostoMaterialManual) {
+      // No recalcular si el material es el mismo del producto (carga inicial)
+      if (String(editData.materialId) === String(product.materialId || '')) return
+
       const selectedMaterial = materials.find(m => String(m.id) === String(editData.materialId))
       if (selectedMaterial) {
+        const newCostoPlaca = Number(selectedMaterial.costoUnitario || 0)
+        const unidsPorPlaca = editData.unidadesPorPlaca || 1
         setEditData(prev => ({
           ...prev,
-          costoMaterial: Number(selectedMaterial.costoUnitario || 0),
-          costoPlaca: Number(selectedMaterial.costoUnitario || 0)
+          costoPlaca: newCostoPlaca,
+          costoMaterial: unidsPorPlaca > 0 ? parseFloat((newCostoPlaca / unidsPorPlaca).toFixed(2)) : 0
         }))
       }
     }
-  }, [editData.materialId, materials, editCalculatedFields.isCostoMaterialManual])
+  }, [editData.materialId, materials, editCalculatedFields.isCostoMaterialManual, product.materialId])
 
   // Recalcular precio unitario cuando cambian costoMaterial o margenMaterial
   useEffect(() => {
     if (!editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial !== undefined && editData.margenMaterial !== undefined) {
-      const precioUnitarioCalc = editData.costoMaterial * (1 + editData.margenMaterial / 100)
-      setEditData(prev => ({
-        ...prev,
-        precioUnitario: parseFloat(precioUnitarioCalc.toFixed(2))
-      }))
+      const precioUnitarioCalc = parseFloat((editData.costoMaterial * (1 + editData.margenMaterial / 100)).toFixed(2))
+      setEditData(prev => {
+        if (prev.precioUnitario === precioUnitarioCalc) return prev
+        return { ...prev, precioUnitario: precioUnitarioCalc }
+      })
     }
   }, [editData.costoMaterial, editData.margenMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
@@ -2869,10 +2874,10 @@ function ProductCard({
     if (editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial > 0 && editData.precioUnitario !== undefined) {
       const margenDesdePrecio = ((editData.precioUnitario / editData.costoMaterial) - 1) * 100
       const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
-      setEditData(prev => ({
-        ...prev,
-        margenMaterial: margenRedondeado
-      }))
+      setEditData(prev => {
+        if (prev.margenMaterial === margenRedondeado) return prev
+        return { ...prev, margenMaterial: margenRedondeado }
+      })
     }
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
