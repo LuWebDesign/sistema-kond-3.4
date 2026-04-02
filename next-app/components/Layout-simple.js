@@ -110,7 +110,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
               Administración
             </div>
             
-            <Link href="/admin/payment-config" style={linkStyle}>
+            <Link href="/admin" style={linkStyle}>
               👤 Panel Admin
             </Link>
           </nav>
