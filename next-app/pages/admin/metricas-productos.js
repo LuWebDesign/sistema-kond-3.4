@@ -70,25 +70,17 @@ function MetricasProductosPage() {
     // Calcular rentabilidad por producto
     const productosConRentabilidad = productos.map(p => {
       const precio = Number(p.precio_unitario || 0)
-      const costoPlaca = Number(p.costo_placa || 0)
-      const unidadesPorPlaca = Number(p.unidades_por_placa || 1)
       const costoMaterial = Number(p.costo_material || 0)
-      const margenMaterial = Number(p.margen_material || 0)
+      const margen = Number(p.margen_material || 0)
 
-      const costoPorUnidad = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
-      const costoMaterialConMargen = costoMaterial * (1 + margenMaterial / 100)
-      const costoTotal = costoPorUnidad + costoMaterialConMargen
-      const ganancia = precio - costoTotal
-      const margen = precio > 0 ? (ganancia / precio) * 100 : 0
+      const ganancia = precio - costoMaterial
 
       const tiempoMin = parseTime(p.tiempo_unitario)
       const gananciaPorMinuto = tiempoMin > 0 ? ganancia / tiempoMin : 0
 
       return {
         ...p,
-        costoPorUnidad,
-        costoMaterialConMargen,
-        costoTotal,
+        costoMaterial,
         ganancia,
         margen,
         tiempoMin,
@@ -109,7 +101,7 @@ function MetricasProductosPage() {
       ? conTiempo.reduce((s, p) => s + p.gananciaPorMinuto, 0) / conTiempo.length
       : 0
 
-    const costoMaterialTotal = productosConRentabilidad.reduce((s, p) => s + p.costoMaterialConMargen, 0)
+    const costoMaterialTotal = productosConRentabilidad.reduce((s, p) => s + p.costoMaterial, 0)
 
     // Rankings
     const top5Rentables = [...productosConRentabilidad]
@@ -205,7 +197,7 @@ function MetricasProductosPage() {
             <span className={styles.kpiValue} style={{ color: metrics.margenPromedio >= 40 ? '#10b981' : metrics.margenPromedio >= 20 ? '#f59e0b' : '#ef4444' }}>
               {metrics.margenPromedio.toFixed(1)}%
             </span>
-            <span className={styles.kpiSub}>sobre precio de venta</span>
+            <span className={styles.kpiSub}>sobre costo material</span>
           </div>
           <div className={styles.kpiCard}>
             <span className={styles.kpiLabel}>Ganancia Total</span>
@@ -240,7 +232,7 @@ function MetricasProductosPage() {
                   {i + 1}. {p.nombre || 'Sin nombre'}
                 </span>
                 <span className={styles.statValue} style={{ color: '#10b981', fontSize: '0.85rem' }}>
-                  {formatCurrency(p.ganancia)} ({p.margen.toFixed(0)}%)
+                  {formatCurrency(p.ganancia)} ({p.margen.toFixed(1)}%)
                 </span>
               </div>
             ))}
