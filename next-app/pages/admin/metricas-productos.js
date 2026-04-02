@@ -135,19 +135,21 @@ function MetricasProductosPage() {
       if (!p.publicado) continue // Solo productos publicados
       const cat = p.categoria || 'Sin categoría'
       if (!categorias[cat]) {
-        categorias[cat] = { count: 0, gananciaTotal: 0, valorTotal: 0, margenSum: 0 }
+        categorias[cat] = { count: 0, gananciaTotal: 0, valorTotal: 0, margenSum: 0, tiempoTotal: 0 }
       }
       categorias[cat].count++
       categorias[cat].gananciaTotal += p.ganancia
       categorias[cat].valorTotal += Number(p.precio_unitario || 0)
       categorias[cat].margenSum += p.margen
+      categorias[cat].tiempoTotal += p.tiempoMin
     }
 
     const categoriasArray = Object.entries(categorias).map(([nombre, data]) => ({
       nombre,
       ...data,
-      margenPromedio: data.count > 0 ? data.margenSum / data.count : 0
-    })).sort((a, b) => b.gananciaTotal - a.gananciaTotal)
+      margenPromedio: data.count > 0 ? data.margenSum / data.count : 0,
+      gananciaPorHora: data.tiempoTotal > 0 ? (data.gananciaTotal / data.tiempoTotal) * 60 : 0
+    })).sort((a, b) => b.valorTotal - a.valorTotal)
 
     // Distribución por tipo
     const tipos = {}
@@ -411,7 +413,7 @@ function MetricasProductosPage() {
                   <th style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-secondary)' }}>Categoría</th>
                   <th style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>Productos</th>
                   <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Valor Total</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Ganancia</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>$/Hora</th>
                   <th style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>Margen Prom.</th>
                 </tr>
               </thead>
@@ -423,8 +425,8 @@ function MetricasProductosPage() {
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#3b82f6', fontWeight: 500 }}>
                       {formatCurrency(cat.valorTotal)}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: cat.gananciaTotal >= 0 ? '#10b981' : '#ef4444', fontWeight: 500 }}>
-                      {formatCurrency(cat.gananciaTotal)}
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#8b5cf6', fontWeight: 500 }}>
+                      {cat.gananciaPorHora > 0 ? formatCurrency(cat.gananciaPorHora) : '—'}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: cat.margenPromedio >= 30 ? '#10b981' : '#f59e0b' }}>
                       {cat.margenPromedio.toFixed(1)}%
