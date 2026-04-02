@@ -899,15 +899,20 @@ function ProductsComponent() {
         return
       }
 
-      // Recargar productos desde Supabase
-      await loadProducts()
-      
-      // Salir del modo edición
+      // Salir del modo edición y colapsar la tarjeta inmediatamente
       setEditingCards(prev => {
         const newSet = new Set(prev)
         newSet.delete(id)
         return newSet
       })
+      setExpandedCards(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(id)
+        return newSet
+      })
+
+      // Limpiar ?edit= de la URL para que el useEffect no reabra la tarjeta
+      router.replace('/admin/products', undefined, { shallow: true })
 
       // Mostrar notificación de éxito
       if (typeof window !== 'undefined') {
@@ -921,6 +926,9 @@ function ProductsComponent() {
         document.body.appendChild(notification)
         setTimeout(() => notification.remove(), 3000)
       }
+
+      // Recargar productos desde Supabase en background (sin bloquear el cierre)
+      loadProducts()
     } catch (error) {
       console.error('Error al guardar producto:', error)
       if (typeof window !== 'undefined') {
