@@ -146,6 +146,10 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             <Link href="/admin/products" style={linkStyle}>
               Productos
             </Link>
+
+            <Link href="/admin/cotizaciones" style={linkStyle}>
+              Cotizaciones Corte
+            </Link>
             
             <Link href="/admin/calendar" style={linkStyle}>
               Calendario
