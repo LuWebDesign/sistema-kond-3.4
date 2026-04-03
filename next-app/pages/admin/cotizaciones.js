@@ -35,7 +35,6 @@ function CotizacionesComponent() {
   const [calculadoraData, setCalculadoraData] = useState({
     materialId: '',
     materialNombre: '',
-    materialTipo: '',
     espesor: '',
     anchoPlaca: 120,
     altoPlaca: 90,
@@ -44,7 +43,6 @@ function CotizacionesComponent() {
     costoPlaca: 0
   })
   const [resultado, setResultado] = useState(null)
-  const [configsGuardadas, setConfigsGuardadas] = useState([])
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -139,15 +137,6 @@ function CotizacionesComponent() {
         const valor = parseFloat(saved)
         setCostoHoraPredeterminado(valor)
         setFormData(prev => ({ ...prev, costoHoraMaquina: valor }))
-      }
-      // Cargar configuraciones guardadas de placas
-      const configs = localStorage.getItem('configsPlacasGuardadas')
-      if (configs) {
-        try {
-          setConfigsGuardadas(JSON.parse(configs))
-        } catch (e) {
-          console.error('Error cargando configs:', e)
-        }
       }
     }
   }, [loadCotizaciones, loadMaterials])
@@ -252,48 +241,6 @@ function CotizacionesComponent() {
       total: 0,
       notas: ''
     })
-  }
-
-  // Guardar configuración de placa
-  const guardarConfigPlaca = () => {
-    const { materialNombre, materialTipo, espesor, anchoPlaca, altoPlaca, costoPlaca } = calculadoraData
-    if (!materialNombre || !espesor) {
-      alert('Por favor selecciona un material y espesor')
-      return
-    }
-    const nuevaConfig = {
-      id: Date.now(),
-      materialNombre,
-      materialTipo,
-      espesor,
-      anchoPlaca,
-      altoPlaca,
-      costoPlaca
-    }
-    const nuevasConfigs = [...configsGuardadas, nuevaConfig]
-    setConfigsGuardadas(nuevasConfigs)
-    localStorage.setItem('configsPlacasGuardadas', JSON.stringify(nuevasConfigs))
-    showNotification('Configuración guardada')
-  }
-
-  // Cargar configuración guardada
-  const cargarConfigPlaca = (config) => {
-    setCalculadoraData(prev => ({
-      ...prev,
-      materialNombre: config.materialNombre,
-      materialTipo: config.materialTipo || '',
-      espesor: config.espesor,
-      anchoPlaca: config.anchoPlaca,
-      altoPlaca: config.altoPlaca,
-      costoPlaca: config.costoPlaca
-    }))
-  }
-
-  // Eliminar configuración guardada
-  const eliminarConfigPlaca = (id) => {
-    const nuevasConfigs = configsGuardadas.filter(c => c.id !== id)
-    setConfigsGuardadas(nuevasConfigs)
-    localStorage.setItem('configsPlacasGuardadas', JSON.stringify(nuevasConfigs))
   }
 
   // Calcular distribución de piezas en placa
@@ -1153,12 +1100,11 @@ function CotizacionesComponent() {
                               ...prev,
                               materialId: id,
                               materialNombre: mat.nombre,
-                              materialTipo: mat.tipo || '',
                               espesor: mat.espesor || '',
                               costoPlaca: Number(mat.costoUnitario || 0)
                             }))
                           } else {
-                            setCalculadoraData(prev => ({ ...prev, materialId: '', materialNombre: '', materialTipo: '', espesor: '' }))
+                            setCalculadoraData(prev => ({ ...prev, materialId: '', materialNombre: '', espesor: '' }))
                           }
                         }}
                         style={{ ...inputStyle, cursor: 'pointer' }}
@@ -1205,25 +1151,6 @@ function CotizacionesComponent() {
                         style={inputStyle}
                       />
                     </div>
-
-                    {/* Botón guardar configuración */}
-                    {calculadoraData.materialNombre && calculadoraData.espesor && (
-                      <button
-                        onClick={guardarConfigPlaca}
-                        style={{
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        💾 Guardar Configuración
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -1281,89 +1208,6 @@ function CotizacionesComponent() {
                 </div>
               </div>
 
-              {/* Configuraciones Guardadas */}
-              {configsGuardadas.length > 0 && (
-                <div style={{
-                  background: 'var(--bg-secondary)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  border: '1px solid var(--border-color)',
-                  marginTop: '20px'
-                }}>
-                  <h4 style={{ margin: '0 0 16px', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    📁 Configuraciones Guardadas
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '12px' }}>
-                    {configsGuardadas.map(config => (
-                      <div
-                        key={config.id}
-                        style={{
-                          background: 'var(--bg-card)',
-                          borderRadius: '8px',
-                          padding: '12px',
-                          border: '1px solid var(--border-color)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px'
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
-                          {config.materialNombre}
-                        </div>
-                        {config.materialTipo && (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            Tipo: {config.materialTipo}
-                          </div>
-                        )}
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Espesor: {config.espesor}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Placa: {config.anchoPlaca} × {config.altoPlaca} cm
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Costo: ${config.costoPlaca.toFixed(2)}
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                          <button
-                            onClick={() => cargarConfigPlaca(config)}
-                            style={{
-                              flex: 1,
-                              padding: '6px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                              color: 'white',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            Cargar
-                          </button>
-                          <button
-                            onClick={() => eliminarConfigPlaca(config.id)}
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              color: '#ef4444',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Resultados */}
               {resultado && (
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.08) 100%)',
