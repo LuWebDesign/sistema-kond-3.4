@@ -25,10 +25,21 @@ function CotizacionesComponent() {
   // Estados principales
   const [cotizaciones, setCotizaciones] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [showCalculadora, setShowCalculadora] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [filters, setFilters] = useState({ search: '', estado: 'all' })
   const [materials, setMaterials] = useState([])
   const [costoHoraPredeterminado, setCostoHoraPredeterminado] = useState(0)
+
+  // Estados de la calculadora
+  const [calculadoraData, setCalculadoraData] = useState({
+    anchoPlaca: 120,
+    altoPlaca: 90,
+    anchoPieza: 16,
+    altoPieza: 16,
+    costoPlaca: 0
+  })
+  const [resultado, setResultado] = useState(null)
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -229,6 +240,63 @@ function CotizacionesComponent() {
     })
   }
 
+  // Calcular distribución de piezas en placa
+  const calcularCorte = () => {
+    const { anchoPlaca, altoPlaca, anchoPieza, altoPieza, costoPlaca } = calculadoraData
+
+    // Validar inputs
+    if (!anchoPlaca || !altoPlaca || !anchoPieza || !altoPieza) {
+      alert('Por favor completa todas las dimensiones')
+      return
+    }
+
+    // Opción 1: orientación normal
+    const columnas1 = Math.floor(anchoPlaca / anchoPieza)
+    const filas1 = Math.floor(altoPlaca / altoPieza)
+    const total1 = columnas1 * filas1
+
+    // Opción 2: orientación rotada
+    const columnas2 = Math.floor(anchoPlaca / altoPieza)
+    const filas2 = Math.floor(altoPlaca / anchoPieza)
+    const total2 = columnas2 * filas2
+
+    // Elegir la mejor opción
+    const mejorOpcion = total1 >= total2 ? {
+      total: total1,
+      columnas: columnas1,
+      filas: filas1,
+      orientacion: 'normal',
+      anchoPiezaUsado: anchoPieza,
+      altoPiezaUsado: altoPieza
+    } : {
+      total: total2,
+      columnas: columnas2,
+      filas: filas2,
+      orientacion: 'rotada',
+      anchoPiezaUsado: altoPieza,
+      altoPiezaUsado: anchoPieza
+    }
+
+    // Calcular costos y áreas
+    const costoPorPieza = mejorOpcion.total > 0 ? costoPlaca / mejorOpcion.total : 0
+    const areaPlaca = anchoPlaca * altoPlaca
+    const areaPieza = anchoPieza * altoPieza
+    const areaUsada = areaPieza * mejorOpcion.total
+    const areaDesperdicio = areaPlaca - areaUsada
+    const porcentajeAprovechamiento = (areaUsada / areaPlaca) * 100
+
+    setResultado({
+      ...mejorOpcion,
+      costoPorPieza,
+      areaPlaca,
+      areaUsada,
+      areaDesperdicio,
+      porcentajeAprovechamiento,
+      anchoPlaca,
+      altoPlaca
+    })
+  }
+
   // Notificación
   const showNotification = (msg) => {
     if (typeof window === 'undefined') return
@@ -416,18 +484,39 @@ function CotizacionesComponent() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             flexWrap: 'wrap', gap: '12px'
           }}>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              style={{
-                background: showForm ? 'var(--text-secondary)' : '#8b5cf6',
-                color: 'white', border: 'none', borderRadius: '8px',
-                padding: '12px 20px', cursor: 'pointer', fontWeight: 600,
-                fontSize: '0.9rem', height: '44px', display: 'flex',
-                alignItems: 'center', justifyContent: 'center'
-              }}
-            >
-              {showForm ? '∧ Ocultar Formulario' : '+ Nueva Cotización de Corte'}
-            </button>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  setShowForm(!showForm)
+                  if (showCalculadora) setShowCalculadora(false)
+                }}
+                style={{
+                  background: showForm ? 'var(--text-secondary)' : '#8b5cf6',
+                  color: 'white', border: 'none', borderRadius: '8px',
+                  padding: '12px 20px', cursor: 'pointer', fontWeight: 600,
+                  fontSize: '0.9rem', height: '44px', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                {showForm ? '∧ Ocultar Formulario' : '+ Nueva Cotización de Corte'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowCalculadora(!showCalculadora)
+                  if (showForm) setShowForm(false)
+                }}
+                style={{
+                  background: showCalculadora ? 'var(--text-secondary)' : '#10b981',
+                  color: 'white', border: 'none', borderRadius: '8px',
+                  padding: '12px 20px', cursor: 'pointer', fontWeight: 600,
+                  fontSize: '0.9rem', height: '44px', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                {showCalculadora ? '∧ Ocultar Calculadora' : '🧮 Calculadora de Corte'}
+              </button>
+            </div>
 
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <input
@@ -941,6 +1030,316 @@ function CotizacionesComponent() {
             </div>
           )}
         </div>
+
+        {/* Calculadora de Corte */}
+        {showCalculadora && (
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-color)',
+            borderRadius: '12px', padding: '20px', marginBottom: '24px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)',
+              border: '2px solid var(--border-color)',
+              borderRadius: '16px',
+              padding: '32px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)'
+            }}>
+              {/* Header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '16px',
+                marginBottom: '32px', paddingBottom: '20px',
+                borderBottom: '2px solid var(--border-color)'
+              }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '28px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                }}>🧮</div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Calculadora de Corte
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Optimiza el aprovechamiento de placas al cortar piezas
+                  </p>
+                </div>
+              </div>
+
+              {/* Formulario */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '24px',
+                marginBottom: '24px'
+              }}>
+                {/* Dimensiones de la placa */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)'
+                }}>
+                  <h4 style={{ margin: '0 0 16px', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    📐 Dimensiones de la Placa
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={labelStyle}>Ancho de la placa (cm)</label>
+                      <input
+                        type="number"
+                        value={calculadoraData.anchoPlaca}
+                        onChange={(e) => setCalculadoraData(prev => ({ ...prev, anchoPlaca: parseFloat(e.target.value) || 0 }))}
+                        min="0"
+                        step="0.1"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Alto de la placa (cm)</label>
+                      <input
+                        type="number"
+                        value={calculadoraData.altoPlaca}
+                        onChange={(e) => setCalculadoraData(prev => ({ ...prev, altoPlaca: parseFloat(e.target.value) || 0 }))}
+                        min="0"
+                        step="0.1"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Costo de la placa ($)</label>
+                      <input
+                        type="number"
+                        value={calculadoraData.costoPlaca}
+                        onChange={(e) => setCalculadoraData(prev => ({ ...prev, costoPlaca: parseFloat(e.target.value) || 0 }))}
+                        min="0"
+                        step="0.01"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dimensiones de la pieza */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.08) 100%)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  border: '1px solid rgba(139, 92, 246, 0.2)'
+                }}>
+                  <h4 style={{ margin: '0 0 16px', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    ✂️ Dimensiones de la Pieza
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={labelStyle}>Ancho de la pieza (cm)</label>
+                      <input
+                        type="number"
+                        value={calculadoraData.anchoPieza}
+                        onChange={(e) => setCalculadoraData(prev => ({ ...prev, anchoPieza: parseFloat(e.target.value) || 0 }))}
+                        min="0"
+                        step="0.1"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Alto de la pieza (cm)</label>
+                      <input
+                        type="number"
+                        value={calculadoraData.altoPieza}
+                        onChange={(e) => setCalculadoraData(prev => ({ ...prev, altoPieza: parseFloat(e.target.value) || 0 }))}
+                        min="0"
+                        step="0.1"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <button
+                      onClick={calcularCorte}
+                      style={{
+                        marginTop: '8px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: '0.95rem',
+                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)'
+                      }}
+                    >
+                      ⚡ Calcular
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resultados */}
+              {resultado && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.08) 100%)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  border: '1px solid rgba(16, 185, 129, 0.2)'
+                }}>
+                  <h4 style={{ margin: '0 0 20px', fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    📊 Resultados
+                  </h4>
+
+                  {/* Grid de métricas */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '16px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total de Piezas</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>{resultado.total}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        {resultado.columnas} × {resultado.filas}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Costo por Pieza</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>
+                        {formatCurrency(resultado.costoPorPieza)}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Aprovechamiento</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#8b5cf6' }}>
+                        {resultado.porcentajeAprovechamiento.toFixed(1)}%
+                      </div>
+                    </div>
+
+                    <div style={{
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Orientación</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {resultado.orientacion === 'normal' ? '📄 Normal' : '🔄 Rotada'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        {resultado.anchoPiezaUsado} × {resultado.altoPiezaUsado} cm
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visualización del corte */}
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>
+                      Vista del Corte:
+                    </div>
+                    <div style={{
+                      background: 'white',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      border: '2px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      minHeight: '300px'
+                    }}>
+                      <svg
+                        width="100%"
+                        height="400"
+                        viewBox={`0 0 ${resultado.anchoPlaca} ${resultado.altoPlaca}`}
+                        style={{ maxWidth: '600px' }}
+                      >
+                        {/* Placa completa (fondo rojo = desperdicio) */}
+                        <rect
+                          x="0"
+                          y="0"
+                          width={resultado.anchoPlaca}
+                          height={resultado.altoPlaca}
+                          fill="#fee2e2"
+                          stroke="#ef4444"
+                          strokeWidth="0.5"
+                        />
+
+                        {/* Piezas cortadas (blanco) */}
+                        {Array.from({ length: resultado.filas }).map((_, fila) =>
+                          Array.from({ length: resultado.columnas }).map((_, columna) => (
+                            <rect
+                              key={`${fila}-${columna}`}
+                              x={columna * resultado.anchoPiezaUsado}
+                              y={fila * resultado.altoPiezaUsado}
+                              width={resultado.anchoPiezaUsado}
+                              height={resultado.altoPiezaUsado}
+                              fill="white"
+                              stroke="#10b981"
+                              strokeWidth="0.3"
+                            />
+                          ))
+                        )}
+
+                        {/* Etiquetas de dimensiones */}
+                        <text
+                          x={resultado.anchoPlaca / 2}
+                          y={resultado.altoPlaca + 15}
+                          textAnchor="middle"
+                          fontSize="4"
+                          fill="#666"
+                        >
+                          {resultado.anchoPlaca} cm
+                        </text>
+                        <text
+                          x="-10"
+                          y={resultado.altoPlaca / 2}
+                          textAnchor="middle"
+                          fontSize="4"
+                          fill="#666"
+                          transform={`rotate(-90, -10, ${resultado.altoPlaca / 2})`}
+                        >
+                          {resultado.altoPlaca} cm
+                        </text>
+                      </svg>
+                    </div>
+
+                    {/* Leyenda */}
+                    <div style={{
+                      display: 'flex',
+                      gap: '16px',
+                      marginTop: '12px',
+                      justifyContent: 'center',
+                      fontSize: '0.85rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '20px', height: '20px', background: 'white', border: '2px solid #10b981', borderRadius: '4px' }}></div>
+                        <span>Piezas ({resultado.areaUsada.toFixed(0)} cm²)</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '20px', height: '20px', background: '#fee2e2', border: '2px solid #ef4444', borderRadius: '4px' }}></div>
+                        <span>Desperdicio ({resultado.areaDesperdicio.toFixed(0)} cm²)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Lista de Cotizaciones */}
         <div style={{
