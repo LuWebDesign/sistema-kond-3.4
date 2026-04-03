@@ -1281,11 +1281,8 @@ function CotizacionesComponent() {
 
                   {/* Visualización del corte */}
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                      Vista del Corte: {resultado.anchoPlaca}×{resultado.altoPlaca} cm
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                      Piezas de {resultado.anchoPiezaUsado}×{resultado.altoPiezaUsado} cm ({resultado.filas} filas × {resultado.columnas} columnas)
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>
+                      Vista del Corte
                     </div>
                     <div style={{
                       background: 'white',
@@ -1299,10 +1296,33 @@ function CotizacionesComponent() {
                     }}>
                       <svg
                         width="100%"
-                        height="400"
-                        viewBox={`0 0 ${resultado.anchoPlaca} ${resultado.altoPlaca}`}
-                        style={{ maxWidth: '600px' }}
+                        height="450"
+                        viewBox={`-5 -30 ${resultado.anchoPlaca + 10} ${resultado.altoPlaca + 45}`}
+                        style={{ maxWidth: '650px' }}
                       >
+                        {/* Título con dimensiones de la placa */}
+                        <text
+                          x={resultado.anchoPlaca / 2}
+                          y="-18"
+                          textAnchor="middle"
+                          fontSize="5"
+                          fontWeight="bold"
+                          fill="#374151"
+                        >
+                          Placa: {resultado.anchoPlaca}×{resultado.altoPlaca} cm
+                        </text>
+                        
+                        {/* Info de piezas */}
+                        <text
+                          x={resultado.anchoPlaca / 2}
+                          y="-10"
+                          textAnchor="middle"
+                          fontSize="3.5"
+                          fill="#6b7280"
+                        >
+                          {resultado.total} piezas de {resultado.anchoPiezaUsado}×{resultado.altoPiezaUsado} cm ({resultado.filas} filas × {resultado.columnas} columnas)
+                        </text>
+
                         {/* Placa completa (fondo rojo = desperdicio) */}
                         <rect
                           x="0"
@@ -1330,7 +1350,21 @@ function CotizacionesComponent() {
                           ))
                         )}
 
-                        {/* Etiquetas de dimensiones */}
+                        {/* Etiqueta en la primera pieza */}
+                        {resultado.total > 0 && (
+                          <text
+                            x={resultado.anchoPiezaUsado / 2}
+                            y={resultado.altoPiezaUsado / 2 + 1}
+                            textAnchor="middle"
+                            fontSize="2.5"
+                            fill="#10b981"
+                            fontWeight="600"
+                          >
+                            {resultado.anchoPiezaUsado}×{resultado.altoPiezaUsado}
+                          </text>
+                        )}
+
+                        {/* Etiquetas de dimensiones de la placa */}
                         <text
                           x={resultado.anchoPlaca / 2}
                           y={resultado.altoPlaca + 15}
