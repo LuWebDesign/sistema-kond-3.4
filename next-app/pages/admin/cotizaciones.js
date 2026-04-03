@@ -1168,20 +1168,6 @@ function CotizacionesComponent() {
                       </select>
                     </div>
 
-                    {/* Espesor (editable) */}
-                    {calculadoraData.materialNombre && (
-                      <div>
-                        <label style={labelStyle}>Espesor</label>
-                        <input
-                          type="text"
-                          value={calculadoraData.espesor}
-                          onChange={(e) => setCalculadoraData(prev => ({ ...prev, espesor: e.target.value }))}
-                          placeholder="Ej: 3mm, 6mm..."
-                          style={inputStyle}
-                        />
-                      </div>
-                    )}
-
                     <div>
                       <label style={labelStyle}>Ancho de la placa (cm)</label>
                       <input
