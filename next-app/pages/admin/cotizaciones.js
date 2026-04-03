@@ -28,6 +28,7 @@ function CotizacionesComponent() {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [filters, setFilters] = useState({ search: '', estado: 'all' })
   const [materials, setMaterials] = useState([])
+  const [costoHoraPredeterminado, setCostoHoraPredeterminado] = useState(0)
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -115,6 +116,15 @@ function CotizacionesComponent() {
   useEffect(() => {
     loadCotizaciones()
     loadMaterials()
+    // Cargar costo por hora predeterminado
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('costoHoraMaquinaPredeterminado')
+      if (saved) {
+        const valor = parseFloat(saved)
+        setCostoHoraPredeterminado(valor)
+        setFormData(prev => ({ ...prev, costoHoraMaquina: valor }))
+      }
+    }
   }, [loadCotizaciones, loadMaterials])
 
   // Convertir tiempo HH:MM:SS a horas decimales
@@ -209,7 +219,7 @@ function CotizacionesComponent() {
       materialNombre: '',
       costoMaterial: 0,
       tiempoMaquina: '00:00:00',
-      costoHoraMaquina: 0,
+      costoHoraMaquina: costoHoraPredeterminado,
       costoTiempoMaquina: 0,
       costoDiseno: 0,
       subtotal: 0,
@@ -701,11 +711,21 @@ function CotizacionesComponent() {
                       type="number"
                       name="costoHoraMaquina"
                       value={formData.costoHoraMaquina}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        handleInputChange(e)
+                        // Guardar como valor predeterminado
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('costoHoraMaquinaPredeterminado', e.target.value)
+                          setCostoHoraPredeterminado(parseFloat(e.target.value) || 0)
+                        }
+                      }}
                       min="0"
                       step="0.01"
                       style={inputStyle}
                     />
+                    <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                      Este valor se guardará como predeterminado
+                    </small>
                   </div>
                   <div>
                     <label style={labelStyle}>Costo Tiempo Máquina</label>
@@ -784,8 +804,8 @@ function CotizacionesComponent() {
                   border: '1px solid var(--border-color)'
                 }}>
                   {[
-                    { label: `Material (${formData.cantidad} uds × ${formatCurrency(formData.costoMaterial)})`, value: formData.costoMaterial * formData.cantidad },
-                    { label: 'Tiempo de máquina', value: formData.costoTiempoMaquina },
+                    { label: 'Material', value: formData.costoMaterial * formData.cantidad },
+                    { label: 'Tiempo de corte', value: formData.costoTiempoMaquina },
                     { label: 'Diseño', value: Number(formData.costoDiseno) }
                   ].map((item, i) => (
                     <div key={i} style={{
@@ -985,7 +1005,7 @@ function CotizacionesComponent() {
                           <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{formatCurrency(cot.costoMaterial * cot.cantidad)}</div>
                         </div>
                         <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Máquina</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Corte</div>
                           <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{formatCurrency(cot.costoTiempoMaquina)}</div>
                         </div>
                         <div style={{ textAlign: 'center', minWidth: '80px' }}>
