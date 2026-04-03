@@ -35,6 +35,7 @@ function CotizacionesComponent() {
   const [calculadoraData, setCalculadoraData] = useState({
     materialId: '',
     materialNombre: '',
+    materialTipo: '',
     espesor: '',
     anchoPlaca: 120,
     altoPlaca: 90,
@@ -255,7 +256,7 @@ function CotizacionesComponent() {
 
   // Guardar configuración de placa
   const guardarConfigPlaca = () => {
-    const { materialNombre, espesor, anchoPlaca, altoPlaca, costoPlaca } = calculadoraData
+    const { materialNombre, materialTipo, espesor, anchoPlaca, altoPlaca, costoPlaca } = calculadoraData
     if (!materialNombre || !espesor) {
       alert('Por favor selecciona un material y espesor')
       return
@@ -263,6 +264,7 @@ function CotizacionesComponent() {
     const nuevaConfig = {
       id: Date.now(),
       materialNombre,
+      materialTipo,
       espesor,
       anchoPlaca,
       altoPlaca,
@@ -279,6 +281,7 @@ function CotizacionesComponent() {
     setCalculadoraData(prev => ({
       ...prev,
       materialNombre: config.materialNombre,
+      materialTipo: config.materialTipo || '',
       espesor: config.espesor,
       anchoPlaca: config.anchoPlaca,
       altoPlaca: config.altoPlaca,
@@ -1150,11 +1153,12 @@ function CotizacionesComponent() {
                               ...prev,
                               materialId: id,
                               materialNombre: mat.nombre,
+                              materialTipo: mat.tipo || '',
                               espesor: mat.espesor || '',
                               costoPlaca: Number(mat.costoUnitario || 0)
                             }))
                           } else {
-                            setCalculadoraData(prev => ({ ...prev, materialId: '', materialNombre: '', espesor: '' }))
+                            setCalculadoraData(prev => ({ ...prev, materialId: '', materialNombre: '', materialTipo: '', espesor: '' }))
                           }
                         }}
                         style={{ ...inputStyle, cursor: 'pointer' }}
@@ -1306,6 +1310,11 @@ function CotizacionesComponent() {
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
                           {config.materialNombre}
                         </div>
+                        {config.materialTipo && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Tipo: {config.materialTipo}
+                          </div>
+                        )}
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           Espesor: {config.espesor}
                         </div>
