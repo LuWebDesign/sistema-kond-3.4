@@ -1003,51 +1003,74 @@ function CotizacionesComponent() {
                       </div>
                     </div>
 
-                    {/* Acciones */}
+                    {/* Información adicional y Acciones */}
                     <div style={{
-                      display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '12px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      gap: '16px', marginTop: '12px', paddingTop: '12px',
                       borderTop: '1px solid var(--border-color)', flexWrap: 'wrap'
                     }}>
-                      {cot.estado === 'pendiente' && (
-                        <>
+                      {/* Info adicional: Tiempo y Precio por minuto */}
+                      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>⏱️ Tiempo:</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {cot.tiempoMaquina || '00:00:00'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>💵 Precio/min:</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {(() => {
+                              const mins = timeToHours(cot.tiempoMaquina || '00:00:00') * 60
+                              const precioMinuto = mins > 0 ? (cot.costoTiempoMaquina / mins) : 0
+                              return formatCurrency(precioMinuto)
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botones de acción */}
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {cot.estado === 'pendiente' && (
+                          <>
+                            <button
+                              onClick={() => handleChangeEstado(cot.id, 'aprobada')}
+                              style={{
+                                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                                background: '#10b981', color: 'white', fontSize: '0.8rem',
+                                fontWeight: 600, cursor: 'pointer'
+                              }}
+                            >Aprobar</button>
+                            <button
+                              onClick={() => handleChangeEstado(cot.id, 'rechazada')}
+                              style={{
+                                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                                background: '#ef4444', color: 'white', fontSize: '0.8rem',
+                                fontWeight: 600, cursor: 'pointer'
+                              }}
+                            >Rechazar</button>
+                          </>
+                        )}
+                        {cot.estado === 'aprobada' && (
                           <button
-                            onClick={() => handleChangeEstado(cot.id, 'aprobada')}
+                            onClick={() => handleChangeEstado(cot.id, 'completada')}
                             style={{
                               padding: '6px 14px', borderRadius: '6px', border: 'none',
-                              background: '#10b981', color: 'white', fontSize: '0.8rem',
+                              background: '#3b82f6', color: 'white', fontSize: '0.8rem',
                               fontWeight: 600, cursor: 'pointer'
                             }}
-                          >Aprobar</button>
-                          <button
-                            onClick={() => handleChangeEstado(cot.id, 'rechazada')}
-                            style={{
-                              padding: '6px 14px', borderRadius: '6px', border: 'none',
-                              background: '#ef4444', color: 'white', fontSize: '0.8rem',
-                              fontWeight: 600, cursor: 'pointer'
-                            }}
-                          >Rechazar</button>
-                        </>
-                      )}
-                      {cot.estado === 'aprobada' && (
+                          >Marcar Completada</button>
+                        )}
                         <button
-                          onClick={() => handleChangeEstado(cot.id, 'completada')}
+                          onClick={() => handleDeleteCotizacion(cot)}
                           style={{
-                            padding: '6px 14px', borderRadius: '6px', border: 'none',
-                            background: '#3b82f6', color: 'white', fontSize: '0.8rem',
-                            fontWeight: 600, cursor: 'pointer'
+                            padding: '6px 14px', borderRadius: '6px',
+                            border: '1px solid var(--border-color)',
+                            background: 'transparent', color: 'var(--text-secondary)',
+                            fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
                           }}
-                        >Marcar Completada</button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteCotizacion(cot)}
-                        style={{
-                          padding: '6px 14px', borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          background: 'transparent', color: 'var(--text-secondary)',
-                          fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                          marginLeft: 'auto'
-                        }}
-                      >🗑️ Eliminar</button>
+                        >🗑️ Eliminar</button>
+                      </div>
                     </div>
                   </div>
                 )
