@@ -1281,8 +1281,11 @@ function CotizacionesComponent() {
 
                   {/* Visualización del corte */}
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>
-                      Vista del Corte:
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                      Vista del Corte: {resultado.anchoPlaca}×{resultado.altoPlaca} cm
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      Piezas de {resultado.anchoPiezaUsado}×{resultado.altoPiezaUsado} cm ({resultado.filas} filas × {resultado.columnas} columnas)
                     </div>
                     <div style={{
                       background: 'white',
