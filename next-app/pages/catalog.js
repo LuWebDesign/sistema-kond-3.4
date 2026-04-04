@@ -334,17 +334,14 @@ export default function Catalog() {
             <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: '8px', marginLeft: '12px' }}>
               <button style={{ background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)', border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Catálogo</button>
               {currentUserState && <button onClick={() => router.push('/catalog/mis-pedidos')} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Mis Pedidos</button>}
+              <button onClick={() => { router.push('/catalog/mi-carrito') }} style={{ position: 'relative', background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                🛒 Carrito
+                {totalItems > 0 && (
+                  <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>{totalItems}</span>
+                )}
+              </button>
             </div>
           </div>
-
-            
-
-          <button onClick={() => { router.push('/catalog/mi-carrito') }} style={{ position: 'relative', background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)', border: 'none', borderRadius: 'var(--kond-btn-radius, 12px)', padding: '12px 24px', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🛒 Carrito
-            {totalItems > 0 && (
-              <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>{totalItems}</span>
-            )}
-          </button>
         </div>
 
         {/* Filtros */}
