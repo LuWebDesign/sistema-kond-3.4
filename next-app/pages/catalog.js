@@ -1860,58 +1860,72 @@ function CheckoutModal({
                 )}
               </div>
 
-              <div className="transfer-payment-info" style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-card)', fontFamily: 'monospace', fontSize: 13 }}>
-                {paymentConfig?.transferencia?.titular && (
-                  <div style={{ marginBottom: 8 }}>
-                    <div><strong>Titular:</strong> {paymentConfig.transferencia.titular}</div>
-                  </div>
-                )}
-
-                {paymentConfig?.transferencia?.banco && (
-                  <div style={{ marginBottom: 8 }}>
-                    <div><strong>Banco:</strong> {paymentConfig.transferencia.banco}</div>
-                  </div>
-                )}
-
-                {paymentConfig?.transferencia?.cbu && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                    <div><strong>CBU:</strong> {paymentConfig.transferencia.cbu}</div>
-                    <button
-                      className="btn-copy"
-                      onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }}
-                      aria-label="Copiar CBU"
-                      title="Copiar CBU"
-                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-
-                <div style={{ marginBottom: 8 }}>
-                  <div><strong>Seña (50%):</strong> {formatCurrency(total * 0.5)}</div>
+              <div className="transfer-payment-info" style={{ marginTop: 12, padding: 14, borderRadius: 10, background: 'var(--bg-card)', fontSize: 14, boxShadow: 'var(--shadow)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ fontWeight: 800 }}>Datos para transferencia</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>🏦</div>
                 </div>
 
-                {paymentConfig?.transferencia?.alias && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div><strong>Alias:</strong> <span style={{ fontFamily: 'monospace', marginLeft: 8 }}>{paymentConfig.transferencia.alias}</span></div>
-                    <button
-                      className="btn-copy"
-                      onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }}
-                      aria-label="Copiar alias"
-                      title="Copiar alias"
-                      style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'center' }}>
+                  {paymentConfig?.transferencia?.titular && (
+                    <>
+                      <div style={{ color: 'var(--text-secondary)' }}><strong>Titular</strong></div>
+                      <div style={{ fontFamily: 'inherit', textAlign: 'right' }}>{paymentConfig.transferencia.titular}</div>
+                    </>
+                  )}
+
+                  {paymentConfig?.transferencia?.banco && (
+                    <>
+                      <div style={{ color: 'var(--text-secondary)' }}><strong>Banco</strong></div>
+                      <div style={{ fontFamily: 'inherit', textAlign: 'right' }}>{paymentConfig.transferencia.banco}</div>
+                    </>
+                  )}
+
+                  {paymentConfig?.transferencia?.cbu && (
+                    <>
+                      <div style={{ color: 'var(--text-secondary)' }}><strong>CBU</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '6px 8px', borderRadius: 6 }}>{paymentConfig.transferencia.cbu}</div>
+                        <button
+                          className="btn-copy"
+                          onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }}
+                          aria-label="Copiar CBU"
+                          title="Copiar CBU"
+                          style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {paymentConfig?.transferencia?.alias && (
+                    <>
+                      <div style={{ color: 'var(--text-secondary)' }}><strong>Alias</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '6px 8px', borderRadius: 6 }}>{paymentConfig.transferencia.alias}</div>
+                        <button
+                          className="btn-copy"
+                          onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }}
+                          aria-label="Copiar alias"
+                          title="Copiar alias"
+                          style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  <div style={{ color: 'var(--text-secondary)' }}><strong>Seña (50%)</strong></div>
+                  <div style={{ fontWeight: 700, textAlign: 'right' }}>{formatCurrency(total * 0.5)}</div>
+                </div>
               </div>
 
               {/* Retiro en local debajo de los datos de transferencia */}
