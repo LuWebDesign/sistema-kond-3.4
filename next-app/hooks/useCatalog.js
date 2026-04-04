@@ -27,7 +27,7 @@ export function useProducts() {
       // Cargar materiales desde Supabase
       const { data: materialesData, error: materialesError } = await getAllMateriales()
       if (materialesError) {
-        console.error('Error loading materiales:', materialesError)
+        // materiales no disponibles
       } else {
         // Mapear de snake_case a camelCase
         const mappedMateriales = (materialesData || []).map(m => ({
@@ -48,7 +48,7 @@ export function useProducts() {
       // Cargar promociones activas desde Supabase
       const { data: promosData, error: promosError } = await getPromocionesActivas()
       if (promosError) {
-        console.error('Error loading promociones:', promosError)
+        // promociones no disponibles
       }
       
       const promocionesActivas = (promosData || []).map(p => ({
@@ -77,7 +77,6 @@ export function useProducts() {
       const { data: productosBase, error } = await getProductosPublicados()
       
       if (error) {
-        console.error('Error loading published products:', error)
         setProducts([])
         setCategories([])
         setIsLoading(false)
@@ -137,7 +136,6 @@ export function useProducts() {
           }
         } catch (e) {
           // Si algo falla con el motor de promociones, devolver el producto original
-          console.warn('Error aplicando promociones al producto', p.id, e)
           return p
         }
       })
@@ -151,7 +149,6 @@ export function useProducts() {
       
       setCategories(uniqueCategories)
     } catch (error) {
-      console.error('Error in loadProducts:', error)
       setProducts([])
       setCategories([])
     } finally {
@@ -180,7 +177,6 @@ export function useCart() {
       const { data: productosBase, error: productosError } = await getProductosPublicados()
       
       if (productosError || !productosBase) {
-        console.warn('Error cargando productos para normalizar el carrito:', productosError)
         // Fallback: usar los datos del carrito tal como están
         setCart(savedCart)
         return
@@ -213,7 +209,7 @@ export function useCart() {
           }))
         }
       } catch (err) {
-        console.warn('No se pudieron cargar promociones para normalizar el carrito:', err)
+        // promos no disponibles
       }
 
       const normalized = savedCart.map(item => {
@@ -243,7 +239,6 @@ export function useCart() {
             originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice)
           }
         } catch (e) {
-          console.warn('Error normalizando item del carrito:', e)
           return item
         }
       })
@@ -252,7 +247,6 @@ export function useCart() {
       localStorage.setItem('cart', JSON.stringify(normalized))
       setCart(normalized)
     } catch (err) {
-      console.warn('Error loading/normalizing cart:', err)
       const fallback = JSON.parse(localStorage.getItem('cart') || '[]')
       setCart(fallback)
     }
@@ -412,7 +406,6 @@ export function useInternalOrders() {
       setOrders(pedidos)
       return pedidos
     } catch (error) {
-      console.error('Error loading internal orders:', error)
       setOrders([])
       return []
     }
@@ -437,7 +430,6 @@ export function useInternalOrders() {
       setOrders(pedidos)
       return newOrder
     } catch (error) {
-      console.error('Error saving internal order:', error)
       return null
     }
   }
@@ -453,7 +445,6 @@ export function useInternalOrders() {
       setOrders(updatedOrders)
       return true
     } catch (error) {
-      console.error('Error updating internal order status:', error)
       return false
     }
   }
@@ -467,7 +458,6 @@ export function useInternalOrders() {
       setOrders(filteredOrders)
       return true
     } catch (error) {
-      console.error('Error deleting internal order:', error)
       return false
     }
   }
@@ -518,7 +508,7 @@ export function useUserOrders() {
         return window.currentUser
       }
     } catch (e) {
-      console.warn('Error obteniendo usuario:', e)
+      // no user
     }
     return null
   }
@@ -551,7 +541,6 @@ export function useUserOrders() {
       
       setUserOrders({ activas, entregadas })
     } catch (error) {
-      console.error('Error loading user orders:', error)
       setUserOrders({ activas: [], entregadas: [] })
     } finally {
       setIsLoading(false)
@@ -602,8 +591,6 @@ export function useOrders() {
         const promoResult = applyPromotionsToCart(orderData.items || [], promosData || [])
         pedidoData.envioGratis = !!promoResult.freeShipping
       } catch (promoErr) {
-        // No bloquear el checkout si el motor de promos falla
-        console.warn('No se pudo calcular envío gratis para el pedido:', promoErr)
         pedidoData.envioGratis = false
       }
 
@@ -638,7 +625,6 @@ export function useOrders() {
             .single()
 
           if (fetchError) {
-            console.warn(`Error obteniendo stock del producto ${item.idProducto}:`, fetchError)
             continue
           }
 
@@ -650,11 +636,9 @@ export function useOrders() {
             .eq('id', item.idProducto)
 
           if (updateError) {
-            console.warn(`Error actualizando stock del producto ${item.idProducto}:`, updateError)
           }
         }
       } catch (stockError) {
-        console.error('Error descontando stock:', stockError)
       }
 
       // ============================================
@@ -678,7 +662,6 @@ export function useOrders() {
         })
       } catch (notificationError) {
         // No fallar el pedido si la notificación falla
-        console.error('Error creando notificación:', notificationError)
       }
 
       // ============================================
@@ -707,9 +690,8 @@ export function useOrders() {
             metodoPago: metodo,
             pedidoCatalogoId: data.pedido.id
           })
-          console.log('💰 Movimiento financiero registrado para pedido #' + data.pedido.id)
+          // movimiento registrado
         } catch (finError) {
-          console.error('Error registrando movimiento financiero:', finError)
         }
       }
 
@@ -733,12 +715,10 @@ export function useOrders() {
         existingOrders.push(orderForStorage)
         localStorage.setItem('pedidosCatalogo', JSON.stringify(existingOrders))
       } catch (localStorageError) {
-        console.warn('Error guardando en localStorage:', localStorageError)
       }
 
       return { success: true, orderId: data.pedido.id, order: { _comprobanteOmitted: false } }
     } catch (error) {
-      console.error('Error guardando pedido:', error)
       return { success: false, error: { message: error.message || 'Error desconocido al guardar el pedido' } }
     } finally {
       setIsSaving(false)
