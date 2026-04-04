@@ -1771,82 +1771,85 @@ function CheckoutModal({
             </div>
           </div>
 
-          <section ref={paymentSectionRef} style={{ marginBottom: 18 }}>
-            <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>� Realizar pedido Mediante</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+          <section ref={paymentSectionRef} style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* ── Subsección 1: Realizar pedido mediante ── */}
+            <div>
+              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>📲 Realizar pedido mediante</div>
               {paymentConfig?.whatsapp?.enabled && (
                 <button
                   onClick={() => setPaymentMethod('whatsapp')}
                   style={{
-                    padding: '14px 12px', borderRadius: 10,
+                    padding: '14px 16px', borderRadius: 10, width: '100%',
                     border: paymentMethod === 'whatsapp' ? '2px solid #25D366' : '1.5px solid var(--border-color)',
                     background: paymentMethod === 'whatsapp' ? '#25D36618' : 'var(--bg-secondary)',
                     cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    textAlign: 'center', position: 'relative'
+                    display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative'
                   }}
                 >
                   {paymentMethod === 'whatsapp' && (
-                    <span style={{ position: 'absolute', top: 7, right: 7, background: '#25D366', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
+                    <span style={{ position: 'absolute', top: 8, right: 10, background: '#25D366', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
                   )}
-                  <span style={{ fontSize: '1.8rem' }}>💬</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: paymentMethod === 'whatsapp' ? '#25D366' : 'var(--text-primary)' }}>WhatsApp</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>Coordinamos pago y entrega por chat</span>
+                  <span style={{ fontSize: '2rem', flexShrink: 0 }}>💬</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'whatsapp' ? '#25D366' : 'var(--text-primary)' }}>WhatsApp</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>Coordinamos los detalles de pago y entrega por chat</div>
+                  </div>
                 </button>
               )}
-
-              {paymentConfig?.transferencia?.enabled && (
-                <button
-                  onClick={() => setPaymentMethod('transferencia')}
-                  style={{
-                    padding: '14px 12px', borderRadius: 10,
-                    border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
-                    background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)',
-                    cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    textAlign: 'center', position: 'relative'
-                  }}
-                >
-                  {paymentMethod === 'transferencia' && (
-                    <span style={{ position: 'absolute', top: 7, right: 7, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
-                  )}
-                  <span style={{ fontSize: '1.8rem' }}>🏦</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>Seña 50% · Elegí fecha de entrega</span>
-                </button>
+              {paymentMethod === 'whatsapp' && paymentConfig?.textos?.infoWhatsappEnabled !== false && (
+                <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: '#25D36610', border: '1px solid #25D36650', fontSize: 14 }}>
+                  <div style={{ fontWeight: 700, color: '#16a34a' }}>💬 Solicitar pedido por WhatsApp</div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    {paymentConfig?.textos?.infoWhatsapp || paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
+                  </div>
+                </div>
               )}
             </div>
 
-            {paymentMethod === 'transferencia' && (
-              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-hover)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                💰 Seña: {formatCurrency(total * 0.5)} — Total: {formatCurrency(total)}
+            {/* ── Subsección 2: Medios de pago ── */}
+            {paymentConfig?.transferencia?.enabled && (
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>💳 Medios de pago</div>
+                <button
+                  onClick={() => setPaymentMethod(paymentMethod === 'transferencia' ? 'whatsapp' : 'transferencia')}
+                  style={{
+                    padding: '14px 16px', borderRadius: 10, width: '100%',
+                    border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
+                    background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)',
+                    cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease',
+                    display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative'
+                  }}
+                >
+                  {paymentMethod === 'transferencia' && (
+                    <span style={{ position: 'absolute', top: 8, right: 10, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
+                  )}
+                  <span style={{ fontSize: '2rem', flexShrink: 0 }}>🏦</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia bancaria</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>Seña del 50% — elegí una fecha de entrega disponible</div>
+                  </div>
+                </button>
+                {paymentMethod === 'transferencia' && (
+                  <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-hover)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    💰 Seña: {formatCurrency(total * 0.5)} — Total: {formatCurrency(total)}
+                  </div>
+                )}
+                {paymentConfig?.textos?.infoTransferenciaEnabled !== false && (
+                  <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', fontSize: 14 }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia y seleccioná una fecha de entrega disponible en el calendario.'}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {paymentMethod === 'whatsapp' && paymentConfig?.textos?.infoWhatsappEnabled !== false && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#25D36610', border: '1px solid #25D36650', fontSize: 14 }}>
-                <div style={{ fontWeight: 700, color: '#16a34a' }}>💬 Solicitar pedido por WhatsApp</div>
-                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  {paymentConfig?.textos?.infoWhatsapp || paymentConfig?.whatsapp?.mensaje || 'Podés enviar tu pedido por WhatsApp y coordinamos los detalles de pago y entrega.'}
-                </div>
-              </div>
-            )}
-
-            {/* Bloque independiente de información sobre Transferencia (solo visible si el método Transferencia está habilitado y el usuario selecciona Transferencia o WhatsApp) */}
-            {paymentConfig?.transferencia?.enabled && (paymentMethod === 'transferencia' || paymentMethod === 'whatsapp') && paymentConfig?.textos?.infoTransferenciaEnabled !== false && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', fontSize: 14 }}>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>🏦 Medios de pago — Transferencia</div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                  {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia y seleccioná una fecha de entrega disponible en el calendario.'}
-                </div>
-              </div>
-            )}
-
-            {/* Bloque informativo para Envío (solo dentro del modal cuando seleccionó 'Con envío') */}
+            {/* Bloque informativo para Envío */}
             {deliveryMethod === 'envio' && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
+              <div style={{ padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>🚚 Completa tus datos de envío</div>
-                <div>Para facilitar la cotización y coordinación del envío, por favor completa tu dirección, localidad y código postal en <strong>Mi Cuenta → Información de perfil</strong>. Con esos datos podremos calcular el costo y tiempo de entrega con mayor precisión.</div>
+                <div>Para facilitar la cotización y coordinación del envío, por favor completa tu dirección, localidad y código postal en <strong>Mi Cuenta → Información de perfil</strong>.</div>
                 <div style={{ marginTop: 8 }}>
                   <button onClick={() => router.push('/catalog/user')} style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--accent-blue)', color: '#fff', border: 'none', cursor: 'pointer' }}>Ir a Mi Cuenta</button>
                 </div>
