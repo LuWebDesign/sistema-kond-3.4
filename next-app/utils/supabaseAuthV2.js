@@ -768,11 +768,10 @@ export async function handleOAuthCallback() {
       const code = new URLSearchParams(window.location.search).get('code');
       if (code) {
         const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          console.error('Error intercambiando código OAuth:', exchangeError);
-          return { data: null, error: exchangeError.message };
+        if (!exchangeError && exchangeData?.session) {
+          session = exchangeData.session;
         }
-        session = exchangeData?.session;
+        // Si falla (code ya consumido por auto-detect), caerá al getSession() abajo
       }
     }
 
