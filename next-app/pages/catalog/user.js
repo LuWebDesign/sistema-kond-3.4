@@ -2,13 +2,11 @@ import PublicLayout from '../../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createToast, formatCurrency, formatDate } from '../../utils/catalogUtils'
-import { loginWithEmail, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback, registerWithEmail, logoutClient } from '../../utils/supabaseAuthV2'
+import { loginWithEmail, getCurrentSession, loginWithGoogle, handleOAuthCallback, registerWithEmail, logoutClient } from '../../utils/supabaseAuthV2'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoginMode, setIsLoginMode] = useState(true)
-  const [isProfileExpanded, setIsProfileExpanded] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,7 +19,6 @@ export default function User() {
     provincia: '',
     observaciones: ''
   })
-  const [avatar, setAvatar] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const router = useRouter()
@@ -244,45 +241,7 @@ export default function User() {
     }
   }
 
-  // Actualizar perfil
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const updatedUser = {
-        ...currentUser,
-        ...formData,
-        avatar
-      }
-      
-      // 1. Guardar en Supabase (base de datos)
-      if (currentUser?.id) {
-        const { error: dbError } = await updateUserProfile(currentUser.id, formData)
-        if (dbError) {
-          console.error('Error guardando en BD:', dbError)
-          createToast('Error al guardar en el servidor: ' + dbError, 'error')
-          setIsLoading(false)
-          return
-        }
-      }
-      
-      // 2. Guardar en las claves usadas por la app (localStorage)
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
-      // La app utiliza 'kond-user' para sesiones/lectura; mantener ambas claves sincronizadas
-      try { localStorage.setItem('kond-user', JSON.stringify(updatedUser)) } catch (e) { /* noop */ }
-      setCurrentUser(updatedUser)
-      try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch (e) { /* noop */ }
-      createToast('Perfil actualizado correctamente', 'success')
-      // Cerrar el desplegable después de guardar exitosamente
-      setIsProfileExpanded(false)
-    } catch (error) {
-      console.error('Error al actualizar perfil:', error)
-      createToast('Error al actualizar perfil', 'error')
-    } finally {
-      setIsLoading(false)
-    }
-  }  // Cerrar sesión del cliente (Supabase Auth + localStorage)
+  // Cerrar sesión del cliente (Supabase Auth + localStorage)
   const handleLogout = async () => {
     await logoutClient()
     
@@ -299,31 +258,8 @@ export default function User() {
       provincia: '',
       observaciones: ''
     })
-    setAvatar(null)
     try { window.dispatchEvent(new CustomEvent('user:updated', { detail: null })) } catch (e) { /* noop */ }
     createToast('Sesión cerrada correctamente', 'success')
-  }
-
-  // Manejar cambio de avatar
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        createToast('El archivo debe ser menor a 2MB', 'error')
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setAvatar(e.target.result)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  // Eliminar avatar
-  const handleRemoveAvatar = () => {
-    setAvatar(null)
   }
 
   // Si el usuario está logueado, mostrar perfil
@@ -394,9 +330,7 @@ export default function User() {
                   width: '80px',
                   height: '80px',
                   borderRadius: '50%',
-                  background: avatar 
-                    ? `url(${avatar}) center/cover` 
-                    : 'var(--accent-blue)',
+                  background: 'var(--accent-blue)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -405,7 +339,7 @@ export default function User() {
                   fontWeight: 700,
                   margin: '0 auto'
                 }}>
-                  {!avatar && (currentUser.nombre?.charAt(0)?.toUpperCase() || 'U')}
+                  {currentUser.nombre?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
               </div>
 
@@ -426,49 +360,22 @@ export default function User() {
                 {currentUser.email}
               </p>
 
-              {/* Avatar Actions */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-              }}>
-                <label style={{
+              {/* Editar perfil */}
+              <button
+                onClick={() => router.push('/catalog/user/perfil')}
+                style={{
                   background: 'var(--accent-blue)',
                   color: 'white',
                   padding: '8px 16px',
                   borderRadius: '8px',
+                  border: 'none',
                   cursor: 'pointer',
                   fontSize: '0.9rem',
-                  fontWeight: 500,
-                  textAlign: 'center'
-                }}>
-                  📷 Cambiar foto
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-                
-                {avatar && (
-                  <button
-                    onClick={handleRemoveAvatar}
-                    style={{
-                      background: '#ef4444',
-                      color: 'white',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: 500
-                    }}
-                  >
-                    🗑️ Eliminar foto
-                  </button>
-                )}
-              </div>
+                  fontWeight: 500
+                }}
+              >
+                ✏️ Editar perfil
+              </button>
             </div>
             
             {/* Account Info Card: Información de cuenta (datos de logeo) */}
@@ -514,584 +421,35 @@ export default function User() {
               </div>
             </div>
 
-            {/* Profile Form */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <div
-                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  padding: '20px 24px',
-                  background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
-                  color: 'white',
-                  transition: 'all 0.3s ease',
-                  borderBottom: isProfileExpanded ? '1px solid var(--border-color)' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'linear-gradient(135deg, var(--accent-blue-dark, #2563eb) 0%, var(--accent-secondary-dark, #7c3aed) 100%)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)';
-                }}
-              >
+            {/* Información del Perfil */}
+            <div
+              onClick={() => router.push('/catalog/user/perfil')}
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px 24px',
+                background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
+                color: 'white'
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.5rem' }}>👤</span>
+                  <span style={{ fontSize: '1.5rem' }}>✏️</span>
                   <div>
-                    <h3 style={{
-                      fontSize: '1.2rem',
-                      fontWeight: 700,
-                      margin: 0,
-                      color: 'white'
-                    }}>
-                      Información del Perfil
-                    </h3>
-                    <p style={{
-                      fontSize: '0.85rem',
-                      margin: '2px 0 0 0',
-                      opacity: 0.9
-                    }}>
-                      Gestiona tus datos personales
-                    </p>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: 'white' }}>Información del Perfil</h3>
+                    <p style={{ fontSize: '0.85rem', margin: '2px 0 0 0', opacity: 0.9 }}>Gestioná tus datos personales</p>
                   </div>
                 </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {!isProfileExpanded && (
-                    <span style={{
-                      fontSize: '0.8rem',
-                      background: 'rgba(255,255,255,0.2)',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontWeight: 500
-                    }}>
-                      Click para editar
-                    </span>
-                  )}
-                  <span style={{
-                    fontSize: '1.2rem',
-                    transition: 'all 0.3s ease',
-                    transform: isProfileExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    display: 'inline-block'
-                  }}>
-                    ▼
-                  </span>
-                </div>
+                <span style={{ fontSize: '1.2rem' }}>→</span>
               </div>
-
-              {isProfileExpanded && (
-                <div style={{
-                  padding: '24px',
-                  animation: 'slideDown 0.3s ease-out'
-                }}>
-                  <form onSubmit={handleUpdateProfile}>
-                    {/* Sección Información Personal */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '20px',
-                        paddingBottom: '12px',
-                        borderBottom: '2px solid var(--accent-blue)'
-                      }}>
-                        <span style={{ fontSize: '1.2rem' }}>👤</span>
-                        <h4 style={{
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          margin: 0
-                        }}>
-                          Información Personal
-                        </h4>
-                      </div>
-
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '20px',
-                        marginBottom: '24px'
-                      }}
-                      className="profile-form-grid"
-                      >
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>👤</span>
-                            Nombre *
-                          </label>
-                          <input
-                            type="text"
-                            name="nombre"
-                            value={formData.nombre}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                            required
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>📛</span>
-                            Apellido
-                          </label>
-                          <input
-                            type="text"
-                            name="apellido"
-                            value={formData.apellido}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>📧</span>
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                            required
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>�</span>
-                            Contraseña
-                          </label>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <input
-                              type={showPassword ? 'text' : 'password'}
-                              name="password"
-                              value={formData.password}
-                              onChange={handleInputChange}
-                              placeholder={formData.password ? '••••••••' : ''}
-                              style={{
-                                width: '100%',
-                                padding: '14px 16px',
-                                border: '2px solid var(--border-color)',
-                                borderRadius: '12px',
-                                background: 'var(--bg-input)',
-                                color: 'var(--text-primary)',
-                                fontSize: '1rem'
-                              }}
-                              onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(s => !s)}
-                              style={{
-                                padding: '10px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border-color)',
-                                background: 'transparent',
-                                color: 'var(--text-primary)',
-                                cursor: 'pointer'
-                              }}
-                            >{showPassword ? 'Ocultar' : 'Mostrar'}</button>
-                          </div>
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>�📱</span>
-                            Teléfono
-                          </label>
-                          <input
-                            type="tel"
-                            name="telefono"
-                            value={formData.telefono}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sección Dirección */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '20px',
-                        paddingBottom: '12px',
-                        borderBottom: '2px solid var(--accent-secondary)'
-                      }}>
-                        <span style={{ fontSize: '1.2rem' }}>🏠</span>
-                        <h4 style={{
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          color: 'var(--text-primary)',
-                          margin: 0
-                        }}>
-                          Dirección de Envío
-                        </h4>
-                      </div>
-
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '20px',
-                        marginBottom: '24px'
-                      }}
-                      className="profile-form-grid"
-                      >
-                        <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>🏠</span>
-                            Dirección
-                          </label>
-                          <input
-                            type="text"
-                            name="direccion"
-                            value={formData.direccion}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>🏙️</span>
-                            Localidad
-                          </label>
-                          <input
-                            type="text"
-                            name="localidad"
-                            value={formData.localidad}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>📮</span>
-                            Código Postal
-                          </label>
-                          <input
-                            type="text"
-                            name="cp"
-                            value={formData.cp}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>🗺️</span>
-                            Provincia
-                          </label>
-                          <input
-                            type="text"
-                            name="provincia"
-                            value={formData.provincia}
-                            onChange={handleInputChange}
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              transition: 'all 0.2s ease',
-                              outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-
-                        <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
-                          <label style={{
-                            display: 'block',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            marginBottom: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span>📝</span>
-                            Observaciones
-                          </label>
-                          <textarea
-                            name="observaciones"
-                            value={formData.observaciones}
-                            onChange={handleInputChange}
-                            placeholder="Ej: Llamar al timbre, dejar en conserjería, horario de entrega preferido..."
-                            style={{
-                              width: '100%',
-                              padding: '14px 16px',
-                              border: '2px solid var(--border-color)',
-                              borderRadius: '12px',
-                              background: 'var(--bg-input)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1rem',
-                              fontFamily: 'inherit',
-                              transition: 'all 0.2s ease',
-                              outline: 'none',
-                              resize: 'vertical',
-                              minHeight: '80px',
-                              maxHeight: '120px'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      paddingTop: '20px',
-                      borderTop: '1px solid var(--border-color)'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => setIsProfileExpanded(false)}
-                        style={{
-                          background: 'var(--bg-section)',
-                          color: 'var(--text-secondary)',
-                          border: '1px solid var(--border-color)',
-                          padding: '12px 24px',
-                          borderRadius: '8px',
-                          fontSize: '1rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = 'var(--bg-card)';
-                          e.target.style.color = 'var(--text-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'var(--bg-section)';
-                          e.target.style.color = 'var(--text-secondary)';
-                        }}
-                      >
-                        ❌ Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        style={{
-                          background: isLoading ? 'var(--text-muted)' : 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '12px 32px',
-                          borderRadius: '8px',
-                          fontSize: '1rem',
-                          fontWeight: 600,
-                          cursor: isLoading ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.2s ease',
-                          boxShadow: isLoading ? 'none' : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isLoading) {
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isLoading) {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-                          }
-                        }}
-                      >
-                        {isLoading ? '⏳ Guardando...' : '💾 Guardar Cambios'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
             </div>
           </div>
 
