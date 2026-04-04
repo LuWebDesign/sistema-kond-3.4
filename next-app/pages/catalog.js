@@ -1819,7 +1819,7 @@ function CheckoutModal({
                   <span style={{ fontSize: '2rem', flexShrink: 0 }}>🏦</span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia bancaria</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>Seña del 50% — elegí una fecha de entrega disponible</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>Seña del 50%</div>
                   </div>
                 </button>
                 {paymentMethod === 'transferencia' && (
