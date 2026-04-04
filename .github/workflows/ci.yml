@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           # El proyecto tiene el package.json y package-lock.json dentro de la carpeta `next-app`.
           # Indicar explícitamente la ruta del lockfile para que el step de cache no busque en la raíz.

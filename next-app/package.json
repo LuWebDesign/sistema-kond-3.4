@@ -2,6 +2,9 @@
   "name": "sistema-kond-next",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 CHOKIDAR_INTERVAL=200 next dev --hostname 0.0.0.0 -p 3000",
     "build": "next build",
