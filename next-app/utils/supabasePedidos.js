@@ -367,7 +367,8 @@ export async function uploadComprobante(file, pedidoId) {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `pedido-${pedidoId}-${Date.now()}.${fileExt}`;
-    const filePath = `comprobantes/${fileName}`;
+    // filePath sin prefijo: el bucket ya se llama 'comprobantes'
+    const filePath = fileName;
 
     const { data, error } = await supabase.storage
       .from('comprobantes')
@@ -378,12 +379,14 @@ export async function uploadComprobante(file, pedidoId) {
 
     if (error) throw error;
 
-    // Obtener URL (privada, solo admins pueden acceder)
-    const { data: urlData } = supabase.storage
+    // URL firmada con 30 días de validez (bucket privado)
+    const { data: signedData, error: signedError } = await supabase.storage
       .from('comprobantes')
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 60 * 60 * 24 * 30); // 30 días
 
-    return { data: { path: filePath, url: urlData.publicUrl }, error: null };
+    if (signedError) throw signedError;
+
+    return { data: { path: filePath, url: signedData.signedUrl }, error: null };
   } catch (error) {
     console.error('Error al subir comprobante:', error);
     return { data: null, error: error.message };
