@@ -1371,7 +1371,7 @@ function CheckoutModal({
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
-  const [showTransferInfo, setShowTransferInfo] = useState(false)
+
   const router = useRouter()
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
   const [customerData, setCustomerData] = useState(() => {
@@ -1844,39 +1844,33 @@ function CheckoutModal({
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>💳 Medios de pago</div>
                 <button
-                  onClick={() => setShowTransferInfo(s => !s)}
+                  onClick={() => setPaymentMethod(paymentMethod === 'transferencia' ? 'whatsapp' : 'transferencia')}
                   style={{
                     padding: '14px 16px', borderRadius: 10, width: '100%',
-                    border: showTransferInfo ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
-                    background: showTransferInfo ? 'var(--bg-hover)' : 'var(--bg-secondary)',
+                    border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
+                    background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)',
                     cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease',
                     display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative'
                   }}
                 >
-                  {showTransferInfo && (
+                  {paymentMethod === 'transferencia' && (
                     <span style={{ position: 'absolute', top: 8, right: 10, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
                   )}
                   <span style={{ fontSize: '2rem', flexShrink: 0 }}>🏦</span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: showTransferInfo ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
                   </div>
                 </button>
-                {showTransferInfo && (
+                {paymentMethod === 'transferencia' && (
                   <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-hover)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     💰 Seña: {formatCurrency(total * 0.5)} — Total: {formatCurrency(total)}
                   </div>
                 )}
-                {paymentConfig?.textos?.infoTransferenciaEnabled !== false && (
+                {paymentConfig?.textos?.infoTransferenciaEnabled !== false && paymentMethod === 'transferencia' && (
                   <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', fontSize: 14 }}>
-                    {showTransferInfo ? (
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                        {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia. Aquí tenés los datos para pagar.'}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                        {paymentConfig?.textos?.infoTransferenciaPreview || 'Haz clic en Transferencia para ver los datos de pago.'}
-                      </div>
-                    )}
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia. Aquí tenés los datos para pagar.'}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1894,7 +1888,7 @@ function CheckoutModal({
             )}
           </section>
 
-          {showTransferInfo && (
+          {paymentMethod === 'transferencia' && (
             <section style={{ marginBottom: 18 }}>
               <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 {paymentConfig?.calendario?.enabled !== false && (
