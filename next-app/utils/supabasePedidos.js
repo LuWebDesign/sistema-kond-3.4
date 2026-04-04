@@ -370,7 +370,7 @@ export async function uploadComprobante(file, pedidoId) {
     const filePath = `comprobantes/${fileName}`;
 
     const { data, error } = await supabase.storage
-      .from('comprobantes-pago')
+      .from('comprobantes')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
@@ -380,7 +380,7 @@ export async function uploadComprobante(file, pedidoId) {
 
     // Obtener URL (privada, solo admins pueden acceder)
     const { data: urlData } = supabase.storage
-      .from('comprobantes-pago')
+      .from('comprobantes')
       .getPublicUrl(filePath);
 
     return { data: { path: filePath, url: urlData.publicUrl }, error: null };
@@ -429,7 +429,7 @@ export async function uploadComprobanteBase64(base64DataUrl, pedidoId) {
 export async function getComprobanteSignedUrl(filePath) {
   try {
     const { data, error } = await supabase.storage
-      .from('comprobantes-pago')
+      .from('comprobantes')
       .createSignedUrl(filePath, 3600); // 1 hora
 
     if (error) throw error;
