@@ -1,3 +1,4 @@
+import '../utils/silenceExternalLogs'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import '../styles/globals.css'
