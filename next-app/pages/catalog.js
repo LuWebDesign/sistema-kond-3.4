@@ -1646,13 +1646,7 @@ function CheckoutModal({
       if (paymentMethod === 'whatsapp') {
         const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'whatsapp' })
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
-        const link = document.createElement('a')
-        link.href = whatsappUrl
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
         createToast('Abriendo WhatsApp...', 'success')
       }
 
@@ -1662,17 +1656,12 @@ function CheckoutModal({
           comprobanteUrl: comprobanteUrl
         })
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
-        const link = document.createElement('a')
-        link.href = whatsappUrl
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
         createToast('Abriendo WhatsApp con los detalles del pedido...', 'success')
       }
 
-      onOrderComplete()
+      // Dar tiempo a que WhatsApp se abra antes de cerrar el checkout
+      setTimeout(() => onOrderComplete(), 1500)
     } catch (error) {
       console.error('Error submitting order:', error)
       if (error.name === 'QuotaExceededError' || (error.message && error.message.includes('exceeded the quota'))) {
