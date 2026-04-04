@@ -1371,6 +1371,7 @@ function CheckoutModal({
   onProfileUpdate
 }) {
   const [paymentMethod, setPaymentMethod] = useState('whatsapp')
+  const [showTransferInfo, setShowTransferInfo] = useState(false)
   const router = useRouter()
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
   const [customerData, setCustomerData] = useState(() => {
@@ -1384,6 +1385,7 @@ function CheckoutModal({
       address: [u.direccion || u.address || '', u.localidad || u.city || '', u.cp || u.zip || '', u.provincia || u.state || ''].filter(Boolean).join(', ')
     }
   })
+  const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   
@@ -1528,6 +1530,23 @@ function CheckoutModal({
     }
   }, [])
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files && e.target.files[0]
+    if (!file) return
+    try {
+      const blob = await compressImage(file, 900, 0.75)
+      const toRead = blob && blob.size > 0 ? blob : file
+      if (toRead.size > 5 * 1024 * 1024) return createToast('El archivo debe ser menor a 5MB', 'error')
+      const reader = new FileReader()
+      reader.onload = (ev) => setComprobante(ev.target.result)
+      reader.readAsDataURL(toRead)
+    } catch (err) {
+      const reader = new FileReader()
+      reader.onload = (ev) => setComprobante(ev.target.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
   // Calcular si el carrito califica para envío gratis según promociones activas
   useEffect(() => {
     let mounted = true
@@ -1566,9 +1585,27 @@ function CheckoutModal({
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
     if (deliveryMethod === 'envio' && (!customerData.address || customerData.address.trim() === '')) return createToast('La dirección es requerida para envío', 'error')
     if (paymentMethod === 'transferencia' && paymentConfig?.calendario?.enabled !== false && !selectedDeliveryDate) return createToast('Selecciona una fecha de entrega para transferencia', 'error')
+    if (paymentMethod === 'transferencia' && !comprobante) return createToast('Sube el comprobante de transferencia', 'error')
 
     setIsSubmitting(true)
     try {
+      // ── Subir comprobante a Supabase Storage (solo para transferencia) ──
+      let comprobanteUrl = null
+      if (paymentMethod === 'transferencia' && comprobante) {
+        createToast('Subiendo comprobante...', 'info')
+        try {
+          const { uploadComprobanteBase64 } = await import('../utils/supabasePedidos')
+          const tempId = Date.now()
+          const { data: uploadData, error: uploadError } = await uploadComprobanteBase64(comprobante, tempId)
+          if (uploadError) {
+            comprobanteUrl = null
+          } else {
+            comprobanteUrl = uploadData.url
+          }
+        } catch (uploadErr) {
+          comprobanteUrl = null
+        }
+      }
 
       const orderData = {
         cliente: {
@@ -1595,7 +1632,7 @@ function CheckoutModal({
         total: total,
         subtotal: subtotal,
         descuento: discount,
-        comprobante: null
+        comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
       }
       if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
 
@@ -1620,7 +1657,10 @@ function CheckoutModal({
       }
 
       if (paymentMethod === 'transferencia') {
-        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'transferencia' })
+        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, {
+          metodoPago: 'transferencia',
+          comprobanteUrl: comprobanteUrl
+        })
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
         const link = document.createElement('a')
         link.href = whatsappUrl
@@ -1804,33 +1844,39 @@ function CheckoutModal({
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>💳 Medios de pago</div>
                 <button
-                  onClick={() => setPaymentMethod(paymentMethod === 'transferencia' ? 'whatsapp' : 'transferencia')}
+                  onClick={() => setShowTransferInfo(s => !s)}
                   style={{
                     padding: '14px 16px', borderRadius: 10, width: '100%',
-                    border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
-                    background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)',
+                    border: showTransferInfo ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)',
+                    background: showTransferInfo ? 'var(--bg-hover)' : 'var(--bg-secondary)',
                     cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease',
                     display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative'
                   }}
                 >
-                  {paymentMethod === 'transferencia' && (
+                  {showTransferInfo && (
                     <span style={{ position: 'absolute', top: 8, right: 10, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>
                   )}
                   <span style={{ fontSize: '2rem', flexShrink: 0 }}>🏦</span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: showTransferInfo ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
                   </div>
                 </button>
-                {paymentMethod === 'transferencia' && (
+                {showTransferInfo && (
                   <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-hover)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     💰 Seña: {formatCurrency(total * 0.5)} — Total: {formatCurrency(total)}
                   </div>
                 )}
                 {paymentConfig?.textos?.infoTransferenciaEnabled !== false && (
                   <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', fontSize: 14 }}>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                      {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia y seleccioná una fecha de entrega disponible en el calendario.'}
-                    </div>
+                    {showTransferInfo ? (
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        {paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia. Aquí tenés los datos para pagar.'}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        {paymentConfig?.textos?.infoTransferenciaPreview || 'Haz clic en Transferencia para ver los datos de pago.'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1848,7 +1894,7 @@ function CheckoutModal({
             )}
           </section>
 
-          {paymentMethod === 'transferencia' && (
+          {showTransferInfo && (
             <section style={{ marginBottom: 18 }}>
               <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 {paymentConfig?.calendario?.enabled !== false && (
@@ -1924,6 +1970,18 @@ function CheckoutModal({
 
                   <div style={{ color: 'var(--text-secondary)' }}><strong>Seña (50%)</strong></div>
                   <div style={{ fontWeight: 700, textAlign: 'right' }}>{formatCurrency(total * 0.5)}</div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                  <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} style={{ padding: '10px 14px', borderRadius: 8, border: comprobante ? '2px solid var(--accent-secondary)' : '1.5px solid var(--border-color)', background: comprobante ? 'var(--bg-hover)' : 'var(--bg-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {comprobante ? '✅ Comprobante cargado' : '📎 Subir comprobante'}
+                  </button>
+                  {comprobante && (
+                    <img src={comprobante} alt="comprobante" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
+                  )}
                 </div>
               </div>
 
