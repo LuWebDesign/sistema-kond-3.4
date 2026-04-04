@@ -1384,7 +1384,6 @@ function CheckoutModal({
       address: [u.direccion || u.address || '', u.localidad || u.city || '', u.cp || u.zip || '', u.provincia || u.state || ''].filter(Boolean).join(', ')
     }
   })
-  const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   
@@ -1529,24 +1528,6 @@ function CheckoutModal({
     }
   }, [])
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files && e.target.files[0]
-    if (!file) return
-    try {
-      const blob = await compressImage(file, 900, 0.75)
-      const toRead = blob && blob.size > 0 ? blob : file
-      if (toRead.size > 5 * 1024 * 1024) return createToast('El archivo debe ser menor a 5MB', 'error')
-      const reader = new FileReader()
-      reader.onload = (ev) => setComprobante(ev.target.result)
-      reader.readAsDataURL(toRead)
-    } catch (err) {
-      console.warn('Fallo compresión, usando original', err)
-      const reader = new FileReader()
-      reader.onload = (ev) => setComprobante(ev.target.result)
-      reader.readAsDataURL(file)
-    }
-  }
-
   // Calcular si el carrito califica para envío gratis según promociones activas
   useEffect(() => {
     let mounted = true
@@ -1585,29 +1566,9 @@ function CheckoutModal({
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
     if (deliveryMethod === 'envio' && (!customerData.address || customerData.address.trim() === '')) return createToast('La dirección es requerida para envío', 'error')
     if (paymentMethod === 'transferencia' && paymentConfig?.calendario?.enabled !== false && !selectedDeliveryDate) return createToast('Selecciona una fecha de entrega para transferencia', 'error')
-    if (paymentMethod === 'transferencia' && !comprobante) return createToast('Sube el comprobante de transferencia', 'error')
 
     setIsSubmitting(true)
     try {
-      // ── Subir comprobante a Supabase Storage (solo para transferencia) ──
-      let comprobanteUrl = null
-      if (paymentMethod === 'transferencia' && comprobante) {
-        createToast('Subiendo comprobante...', 'info')
-        try {
-          const { uploadComprobanteBase64 } = await import('../utils/supabasePedidos')
-          const tempId = Date.now()
-          const { data: uploadData, error: uploadError } = await uploadComprobanteBase64(comprobante, tempId)
-          if (uploadError) {
-            // Fallback: continuar con base64 local y avisar al admin
-            console.warn('No se pudo subir comprobante a Storage, usando base64 como fallback:', uploadError)
-            createToast('No se pudo subir el comprobante al servidor. Se guardará localmente.', 'warning')
-          } else {
-            comprobanteUrl = uploadData.url
-          }
-        } catch (uploadErr) {
-          console.warn('Error inesperado subiendo comprobante:', uploadErr)
-        }
-      }
 
       const orderData = {
         cliente: {
@@ -1634,19 +1595,14 @@ function CheckoutModal({
         total: total,
         subtotal: subtotal,
         descuento: discount,
-        // Usar URL pública si se subió a Storage; fallback a base64
-        comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
+        comprobante: null
       }
       if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
 
       const result = await saveOrder(orderData, handleOrderSuccess)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
-      if (result.order._comprobanteOmitted) {
-        createToast('Pedido guardado, pero el comprobante no pudo almacenarse debido a limitaciones de espacio. El administrador revisará el pedido.', 'warning')
-      } else {
-        createToast('Pedido procesado exitosamente.', 'success')
-      }
+      createToast('Pedido procesado exitosamente.', 'success')
 
       const whatsappPhone = paymentConfig?.whatsapp?.numero || '541136231857'
 
@@ -1663,12 +1619,8 @@ function CheckoutModal({
         createToast('Abriendo WhatsApp...', 'success')
       }
 
-      // ── Abrir WhatsApp con los datos del pedido y link al comprobante ──
       if (paymentMethod === 'transferencia') {
-        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, {
-          metodoPago: 'transferencia',
-          comprobanteUrl: comprobanteUrl
-        })
+        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'transferencia' })
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
         const link = document.createElement('a')
         link.href = whatsappUrl
@@ -1960,17 +1912,6 @@ function CheckoutModal({
                     </button>
                   </div>
                 )}
-              </div>
-
-              <div className="comprobante-upload" style={{ marginTop: 12 }}>
-                <div className="comprobante-controls" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input id="comprobante-file" type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                  <button type="button" onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }} className="comprobante-btn" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #7dd3fc', background: 'var(--bg-hover)', cursor: 'pointer' }}>Subir comprobante</button>
-                  {comprobante && (
-                    <img src={comprobante} alt="comprobante" className="comprobante-thumb" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />
-                  )}
-                </div>
-                {comprobante && <div className="comprobante-saved" style={{ marginTop: 8, padding: '6px 8px', borderRadius: 6, background: 'var(--accent-secondary)', color: '#fff', fontSize: 12 }}>✓ Comprobante cargado</div>}
               </div>
 
               {/* Retiro en local debajo de los datos de transferencia */}
