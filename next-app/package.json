@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 CHOKIDAR_INTERVAL=200 next dev --hostname 0.0.0.0 -p 3000",
