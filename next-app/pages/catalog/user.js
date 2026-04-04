@@ -39,17 +39,21 @@ export default function User() {
           const result = await handleOAuthCallback()
           
           if (result.error) {
-            createToast('Error al procesar login con Google', 'error')
-          } else if (result.data && result.data.user) {
-            createToast('¡Bienvenido! Has iniciado sesión con Google', 'success')
-            
-            // Guardar usuario del catálogo (cliente) en 'currentUser'
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('currentUser', JSON.stringify(result.data.user))
+            createToast('Error al procesar login con Google: ' + result.error, 'error')
+          } else {
+            const oauthUser = result.data?.user || result.user
+            if (oauthUser) {
+              createToast('¡Bienvenido! Has iniciado sesión con Google', 'success')
+              
+              // Guardar usuario del catálogo (cliente) en 'currentUser'
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('currentUser', JSON.stringify(oauthUser))
+              }
+              
+              // Redirigir al catálogo
+              router.push('/catalog')
+              return
             }
-            
-            // Redirigir al catálogo inmediatamente
-            router.push('/catalog')
           }
         } catch (error) {
           console.error('Error en OAuth callback:', error)

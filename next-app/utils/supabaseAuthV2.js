@@ -757,18 +757,37 @@ export async function loginWithGoogle() {
 
 /**
  * Manejar callback de OAuth después del login
+ * Soporta PKCE flow (code) e implicit flow (access_token en hash)
  */
 export async function handleOAuthCallback() {
   try {
-    const { data, error } = await supabase.auth.getSession();
+    let session = null;
 
-    if (error) {
-      console.error('Error obteniendo sesión OAuth:', error);
-      return { error: error.message, user: null, session: null };
+    // PKCE flow: intercambiar code por sesión
+    if (typeof window !== 'undefined') {
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error('Error intercambiando código OAuth:', exchangeError);
+          return { data: null, error: exchangeError.message };
+        }
+        session = exchangeData?.session;
+      }
     }
 
-    if (data.session) {
-      const user = data.session.user;
+    // Fallback: obtener sesión existente (implicit flow o si ya se procesó)
+    if (!session) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error obteniendo sesión OAuth:', error);
+        return { data: null, error: error.message };
+      }
+      session = data?.session;
+    }
+
+    if (session) {
+      const user = session.user;
 
       // Verificar si el usuario ya existe en nuestra tabla usuarios
       const { data: existingUser, error: fetchError } = await supabase
@@ -780,22 +799,23 @@ export async function handleOAuthCallback() {
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
         console.warn('Error verificando usuario existente (posible error de permisos RLS):', fetchError);
         // En lugar de fallar, continuar con datos básicos del usuario
+        const basicUserData = {
+          id: user.id,
+          email: user.email,
+          nombre: user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0],
+          apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+          telefono: '',
+          direccion: '',
+          localidad: '',
+          cp: '',
+          provincia: '',
+          observaciones: '',
+          rol: 'cliente',
+        };
         if (typeof window !== 'undefined') {
-          const basicUserData = {
-            id: user.id,
-            email: user.email,
-            nombre: user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0],
-            apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            telefono: '',
-            direccion: '',
-            localidad: '',
-            cp: '',
-            provincia: '',
-            observaciones: '',
-          };
           localStorage.setItem('currentUser', JSON.stringify(basicUserData));
         }
-        return { error: null, user: user, session: data.session };
+        return { data: { user: basicUserData, session }, error: null };
       }
 
       if (!existingUser) {
@@ -821,7 +841,18 @@ export async function handleOAuthCallback() {
 
         if (insertError) {
           console.error('Error creando usuario OAuth:', insertError);
-          return { error: insertError.message, user: null, session: null };
+          // No bloquear el login por error de insert — usar datos básicos
+          const fallbackUser = {
+            id: user.id,
+            email: user.email,
+            nombre: user.user_metadata?.full_name?.split(' ')[0] || '',
+            apellido: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            rol: 'cliente',
+          };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('currentUser', JSON.stringify(fallbackUser));
+          }
+          return { data: { user: fallbackUser, session }, error: null };
         }
 
         // Guardar información del usuario del catálogo en localStorage
@@ -843,7 +874,7 @@ export async function handleOAuthCallback() {
           localStorage.setItem('currentUser', JSON.stringify(userData));
         }
 
-        return { data: { user: newUser, session: data.session }, error: null };
+        return { data: { user: newUser, session }, error: null };
       } else {
         // Usuario ya existe, actualizar localStorage
         if (typeof window !== 'undefined') {
@@ -864,7 +895,7 @@ export async function handleOAuthCallback() {
           localStorage.setItem('currentUser', JSON.stringify(userData));
         }
 
-        return { data: { user: existingUser, session: data.session }, error: null };
+        return { data: { user: existingUser, session }, error: null };
       }
     }
 
