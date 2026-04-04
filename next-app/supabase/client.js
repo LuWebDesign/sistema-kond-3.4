@@ -17,8 +17,10 @@ const browserConfig = (typeof window !== 'undefined' && window.KOND_SUPABASE_CON
 const SUPABASE_URL = envUrl || browserConfig.url || '';
 const SUPABASE_ANON_KEY = envAnon || browserConfig.anonKey || '';
 
-// Crear cliente Supabase
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Crear cliente Supabase solo si hay credenciales (evita error en build de CI)
+export const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 // Flag para alternar entre localStorage (modo legacy) y Supabase
 export const USE_SUPABASE = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_USE_SUPABASE === 'true') || (browserConfig.useSupabase === true);
