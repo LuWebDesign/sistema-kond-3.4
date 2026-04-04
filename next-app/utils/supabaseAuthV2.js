@@ -757,33 +757,41 @@ export async function loginWithGoogle() {
 
 /**
  * Manejar callback de OAuth después del login
- * Soporta PKCE flow (code) e implicit flow (access_token en hash)
+ * Usa onAuthStateChange para esperar la sesión - funciona en desktop y mobile
  */
 export async function handleOAuthCallback() {
   try {
-    let session = null;
+    // Esperar que Supabase establezca la sesión via onAuthStateChange
+    // (Supabase auto-intercambia el code PKCE con detectSessionInUrl: true)
+    const session = await new Promise((resolve) => {
+      let resolved = false;
 
-    // PKCE flow: intercambiar code por sesión
-    if (typeof window !== 'undefined') {
-      const code = new URLSearchParams(window.location.search).get('code');
-      if (code) {
-        const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (!exchangeError && exchangeData?.session) {
-          session = exchangeData.session;
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && s) {
+          resolved = true;
+          subscription.unsubscribe();
+          resolve(s);
         }
-        // Si falla (code ya consumido por auto-detect), caerá al getSession() abajo
-      }
-    }
+      });
 
-    // Fallback: obtener sesión existente (implicit flow o si ya se procesó)
-    if (!session) {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error obteniendo sesión OAuth:', error);
-        return { data: null, error: error.message };
-      }
-      session = data?.session;
-    }
+      // Timeout máximo 8 segundos - si ya hay sesión disponible, getSession() la retorna
+      setTimeout(async () => {
+        if (!resolved) {
+          subscription.unsubscribe();
+          const { data } = await supabase.auth.getSession();
+          resolve(data?.session || null);
+        }
+      }, 8000);
+
+      // Verificar si la sesión ya existe de inmediato (intercambio ya completado)
+      supabase.auth.getSession().then(({ data }) => {
+        if (!resolved && data?.session) {
+          resolved = true;
+          subscription.unsubscribe();
+          resolve(data.session);
+        }
+      });
+    });
 
     if (session) {
       const user = session.user;

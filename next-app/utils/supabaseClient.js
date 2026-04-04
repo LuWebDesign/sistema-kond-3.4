@@ -22,7 +22,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: false, // Lo manejamos manualmente en handleOAuthCallback
+      detectSessionInUrl: true,
     },
   });
 }
