@@ -109,6 +109,28 @@ export default async function handler(req, res) {
         }
       }
 
+      // Enviar email al cliente cuando el estado cambia a 'confirmado' o 'listo'
+      if (payload.estado === 'confirmado' || payload.estado === 'listo') {
+        try {
+          const protocol = req.headers['x-forwarded-proto'] || 'http'
+          const host = req.headers.host
+          const emailRes = await fetch(`${protocol}://${host}/api/send-order-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pedidoId: id, nuevoEstado: payload.estado })
+          })
+          const emailResult = await emailRes.json()
+          if (emailResult.success) {
+            console.log(`📧 Email "${payload.estado}" enviado para pedido #${id}`)
+          } else {
+            console.warn(`⚠️ Email no enviado para pedido #${id}:`, emailResult.reason || emailResult.error)
+          }
+        } catch (emailError) {
+          // No bloquear el update si falla el email
+          console.warn('⚠️ Error al enviar email de notificación:', emailError.message)
+        }
+      }
+
       return res.status(200).json({ success: true, pedido: data })
     } catch (error) {
       console.error('❌ Error actualizando pedido catalogo:', error)
