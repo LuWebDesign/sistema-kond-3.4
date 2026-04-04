@@ -1,8 +1,8 @@
-﻿import Layout from '../components/Layout'
-import withAdminAuth from '../components/withAdminAuth'
+﻿import Layout from '../../components/Layout'
+import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { formatCurrency } from '../utils/catalogUtils'
+import { formatCurrency } from '../../utils/catalogUtils'
 
 function Admin() {
   const router = useRouter()
