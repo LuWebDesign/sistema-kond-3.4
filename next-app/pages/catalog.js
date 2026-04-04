@@ -2056,6 +2056,18 @@ function CheckoutModal({
 
           <div style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Los envíos y tiempos se coordinan luego de la confirmación. Para transferencias, la seña es del 50%.</div>
         </aside>
+        {/* Barra de acciones móvil: fija en la parte inferior para mantener CTA visible en pantallas pequeñas */}
+        <div style={{ display: 'none' }} className={stylesResp.mobileActions}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>Total</div>
+              <div style={{ fontWeight: 800 }}>{formatCurrency(total)}</div>
+            </div>
+            <div style={{ width: '55%' }}>
+              <button onClick={handleSubmitOrder} disabled={isSubmitting} style={{ width: '100%', padding: 12, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700 }}>{isSubmitting ? '⏳' : paymentMethod === 'whatsapp' ? '💬 Enviar por WhatsApp' : '🚀 Confirmar'}</button>
+            </div>
+          </div>
+        </div>
       </div>
       </div>
     )
