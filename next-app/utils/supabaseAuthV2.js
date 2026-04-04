@@ -614,6 +614,116 @@ export async function updateUserProfile(userId, profileData) {
 }
 
 // ============================================
+// REGISTRO DE CLIENTES
+// ============================================
+
+/**
+ * Registrar un nuevo cliente con email y contraseña usando Supabase Auth
+ * Crea el usuario en auth.users y en la tabla usuarios
+ */
+export async function registerWithEmail(email, password, profileData = {}) {
+  if (!supabase) {
+    return {
+      error: 'Sistema de autenticación no disponible',
+      user: null,
+      session: null,
+    };
+  }
+
+  try {
+    // 1. Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      // Mensaje amigable para errores comunes
+      if (authError.message?.includes('already registered')) {
+        return { error: 'Este email ya está registrado. Intentá iniciar sesión.', user: null, session: null };
+      }
+      return { error: authError.message, user: null, session: null };
+    }
+
+    if (!authData?.user) {
+      return { error: 'No se pudo crear la cuenta', user: null, session: null };
+    }
+
+    // 2. Crear registro en la tabla usuarios
+    const baseUsername = profileData.nombre || email.split('@')[0];
+    const uniqueUsername = `${baseUsername.replace(/\s+/g, '_')}_${Date.now()}`.substring(0, 100);
+
+    const { error: insertError } = await supabase
+      .from('usuarios')
+      .insert({
+        id: authData.user.id,
+        email: email,
+        username: uniqueUsername,
+        nombre: profileData.nombre || '',
+        apellido: profileData.apellido || '',
+        telefono: profileData.telefono || '',
+        direccion: profileData.direccion || '',
+        localidad: profileData.localidad || '',
+        cp: profileData.cp || '',
+        provincia: profileData.provincia || '',
+        observaciones: profileData.observaciones || '',
+        rol: 'cliente',
+      });
+
+    if (insertError) {
+      console.error('Error creando usuario en tabla usuarios:', insertError);
+      // El usuario se creó en Auth pero falló en la tabla — no es fatal
+    }
+
+    // 3. Construir objeto de usuario (sin password)
+    const user = {
+      id: authData.user.id,
+      email: email,
+      username: uniqueUsername,
+      nombre: profileData.nombre || '',
+      apellido: profileData.apellido || '',
+      telefono: profileData.telefono || '',
+      direccion: profileData.direccion || '',
+      localidad: profileData.localidad || '',
+      cp: profileData.cp || '',
+      provincia: profileData.provincia || '',
+      observaciones: profileData.observaciones || '',
+      rol: 'cliente',
+      fechaRegistro: new Date().toISOString(),
+    };
+
+    return {
+      error: null,
+      user,
+      session: authData.session,
+      emailConfirmationRequired: !authData.session, // si no hay sesión, requiere confirmar email
+    };
+  } catch (error) {
+    console.error('Error en registerWithEmail:', error);
+    return { error: error.message, user: null, session: null };
+  }
+}
+
+/**
+ * Cerrar sesión de clientes del catálogo
+ * Cierra la sesión de Supabase Auth y limpia localStorage del cliente
+ */
+export async function logoutClient() {
+  try {
+    await supabase.auth.signOut();
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Error al cerrar sesión de cliente:', error);
+    return { error: error.message };
+  }
+}
+
+// ============================================
 // GOOGLE OAUTH AUTHENTICATION
 // ============================================
 

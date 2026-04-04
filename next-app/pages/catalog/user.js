@@ -1,8 +1,8 @@
 import PublicLayout from '../../components/PublicLayout'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getCurrentUser, createToast, formatCurrency, formatDate } from '../../utils/catalogUtils'
-import { loginWithEmail, logout as supabaseLogout, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback } from '../../utils/supabaseAuthV2'
+import { createToast, formatCurrency, formatDate } from '../../utils/catalogUtils'
+import { loginWithEmail, getCurrentSession, updateUserProfile, loginWithGoogle, handleOAuthCallback, registerWithEmail, logoutClient } from '../../utils/supabaseAuthV2'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -137,34 +137,15 @@ export default function User() {
         return
       }
 
-      // Si Supabase falla, intentar con el usuario guardado en localStorage
-      // (para compradores registrados localmente)
       if (supabaseError || !user) {
-        try {
-          const stored = localStorage.getItem('currentUser')
-          if (stored) {
-            const localUser = JSON.parse(stored)
-            if (
-              localUser.email === formData.email &&
-              localUser.password === formData.password
-            ) {
-              user = localUser
-              console.log('✅ Login local exitoso para comprador')
-            }
-          }
-        } catch {
-          // noop
-        }
-      }
-
-      if (!user) {
         createToast('Email o contraseña incorrectos', 'error')
         setIsLoading(false)
         return
       }
       
-      // Guardar en localStorage y actualizar estado
-      try { localStorage.setItem('currentUser', JSON.stringify(user)) } catch {}
+      // Guardar en localStorage (sin password) y actualizar estado
+      const { password: _pw, ...safeUser } = user
+      try { localStorage.setItem('currentUser', JSON.stringify(safeUser)) } catch {}
       setCurrentUser(user)
       try {
         window.dispatchEvent(new CustomEvent('user:updated', { detail: user }))
@@ -192,21 +173,33 @@ export default function User() {
 
     try {
       if (formData.email && formData.password && formData.nombre) {
-        // No guardar password en localStorage por seguridad
-        const { password, ...safeData } = formData
-        const user = {
-          id: Date.now(),
-          ...safeData,
-          password: password, // se mantiene para login local
-          avatar: null,
-          rol: 'cliente',
-          fechaRegistro: new Date().toISOString()
+        if (formData.password.length < 6) {
+          createToast('La contraseña debe tener al menos 6 caracteres', 'error')
+          setIsLoading(false)
+          return
         }
-        
-        localStorage.setItem('currentUser', JSON.stringify(user))
+
+        const { password, ...profileData } = formData
+        const result = await registerWithEmail(formData.email, password, profileData)
+
+        if (result.error) {
+          createToast(result.error, 'error')
+          setIsLoading(false)
+          return
+        }
+
+        const user = result.user
+
+        // Guardar en localStorage (sin password)
+        try { localStorage.setItem('currentUser', JSON.stringify(user)) } catch {}
         setCurrentUser(user)
-  try { window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) } catch (e) { /* noop */ }
-        createToast('Usuario registrado correctamente', 'success')
+        try { window.dispatchEvent(new CustomEvent('user:updated', { detail: user })) } catch { /* noop */ }
+
+        if (result.emailConfirmationRequired) {
+          createToast('Cuenta creada. Revisa tu email para confirmar la cuenta.', 'success')
+        } else {
+          createToast('Usuario registrado correctamente', 'success')
+        }
         
         // Reset form
         setFormData({
@@ -285,13 +278,9 @@ export default function User() {
     } finally {
       setIsLoading(false)
     }
-  }  // Cerrar sesión (solo del catálogo público, sin tocar sesión admin)
+  }  // Cerrar sesión del cliente (Supabase Auth + localStorage)
   const handleLogout = async () => {
-    // Solo limpiar la sesión del comprador (localStorage)
-    // NO llamar supabase.auth.signOut() porque destruiría la sesión del admin
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('currentUser')
-    }
+    await logoutClient()
     
     setCurrentUser(null)
     setFormData({
