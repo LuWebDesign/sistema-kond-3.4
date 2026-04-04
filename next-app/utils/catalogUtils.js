@@ -83,26 +83,34 @@ export const getMinSelectableDateForTransfer = () => {
 }
 
 // Generar mensaje de WhatsApp
-export const generateWhatsAppMessage = (cart, total, customerData, formatCurrency) => {
-  const itemsList = cart.map(item => 
-    `• ${item.name} (${item.measures}) - Cantidad: ${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
+export const generateWhatsAppMessage = (cart, total, customerData, formatCurrency, options = {}) => {
+  const { comprobanteUrl, metodoPago } = options
+
+  const clienteNombre = [customerData.name, customerData.apellido].filter(Boolean).join(' ')
+
+  const itemsList = cart.map(item =>
+    `• ${item.name}${item.measures ? ` (${item.measures})` : ''} x${item.quantity} — ${formatCurrency(item.price * item.quantity)}`
   ).join('\n')
-  
-  const customerInfo = [
-    customerData.name,
-    customerData.phone,
-    customerData.email,
-    customerData.address
-  ].filter(Boolean).join('\n')
-  
-  return `Hola! Quiero realizar este pedido:
 
-${itemsList}
+  let message = `🛒 *NUEVO PEDIDO*\n`
+  message += `👤 Cliente: ${clienteNombre}\n`
+  message += `📞 Teléfono: ${customerData.phone}\n`
+  if (customerData.email) message += `📧 Email: ${customerData.email}\n`
+  message += `\n📦 Productos:\n${itemsList}\n`
+  message += `\n💰 Total: ${formatCurrency(total)}\n`
 
-Total: ${formatCurrency(total)}
+  if (metodoPago === 'transferencia') {
+    message += `💳 Pago: Transferencia bancaria\n`
+    if (comprobanteUrl) {
+      message += `🧾 Comprobante: ${comprobanteUrl}\n`
+    }
+  }
 
-Mis datos:
-${customerInfo}`
+  if (customerData.address) {
+    message += `\n📍 Dirección: ${customerData.address}`
+  }
+
+  return message
 }
 
 // Validar datos del formulario de checkout

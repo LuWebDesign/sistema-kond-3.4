@@ -391,6 +391,39 @@ export async function uploadComprobante(file, pedidoId) {
 }
 
 /**
+ * Subir comprobante desde base64 DataURL a Supabase Storage.
+ * Convierte el DataURL a File y delega en uploadComprobante.
+ * @param {string} base64DataUrl - DataURL base64 del comprobante (jpeg/png/webp/pdf)
+ * @param {number|string} pedidoId - ID del pedido (puede ser provisional)
+ * @returns {Promise<{data: {path: string, url: string}|null, error: string|null}>}
+ */
+export async function uploadComprobanteBase64(base64DataUrl, pedidoId) {
+  try {
+    if (!base64DataUrl) throw new Error('No se proporcionó comprobante')
+
+    // Determinar tipo MIME desde el encabezado del DataURL
+    const mimeMatch = base64DataUrl.match(/^data:([^;]+);base64,/)
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+    let ext = 'jpg'
+    if (mimeType === 'image/png') ext = 'png'
+    else if (mimeType === 'image/webp') ext = 'webp'
+    else if (mimeType === 'application/pdf') ext = 'pdf'
+
+    // Convertir base64 a Blob
+    const fetchResp = await fetch(base64DataUrl)
+    const blob = await fetchResp.blob()
+
+    // Crear File con nombre para reutilizar uploadComprobante
+    const file = new File([blob], `comprobante.${ext}`, { type: mimeType })
+
+    return uploadComprobante(file, pedidoId)
+  } catch (error) {
+    console.error('Error al procesar comprobante base64:', error)
+    return { data: null, error: error.message }
+  }
+}
+
+/**
  * Obtener URL firmada de comprobante (solo admins, 1 hora de validez)
  */
 export async function getComprobanteSignedUrl(filePath) {

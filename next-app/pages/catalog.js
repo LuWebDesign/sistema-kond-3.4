@@ -1589,6 +1589,26 @@ function CheckoutModal({
 
     setIsSubmitting(true)
     try {
+      // ── Subir comprobante a Supabase Storage (solo para transferencia) ──
+      let comprobanteUrl = null
+      if (paymentMethod === 'transferencia' && comprobante) {
+        createToast('Subiendo comprobante...', 'info')
+        try {
+          const { uploadComprobanteBase64 } = await import('../utils/supabasePedidos')
+          const tempId = Date.now()
+          const { data: uploadData, error: uploadError } = await uploadComprobanteBase64(comprobante, tempId)
+          if (uploadError) {
+            // Fallback: continuar con base64 local y avisar al admin
+            console.warn('No se pudo subir comprobante a Storage, usando base64 como fallback:', uploadError)
+            createToast('No se pudo subir el comprobante al servidor. Se guardará localmente.', 'warning')
+          } else {
+            comprobanteUrl = uploadData.url
+          }
+        } catch (uploadErr) {
+          console.warn('Error inesperado subiendo comprobante:', uploadErr)
+        }
+      }
+
       const orderData = {
         cliente: {
           nombre: customerData.name,
@@ -1614,7 +1634,8 @@ function CheckoutModal({
         total: total,
         subtotal: subtotal,
         descuento: discount,
-        comprobante: paymentMethod === 'transferencia' ? comprobante : null
+        // Usar URL pública si se subió a Storage; fallback a base64
+        comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
       }
       if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
 
@@ -1627,9 +1648,11 @@ function CheckoutModal({
         createToast('Pedido procesado exitosamente.', 'success')
       }
 
+      const whatsappPhone = paymentConfig?.whatsapp?.numero || '541136231857'
+
       if (paymentMethod === 'whatsapp') {
-        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency)
-        const whatsappUrl = `https://api.whatsapp.com/send?phone=541136231857&text=${encodeURIComponent(message)}`
+        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'whatsapp' })
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
         const link = document.createElement('a')
         link.href = whatsappUrl
         link.target = '_blank'
@@ -1638,6 +1661,23 @@ function CheckoutModal({
         link.click()
         document.body.removeChild(link)
         createToast('Abriendo WhatsApp...', 'success')
+      }
+
+      // ── Abrir WhatsApp con los datos del pedido y link al comprobante ──
+      if (paymentMethod === 'transferencia') {
+        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, {
+          metodoPago: 'transferencia',
+          comprobanteUrl: comprobanteUrl
+        })
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`
+        const link = document.createElement('a')
+        link.href = whatsappUrl
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        createToast('Abriendo WhatsApp con los detalles del pedido...', 'success')
       }
 
       onOrderComplete()
