@@ -191,8 +191,9 @@ npm run lint
 
 Ver archivos de cambios:
 - `CHANGELOG-PROMOCIONES.md` — Historial de promociones
-- `MIGRACION-SUPABASE.md` — Resumen de migración a Supabase
-- `LIMPIEZA-COMPLETADA.md` — Archivos eliminados/movidos
+- `CHANGELOG-COLORES-PROMOCIONES.md` — Cambios de colores y badges
+- `SISTEMA-NOTIFICACIONES-README.md` — Sistema de notificaciones por email
+- `GUIA-DEPLOY-VERCEL.md` — Guía de deploy en Vercel
 
 ## 🆘 Troubleshooting
 
@@ -219,18 +220,18 @@ Ver archivos de cambios:
 
 ## 📄 Licencia
 
-[Especificar licencia]
+Todos los derechos reservados © 2026 LuWebDesign
 
 ## 👥 Autores
 
-Sistema KOND - Gestión de Producción
+- **LuWebDesign** — [github.com/LuWebDesign](https://github.com/LuWebDesign)
 
 ## 📞 Soporte
 
 Para dudas o soporte:
 - Revisar `supabase/README.md`
 - Consultar documentación en archivos MD del proyecto
-- [Crear issue en el repositorio]
+- [Crear issue en el repositorio](https://github.com/LuWebDesign/sistema-kond-3.4/issues)
 
 ---
 
