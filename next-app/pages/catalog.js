@@ -10,6 +10,7 @@ import {
   compressImage
 } from '../utils/catalogUtils'
 import { getPaymentConfig } from '../utils/supabasePaymentConfig'
+import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
 import { getPromocionesActivas } from '../utils/supabaseMarketing'
 import { applyPromotionsToCart } from '../utils/promoEngine'
@@ -43,6 +44,19 @@ export default function Catalog() {
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 12
+  const [gridColumns, setGridColumns] = useState(3)
+
+  // Cargar columnas del catálogo desde estilos personalizados
+  useEffect(() => {
+    getCatalogStyles().then(s => {
+      if (s && s.gridColumns) setGridColumns(Number(s.gridColumns))
+    }).catch(() => {})
+    const onStylesUpdate = (e) => {
+      if (e.detail && e.detail.gridColumns) setGridColumns(Number(e.detail.gridColumns))
+    }
+    window.addEventListener('catalogStyles:updated', onStylesUpdate)
+    return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
+  }, [])
 
   // Debounce para la búsqueda (300ms)
   useEffect(() => {
@@ -437,7 +451,7 @@ export default function Catalog() {
         {/* Grid de productos */}
         <div className="products-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
           gap: '24px',
           marginBottom: '24px'
         }}>

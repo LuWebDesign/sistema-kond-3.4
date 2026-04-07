@@ -84,6 +84,7 @@ function CatalogStylesAdmin() {
     { id: 'header', label: '📌 Header y Logo', icon: '📌' },
     { id: 'footer', label: '📝 Footer', icon: '📝' },
     { id: 'banner', label: '📢 Banner', icon: '📢' },
+    { id: 'layout', label: '🔲 Layout', icon: '🔲' },
   ]
 
   const inputStyle = {
@@ -323,6 +324,54 @@ function CatalogStylesAdmin() {
               </div>
             )}
 
+            {/* Sección Layout */}
+            {activeSection === 'layout' && (
+              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '1.1rem' }}>🔲 Columnas del catálogo</h3>
+                <p style={{ margin: '0 0 24px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Elegí cuántos productos se muestran por fila en el catálogo público. Se aplica en pantallas grandes; en mobile siempre se adapta automáticamente.
+                </p>
+
+                <div style={fieldGroup}>
+                  <label style={labelStyle}>Columnas por fila</label>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {[3, 4, 5, 6].map(col => {
+                      const isActive = (Number(styles.gridColumns) || 3) === col
+                      return (
+                        <button
+                          key={col}
+                          onClick={() => updateStyle('gridColumns', col)}
+                          style={{
+                            width: '72px',
+                            padding: '16px 8px',
+                            borderRadius: '10px',
+                            border: isActive ? `2px solid ${previewAccent}` : '2px solid var(--border-color)',
+                            background: isActive ? `${previewAccent}18` : 'var(--bg-secondary)',
+                            color: isActive ? previewAccent : 'var(--text-secondary)',
+                            fontWeight: isActive ? 700 : 400,
+                            fontSize: '1.4rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span>{col}</span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>cols</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  💡 Actualmente: <strong style={{ color: 'var(--text-primary)' }}>{Number(styles.gridColumns) || 3} columnas</strong> — recordá guardar los cambios para que se apliquen en el catálogo.
+                </div>
+              </div>
+            )}
+
             {/* Botones de acción */}
             <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
               <button onClick={handleSave} disabled={isSaving} style={{ padding: '12px 24px', borderRadius: '8px', background: isSaving ? 'var(--text-secondary)' : previewAccent, color: '#fff', border: 'none', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer', fontSize: '0.95rem' }}>
@@ -376,7 +425,7 @@ function CatalogStylesAdmin() {
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: styles.catalogTextColor || 'var(--text-primary)', marginBottom: '10px' }}>
                     🛒 Nuestros Productos
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(Number(styles.gridColumns) || 3, 2)}, 1fr)`, gap: '8px' }}>
                     {[1, 2].map(i => (
                       <div key={i} style={{ background: styles.cardBg || 'var(--bg-card)', border: `1px solid ${styles.cardBorderColor || 'var(--border-color)'}`, borderRadius: `${styles.cardRadius || 12}px`, overflow: 'hidden' }}>
                         <div style={{ background: 'var(--bg-secondary)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: '1.2rem' }}>

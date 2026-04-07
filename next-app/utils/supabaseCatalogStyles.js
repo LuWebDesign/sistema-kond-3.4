@@ -33,6 +33,8 @@ const DEFAULT_STYLES = {
   bannerText: '',
   bannerBg: '#3b82f6',
   bannerTextColor: '#ffffff',
+  // Layout del catálogo
+  gridColumns: 3,
 }
 
 /**
