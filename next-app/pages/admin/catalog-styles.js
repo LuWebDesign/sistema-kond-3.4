@@ -381,22 +381,41 @@ function CatalogStylesAdmin() {
                   Muestra un botón fijo en la esquina inferior derecha del catálogo para que los clientes te contacten directamente por WhatsApp.
                 </p>
 
-                <div style={{ ...fieldGroup, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ ...fieldGroup, display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <label style={{ ...labelStyle, margin: 0 }}>Mostrar botón</label>
-                  <button
+                  <div
                     onClick={() => updateStyle('whatsappEnabled', !styles.whatsappEnabled)}
                     style={{
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: styles.whatsappEnabled ? 'rgba(37,211,102,0.12)' : 'transparent',
-                      color: styles.whatsappEnabled ? '#25d366' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      fontWeight: 500,
+                      display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none',
                     }}
                   >
-                    {styles.whatsappEnabled ? '✅ Activo' : 'Inactivo'}
-                  </button>
+                    {/* Toggle track */}
+                    <div style={{
+                      position: 'relative', width: '48px', height: '26px',
+                      borderRadius: '13px',
+                      background: styles.whatsappEnabled ? '#25d366' : 'var(--border-color)',
+                      transition: 'background 0.25s',
+                      flexShrink: 0,
+                    }}>
+                      {/* Toggle thumb */}
+                      <div style={{
+                        position: 'absolute', top: '3px',
+                        left: styles.whatsappEnabled ? '25px' : '3px',
+                        width: '20px', height: '20px',
+                        borderRadius: '50%', background: '#fff',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                        transition: 'left 0.25s',
+                      }} />
+                    </div>
+                    {/* Label */}
+                    <span style={{
+                      fontSize: '0.875rem', fontWeight: 600,
+                      color: styles.whatsappEnabled ? '#25d366' : 'var(--text-secondary)',
+                      transition: 'color 0.25s',
+                    }}>
+                      {styles.whatsappEnabled ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
                 </div>
 
                 <div style={fieldGroup}>
