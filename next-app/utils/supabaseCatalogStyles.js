@@ -35,6 +35,10 @@ const DEFAULT_STYLES = {
   bannerTextColor: '#ffffff',
   // Layout del catálogo
   gridColumns: 3,
+  // Botón flotante WhatsApp
+  whatsappEnabled: false,
+  whatsappNumber: '',
+  whatsappMessage: 'Hola! Me gustaría consultar sobre sus productos.',
 }
 
 /**

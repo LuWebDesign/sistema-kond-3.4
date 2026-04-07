@@ -85,6 +85,7 @@ function CatalogStylesAdmin() {
     { id: 'footer', label: '📝 Footer', icon: '📝' },
     { id: 'banner', label: '📢 Banner', icon: '📢' },
     { id: 'layout', label: '🔲 Layout', icon: '🔲' },
+    { id: 'whatsapp', label: '💬 WhatsApp', icon: '💬' },
   ]
 
   const inputStyle = {
@@ -369,6 +370,73 @@ function CatalogStylesAdmin() {
                 <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   💡 Actualmente: <strong style={{ color: 'var(--text-primary)' }}>{Number(styles.gridColumns) || 3} columnas</strong> — recordá guardar los cambios para que se apliquen en el catálogo.
                 </div>
+              </div>
+            )}
+
+            {/* Sección WhatsApp */}
+            {activeSection === 'whatsapp' && (
+              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '1.1rem' }}>💬 Botón flotante de WhatsApp</h3>
+                <p style={{ margin: '0 0 24px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Muestra un botón fijo en la esquina inferior derecha del catálogo para que los clientes te contacten directamente por WhatsApp.
+                </p>
+
+                <div style={{ ...fieldGroup, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <label style={{ ...labelStyle, margin: 0 }}>Mostrar botón</label>
+                  <button
+                    onClick={() => updateStyle('whatsappEnabled', !styles.whatsappEnabled)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: styles.whatsappEnabled ? 'rgba(37,211,102,0.12)' : 'transparent',
+                      color: styles.whatsappEnabled ? '#25d366' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {styles.whatsappEnabled ? '✅ Activo' : 'Inactivo'}
+                  </button>
+                </div>
+
+                <div style={fieldGroup}>
+                  <label style={labelStyle}>Número de WhatsApp</label>
+                  <input
+                    type="text"
+                    value={styles.whatsappNumber || ''}
+                    onChange={(e) => updateStyle('whatsappNumber', e.target.value)}
+                    placeholder="5491112345678 (código de país + número, sin + ni espacios)"
+                    style={inputStyle}
+                  />
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                    Ejemplo Argentina: 5491112345678
+                  </span>
+                </div>
+
+                <div style={fieldGroup}>
+                  <label style={labelStyle}>Mensaje predeterminado</label>
+                  <textarea
+                    value={styles.whatsappMessage || ''}
+                    onChange={(e) => updateStyle('whatsappMessage', e.target.value)}
+                    placeholder="Hola! Me gustaría consultar sobre sus productos."
+                    rows={3}
+                    style={{ ...inputStyle, resize: 'vertical' }}
+                  />
+                </div>
+
+                {styles.whatsappEnabled && styles.whatsappNumber && (
+                  <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(37,211,102,0.08)', borderRadius: '8px', border: '1px solid rgba(37,211,102,0.25)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    📱 Vista previa del enlace:{' '}
+                    <a
+                      href={`https://wa.me/${styles.whatsappNumber}?text=${encodeURIComponent(styles.whatsappMessage || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#25d366', fontWeight: 500 }}
+                    >
+                      wa.me/{styles.whatsappNumber}
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
