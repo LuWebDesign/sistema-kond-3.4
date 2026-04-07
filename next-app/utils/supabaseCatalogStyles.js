@@ -47,7 +47,10 @@ export async function getCatalogStyles() {
         const resp = await fetch('/api/admin/catalog-styles')
         if (resp.ok) {
           const json = await resp.json()
-          return { ...DEFAULT_STYLES, ...json.styles }
+          const merged = { ...DEFAULT_STYLES, ...json.styles }
+          // Cachear en localStorage para evitar flash en cargas posteriores
+          try { localStorage.setItem('catalogStyles', JSON.stringify(merged)) } catch {}
+          return merged
         }
       } catch (e) {
         console.warn('Fallo al obtener estilos vía API, intentando fallback:', e)
