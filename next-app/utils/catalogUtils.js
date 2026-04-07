@@ -143,16 +143,16 @@ const isValidEmail = (email) => {
 }
 
 // Comprimir imagen para evitar exceder localStorage
-export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+export const compressImage = (file, maxWidth = 1200, quality = 0.82) => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const img = new Image()
     
     img.onload = () => {
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height)
-      canvas.width = img.width * ratio
-      canvas.height = img.height * ratio
+      const ratio = Math.min(1, maxWidth / img.width, maxWidth / img.height)
+      canvas.width = Math.round(img.width * ratio)
+      canvas.height = Math.round(img.height * ratio)
       
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       

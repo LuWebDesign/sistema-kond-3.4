@@ -362,15 +362,29 @@ export async function toggleProductoPublicado(id, publicado) {
  */
 export async function uploadProductoImagen(file, productoId) {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${productoId}-${Date.now()}.${fileExt}`;
+    // Comprimir la imagen antes de subir (máx 1200px, quality 0.82 → ~80-180KB típico)
+    let fileToUpload = file
+    try {
+      if (typeof window !== 'undefined') {
+        const { compressImage } = await import('./catalogUtils')
+        const blob = await compressImage(file, 1200, 0.82)
+        if (blob && blob.size) {
+          fileToUpload = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+        }
+      }
+    } catch (compressErr) {
+      console.warn('No se pudo comprimir la imagen, se sube el original:', compressErr)
+    }
+
+    const fileName = `${productoId}-${Date.now()}.jpg`;
     const filePath = `productos/${fileName}`;
 
     const { data, error } = await supabase.storage
       .from('productos-imagenes')
-      .upload(filePath, file, {
+      .upload(filePath, fileToUpload, {
         cacheControl: '3600',
         upsert: false,
+        contentType: 'image/jpeg',
       });
 
     if (error) throw error;

@@ -78,7 +78,14 @@ function ProductsComponent() {
 
   // Manejar cambio de imagen en el formulario de agregar
   const handleImageChange = (e) => {
+    const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8MB
     const files = Array.from(e.target.files).slice(0, 5) // Limitar a 5 archivos
+    const oversized = files.filter(f => f.size > MAX_FILE_SIZE)
+    if (oversized.length > 0) {
+      alert(`La imagen "${oversized[0].name}" supera los 8MB. Por favor usá una imagen más chica.`)
+      e.target.value = ''
+      return
+    }
     if (files.length > 0) {
       setImageFiles(files)
       const previews = files.map(file => {
@@ -95,7 +102,7 @@ function ProductsComponent() {
     }
   }
 
-  const fileToBase64 = async (file, maxWidth = 900, quality = 0.75) => {
+  const fileToBase64 = async (file, maxWidth = 1200, quality = 0.82) => {
     try {
       // Intentar comprimir la imagen antes de convertir a base64
       const blob = await compressImage(file, maxWidth, quality)
@@ -2949,8 +2956,16 @@ function ProductCard({
 
   // Manejar cambio de imagen (agregar nuevas manteniendo las existentes)
   const handleImageChange = (e) => {
+    const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8MB
     const incoming = Array.from(e.target.files || [])
     if (incoming.length === 0) return
+
+    const oversized = incoming.filter(f => f.size > MAX_FILE_SIZE)
+    if (oversized.length > 0) {
+      alert(`La imagen "${oversized[0].name}" supera los 8MB. Por favor usá una imagen más chica.`)
+      e.target.value = ''
+      return
+    }
 
     // calcular cuántos slots quedan (max 5)
     const remaining = Math.max(0, 5 - imagePreviews.length)
@@ -3000,7 +3015,7 @@ function ProductCard({
   }
 
   // Convertir archivo a base64 (intenta comprimir/resamplear antes)
-  const fileToBase64 = async (file, maxWidth = 900, quality = 0.75) => {
+  const fileToBase64 = async (file, maxWidth = 1200, quality = 0.82) => {
     try {
       const blob = await compressImage(file, maxWidth, quality)
       const toRead = (blob && blob.size) ? blob : file
