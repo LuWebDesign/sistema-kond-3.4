@@ -48,9 +48,20 @@ export default function Catalog() {
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
+    // 1. Leer localStorage de forma sincrónica para evitar el flash visual
+    try {
+      const raw = localStorage.getItem('catalogStyles')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed.gridColumns) setGridColumns(Number(parsed.gridColumns))
+      }
+    } catch {}
+
+    // 2. Actualizar desde la API en segundo plano (stale-while-revalidate)
     getCatalogStyles().then(s => {
       if (s && s.gridColumns) setGridColumns(Number(s.gridColumns))
     }).catch(() => {})
+
     const onStylesUpdate = (e) => {
       if (e.detail && e.detail.gridColumns) setGridColumns(Number(e.detail.gridColumns))
     }
