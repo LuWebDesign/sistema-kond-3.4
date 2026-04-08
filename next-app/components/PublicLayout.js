@@ -8,7 +8,15 @@ import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [currentUser, setCurrentUser] = useState(null)
-  const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
+  const [catalogStyles, setCatalogStyles] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('catalogStyles')
+        if (raw) return { ...DEFAULT_STYLES, ...JSON.parse(raw) }
+      }
+    } catch (e) {}
+    return DEFAULT_STYLES
+  })
   const router = useRouter()
 
   useEffect(() => {
@@ -35,6 +43,38 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     window.addEventListener('catalogStyles:updated', onStylesUpdate)
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
+
+  // Aplicar variables CSS en el documento cuando cambian los catalogStyles
+  useEffect(() => {
+    try {
+      const map = {
+        buttonBg: '--kond-btn-bg',
+        buttonTextColor: '--kond-btn-color',
+        buttonRadius: '--kond-btn-radius',
+        accentColor: '--accent-blue',
+        cardBg: '--kond-card-bg',
+        cardBorderColor: '--kond-card-border',
+        cardRadius: '--kond-card-radius',
+        badgeBg: '--kond-badge-bg',
+        badgeTextColor: '--kond-badge-color',
+        headerBg: '--header-bg',
+        headerTextColor: '--header-text-color',
+        catalogBg: '--bg-primary',
+        catalogTextColor: '--text-primary',
+        footerBg: '--footer-bg',
+        footerTextColor: '--footer-text-color',
+        bannerBg: '--banner-bg',
+        bannerTextColor: '--banner-text-color'
+      }
+      Object.keys(map).forEach(k => {
+        const v = catalogStyles && catalogStyles[k]
+        if (v) document.documentElement.style.setProperty(map[k], v)
+        else document.documentElement.style.removeProperty(map[k])
+      })
+    } catch (e) {
+      // ignore
+    }
+  }, [catalogStyles])
 
   const handleLogout = () => {
     try {
