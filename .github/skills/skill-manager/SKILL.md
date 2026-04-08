@@ -87,3 +87,7 @@ triggers: [palabra1, palabra2, frase clave]
 |--------|-------------|----------|
 | `next-admin-page` | Crear páginas admin en Next.js con Supabase + fallback localStorage | admin page, next.js, panel admin, withAdminAuth |
 | `skill-manager` | Meta-skill para detectar, crear y ejecutar la skill correcta | skill manager, crear skill, nueva skill |
+| `catalog-feature-toggle` | Agregar toggle ON/OFF controlado desde admin al catálogo público | toggle, catalog-styles, feature flag, botón flotante, banner, switch |
+| `email-transaccional` | Agregar nuevo tipo de email transaccional con Resend | email, resend, notificación email, template email, confirmado, listo |
+| `image-upload-compress` | Subir imagen con compresión client-side (1200px/0.82) a Supabase Storage | imagen, upload, compresión, supabase storage, base64, canvas |
+| `api-route-supabase` | Crear nueva API route Next.js con supabaseAdmin y patrón del sistema | api route, endpoint, pages/api, handler, POST, GET, servidor |
