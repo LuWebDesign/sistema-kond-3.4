@@ -213,7 +213,7 @@ export async function saveCatalogStyles(styles) {
           const resp = await fetch('/api/admin/catalog-styles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ styles })
+            body: JSON.stringify({ styles: toSave })
           })
           if (resp.ok) return { success: true, normalized: normalizedKeys }
           const text = await resp.text()
@@ -248,6 +248,7 @@ export async function saveCatalogStyles(styles) {
 
       // Si no hay supabase y la API falló, dejar los cambios en localStorage (ya aplicados optimísticamente)
       return { success: true, normalized: normalizedKeys }
+    }
   } catch (error) {
     console.error('Error al guardar estilos:', error)
     return { success: false, error: error.message || String(error) }
