@@ -89,3 +89,4 @@ description: "[Una oración: QUÉ hace y CUÁNDO se usa]"
 | `email-transaccional` | Agregar nuevo tipo de email transaccional con Resend | email, resend, notificación email, template email, confirmado, listo |
 | `image-upload-compress` | Subir imagen con compresión client-side (1200px/0.82) a Supabase Storage | imagen, upload, compresión, supabase storage, base64, canvas |
 | `api-route-supabase` | Crear nueva API route Next.js con supabaseAdmin y patrón del sistema | api route, endpoint, pages/api, handler, POST, GET, servidor |
+| `code-cleanup` | Eliminar código obsoleto/redundante sin alterar comportamiento (análisis → confirmación → ejecución) | limpiar código, dead code, refactorizar, imports sin uso, cleanup, optimizar |
