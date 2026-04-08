@@ -393,7 +393,6 @@ function ProductsComponent() {
   // Mantenemos la función por compatibilidad pero vacía
   const saveProducts = useCallback((productList) => {
     // No-op: Supabase guarda automáticamente en cada operación
-')
   }, [])
 
   // Calcular productos filtrados con useMemo (optimización)
