@@ -1,89 +1,139 @@
-## Sistema KOND - Gestión de Producción
+# Sistema KOND — Guía para agente IA
 
-Este proyecto es una SPA estática (HTML/CSS/JS) destinada a la gestión interna de productos, pedidos y reportes, y un catálogo público simple para clientes. No usa bundlers ni servidor por defecto: los archivos HTML cargan scripts directamente y la persistencia se realiza en el navegador mediante Local Storage.
+## Arquitectura del proyecto
 
-Resumen rápido (qué hay y dónde buscar)
-- Páginas principales:
-  - `index.html` — Dashboard administrativo
-  - `catalog.html` — Catálogo público y checkout (transferencia / WhatsApp / retiro)
-  - `dashboard.html` — Vistas administrativas y listas de pedidos
-  - `tracking.html` — Vista pública para seguimiento de pedidos
-  - `user.html` — Gestión de usuarios / login
-- Directorio `js/` — lógica principal (catalog.js, products.js, pedidos.js, utils.js, etc.)
-- Directorio `css/` — estilos por secciones (catalog.css, modals.css, calendar.css...)
+El proyecto tiene **dos capas que coexisten**:
 
-Arquitectura y convenciónes importantes
-- Persistencia: el proyecto usa `localStorage` para guardar arrays como `productosBase`, `pedidos`, `pedidosCatalogo` y `cart`. Busca `localStorage.setItem`/`getItem` para ver las claves usadas.
-- Globals: algunas variables globales son compartidas entre archivos. Ejemplos: `productosBase`, `pedidos`, `cart`, `selectedDeliveryDate`. Revisa `js/main.js` y `js/catalog.js` para inicialización.
-- Orden de scripts: los archivos utilitarios deben cargarse antes que los módulos que dependen de ellos. Revisa `index.html` / `catalog.html` para el orden correcto (`utils.js` → utilidades compartidas → `main.js` inicializador`).
+| Capa | Directorio | Descripción |
+|------|------------|-------------|
+| SPA estática (legado) | `/` (raíz) | HTML/CSS/JS vanilla, sin bundler. Persiste en `localStorage`. |
+| App Next.js (activa) | `next-app/` | Next.js 15 + React 19 + Supabase. Destino final de la migración. |
 
-Modelo de datos (ejemplos)
-- Producto (ejemplo):
-```
-{
-  id: Number,
-  nombre: String,
-  categoria: String,
-  tipo: String,
-  medidas: String,
-  tiempoUnitario: String, // 'HH:MM:SS'
-  publicado: Boolean, // visible en catálogo público
-  hiddenInProductos: Boolean, // oculto en la vista interna
-  unidadesPorPlaca: Number,
-  usoPlacas: Number,
-  costoPlaca: Number,
-  costoMaterial: Number,
-  imagen: String, // dataURL base64
-}
+**El trabajo nuevo se hace en `next-app/`.** Los archivos de la raíz (`index.html`, `catalog.html`, etc.) son referencia/legado.
+
+## Build y comandos de desarrollo
+
+Todos los comandos se ejecutan **desde `next-app/`**. Requiere Node 22.x.
+
+```bash
+cd next-app
+npm run dev        # Servidor local en :3000 (con polling para Windows)
+npm run build      # Build de producción
+npm run start      # Servidor producción en :3000
+npm run test:prod  # Build + start en :3001
 ```
 
-- Pedido catálogo (ejemplo simplificado):
+En Windows usar `EJECUTAR-SISTEMA.bat` o `start-dev.bat` en `next-app/`.
+
+## Stack tecnológico (next-app)
+
+- Next.js 15 · React 19 · `@supabase/supabase-js` 2.80
+- `bcryptjs` para hash de contraseñas (solo en API routes)
+- Sin ORM — queries Supabase directo
+- CSS: `postcss-preset-env` (sin Tailwind en versión actual)
+- Deployment: Vercel (ver `next-app/vercel.json`)
+
+## Variables de entorno requeridas
+
+Crear `next-app/.env.local` con:
+
 ```
-{
-  id: Number,
-  cliente: { nombre, apellido?, telefono, email, direccion? },
-  items: [ { idProducto, name, price, quantity, measures } ],
-  metodoPago: 'transferencia' | 'whatsapp' | 'retiro',
-  estadoPago: 'sin_seña' | 'seña_pagada' | 'pagado',
-  comprobante: dataURL | null,
-  _comprobanteOmitted: Boolean, // si se omite por cuota localStorage
-  fechaCreacion: ISOString,
-  fechaSolicitudEntrega: 'YYYY-MM-DD' | null,
-  total: Number
-}
+NEXT_PUBLIC_SUPABASE_URL=https://...supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbG...
+NEXT_PUBLIC_USE_SUPABASE=true
+SUPABASE_SERVICE_ROLE_KEY=...          # Solo en API routes, NUNCA en cliente
+RESEND_API_KEY=re_...                  # Email transaccional
+RESEND_FROM_EMAIL="KOND <pedidos@tudominio.com>"
 ```
 
-Reglas UX / negocio relevantes
-- Calendario en checkout (transferencia): domingo no seleccionable, sábado permitidos, el día actual no es seleccionable. Para envíos (método 'envío'), la fecha mínima suele ser hoy + 2 días.
-- Transferencia: se pide una seña (50%). El comprobante se guarda en `pedidosCatalogo`. Si localStorage lanza `QuotaExceededError`, el flujo reintenta guardar sin el comprobante y marca el pedido con `_comprobanteOmitted: true` para que el admin lo revise.
+Ver `next-app/.env.example` y `next-app/RESEND-SETUP.md`.
 
-Funciones y puntos de entrada clave
-- `js/catalog.js` — contiene la mayor parte del flujo de catálogo/checkout: `renderAvailabilityCalendar()`, `sendTransferProof()`, `savePedidoCatalogo()`, `showInfoModal()`.
-- `js/pedidos-catalogo.js` — vistas administrativas y exportación de pedidos.
-- `js/utils.js` — utilidades compartidas: `guardarProductos()`, `formatCurrency()`, `minutesToTime()`.
+## Estructura de `next-app/`
 
-Buenas prácticas y convenciones
-- Siempre llamar a las funciones de persistencia después de mutar estado: p. ej. `guardarProductos()` o `localStorage.setItem('pedidosCatalogo', JSON.stringify(pedidosCatalogo))`.
-- Evitar mutar objetos compartidos sin clonar si los vas a rerenderizar.
-- Usar `escapeHtml()` antes de insertar contenido dinámico en el DOM.
+```
+pages/
+  admin/          ← Páginas protegidas (panel, productos, pedidos, finanzas…)
+  api/            ← API routes: auth/, pedidos/, pedidos-catalogo/, productos/…
+  catalog/        ← Catálogo público
+components/
+  withAdminAuth.js      ← HOC que protege todas las páginas en pages/admin/
+  Layout.js             ← Layout principal con sidebar
+  AvailabilityCalendar.js
+  PedidoCard.js / PedidosModal.js
+utils/
+  supabaseClient.js     ← Cliente Supabase (público + admin service-role)
+  supabaseAuthV2.js     ← loginWithUsername(), getCurrentSession(), logout()
+  supabaseProductos.js / supabasePedidos.js / supabaseMarketing.js  ← helpers por entidad
+  utils.js              ← formatCurrency(), escapeHtml(), minutesToTime(), safeLocalStorageSetItem()
+hooks/
+  useAdmin.js / useCatalog.js / useToast.js
+```
 
-Depuración rápida
-- Abrir `catalog.html` directamente en el navegador y usar DevTools > Application > Local Storage para inspeccionar claves (`productosBase`, `pedidos`, `pedidosCatalogo`, `cart`).
-- Console: agregar `console.log()` temporales en funciones como `sendTransferProof()` o `savePedidoCatalogo()` para seguir el flujo.
+Documentación adicional: `next-app/README.md`, `next-app/migrations/README.md`, `supabase/README-SUPABASE-BOOTSTRAP.md`.
 
-Tareas comunes y enlaces
-- Añadir producto: `js/products.js` → busca el listener del formulario `addProduct`.
-- Modificar visibilidad: `js/database.js` → `showToggleVisibilityModal()`.
-- Editar el calendario: `js/calendar.js` y `js/catalog.js` → `renderAvailabilityCalendar()`.
+## Autenticación (next-app)
 
-Checklist de control de calidad antes de commits
-- Ejecutar manualmente flujo de checkout en `catalog.html` (transferencia y WhatsApp).
-- Verificar que las imágenes adjuntas no excedan localStorage para evitar `QuotaExceededError` (usar compresión si es necesario).
-- Probar funciones administrativas en `dashboard.html` y `pedidos-catalogo`.
+1. **Login:** `POST /api/auth/login { username, password }` → verifica en tabla `usuarios` con `bcryptjs`, guarda `kond-user` en `localStorage`.
+2. **Protección de páginas admin:** envolver con `withAdminAuth`:
+   ```js
+   import withAdminAuth from '../../components/withAdminAuth'
+   export default withAdminAuth(MiPaginaAdmin)
+   ```
+3. **Verificación de sesión:** `getCurrentSession()` desde `utils/supabaseAuthV2.js`. Acepta `kond-user` o `adminSession` (fallback legado).
+4. **Supabase Auth:** usa email temporal `<uuid>@kond.local`; el usuario real vive en tabla `usuarios`.
 
-Contacto y notas
-- Si agregás cambios que afectan la estructura de datos (por ejemplo, nuevos campos en `pedido`), actualizá cualquier función que lea/escriba `pedidosCatalogo`.
-- Para cambios grandes, proponé migraciones: por ejemplo, cuando añadas `_comprobanteOmitted`, actualiza el render admin para mostrar una advertencia.
+## Convenciones de código (next-app)
+
+- **PascalCase** para componentes React. **camelCase** para funciones y variables.
+- Cada página Next.js evita hydration mismatch con `useState(false)` / `setMounted(true)` en `useEffect`:
+  ```js
+  if (!mounted) return <LoadingSpinner />
+  ```
+- Import del cliente Supabase: `import supabase from '../utils/supabaseClient'`
+- Import de funciones utilitarias: `import { formatCurrency, escapeHtml } from '../utils/utils'`
+- Siempre exportar páginas envueltas en `withAdminAuth` para rutas admin.
+
+## Persistencia y fallbacks
+
+- **Fuente de verdad:** Supabase (PostgreSQL).
+- **Fallback:** `localStorage` si Supabase no está disponible. Patrón:
+  ```js
+  try {
+    const { data, error } = await getAllProductos()
+    if (error) throw error
+    return data
+  } catch {
+    return JSON.parse(localStorage.getItem('productosBase') ?? '[]')
+  }
+  ```
+- **`QuotaExceededError`:** al guardar comprobantes (dataURL base64), usar `safeLocalStorageSetItem()` de `utils/utils.js`. Si falla, marcar pedido con `_comprobanteOmitted: true`.
+- **claves `localStorage` canónicas:** `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `kond-user`, `theme`, `notifications`.
+
+## Migraciones de base de datos
+
+Los archivos SQL están en `supabase/` (raíz) y `next-app/supabase-migrations/`. Para aplicar un schema nuevo:
+1. Ejecutar `supabase/schema.sql` en el proyecto Supabase.
+2. Aplicar `ALTER TABLE` adicionales de `supabase/add-*.sql` según corresponda.
+3. Ver `next-app/migrations/README.md` para el proceso paso a paso.
+
+Si se agrega un campo nuevo a `pedidos_catalogo` o `productos`, actualizar también los helpers de `utils/supabase*.js` que leen/escriben esa entidad.
+
+## Reglas de negocio críticas
+
+- **Calendario de entrega:** domingo no disponible; día actual no seleccionable; método 'envío' requiere mínimo hoy +2 días. Ver `components/AvailabilityCalendar.js`.
+- **Seña:** checkout por transferencia requiere 50% de seña. Comprobante se adjunta como dataURL.
+- **`SUPABASE_SERVICE_ROLE_KEY`** nunca debe exportarse al cliente; solo usarla en `pages/api/`.
+- Usar `escapeHtml()` siempre que se inserte contenido de usuario en el DOM (SPA legado) o innerHTML.
+
+## Gotchas frecuentes
+
+| Problema | Solución |
+|----------|----------|
+| Hydration mismatch `#418` | Agregar patrón `mounted` en el componente |
+| RLS silencia queries en dev | Verificar políticas en Supabase Dashboard o `supabase/fix-usuarios-rls.sql` |
+| Usuarios UUID vs INT | Ver `supabase/migrate-usuarios-uuid.sql`; el código actual espera UUID |
+| `NEXT_PUBLIC_*` undefined | Reiniciar `next dev` después de editar `.env.local` |
+| Windows: polling de archivos | El script `npm run dev` ya incluye `WATCHPACK_POLLING=true` |
 
 ---
-Versión: actualizada 14-10-2025 — contiene notas sobre manejo de comprobantes y fallback para localStorage.
+Actualizado: 2026-04-07

@@ -38,6 +38,7 @@ const DEFAULT_STYLES = {
   // Botón flotante WhatsApp
   whatsappEnabled: false,
   whatsappNumber: '',
+  whatsappCountry: '54',
   whatsappMessage: 'Hola! Me gustaría consultar sobre sus productos.',
 }
 

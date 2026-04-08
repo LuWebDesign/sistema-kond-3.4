@@ -88,6 +88,17 @@ function CatalogStylesAdmin() {
     { id: 'whatsapp', label: '💬 WhatsApp', icon: '💬' },
   ]
 
+  const COUNTRIES = [
+    { code: '54', label: 'Argentina (+54)' },
+    { code: '598', label: 'Uruguay (+598)' },
+    { code: '56', label: 'Chile (+56)' },
+    { code: '57', label: 'Colombia (+57)' },
+    { code: '55', label: 'Brasil (+55)' },
+    { code: '52', label: 'México (+52)' },
+    { code: '34', label: 'España (+34)' },
+    { code: '1', label: 'Estados Unidos / Canadá (+1)' },
+  ]
+
   const inputStyle = {
     width: '100%',
     padding: '10px 12px',
@@ -142,6 +153,17 @@ function CatalogStylesAdmin() {
   const previewBtnColor = styles.buttonTextColor || '#ffffff'
   const previewHeaderBg = styles.headerBg || 'var(--bg-card)'
   const previewCardBg = styles.cardBg || 'var(--bg-card)'
+
+  const computeWaNumber = () => {
+    const raw = (styles.whatsappNumber || '').toString()
+    const digits = raw.replace(/\D/g, '')
+    if (!digits) return ''
+    const country = styles.whatsappCountry || ''
+    if (!country) return digits
+    // If user already entered a number starting with the country code, keep it
+    if (digits.startsWith(country)) return digits
+    return `${country}${digits}`
+  }
 
   return (
     <Layout title="Personalizar Catálogo - Sistema KOND">
@@ -420,15 +442,26 @@ function CatalogStylesAdmin() {
 
                 <div style={fieldGroup}>
                   <label style={labelStyle}>Número de WhatsApp</label>
-                  <input
-                    type="text"
-                    value={styles.whatsappNumber || ''}
-                    onChange={(e) => updateStyle('whatsappNumber', e.target.value)}
-                    placeholder="5491112345678 (código de país + número, sin + ni espacios)"
-                    style={inputStyle}
-                  />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      value={styles.whatsappCountry || ''}
+                      onChange={(e) => updateStyle('whatsappCountry', e.target.value)}
+                      style={{ width: 200, ...inputStyle }}
+                    >
+                      {COUNTRIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={styles.whatsappNumber || ''}
+                      onChange={(e) => updateStyle('whatsappNumber', e.target.value)}
+                      placeholder="Ej: 9 11 1234-5678 (sin código de país)"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                  </div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
-                    Ejemplo Argentina: 5491112345678
+                    Ejemplo Argentina (prefijo + país seleccionado): país + 91112345678 → wa.me/{computeWaNumber() || '5491112345678'}
                   </span>
                 </div>
 
@@ -443,16 +476,16 @@ function CatalogStylesAdmin() {
                   />
                 </div>
 
-                {styles.whatsappEnabled && styles.whatsappNumber && (
+                {styles.whatsappEnabled && (computeWaNumber()) && (
                   <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(37,211,102,0.08)', borderRadius: '8px', border: '1px solid rgba(37,211,102,0.25)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     📱 Vista previa del enlace:{' '}
                     <a
-                      href={`https://wa.me/${styles.whatsappNumber}?text=${encodeURIComponent(styles.whatsappMessage || '')}`}
+                      href={`https://wa.me/${computeWaNumber()}?text=${encodeURIComponent(styles.whatsappMessage || '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: '#25d366', fontWeight: 500 }}
                     >
-                      wa.me/{styles.whatsappNumber}
+                      wa.me/{computeWaNumber()}
                     </a>
                   </div>
                 )}
