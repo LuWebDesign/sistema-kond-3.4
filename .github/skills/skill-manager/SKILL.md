@@ -1,7 +1,6 @@
 ---
 name: skill-manager
 description: "Meta-skill que administra el ecosistema de Skills: detecta, crea, adapta y ejecuta la skill correcta para cada tarea. Usar cuando necesitás resolver cualquier tarea y querés que el agente elija o cree la skill óptima."
-triggers: [skill manager, crear skill, nueva skill, qué skill usar, gestionar skills, meta-skill]
 ---
 
 # Skill: skill-manager
@@ -50,7 +49,6 @@ Crear Skill nueva → Guardar en repositorio → Ejecutar
 ---
 name: [nombre-kebab-case]
 description: "[Una oración: QUÉ hace y CUÁNDO se usa]"
-triggers: [palabra1, palabra2, frase clave]
 ---
 
 ## Objetivo

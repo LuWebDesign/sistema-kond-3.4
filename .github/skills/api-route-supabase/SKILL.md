@@ -1,7 +1,6 @@
 ---
 name: api-route-supabase
 description: "Crear una nueva API route Next.js con el patrón del sistema (supabaseAdmin, validación de método, manejo de errores). Usar cuando: necesitás un nuevo endpoint en pages/api/ que lea o escriba en Supabase desde el servidor."
-triggers: [api route, endpoint, pages/api, handler, supabaseAdmin, POST, GET, servidor, backend]
 ---
 
 # Skill: api-route-supabase

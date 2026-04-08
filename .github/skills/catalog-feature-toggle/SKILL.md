@@ -1,7 +1,6 @@
 ---
 name: catalog-feature-toggle
 description: "Agregar una nueva funcionalidad ON/OFF controlada desde el admin al catálogo público. Usar cuando: adding toggle, banner, botón flotante, o cualquier opción visual/funcional que el admin active/desactive desde catalog-styles."
-triggers: [toggle, catalog-styles, feature flag, botón flotante, whatsapp, banner, columnas, switch admin]
 ---
 
 # Skill: catalog-feature-toggle

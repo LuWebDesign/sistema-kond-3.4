@@ -1,7 +1,6 @@
 ---
 name: image-upload-compress
 description: "Implementar subida de imagen con compresión client-side a Supabase Storage. Usar cuando: un formulario admin necesita subir imagen de producto, avatar u otro recurso con validación de tamaño y compresión automática."
-triggers: [imagen, subida imagen, upload, compresión, supabase storage, base64, canvas, producto imagen]
 ---
 
 # Skill: image-upload-compress

@@ -1,7 +1,6 @@
 ---
 name: email-transaccional
 description: "Agregar un nuevo tipo de email transaccional al sistema (Resend). Usar cuando: querés notificar al cliente por email ante un nuevo evento de pedido u otro disparador del sistema."
-triggers: [email, resend, notificación email, send-order-email, confirmado, listo, transaccional, template email]
 ---
 
 # Skill: email-transaccional
