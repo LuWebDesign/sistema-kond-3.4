@@ -442,11 +442,11 @@ function CatalogStylesAdmin() {
 
                 <div style={fieldGroup}>
                   <label style={labelStyle}>Número de WhatsApp</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <select
                       value={styles.whatsappCountry || ''}
                       onChange={(e) => updateStyle('whatsappCountry', e.target.value)}
-                      style={{ width: 200, ...inputStyle }}
+                      style={{ width: 140, flex: '0 0 140px', minWidth: 120, ...inputStyle }}
                     >
                       {COUNTRIES.map(c => (
                         <option key={c.code} value={c.code}>{c.label}</option>
@@ -457,7 +457,7 @@ function CatalogStylesAdmin() {
                       value={styles.whatsappNumber || ''}
                       onChange={(e) => updateStyle('whatsappNumber', e.target.value)}
                       placeholder="Ej: 9 11 1234-5678 (sin código de país)"
-                      style={{ ...inputStyle, flex: 1 }}
+                      style={{ ...inputStyle, flex: 1, minWidth: 0 }}
                     />
                   </div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
