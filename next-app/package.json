@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 CHOKIDAR_INTERVAL=200 next dev --hostname 0.0.0.0 -p 3000",
     "build": "next build",
+    "test": "vitest",
     "start": "next start -p 3000",
     "test:prod": "next build && next start -p 3001"
   },
@@ -23,6 +24,7 @@
   "devDependencies": {
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.1.6",
-    "postcss-preset-env": "^10.4.0"
+    "postcss-preset-env": "^10.4.0",
+    "vitest": "^1.3.0"
   }
 }

@@ -255,3 +255,4 @@ export async function saveCatalogStyles(styles) {
 }
 
 export { DEFAULT_STYLES }
+export { isValidCssColor, normalizeHex, sanitizeStyles }
