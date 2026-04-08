@@ -102,10 +102,8 @@
       editPromo = null;
     }
     
-    console.log('[DEBUG] openCreateModal llamado con:', editPromo);
     closeModal();
     const isEdit = !!editPromo;
-    console.log('[DEBUG] isEdit:', isEdit);
     const products = getProducts();
     
     const modal = document.createElement('div');
@@ -522,10 +520,8 @@
 
   // Render de la grilla
   function render(){
-    console.log('[DEBUG] render() llamado, currentTab:', currentTab);
     const grid = el('#mkPromosContainer');
     const empty = el('#mkEmptyState');
-    console.log('[DEBUG] grid:', grid, 'empty:', empty);
     if (!grid || !empty) return;
 
     // Renderizar según la pestaña activa
@@ -538,7 +534,6 @@
 
     // Renderizar promociones (pestaña por defecto)
     const list = loadPromos();
-    console.log('[DEBUG] Promociones cargadas:', list);
     const products = getProducts();
     const filtered = list.filter(p => {
       if (!searchQuery) return true;
@@ -550,8 +545,6 @@
         (p.tags||[]).some(t => (t||'').toLowerCase().includes(q))
       );
     });
-
-    console.log('[DEBUG] Promociones filtradas:', filtered.length, 'de', list.length);
 
     if (!filtered.length){
       grid.innerHTML = '';
@@ -999,7 +992,6 @@
       btnNuevaPromo.removeAttribute('title');
       btnNuevaPromo.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('[DEBUG] btnNuevaPromo clicked');
         openCreateModal();
       });
     }
@@ -1010,7 +1002,6 @@
       btnEmptyNew.removeAttribute('disabled');
       btnEmptyNew.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('[DEBUG] btnEmptyNew clicked');
         openCreateModal();
       });
     }

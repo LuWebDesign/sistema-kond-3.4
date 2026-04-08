@@ -45,7 +45,6 @@ function debugCalcularCaja() {
   });
 
   const dineroDisponible = ingresosHoy - egresosHoy + saldoAyer;
-  console.log('debugCalcularCaja ->', { ingresosHoy, egresosHoy, saldoAyer, dineroDisponible, porCobrar });
   return { ingresosHoy, egresosHoy, saldoAyer, dineroDisponible, porCobrar };
 }
 
@@ -419,7 +418,6 @@ function registrarMovimiento({ tipo = 'ingreso', monto = 0, categoria = '', desc
       const exists = existingFin.some(m => m.idempotencyKey && m.idempotencyKey === idempotencyKey);
       if (exists) {
         const found = existingFin.find(m => m.idempotencyKey === idempotencyKey);
-        try { console.debug('[DEBUG] registrarMovimiento -> idempotency hit', idempotencyKey); } catch(e) {}
         return found;
       }
     }

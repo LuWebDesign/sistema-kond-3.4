@@ -691,21 +691,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
 
-  // Log único para verificar datos (solo primer producto)
-  useEffect(() => {
-    if (product.id === 1) {
-      console.log('🔍 ProductCard Debug:', {
-        productId: product.id,
-        productName: product.nombre,
-        materialId: product.materialId,
-        material: product.material,
-        tipoMaterial: product.tipoMaterial,
-        materialsCount: materials.length,
-        materials: materials
-      })
-    }
-  }, [product.id, materials])
-
   // ProductCard will use the shared slugify helper imported above
 
   // Detectar tema (dark vs light) para ajustar estilos de badge de categoría
@@ -743,37 +728,20 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
   // Obtener información del material
   const getMaterialInfo = () => {
-    // Debug: verificar datos
-    if (product.id === 1) {
-      console.log('🔍 Debug Material Info:', {
-        materials,
-        materialsLength: materials.length,
-        productMaterialId: product.materialId,
-        productMaterial: product.material
-      })
-    }
-    
     if (materials.length === 0) return null
     
     // Primero intentar por materialId
     if (product.materialId) {
       const material = materials.find(m => String(m.id) === String(product.materialId))
-      if (material) {
-        if (product.id === 1) console.log('✅ Material encontrado por ID:', material)
-        return material
-      }
+      if (material) return material
     }
     
     // Si no hay materialId, intentar por nombre del material (para compatibilidad con productos antiguos)
     if (product.material) {
       const material = materials.find(m => m.nombre === product.material)
-      if (material) {
-        if (product.id === 1) console.log('✅ Material encontrado por nombre:', material)
-        return material
-      }
+      if (material) return material
     }
     
-    if (product.id === 1) console.log('❌ Material no encontrado')
     return null
   }
 
@@ -951,9 +919,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             // En dark: texto blanco con borde; en light: texto gris oscuro sobre fondo gris claro
             const badgeTextColor = isDarkTheme ? '#ffffff' : '#374151' // gray-700
             const badgeBorder = isDarkTheme ? `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}` : 'none'
-            
-            // Debug: ver qué tema está detectando
-            if (product.id === 1) console.log('🎨 Theme detected:', { isDarkTheme, badgeTextColor, badgeBackground })
             
             return (
               <>

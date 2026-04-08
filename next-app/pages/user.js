@@ -123,7 +123,6 @@ export default function User() {
     setIsLoading(true)
 
     try {
-      console.log('🔐 Intentando login con:', formData.email)
       // Primero intentar login con Supabase Auth
       const result = await loginWithEmail(formData.email, formData.password)
       
@@ -149,7 +148,6 @@ export default function User() {
               localUser.password === formData.password
             ) {
               user = localUser
-              console.log('✅ Login local exitoso para comprador')
             }
           }
         } catch {

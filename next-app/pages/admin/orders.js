@@ -172,14 +172,13 @@ function PedidosCatalogo() {
 
   const loadData = async () => {
     try {
-      // console.log('📦 Cargando pedidos catálogo...')
       
       // Cargar productos desde Supabase primero, fallback a localStorage
       let productosBase = []
       const { data: productosDB, error: productosError } = await getAllProductos()
       
       if (!productosError && productosDB && productosDB.length > 0) {
-        // console.log('✅ Productos cargados desde Supabase:', productosDB.length)
+
         productosBase = productosDB.map(mapProductoToFrontend)
       } else {
         console.log('⚠️ Cargando productos desde localStorage como fallback')
@@ -190,7 +189,7 @@ function PedidosCatalogo() {
       const { data: pedidosDB, error } = await getAllPedidosCatalogo()
       
       if (!error && pedidosDB && pedidosDB.length > 0) {
-        // console.log('✅ Pedidos cargados desde Supabase:', pedidosDB.length)
+
         // Mapear de snake_case a camelCase con productos para imágenes
         const pedidosMapped = pedidosDB.map(pedidoDB => 
           mapSupabasePedidoToFrontend(pedidoDB, productosBase)
@@ -203,7 +202,7 @@ function PedidosCatalogo() {
         const pedidos = JSON.parse(localStorage.getItem('pedidosCatalogo')) || []
         const normalized = (pedidos || []).map(normalizePedido)
         setPedidosCatalogo(normalized)
-        // console.log('📂 Pedidos cargados desde localStorage:', normalized.length)
+
       }
       
       // Guardar productos en estado y cargar materiales (aún desde localStorage)

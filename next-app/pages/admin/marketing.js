@@ -206,16 +206,10 @@ function Marketing() {
   };
 
   const handlePromoSubmit = async (promoData) => {
-    console.log('🚀 handlePromoSubmit iniciado');
-    console.log('📦 Datos recibidos:', promoData);
-    console.log('✏️ Es edición?', !!editingPromo);
-    
     try {
       if (editingPromo) {
         // Actualizar promoción existente
-        console.log('🔄 Actualizando promoción ID:', editingPromo.id);
         const { data, error } = await updatePromocion(editingPromo.id, promoData);
-        console.log('📊 Resultado update:', { data, error });
         if (error) {
           console.error('❌ Error updating promocion:', error);
           alert('Error al actualizar la promoción: ' + error);
@@ -223,9 +217,7 @@ function Marketing() {
         }
       } else {
         // Crear nueva promoción
-        console.log('➕ Creando nueva promoción');
         const { data, error } = await createPromocion(promoData);
-        console.log('📊 Resultado create:', { data, error });
         if (error) {
           console.error('❌ Error creating promocion:', error);
           alert('Error al crear la promoción: ' + error);

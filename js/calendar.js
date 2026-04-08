@@ -182,7 +182,6 @@ function setupCalendarListeners() {
       const btn = e.target.closest('[data-action="view-pedido"]');
       const pedidoId = btn.dataset.id;
       // Aquí podrías abrir un modal de detalle para pedidos internos si lo deseas
-      console.log('Ver pedido interno:', pedidoId);
     }
   });
 }
@@ -298,15 +297,6 @@ function renderDayProducts(dateStr) {
         if (esProduccion) {
           const fechaReal = pedidoCatalogo.fechaProduccionCalendario || dateStr;
           const relativeDateText = getRelativeDateText(fechaReal);
-          
-          // DEBUG: logging temporal para depurar el problema
-          console.log('DEBUG PRODUCCION:', {
-            pedidoId: pedidoCatalogo.id,
-            fechaProduccionCalendario: pedidoCatalogo.fechaProduccionCalendario,
-            dateStr: dateStr,
-            fechaReal: fechaReal,
-            relativeDateText: relativeDateText
-          });
           
           allDayItems.push({
             type: 'catalogo-produccion',

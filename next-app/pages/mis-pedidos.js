@@ -92,7 +92,6 @@ export default function MisPedidos() {
       setCurrentUserState(user)
 
       if (user && user.email) {
-        // console.log('📦 Cargando pedidos del usuario:', user.email)
         
         // Cargar productos desde Supabase primero, fallback a localStorage
         let productosBase = []

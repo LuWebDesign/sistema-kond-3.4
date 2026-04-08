@@ -243,7 +243,6 @@ function ProductsComponent() {
     try {
       const raw = localStorage.getItem('materiales')
       const list = raw ? JSON.parse(raw) : []
-      // console.log('Conexión con base de datos materiales:', list.length > 0 ? 'OK' : 'Sin materiales', 'Total materiales:', list.length)
       return list.length > 0
     } catch (e) {
       console.error('Error conectando con base de datos materiales:', e)
@@ -283,7 +282,7 @@ function ProductsComponent() {
         const { data, error } = await updateMaterial(editingMaterial, materialForm)
         
         if (data && !error) {
-          // console.log('✅ Material actualizado en Supabase desde products')
+
           
           // Recargar materiales desde Supabase
           await loadMaterials()
@@ -365,7 +364,7 @@ function ProductsComponent() {
         }))
         
         setMaterials(mappedMateriales)
-        // console.log('✅ Materiales cargados desde Supabase en products:', mappedMateriales.length)
+
         checkMaterialsConnection()
         return
       } else {
@@ -394,7 +393,7 @@ function ProductsComponent() {
   // Mantenemos la función por compatibilidad pero vacía
   const saveProducts = useCallback((productList) => {
     // No-op: Supabase guarda automáticamente en cada operación
-    // console.log('saveProducts called (no-op with Supabase)')
+')
   }, [])
 
   // Calcular productos filtrados con useMemo (optimización)

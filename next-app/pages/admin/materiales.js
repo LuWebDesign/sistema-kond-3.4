@@ -74,7 +74,6 @@ function Materiales() {
         }))
         
         setMateriales(mappedMateriales)
-        // console.log('✅ Materiales cargados desde Supabase:', mappedMateriales.length)
       } else {
         throw new Error('Supabase materiales failed')
       }
@@ -85,7 +84,7 @@ function Materiales() {
         if (proveedoresSupabase && proveedoresSupabase.length > 0) {
           const nombresProveedores = proveedoresSupabase.map(p => p.nombre)
           setProveedores(nombresProveedores)
-          // console.log('✅ Proveedores cargados desde Supabase:', nombresProveedores.length)
+
         } else {
           // Fallback a localStorage
           const rawP = localStorage.getItem('proveedores')
@@ -103,7 +102,7 @@ function Materiales() {
         if (tamanosSupabase && tamanosSupabase.length > 0) {
           const valoresTamanos = tamanosSupabase.map(t => t.valor)
           setTamanos(valoresTamanos)
-          // console.log('✅ Tamaños cargados desde Supabase:', valoresTamanos.length)
+
         } else {
           // Fallback a localStorage
           const rawT = localStorage.getItem('tamanos')
@@ -121,7 +120,7 @@ function Materiales() {
         if (espesoresSupabase && espesoresSupabase.length > 0) {
           const valoresEspesores = espesoresSupabase.map(e => e.valor)
           setEspesores(valoresEspesores)
-          // console.log('✅ Espesores cargados desde Supabase:', valoresEspesores.length)
+
         } else {
           // Fallback a localStorage
           const rawE = localStorage.getItem('espesores')
@@ -194,7 +193,7 @@ function Materiales() {
         const { data, error } = await updateMaterial(editingId, form)
         
         if (data && !error) {
-          // console.log('✅ Material actualizado en Supabase')
+
           await loadData() // Recargar desde Supabase
           resetForm(false)
           createToast('✅ Material actualizado correctamente', 'success')
@@ -207,7 +206,7 @@ function Materiales() {
         const { data, error } = await createMaterial(form)
         
         if (data && !error) {
-          // console.log('✅ Material creado en Supabase')
+
           await loadData() // Recargar desde Supabase
           resetForm(true) // Mantener form abierto para crear más
           createToast('✅ Material creado correctamente', 'success')
@@ -460,7 +459,7 @@ function Materiales() {
                             const { data, error } = await createTamano(v)
                             
                             if (data && !error) {
-                              // console.log('✅ Tamaño creado en Supabase')
+
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, tamano: v }))
@@ -528,7 +527,7 @@ function Materiales() {
                             const { data, error } = await createEspesor(v)
                             
                             if (data && !error) {
-                              // console.log('✅ Espesor creado en Supabase')
+
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, espesor: v }))
@@ -591,7 +590,7 @@ function Materiales() {
                             const { data, error } = await createProveedor({ nombre: v })
                             
                             if (data && !error) {
-                              // console.log('✅ Proveedor creado en Supabase')
+
                               // Recargar catálogos
                               await loadData()
                               setForm(prev => ({ ...prev, proveedor: v }))
