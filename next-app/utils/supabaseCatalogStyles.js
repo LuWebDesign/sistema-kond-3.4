@@ -41,6 +41,75 @@ const DEFAULT_STYLES = {
   whatsappMessage: 'Hola! Me gustaría consultar sobre sus productos.',
 }
 
+// Helper: validar si un string es un color CSS válido.
+function isValidCssColor(value) {
+  if (!value || typeof value !== 'string') return false
+  const v = value.trim()
+  // Si estamos en el navegador, usar el motor CSS para validar
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    try {
+      const s = document.createElement('span').style
+      s.color = ''
+      s.color = v
+      return !!s.color
+    } catch (e) {
+      // fallthrough
+    }
+  }
+  // Fallback: validar hex y rgb(a) mediante regex
+  const hex = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+  const rgb = /^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*(0|1|0?\.\d+))?\s*\)$/i
+  return hex.test(v) || rgb.test(v)
+}
+
+// Normalizar un valor de color: expandir hex corto y asegurar prefijo '#'.
+function normalizeHex(value) {
+  if (!value || typeof value !== 'string') return ''
+  const v = value.trim()
+  const hexNoHash = v.replace(/^#/, '')
+  if (/^[0-9a-fA-F]{3}$/.test(hexNoHash)) {
+    return '#' + hexNoHash.split('').map(c => c + c).join('').toLowerCase()
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(hexNoHash)) return '#' + hexNoHash.toLowerCase()
+  if (/^[0-9a-fA-F]{8}$/.test(hexNoHash)) return '#' + hexNoHash.toLowerCase()
+  return ''
+}
+
+function sanitizeStyles(inputStyles) {
+  const colorKeys = [
+    'headerBg','headerTextColor','accentColor','buttonBg','buttonTextColor','cardBg','cardBorderColor','badgeBg','badgeTextColor','bannerBg','bannerTextColor','footerBg','footerTextColor','catalogBg','catalogTextColor'
+  ]
+  const cleaned = { ...inputStyles }
+  const normalizedKeys = []
+  colorKeys.forEach(k => {
+    if (!Object.prototype.hasOwnProperty.call(cleaned, k)) return
+    const val = cleaned[k]
+    if (!val) {
+      // keep falsy as-is (means fallback to defaults)
+      return
+    }
+    if (isValidCssColor(val)) {
+      // prefer hex normalized when possible
+      const hex = normalizeHex(val)
+      if (hex) {
+        if (hex !== val) normalizedKeys.push(k)
+        cleaned[k] = hex
+      } else {
+        // keep original (e.g., rgb(...), color names)
+        // but mark normalized if we trimmed whitespace
+        const trimmed = typeof val === 'string' ? val.trim() : val
+        if (trimmed !== val) normalizedKeys.push(k)
+        cleaned[k] = trimmed
+      }
+    } else {
+      // Invalid color -> remove to fallback to defaults
+      cleaned[k] = ''
+      normalizedKeys.push(k)
+    }
+  })
+  return { cleaned, normalizedKeys }
+}
+
 /**
  * Obtener estilos del catálogo
  */
@@ -130,12 +199,15 @@ export async function getCatalogStyles() {
  */
 export async function saveCatalogStyles(styles) {
   try {
-    // Optimistic update: aplicar inmediatamente en localStorage y disparar evento
+    // Sanitizar y normalizar colores antes de persistir
+    const { cleaned, normalizedKeys } = sanitizeStyles(styles || {})
+    const toSave = { ...cleaned }
+    // Optimistic update: aplicar inmediatamente en localStorage and disparar evento
     const prevRaw = (typeof window !== 'undefined') ? localStorage.getItem('catalogStyles') : null
     try {
       if (typeof window !== 'undefined') {
-        try { localStorage.setItem('catalogStyles', JSON.stringify(styles)) } catch (e) {}
-        try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: styles })) } catch (e) {}
+        try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
+        try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
         // Intentar persistir en API; si falla, revertir
         try {
           const resp = await fetch('/api/admin/catalog-styles', {
@@ -143,7 +215,7 @@ export async function saveCatalogStyles(styles) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ styles })
           })
-          if (resp.ok) return { success: true }
+          if (resp.ok) return { success: true, normalized: normalizedKeys }
           const text = await resp.text()
           // Revertir localStorage si había un valor previo
           if (prevRaw != null) {
@@ -163,19 +235,19 @@ export async function saveCatalogStyles(styles) {
       if (supabase) {
         const { data: existing } = await supabase.from('catalog_styles').select('id').single()
         if (existing) {
-          const { error } = await supabase.from('catalog_styles').update({ styles, updated_at: new Date().toISOString() }).eq('id', existing.id)
+          const { error } = await supabase.from('catalog_styles').update({ styles: toSave, updated_at: new Date().toISOString() }).eq('id', existing.id)
           if (error) return { success: false, error: error.message }
         } else {
-          const { error } = await supabase.from('catalog_styles').insert([{ styles, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+          const { error } = await supabase.from('catalog_styles').insert([{ styles: toSave, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
           if (error) return { success: false, error: error.message }
         }
-        try { localStorage.setItem('catalogStyles', JSON.stringify(styles)) } catch (e) {}
-        try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: styles })) } catch (e) {}
-        return { success: true }
+        try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
+        try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
+        return { success: true, normalized: normalizedKeys }
       }
 
       // Si no hay supabase y la API falló, dejar los cambios en localStorage (ya aplicados optimísticamente)
-      return { success: true }
+      return { success: true, normalized: normalizedKeys }
   } catch (error) {
     console.error('Error al guardar estilos:', error)
     return { success: false, error: error.message || String(error) }

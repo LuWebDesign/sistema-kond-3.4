@@ -34,8 +34,12 @@ function CatalogStylesAdmin() {
     try {
       const result = await saveCatalogStyles(styles)
       if (result && result.success) {
-        setSaveMessage('✅ Estilos guardados exitosamente')
-        setTimeout(() => setSaveMessage(''), 3000)
+        if (result.normalized && Array.isArray(result.normalized) && result.normalized.length > 0) {
+          setSaveMessage(`✅ Estilos guardados. ⚠️ Se normalizaron: ${result.normalized.join(', ')}`)
+        } else {
+          setSaveMessage('✅ Estilos guardados exitosamente')
+        }
+        setTimeout(() => setSaveMessage(''), 5000)
       } else {
         setSaveMessage(`❌ ${result?.error || 'Error al guardar'}`)
       }
