@@ -204,51 +204,49 @@ export async function saveCatalogStyles(styles) {
     const toSave = { ...cleaned }
     // Optimistic update: aplicar inmediatamente en localStorage and disparar evento
     const prevRaw = (typeof window !== 'undefined') ? localStorage.getItem('catalogStyles') : null
-    try {
-      if (typeof window !== 'undefined') {
-        try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
-        try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
-        // Intentar persistir en API; si falla, revertir
-        try {
-          const resp = await fetch('/api/admin/catalog-styles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ styles: toSave })
-          })
-          if (resp.ok) return { success: true, normalized: normalizedKeys }
-          const text = await resp.text()
-          // Revertir localStorage si había un valor previo
-          if (prevRaw != null) {
-            try { localStorage.setItem('catalogStyles', prevRaw) } catch (e) {}
-            try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: JSON.parse(prevRaw) })) } catch (e) {}
-          } else {
-            try { localStorage.removeItem('catalogStyles') } catch (e) {}
-            try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: {} })) } catch (e) {}
-          }
-          return { success: false, error: text }
-        } catch (e) {
-          console.warn('Fallo al guardar vía API:', e)
-          // fallback: intentar persistir en supabase si existe
-        }
-      }
-
-      if (supabase) {
-        const { data: existing } = await supabase.from('catalog_styles').select('id').single()
-        if (existing) {
-          const { error } = await supabase.from('catalog_styles').update({ styles: toSave, updated_at: new Date().toISOString() }).eq('id', existing.id)
-          if (error) return { success: false, error: error.message }
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
+      // Intentar persistir en API; si falla, revertir
+      try {
+        const resp = await fetch('/api/admin/catalog-styles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ styles: toSave })
+        })
+        if (resp.ok) return { success: true, normalized: normalizedKeys }
+        const text = await resp.text()
+        // Revertir localStorage si había un valor previo
+        if (prevRaw != null) {
+          try { localStorage.setItem('catalogStyles', prevRaw) } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: JSON.parse(prevRaw) })) } catch (e) {}
         } else {
-          const { error } = await supabase.from('catalog_styles').insert([{ styles: toSave, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
-          if (error) return { success: false, error: error.message }
+          try { localStorage.removeItem('catalogStyles') } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: {} })) } catch (e) {}
         }
-        try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
-        try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
-        return { success: true, normalized: normalizedKeys }
+        return { success: false, error: text }
+      } catch (e) {
+        console.warn('Fallo al guardar vía API:', e)
+        // fallback: intentar persistir en supabase si existe
       }
+    }
 
-      // Si no hay supabase y la API falló, dejar los cambios en localStorage (ya aplicados optimísticamente)
+    if (supabase) {
+      const { data: existing } = await supabase.from('catalog_styles').select('id').single()
+      if (existing) {
+        const { error } = await supabase.from('catalog_styles').update({ styles: toSave, updated_at: new Date().toISOString() }).eq('id', existing.id)
+        if (error) return { success: false, error: error.message }
+      } else {
+        const { error } = await supabase.from('catalog_styles').insert([{ styles: toSave, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+        if (error) return { success: false, error: error.message }
+      }
+      try { localStorage.setItem('catalogStyles', JSON.stringify(toSave)) } catch (e) {}
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('catalogStyles:updated', { detail: toSave })) } catch (e) {}
       return { success: true, normalized: normalizedKeys }
     }
+
+    // Si no hay supabase y la API falló, dejar los cambios en localStorage (ya aplicados optimísticamente)
+    return { success: true, normalized: normalizedKeys }
   } catch (error) {
     console.error('Error al guardar estilos:', error)
     return { success: false, error: error.message || String(error) }
