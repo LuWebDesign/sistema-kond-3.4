@@ -264,7 +264,7 @@ Resultado:
 
 Si tienes dudas:
 1. Revisa esta guía completa
-2. Consulta `GUIA-COLOR-TEXTO-BADGES.md` para info sobre colores de texto
+2. Consulta `docs/guides/GUIA-COLOR-TEXTO-BADGES.md` para info sobre colores de texto
 3. Abre consola (F12) para ver errores
 4. Verifica que todos los scripts estén cargados
 
@@ -273,3 +273,4 @@ Si tienes dudas:
 **Autor**: GitHub Copilot  
 **Revisión**: Sistema KOND v3.2  
 **Actualización**: Color personalizable del badge de descuento porcentual
+

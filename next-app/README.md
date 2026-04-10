@@ -205,7 +205,7 @@ npm start
 
 - [Documentación Next.js](https://nextjs.org/docs)
 - [React Documentation](https://react.dev)
-- [Guía de Migración](../GUIA-NAVEGACION-URLS.md)
+- [Guía de Migración](../docs/guides/GUIA-NAVEGACION-URLS.md)
 
 ---
 
@@ -220,3 +220,4 @@ npm start
 
 **Última actualización:** 20 de octubre de 2025  
 **Versión:** 0.1.0 (Migración en progreso)
+
