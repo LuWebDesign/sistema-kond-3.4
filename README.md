@@ -190,7 +190,7 @@ npm run lint
 ## 📝 Changelog
 
 Ver archivos de cambios:
-- `CHANGELOG-PROMOCIONES.md` — Historial de promociones
+- `docs/changelogs/CHANGELOG-PROMOCIONES.md` — Historial de promociones
 - `MIGRACION-SUPABASE.md` — Resumen de migración a Supabase
 - `LIMPIEZA-COMPLETADA.md` — Archivos eliminados/movidos
 
@@ -235,3 +235,4 @@ Para dudas o soporte:
 ---
 
 **¡Sistema listo para producción!** 🚀
+
