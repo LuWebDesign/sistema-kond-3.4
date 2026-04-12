@@ -53,7 +53,6 @@ export default function User() {
             }
           }
         } catch (error) {
-          console.error('Error en OAuth callback:', error)
           createToast('Error al procesar login con Google', 'error')
         }
       }
@@ -124,7 +123,6 @@ export default function User() {
     setIsLoading(true)
 
     try {
-      console.log('🔐 Intentando login con:', formData.email)
       // Primero intentar login con Supabase Auth
       const result = await loginWithEmail(formData.email, formData.password)
       
@@ -160,7 +158,6 @@ export default function User() {
         direccion: '', localidad: '', cp: '', provincia: '', observaciones: ''
       })
     } catch (error) {
-      console.error('Error en login:', error)
       createToast('Error al iniciar sesión', 'error')
     } finally {
       setIsLoading(false)
@@ -234,7 +231,6 @@ export default function User() {
         createToast('No se pudo iniciar sesión con Google', 'error')
       }
     } catch (error) {
-      console.error('Error en login con Google:', error)
       createToast('Error al iniciar sesión con Google', 'error')
     } finally {
       setIsLoading(false)
@@ -506,7 +502,6 @@ export default function User() {
                   try {
                     await loginWithGoogle()
                   } catch (error) {
-                    console.error('Error al iniciar login con Google:', error)
                     createToast('Error al conectar con Google', 'error')
                   }
                 }}
