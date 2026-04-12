@@ -117,6 +117,7 @@ Próximos pasos sugeridos:
 - ❌ No eliminar funciones marcadas como `@deprecated` sin confirmación — pueden tener consumidores externos.
 - ❌ No tocar archivos de configuración, migraciones de base de datos ni scripts de deploy sin pedido explícito.
 - ❌ No asumir que una función sin uso local está realmente sin uso — puede ser llamada por reflection, eventos, o desde otro repositorio.
+- ❌ No eliminar bloques catch con fallback a localStorage — son parte del patrón dual del sistema (Supabase primario + localStorage como respaldo)
 
 ---
 

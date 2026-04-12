@@ -26,7 +26,7 @@ Crear Skill nueva → Guardar en repositorio → Ejecutar
 
 ## Pasos
 
-1. Escanear `.github/skills/*/SKILL.md` y construir el índice.
+1. **Detectar skills disponibles**: Leer `.github/skills/*/SKILL.md` en tiempo real para construir el índice. No usar un índice estático — puede estar desactualizado.
 2. Comparar la tarea contra `name`, `description` y `triggers` de cada skill.
 3. Aplicar el flujo de decisión anterior.
 4. Al ejecutar: cargar **solo** la skill necesaria (no todo el repositorio).
@@ -76,17 +76,3 @@ description: "[Una oración: QUÉ hace y CUÁNDO se usa]"
 | Skill > 50 líneas → dividir en dos | Una skill = una responsabilidad |
 | Sin ejemplos genéricos | Solo si son necesarios para ejecución correcta |
 | No repetir info ya presente en el contexto | Eficiencia de tokens |
-
----
-
-## Índice de Skills disponibles
-
-| nombre | descripción | triggers |
-|--------|-------------|----------|
-| `next-admin-page` | Crear páginas admin en Next.js con Supabase + fallback localStorage | admin page, next.js, panel admin, withAdminAuth |
-| `skill-manager` | Meta-skill para detectar, crear y ejecutar la skill correcta | skill manager, crear skill, nueva skill |
-| `catalog-feature-toggle` | Agregar toggle ON/OFF controlado desde admin al catálogo público | toggle, catalog-styles, feature flag, botón flotante, banner, switch |
-| `email-transaccional` | Agregar nuevo tipo de email transaccional con Resend | email, resend, notificación email, template email, confirmado, listo |
-| `image-upload-compress` | Subir imagen con compresión client-side (1200px/0.82) a Supabase Storage | imagen, upload, compresión, supabase storage, base64, canvas |
-| `api-route-supabase` | Crear nueva API route Next.js con supabaseAdmin y patrón del sistema | api route, endpoint, pages/api, handler, POST, GET, servidor |
-| `code-cleanup` | Eliminar código obsoleto/redundante sin alterar comportamiento (análisis → confirmación → ejecución) | limpiar código, dead code, refactorizar, imports sin uso, cleanup, optimizar |

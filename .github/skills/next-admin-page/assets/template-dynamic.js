@@ -10,7 +10,7 @@
 
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import styles from '../../styles/nombre-archivo.module.css' // ← renombrar
 // import { getAllProductos } from '../../utils/supabaseProducts'  ← ejemplo, ajustar según entidad
@@ -26,7 +26,7 @@ const NombrePaginaDynamic = dynamic(() => Promise.resolve(NombrePaginaContent), 
 })
 
 // ─── Componente principal ──────────────────────────────────────────────────────
-function NombrePaginaContent() {
+const NombrePaginaContent = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -48,7 +48,6 @@ function NombrePaginaContent() {
       const local = JSON.parse(localStorage.getItem('productosBase') || '[]')
       setData(local)
     } catch (err) {
-      console.error('Error cargando datos:', err)
       setError('No se pudieron cargar los datos.')
       const local = JSON.parse(localStorage.getItem('productosBase') || '[]')
       setData(local)
@@ -57,12 +56,8 @@ function NombrePaginaContent() {
     }
   }
 
-  // useMemo para cálculos costosos — depende de `data`
-  const metrics = useMemo(() => {
-    if (!data.length) return null
-    // … cálculos derivados
-    return {}
-  }, [data])
+  // Agregar aquí cálculos derivados de `data` si son necesarios
+  // (usar useMemo solo si el cálculo es costoso y los benchmarks lo justifican — React 19 Compiler optimiza automáticamente)
 
   if (loading) {
     return (

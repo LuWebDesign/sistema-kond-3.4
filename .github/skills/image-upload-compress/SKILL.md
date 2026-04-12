@@ -40,11 +40,17 @@ Recibir un archivo de imagen del usuario, comprimirlo a 1200px/0.82 quality, sub
 
 5. **Subir a Supabase Storage** (si disponible):
    ```js
+   // Date.now() en el filename garantiza unicidad — no cambiar este patrón
    const fileName = `productos/${Date.now()}-${file.name.replace(/\s+/g, '_')}`
-   const { data, error } = await supabase.storage
+   const { data, error: storageError } = await supabase.storage
      .from('product-images')
      .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false })
    
+   if (storageError) {
+     // Fallback a base64 si Storage falla
+     return base64DataUrl
+   }
+
    const { data: urlData } = supabase.storage
      .from('product-images')
      .getPublicUrl(fileName)

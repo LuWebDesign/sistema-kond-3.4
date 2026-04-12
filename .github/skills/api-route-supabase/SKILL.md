@@ -38,9 +38,9 @@ Crear un endpoint en `next-app/pages/api/` siguiendo el patrón establecido en e
        if (error) throw error
 
        return res.status(200).json({ success: true, data })
-     } catch (error) {
-       console.error('Error en [nombre-endpoint]:', error)
-       return res.status(500).json({ error: error.message })
+      } catch (error) {
+        // Registrar error con tu sistema de logging si aplica
+        return res.status(500).json({ error: error.message })
      }
    }
    ```

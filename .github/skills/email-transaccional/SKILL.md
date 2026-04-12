@@ -32,7 +32,8 @@ Añadir un nuevo estado/evento que dispara un email al cliente usando la API Res
 
 4. **Llamar desde el trigger** (por ej. desde `pages/api/pedidos/catalogo/[id].js`):
    ```js
-   await fetch('/api/send-order-email', {
+   // IMPORTANTE: usar URL absoluta porque este fetch se hace server-side desde otro API route
+   await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
      method: 'POST',
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({ pedidoId, nuevoEstado: 'nuevo-estado' })

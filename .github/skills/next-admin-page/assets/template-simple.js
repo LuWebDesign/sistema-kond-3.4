@@ -11,11 +11,11 @@
 
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '../../styles/nombre-archivo.module.css' // ← renombrar
 // import { obtenerDatos } from '../../utils/supabase*.js'  ← ajustar según entidad
 
-function NombrePagina() {
+const NombrePagina = () => {
   const [mounted, setMounted] = useState(false) // ← guard contra hydration
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
@@ -38,24 +38,23 @@ function NombrePagina() {
       // if (err) throw err
       // setData(result || [])
     } catch (err) {
-      console.error('Error:', err)
-      setError('No se pudieron cargar los datos.')
+      // Fallback a localStorage si Supabase falla
+      const cached = JSON.parse(localStorage.getItem('KOND_CACHE_KEY') || '[]')
+      setData(cached)
+      setError(cached.length ? 'Usando datos en caché local.' : 'No se pudieron cargar los datos.')
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredData = useMemo(() => {
-    if (!searchText) return data
-    const term = searchText.toLowerCase()
-    return data.filter(item =>
-      item.nombre?.toLowerCase().includes(term)
-    )
-  }, [data, searchText])
+  // filteredData como derivación directa — React 19 Compiler optimiza esto automáticamente
+  const filteredData = !searchText
+    ? data
+    : data.filter(item => item.nombre?.toLowerCase().includes(searchText.toLowerCase()))
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     await loadData()
-  }, [])
+  }
 
   // No renderizar hasta que el componente esté montado en cliente
   if (!mounted) return null
