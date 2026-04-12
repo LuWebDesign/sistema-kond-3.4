@@ -1,0 +1,21 @@
+# Node
+node_modules/
+.next/
+
+# Archivos sensibles
+*contraseña*
+*password*
+*token*
+*.txt
+*.xlsx
+
+# Sistema
+.DS_Store/
+Thumbs.db
+
+# Backups
+backup-*/
+
+# Entorno
+.env
+.env.local

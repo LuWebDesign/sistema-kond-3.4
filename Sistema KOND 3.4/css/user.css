@@ -1,0 +1,256 @@
+/* user.css - estilos para la página de usuario (responsive) */
+.user-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 12px;
+}
+.profile-header {
+  display:flex; align-items:center; gap:12px;
+}
+.avatar {
+  width:72px; height:72px; border-radius:50%; background:#eee; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:#333;
+}
+.avatar img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; }
+
+.avatar-actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.avatar-actions input[type="file"]{ display:none; }
+.profile-name { font-size:1.1rem; font-weight:700; }
+.profile-actions { margin-top:8px; display:flex; gap:8px; justify-content:flex-end; }
+ 
+/* Estilo para el enlace 'Volver al catálogo' en user.html */
+#openCatalogLink {
+  margin-left: 16px;
+  background: linear-gradient(90deg,#74b9ff,#4aa3ff);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight:600;
+}
+
+header .header-actions { display:flex; align-items:center; gap:12px; }
+
+/* Paginación de Mis Compras */
+#misComprasPagination { display:flex; gap:8px; justify-content:center; margin-top:12px; }
+#misComprasPagination .pag-btn { background:transparent; border:1px solid rgba(255,255,255,0.06); color:#dce9fb; padding:6px 10px; border-radius:6px; cursor:pointer; }
+#misComprasPagination .pag-btn[disabled] { opacity:0.4; cursor:default; }
+#misComprasPagination .pag-btn[aria-current="true"] { background:#74b9ff; color:#06233b; border-color:transparent; font-weight:700; }
+.cards-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.card { background: #0f1720; border-radius:10px; padding:12px; color:#e6eef6; box-shadow: 0 2px 12px rgba(0,0,0,0.3);} 
+.card h3 { margin:0 0 8px 0; color:#74b9ff; }
+.card .row { display:flex; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.card label { font-size:0.85rem; color:#bfcbd8; }
+.form-input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:#fff; box-sizing:border-box; }
+.btn-primary, .btn-close-cart, .btn-checkout { padding:8px 12px; border-radius:8px; }
+
+.profile-actions { margin-top:8px; display:flex; gap:8px; justify-content:flex-end; }
+.profile-actions .btn-primary, .profile-actions .btn-secondary { min-width:120px; }
+#btnEditProfile { display:none; }
+
+/* Botones secundarios (estética general) */
+.btn-secondary { padding:8px 12px; border-radius:8px; background: linear-gradient(90deg,#28323a,#14191d); color:#dbeafe; border:1px solid rgba(255,255,255,0.04); cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition: transform 120ms ease, box-shadow 150ms ease, background 120ms ease; }
+.btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.45); background: linear-gradient(90deg,#34424b,#1b2428); }
+.btn-secondary:active { transform: translateY(0); }
+.btn-secondary:focus { outline:2px solid rgba(100,180,255,0.12); outline-offset:2px; }
+
+/* Estilo específico para el botón Editar del perfil */
+#btnEditProfile { font-weight:700; font-size:0.95rem; color:#cfe8ff; padding:7px 10px; }
+#btnEditProfile::before { content: "✎"; display:inline-block; margin-right:6px; font-size:0.95rem; color:#78a8ff; transform:translateY(1px); }
+
+#btnEditProfile[disabled], .btn-secondary[disabled] { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.orders-list { display:grid; gap:10px; }
+.order-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:10px; border-radius:10px; }
+.order-meta { display:flex; justify-content:space-between; font-size:0.9rem; color:#cfdcec; }
+.order-products { margin-top:8px; font-size:0.9rem; }
+
+/* Mejoras visuales para Mis Compras */
+.order-card { display:block; padding:12px; border-radius:10px; background:#0f1720; }
+.order-card .order-top { display:flex; gap:12px; align-items:flex-start; }
+.order-card .order-left { width:72%; }
+.order-card .order-right { width:28%; text-align:right; }
+.product-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+.product-item { display:flex; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:8px; border-radius:8px; }
+.product-item img { width:56px; height:56px; object-fit:cover; border-radius:6px; background:#111; }
+.product-item .pi-info { flex:1; }
+.product-item .pi-qty { font-weight:700; margin-right:8px; }
+.order-card .meta-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; color:#9aa3b2; margin-top:6px; }
+.order-actions { margin-top:10px; display:flex; gap:8px; justify-content:flex-end; }
+
+.badge { display:inline-block; padding:2px 6px; border-radius:999px; background:#222; color:#9aa3b2; font-size:0.8rem; }
+.badge.success { background:#1b5e20; color:#c8e6c9; }
+.badge.warning { background:#7f6000; color:#ffecb3; }
+.badge.info { background:#0d47a1; color:#bbdefb; }
+.badge.error { background:#b71c1c; color:#ffcdd2; }
+
+/* Badge estilo 'ticket' para estados (mayúsculas, padding y borde) */
+.badge.state { padding:6px 10px; border-radius:10px; font-weight:700; letter-spacing:0.6px; font-size:0.85rem; color:#fff; text-transform:uppercase; }
+.badge.state.info { background:linear-gradient(90deg,#1976d2,#0d47a1); }
+.badge.state.success { background:linear-gradient(90deg,#16a34a,#065f46); padding:4px 8px; font-size:0.78rem; border-radius:8px; }
+.badge.state.warning { background:linear-gradient(90deg,#f59e0b,#b45309); }
+.badge.state.error { background:linear-gradient(90deg,#ef4444,#b91c1c); }
+
+/* Badge para estado de pago: más discreto */
+.badge.payment { padding:4px 8px; border-radius:8px; font-weight:600; background:transparent; color:#cfd8e3; border:1px solid rgba(255,255,255,0.04); }
+.badge.payment.info { background:rgba(13,71,161,0.08); color:#bbdefb; border-color:rgba(11,61,128,0.12); }
+.badge.payment.success { background:rgba(27,94,32,0.07); color:#c8e6c9; border-color:rgba(20,70,33,0.12); }
+.badge.payment.warning { background:rgba(127,96,0,0.06); color:#ffecb3; border-color:rgba(90,70,0,0.12); }
+
+/* Collapsible card styles */
+.card { overflow: hidden; }
+.card-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.card-header h3 { margin:0; }
+.card-toggle { background:transparent; border:none; color:#98bcd9; font-size:1rem; cursor:pointer; }
+.card-body { transition: max-height 220ms ease, opacity 180ms ease, padding 180ms ease; max-height: 2000px; opacity:1; padding-top:10px; padding-bottom:10px; }
+.card[aria-expanded="false"] .card-body { max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+.card[aria-expanded="false"] .card-toggle { transform: rotate(-90deg); }
+
+/* Pedido card (collapsible) */
+.order-card { cursor: pointer; }
+.order-summary { display:flex; justify-content:space-between; align-items:center; }
+.order-details { margin-top:8px; transition: max-height 200ms ease, opacity 160ms ease; max-height: 1500px; opacity:1; overflow:hidden; }
+.order-collapsed .order-details { max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+
+/* Nueva estructura: header, top (productos) y columna derecha con resumen */
+.order-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+.order-header .oh-left { display:flex; flex-direction:column; }
+.order-header .oh-id { font-weight:700; color:#e6eef6; }
+.order-header .oh-date { font-size:0.85rem; color:#9aa3b2; }
+.order-header .oh-right { text-align:right; }
+.order-total { font-weight:800; font-size:1.05rem; color:#e6eef6; }
+.order-right-meta { margin-top:8px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; color:#9aa3b2; }
+.order-confirmed { background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03)); padding:6px 8px; border-radius:8px; color:#a7f3d0; font-size:0.92rem; backdrop-filter: blur(4px); }
+.order-confirmed strong { color:#d1fae5; }
+.order-confirmed--empty { background: linear-gradient(90deg, rgba(239,68,68,0.08), rgba(239,68,68,0.03)); padding:6px 8px; border-radius:8px; color:#ffdede; font-size:0.92rem; backdrop-filter: blur(4px); }
+.order-confirmed--empty em { color:#ffb4b4; }
+.order-confirmed--empty { background:transparent; color:#8fa7c2; }
+.order-notes { margin-top:8px; color:#bfcbd8; font-size:0.9rem; }
+
+.order-production { background: linear-gradient(90deg, rgba(99,102,241,0.04), rgba(99,102,241,0.02)); padding:6px 8px; border-radius:8px; color:#dbeafe; font-size:0.9rem; margin-top:6px; }
+.order-production strong { color:#e0e7ff; }
+
+/* Forzar que las fechas estén en columna vertical dentro de la columna derecha cuando haya espacio */
+.order-left .meta-row { margin-bottom:6px; }
+.order-right { display:flex; flex-direction:column; align-items:flex-end; justify-content:flex-start; gap:8px; }
+.order-right .order-total { font-size:1.05rem; }
+
+/* Pie de la tarjeta con TOTAL alineado a la derecha */
+.order-footer { margin-top:12px; display:block; }
+.order-footer-inner { display:flex; justify-content:flex-end; align-items:center; gap:10px; }
+.order-total-label { font-size:0.75rem; color:#9aa3b2; font-weight:700; letter-spacing:1px; }
+.order-total-value { font-weight:900; font-size:1.05rem; color:#e6eef6; }
+.order-footer-inner .order-total-label { text-transform:uppercase; }
+
+/* Ajustes responsive para la nueva estructura */
+@media(min-width:900px){
+  .order-card .order-left { width:68%; }
+  .order-card .order-right { width:32%; }
+}
+
+/* Debug panel */
+#userDebugPanel { background: rgba(255,255,255,0.02); padding:8px 10px; border-radius:8px; }
+#userDebugPanel button { padding:6px 10px; border-radius:6px; }
+
+/* Empty state visible only when no orders - JS controls display */
+.empty-state { display:block; color:#9aa3b2; padding:12px; text-align:center; }
+
+/* Modal small for logout confirm */
+.modal-small { max-width:420px; margin:12px; }
+.modal-small .modal-header { display:flex; align-items:center; justify-content:space-between; }
+.modal-small .modal-body { padding:8px 0; }
+.modal-small .modal-footer { display:flex; gap:8px; justify-content:flex-end; padding:8px 0; }
+
+/* Mobile first: inputs and buttons should be easy to tap */
+@media(max-width:799px){
+  .user-container { padding:10px; grid-template-columns: 1fr; }
+  .profile-header { gap:10px; }
+  .avatar { width:88px; height:88px; }
+  .profile-name { font-size:1.15rem; }
+  .avatar-actions { width:100%; justify-content:flex-start; }
+  .avatar-actions .btn-secondary, .avatar-actions .btn-close-cart { padding:8px 10px; font-size:0.95rem; }
+  .profile-actions { width:100%; flex-direction:column; align-items:stretch; justify-content:flex-start; }
+  .profile-actions button { width:100%; }
+  .card { padding:12px; }
+  .order-card .order-left, .order-card .order-right { width:100%; }
+  .order-card .order-top { flex-direction:column; }
+  .order-right { align-items:flex-start; }
+}
+
+@media(min-width:800px){
+  .user-container { grid-template-columns: 320px 1fr; }
+  .cards-grid { grid-template-columns: 1fr; }
+}
+
+/* Tabs para separar compras activas y entregadas */
+.tabs-container {
+  margin-bottom: 20px;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 0;
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #9aa3b2;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg,#74b9ff,#4aa3ff);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(116,185,255,0.3);
+}
+
+.tab-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.04);
+  color: #dce9fb;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Paginación de entregadas */
+#comprasEntregadasPagination { 
+  display:flex; 
+  gap:8px; 
+  justify-content:center; 
+  margin-top:12px; 
+}
+
+#comprasEntregadasPagination .pag-btn { 
+  background:transparent; 
+  border:1px solid rgba(255,255,255,0.06); 
+  color:#dce9fb; 
+  padding:6px 10px; 
+  border-radius:6px; 
+  cursor:pointer; 
+}
+
+#comprasEntregadasPagination .pag-btn[disabled] { 
+  opacity:0.4; 
+  cursor:default; 
+}
+
+#comprasEntregadasPagination .pag-btn[aria-current="true"] { 
+  background:#74b9ff; 
+  color:#06233b; 
+  border-color:transparent; 
+  font-weight:700; 
+}
