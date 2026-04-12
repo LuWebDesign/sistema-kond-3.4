@@ -3,6 +3,8 @@ node_modules/
 /.pnp
 .pnp.js
 
+# GGA local config (never commit)
+.gga
 # Testing
 /coverage
 
