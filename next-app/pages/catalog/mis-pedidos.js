@@ -1,6 +1,5 @@
 import PublicLayout from '../../components/PublicLayout'
 import UserOrderCard from '../../components/UserOrderCard'
-import { useOrders } from '../../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../../utils/catalogUtils'
 import { getPedidosByEmail } from '../../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProductos'
@@ -22,23 +21,6 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
       email: pedidoDB.cliente_email || '',
       direccion: pedidoDB.cliente_direccion || ''
     },
-    items: (pedidoDB.items || []).map(item => {
-      const producto = productosBase.find(p => p.id === item.producto_id)
-      return {
-        idProducto: item.producto_id,
-        name: item.producto_nombre,
-        nombre: item.producto_nombre,
-        price: item.producto_precio,
-        precioUnitario: item.producto_precio,
-        precio: item.producto_precio,
-        quantity: item.cantidad,
-        cantidad: item.cantidad,
-        subtotal: (Number(item.producto_precio || 0) * Number(item.cantidad || 1)),
-        measures: item.medidas,
-        medidas: item.medidas,
-        imagen: producto?.imagen || null
-      }
-    }),
     productos: (pedidoDB.items || []).map(item => {
       const producto = productosBase.find(p => p.id === item.producto_id)
       return {
@@ -77,17 +59,18 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
 
 export default function MisPedidos() {
   const router = useRouter()
-  const { saveOrder } = useOrders()
+  const [isMounted, setIsMounted] = useState(false)
   const [userOrders, setUserOrders] = useState([])
   const [currentUserState, setCurrentUserState] = useState(null)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [ordersPage, setOrdersPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const itemsPerPage = 4
 
   // Cargar pedidos del usuario actual y suscribirse a actualizaciones globales
-  const loadUserOrders = async () => {
+  const loadUserOrders = useCallback(async () => {
     try {
+      setIsLoading(true)
       const user = getCurrentUser()
       setCurrentUserState(user)
 
@@ -136,19 +119,21 @@ export default function MisPedidos() {
       
       setIsLoading(false)
     } catch (error) {
-      console.error('❌ Error cargando pedidos:', error)
       setCurrentUserState(null)
       setIsLoading(false)
       setUserOrders([])
       createToast('Error al cargar los pedidos', 'error')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     loadUserOrders()
 
-    const handlePedidosUpdated = (e) => {
-      // e.detail puede contener información adicional (type, order)
+    const handlePedidosUpdated = () => {
       loadUserOrders()
     }
 
@@ -156,7 +141,7 @@ export default function MisPedidos() {
     return () => {
       window.removeEventListener('pedidosCatalogo:updated', handlePedidosUpdated)
     }
-  }, [])
+  }, [loadUserOrders])
 
   // Paginación (memoizada para evitar recalcular en cada render)
   const totalPages = useMemo(() => Math.ceil(userOrders.length / itemsPerPage), [userOrders.length, itemsPerPage])
@@ -194,6 +179,8 @@ export default function MisPedidos() {
   const handleOrderClick = useCallback((order) => {
     setSelectedOrder(order)
   }, [])
+
+  if (!isMounted) return null
 
   if (isLoading) {
     return (
@@ -331,8 +318,8 @@ export default function MisPedidos() {
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 Catálogo
               </button>
@@ -404,17 +391,17 @@ export default function MisPedidos() {
                 fontSize: '1.1rem',
                 fontWeight: 600,
                 display: 'inline-block',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)'
-                e.target.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'
-              }}
+              boxShadow: 'var(--shadow-md)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)'
+            }}
             >
               🛒 Ir al Catálogo
             </Link>
