@@ -1,6 +1,6 @@
 name: Skill Runner CI
 
-on:
+"on":
   push:
     branches: ["feat/skill-runner", "main"]
     paths:
