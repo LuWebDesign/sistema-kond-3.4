@@ -59,7 +59,6 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
       setNotifications(notificationsData)
       setUnreadCount(unreadCountData)
     } catch (error) {
-      console.error('Error loading notifications:', error)
       setError(error.message)
 
       // Fallback a localStorage si Supabase falla
@@ -68,8 +67,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
         const list = stored ? JSON.parse(stored) : []
         setNotifications(list)
         setUnreadCount(list.filter(n => !n.read).length)
-      } catch (fallbackError) {
-        console.error('Fallback to localStorage also failed:', fallbackError)
+      } catch {
         setNotifications([])
         setUnreadCount(0)
       }
@@ -86,6 +84,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
     meta = {},
     read = false
   }) => {
+    if (typeof window === 'undefined') return null
     try {
       const newNotification = await createNotification({
         title: title || 'Notificación',
@@ -103,15 +102,13 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
 
       return newNotification
     } catch (error) {
-      console.error('Error creando notificación:', error)
-
       // Fallback a localStorage si Supabase falla
       const fallbackNotification = {
-        id: Date.now() + Math.floor(Math.random() * 1000),
+        id: Math.floor(Math.random() * 1e12),
         title: title || 'Notificación',
         body: body || '',
         type,
-        date: new Date().toISOString().slice(0, 10),
+        date: new Date().toISOString().slice(0, 10),  // cliente-only: guarded above
         read: !!read,
         meta: {
           tipo: type,
@@ -126,10 +123,8 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
       // Guardar en localStorage como respaldo
       try {
         localStorage.setItem('notifications', JSON.stringify(updatedList))
-        localStorage.setItem('notifications_updated', new Date().toISOString())
-      } catch (storageError) {
-        console.error('Error saving to localStorage:', storageError)
-      }
+        localStorage.setItem('notifications_updated', new Date().toISOString())  // cliente-only: guarded above
+      } catch {}
 
       return fallbackNotification
     }
@@ -152,9 +147,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
         setNotifications(updatedList)
         setUnreadCount(updatedList.filter(n => !n.read).length)
       }
-    } catch (error) {
-      console.error('Error marcando notificación como leída:', error)
-
+    } catch {
       // Fallback local
       const updatedList = notifications.map(n =>
         String(n.id) === String(id) ? { ...n, read: true } : n
@@ -179,9 +172,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
         setNotifications(updatedList)
         setUnreadCount(0)
       }
-    } catch (error) {
-      console.error('Error marcando todas las notificaciones como leídas:', error)
-
+    } catch {
       // Fallback local
       const updatedList = notifications.map(n => ({ ...n, read: true }))
       setNotifications(updatedList)
@@ -204,9 +195,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
         setNotifications(updatedList)
         setUnreadCount(updatedList.filter(n => !n.read).length)
       }
-    } catch (error) {
-      console.error('Error eliminando notificación:', error)
-
+    } catch {
       // Fallback local
       const updatedList = notifications.filter(n => String(n.id) !== String(id))
       setNotifications(updatedList)
@@ -226,9 +215,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
 
       setNotifications([])
       setUnreadCount(0)
-    } catch (error) {
-      console.error('Error limpiando todas las notificaciones:', error)
-
+    } catch {
       // Fallback local
       setNotifications([])
       setUnreadCount(0)
@@ -259,10 +246,7 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
     const setup = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          console.warn('⚠️ No hay sesión activa — se omite la suscripción Realtime de notificaciones')
-          return
-        }
+        if (!session) return
 
         if (!mounted) return
 
@@ -293,15 +277,12 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
             })
           },
           onError: (error) => {
-            console.error('❌ [Provider] Error en Realtime:', error)
             setError(error.message)
           }
         })
 
         realtimeChannelRef.current = channel
-      } catch (err) {
-        console.error('Error comprobando sesión antes de crear Realtime listener:', err)
-      }
+      } catch {}
     }
 
     setup()

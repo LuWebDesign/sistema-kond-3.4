@@ -17,6 +17,7 @@ export default function MyApp({ Component, pageProps }) {
 
   // Función reutilizable para leer email del comprador
   const refreshBuyerEmail = () => {
+    if (typeof window === 'undefined') return
     try {
       const u = localStorage.getItem('currentUser')
       setCurrentBuyerEmail(u ? JSON.parse(u)?.email || null : null)
@@ -51,12 +52,12 @@ export default function MyApp({ Component, pageProps }) {
     refreshBuyerEmail()
   }, [router.pathname])
 
-  // Siempre renderizar el mismo árbol en SSR y en el cliente hasta que esté montado
-  // Esto evita el error de hidratación #418
-  const isBuyer = mounted && isBuyerRoute(router.pathname)
+  // router.pathname está disponible desde el primer render (SSR + cliente) — no necesita 'mounted'
+  // Solo currentBuyerEmail necesita 'mounted' porque lee localStorage
+  const isBuyerRoutePath = isBuyerRoute(router.pathname)
 
-  if (isBuyer) {
-    if (currentBuyerEmail) {
+  if (isBuyerRoutePath) {
+    if (mounted && currentBuyerEmail) {
       return (
         <NotificationsProvider targetUser="user" userId={currentBuyerEmail}>
           <Component {...pageProps} />
