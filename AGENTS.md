@@ -6,7 +6,7 @@
 - Use arrow functions for components and callbacks
 - Functional components only (no class components)
 - No `console.log`, `console.error`, or `console.warn` in production code
-- No dead code or commented-out code blocks
+- No commented-out code blocks (dead code that is commented out and not executing). Explanatory inline comments (describing logic or intent) are allowed and encouraged.
 
 ## Next.js (Pages Router)
 
@@ -29,4 +29,4 @@
 ## Style
 
 - Inline styles only (no CSS modules, no Tailwind in this project)
-- Use CSS variables (`var(--accent-blue)`, `var(--text-primary)`, etc.) — never hardcoded colors
+- Use CSS variables (`var(--accent-blue)`, `var(--text-primary)`, etc.) for brand/accent colors in new code. Neutral values like `'white'`, `'black'`, `'transparent'`, and `rgba(0,0,0,x)` overlays are acceptable when no semantic CSS variable exists.
