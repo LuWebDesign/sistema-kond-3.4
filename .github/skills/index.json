@@ -1,0 +1,58 @@
+[
+  {
+    "name": "api-route-supabase",
+    "description": "Crear una nueva API route Next.js con el patrón del sistema (supabaseAdmin, validación de método, manejo de errores). Usar cuando: necesitás un nuevo endpoint en pages/api/ que lea o escriba en Supabase desde el servidor.",
+    "triggers": [],
+    "file": ".github/skills/api-route-supabase/SKILL.md",
+    "short_summary": "# Skill: api-route-supabase ## Objetivo Crear un endpoint en `next-app/pages/api/` siguiendo el patrón establecido en el sistema (validación de método, cliente admin, respuestas consistentes). ## Pasos 1. **Crear el archivo** en `pages/api/[recurso]/[accion].js` (o `[id].js` para rutas dinámicas).",
+    "hash": "814454f3f09d6e4943bc452bd3765bb49590e548"
+  },
+  {
+    "name": "catalog-feature-toggle",
+    "description": "Agregar una nueva funcionalidad ON/OFF controlada desde el admin al catálogo público. Usar cuando: adding toggle, banner, botón flotante, o cualquier opción visual/funcional que el admin active/desactive desde catalog-styles.",
+    "triggers": [],
+    "file": ".github/skills/catalog-feature-toggle/SKILL.md",
+    "short_summary": "# Skill: catalog-feature-toggle ## Objetivo Añadir un nuevo campo de configuración en `catalog_styles` (Supabase), un control en el admin y su efecto en el catálogo público, con cache en localStorage para evitar flash. ## Pasos 1. **Agregar a `DEFAULT_STYLES`** en `next-app/utils/supabaseCatalogStyles.js`:",
+    "hash": "d148edeb7ea146e2a0a295ea71eec4ccea813547"
+  },
+  {
+    "name": "code-cleanup",
+    "description": "Elimina código obsoleto, redundante o sin uso, y optimiza la estructura del código existente SIN alterar el comportamiento del sistema. Usá esta skill cuando el usuario mencione \"limpiar código\", \"eliminar código muerto\", \"optimizar\", \"refactorizar\", \"código obsoleto\", \"dead code\", \"cleanup\", o cuando el código tenga funciones/variables sin uso, comentarios desactualizados, imports innecesarios o duplicación evidente.",
+    "triggers": [],
+    "file": ".github/skills/code-cleanup/SKILL.md",
+    "short_summary": "# Code Cleanup & Optimization Elimina código innecesario y optimiza la estructura sin romper funcionalidad. --- ## Regla de Oro",
+    "hash": "28f1fb52730b3647fd52b424d2c8701869be1d5c"
+  },
+  {
+    "name": "email-transaccional",
+    "description": "Agregar un nuevo tipo de email transaccional al sistema (Resend). Usar cuando: querés notificar al cliente por email ante un nuevo evento de pedido u otro disparador del sistema.",
+    "triggers": [],
+    "file": ".github/skills/email-transaccional/SKILL.md",
+    "short_summary": "# Skill: email-transaccional ## Objetivo Añadir un nuevo estado/evento que dispara un email al cliente usando la API Resend ya configurada en `pages/api/send-order-email.js`. ## Pasos 1. **Agregar el nuevo estado** al whitelist en `send-order-email.js`:",
+    "hash": "0a23dfdf26c1cc70a98b6ac4b2f49af7ef1cd1a1"
+  },
+  {
+    "name": "image-upload-compress",
+    "description": "Implementar subida de imagen con compresión client-side a Supabase Storage. Usar cuando: un formulario admin necesita subir imagen de producto, avatar u otro recurso con validación de tamaño y compresión automática.",
+    "triggers": [],
+    "file": ".github/skills/image-upload-compress/SKILL.md",
+    "short_summary": "# Skill: image-upload-compress ## Objetivo Recibir un archivo de imagen del usuario, comprimirlo a 1200px/0.82 quality, subirlo a Supabase Storage y obtener la URL pública (con fallback a base64 para localStorage). ## Pasos 1. **Importar** `compressImage` desde `../../utils/catalogUtils`:",
+    "hash": "1b4952a876d61410fb818dd86989131c1394dd20"
+  },
+  {
+    "name": "next-admin-page",
+    "description": "Crear páginas de administración en Next.js para Sistema KOND. Usar cuando: creando una nueva vista en pages/admin/, añadiendo sección a panel admin, creando página con datos de Supabase + fallback localStorage, añadiendo withAdminAuth, creando métricas, reportes, formularios o listados administrativos.",
+    "triggers": [],
+    "file": ".github/skills/next-admin-page/SKILL.md",
+    "short_summary": "# Skill: next-admin-page ## Cuándo usar esta skill - Crear una nueva página en `next-app/pages/admin/` - Necesitás proteger una ruta con autenticación de admin - La página accede a datos de Supabase con fallback a `localStorage` - Necesitás un módulo CSS propio para la página",
+    "hash": "b338cf8580785c1de87b597a3cdf052b0dd2864b"
+  },
+  {
+    "name": "skill-manager",
+    "description": "Meta-skill que administra el ecosistema de Skills: detecta, crea, adapta y ejecuta la skill correcta para cada tarea. Usar cuando necesitás resolver cualquier tarea y querés que el agente elija o cree la skill óptima.",
+    "triggers": [],
+    "file": ".github/skills/skill-manager/SKILL.md",
+    "short_summary": "# Skill: skill-manager ## Objetivo Analizar la tarea recibida, detectar la skill adecuada del repositorio y ejecutarla (o crearla si no existe), minimizando consumo de tokens y maximizando precisión. --- ## Flujo de decisión",
+    "hash": "ab0187def6415fdf7bc049a082529925dfedbec2"
+  }
+]
