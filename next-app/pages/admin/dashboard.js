@@ -11,7 +11,9 @@ function Dashboard() {
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
   const [catalogOrders, setCatalogOrders] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState('')
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -35,6 +37,7 @@ function Dashboard() {
 
   // Cargar datos desde Supabase
   useEffect(() => {
+    setIsMounted(true)
     loadDashboardData()
     
     // Recargar cada 30 segundos para mantener datos frescos
@@ -175,9 +178,10 @@ function Dashboard() {
       })
 
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
+      // error silenciado en producción
     } finally {
       setLoading(false)
+      setLastUpdate(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }))
     }
   }
 
@@ -206,6 +210,8 @@ function Dashboard() {
     }
   }
 
+  if (!isMounted) return null
+
   return (
     <Layout title="Dashboard - Sistema KOND">
       <div style={{ padding: '20px' }}>
@@ -225,7 +231,7 @@ function Dashboard() {
               📊 Dashboard Administrativo
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Métricas en tiempo real • Última actualización: {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+              Métricas en tiempo real{lastUpdate ? ` • Última actualización: ${lastUpdate}` : ''}
             </p>
           </div>
           
@@ -774,14 +780,14 @@ function QuickActionButton({ href, onClick, icon, title, subtitle, isButton }) {
   }
 
   return (
-    <a
+    <Link
       href={href}
       style={commonStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {content}
-    </a>
+    </Link>
   )
 }
 
