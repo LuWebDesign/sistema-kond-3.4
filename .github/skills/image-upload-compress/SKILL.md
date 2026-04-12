@@ -58,5 +58,26 @@ Recibir un archivo de imagen del usuario, comprimirlo a 1200px/0.82 quality, sub
 
 ## Notas de eficiencia
 - `compressImage` es client-only (usa `canvas`) — llamarla solo dentro de handlers de eventos.
+
+## Actions
+Acciones estructuradas para el Skill Runner. Ajustá `path` según la página destino.
+
+```json
+[
+  {
+    "type": "ask-user",
+    "question": "¿En qué página querés implementar la subida de imágenes? (ej: next-app/pages/admin/products.js)"
+  },
+  {
+    "type": "noop",
+    "reason": "La lógica de compressImage ya existe en next-app/utils/catalogUtils.js — no requiere creación de archivo"
+  },
+  {
+    "type": "run-cmd",
+    "cmd": "node scripts/build-skill-index.js",
+    "cwd": "."
+  }
+]
+```
 - Si Supabase Storage no está configurado, el base64 funciona como fallback completo.
 - Bucket recomendado: `product-images` (público). Verificar políticas RLS en Supabase.

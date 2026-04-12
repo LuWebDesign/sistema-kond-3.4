@@ -1,0 +1,47 @@
+name: Skill Runner CI
+
+on:
+  push:
+    branches: ["feat/skill-runner", "main"]
+    paths:
+      - ".github/skills/**"
+      - "scripts/build-skill-index.js"
+      - "scripts/skill-runner.js"
+      - "lib/skill-handlers.js"
+      - "lib/skill-schema.json"
+      - "test/skill-runner.test.js"
+  pull_request:
+    branches: ["main", "docs/reorg"]
+    paths:
+      - ".github/skills/**"
+      - "scripts/**"
+      - "lib/**"
+      - "test/**"
+
+jobs:
+  skill-runner-tests:
+    name: Tests + dry-run
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build skill index
+        run: node scripts/build-skill-index.js
+
+      - name: Run unit tests
+        run: node test/skill-runner.test.js
+
+      - name: List skills (dry-run smoke test)
+        run: node scripts/skill-runner.js --list
+
+      - name: Dry-run piloto (image-upload-compress)
+        run: node scripts/skill-runner.js --skill image-upload-compress --dry-run
+
+      - name: Dry-run piloto (skill-manager)
+        run: node scripts/skill-runner.js --skill skill-manager --dry-run

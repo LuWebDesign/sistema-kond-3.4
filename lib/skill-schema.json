@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Skill Action DSL",
+  "description": "Esquema de acciones estructuradas para el Skill Runner de Sistema KOND",
+  "type": "array",
+  "items": {
+    "oneOf": [
+      {
+        "description": "Crear un archivo nuevo",
+        "type": "object",
+        "required": ["type", "path"],
+        "additionalProperties": false,
+        "properties": {
+          "type":     { "const": "create-file" },
+          "path":     { "type": "string", "description": "Ruta relativa desde la raíz del repo" },
+          "content":  { "type": "string", "description": "Contenido literal del archivo" },
+          "template": { "type": "string", "description": "Nombre de plantilla en lib/templates/" }
+        }
+      },
+      {
+        "description": "Editar un archivo existente (find-and-replace)",
+        "type": "object",
+        "required": ["type", "path", "find", "replace"],
+        "additionalProperties": false,
+        "properties": {
+          "type":    { "const": "edit-file" },
+          "path":    { "type": "string" },
+          "find":    { "type": "string", "description": "Cadena exacta a buscar" },
+          "replace": { "type": "string", "description": "Cadena por la que reemplazar" }
+        }
+      },
+      {
+        "description": "Ejecutar un comando de shell",
+        "type": "object",
+        "required": ["type", "cmd"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "const": "run-cmd" },
+          "cmd":  { "type": "string" },
+          "cwd":  { "type": "string", "default": "." }
+        }
+      },
+      {
+        "description": "Pausar y preguntar al usuario antes de continuar",
+        "type": "object",
+        "required": ["type", "question"],
+        "additionalProperties": false,
+        "properties": {
+          "type":     { "const": "ask-user" },
+          "question": { "type": "string" }
+        }
+      },
+      {
+        "description": "Acción sin efecto (placeholder / documentación)",
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": false,
+        "properties": {
+          "type":   { "const": "noop" },
+          "reason": { "type": "string" }
+        }
+      }
+    ]
+  }
+}
