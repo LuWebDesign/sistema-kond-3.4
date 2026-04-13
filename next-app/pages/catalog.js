@@ -761,13 +761,28 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     setQuantity(1)
   }
 
+  const navigateToProduct = () => {
+    try {
+      const catSlug = slugifyPreserveCase(product.categoria)
+      const prodSlug = slugifyPreserveCase(product.nombre)
+      router.push(`/catalog/${catSlug}/${prodSlug}`)
+    } catch (e) {
+      router.push('/catalog')
+    }
+  }
+
   return (
-    <div className="product-card" style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '0 0 12px 12px',
-      overflow: 'hidden'
-    }}>
+    <div
+      className="product-card"
+      onClick={navigateToProduct}
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '0 0 12px 12px',
+        overflow: 'hidden',
+        cursor: 'pointer'
+      }}
+    >
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
@@ -780,7 +795,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               src={product.imagenes[imageIndex]}
               alt={product.nombre}
               loading="lazy"
-              onClick={() => onImageClick && onImageClick(product.id, imageIndex)}
+              onClick={(e) => { e.stopPropagation(); onImageClick && onImageClick(product.id, imageIndex) }}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -897,15 +912,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           overflow: 'hidden'
         }}>
           <span
-            onClick={() => {
-              try {
-                const catSlug = slugifyPreserveCase(product.categoria)
-                const prodSlug = slugifyPreserveCase(product.nombre)
-                router.push(`/catalog/${catSlug}/${prodSlug}`)
-              } catch (e) {
-                router.push('/catalog')
-              }
-            }}
+            onClick={(e) => { e.stopPropagation(); navigateToProduct() }}
             style={{ cursor: 'pointer' }}
           >
             {product.nombre}
@@ -1101,7 +1108,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           )}
 
           <button
-            onClick={handleAddToCart}
+            onClick={(e) => { e.stopPropagation(); handleAddToCart() }}
             style={{
               flex: showControls ? 'none' : 1,
               width: showControls ? 'auto' : '100%',
@@ -1119,7 +1126,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               justifyContent: 'center'
             }}
           >
-            Agregar
+            Agregar al carrito
           </button>
         </div>
       </div>

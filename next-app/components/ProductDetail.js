@@ -236,38 +236,38 @@ export default function ProductDetail({ product, categories = [] }) {
                 <button
                   onClick={() => setQty(q => Math.max(1, q - 1))}
                   style={{
-                    padding: '10px 18px',
+                    padding: '6px 12px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.2rem',
+                    fontSize: '1rem',
                     lineHeight: 1,
-                    minHeight: 48
+                    minHeight: 36
                   }}
                 >−</button>
                 <span style={{
-                  padding: '10px 18px',
+                  padding: '6px 12px',
                   fontWeight: 600,
                   background: 'var(--bg-input)',
                   color: 'var(--text-primary)',
                   minWidth: 44,
                   textAlign: 'center',
-                  fontSize: '1rem'
+                  fontSize: '0.95rem'
                 }}>
                   {qty}
                 </span>
                 <button
                   onClick={() => setQty(q => q + 1)}
                   style={{
-                    padding: '10px 18px',
+                    padding: '6px 12px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.2rem',
+                    fontSize: '1rem',
                     lineHeight: 1,
-                    minHeight: 48
+                    minHeight: 36
                   }}
                 >+</button>
               </div>
@@ -280,7 +280,7 @@ export default function ProductDetail({ product, categories = [] }) {
                 disabled={!hasStock}
                 className="pd-btn-primary"
                 style={{
-                  padding: '14px 20px',
+                  padding: '10px 16px',
                   borderRadius: 8,
                   border: 'none',
                   cursor: hasStock ? 'pointer' : 'not-allowed',
@@ -291,8 +291,8 @@ export default function ProductDetail({ product, categories = [] }) {
                     ? 'var(--kond-btn-color, #fff)'
                     : 'var(--text-muted)',
                   fontWeight: 600,
-                  fontSize: '0.95rem',
-                  minHeight: 48,
+                  fontSize: '0.875rem',
+                  minHeight: 40,
                   opacity: hasStock ? 1 : 0.6,
                   transition: 'opacity 0.2s'
                 }}
@@ -310,13 +310,13 @@ export default function ProductDetail({ product, categories = [] }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  padding: '14px 20px',
+                  padding: '10px 16px',
                   borderRadius: 8,
                   background: '#25d366',
                   color: '#fff',
                   fontWeight: 600,
-                  fontSize: '0.95rem',
-                  minHeight: 48,
+                  fontSize: '0.875rem',
+                  minHeight: 40,
                   textDecoration: 'none',
                   transition: 'opacity 0.2s'
                 }}
@@ -445,7 +445,7 @@ export default function ProductDetail({ product, categories = [] }) {
         .pd-layout {
           max-width: 1000px;
           margin: 0 auto;
-          padding: 16px 20px 48px;
+          padding: 12px 16px 48px;
           display: grid;
           gap: 16px;
           grid-template-areas:
@@ -548,6 +548,16 @@ export default function ProductDetail({ product, categories = [] }) {
           overflow-x: auto;
           padding-bottom: 4px;
           scrollbar-width: thin;
+        }
+
+        /* Mobile tweaks: limitar padding de imagen card */
+        @media (max-width: 640px) {
+          .pd-layout {
+            gap: 12px;
+          }
+          .pd-images :global(.pd-card) {
+            padding: 8px;
+          }
         }
       `}</style>
     </PublicLayout>
