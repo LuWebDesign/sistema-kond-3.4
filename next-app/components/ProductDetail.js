@@ -4,6 +4,7 @@ import PublicLayout from './PublicLayout'
 import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
+import { slugifyPreserveCase } from '../utils/slugify'
 
 const SPEC_FIELDS = [
   { key: 'medidas', label: 'Medidas' },
@@ -412,7 +413,7 @@ export default function ProductDetail({ product, categories = [] }) {
                 return (
                   <Link
                     key={cat}
-                    href={`/catalog?category=${encodeURIComponent(cat)}`}
+                    href={`/catalog/${slugifyPreserveCase(cat)}`}
                     style={{
                       display: 'inline-block',
                       padding: '10px 18px',
