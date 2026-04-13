@@ -1102,22 +1102,20 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             style={{
               flex: 'none',
               width: 'auto',
-              minWidth: '120px',
+              minWidth: '100px',
               background: 'var(--accent-secondary)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              padding: '12px 16px',
-              fontSize: '0.9rem',
+              padding: '8px 12px',
+              fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
+              justifyContent: 'center'
             }}
           >
-            <span className="btn-icon" aria-hidden="true">🛒</span>
             Agregar
           </button>
         </div>
