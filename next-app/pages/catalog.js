@@ -951,7 +951,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     fontSize: '0.9rem',
                     marginBottom: '8px'
                   }}>
-                    📏 {product.medidas}
+                    {product.medidas}
                   </p>
                 )}
 
