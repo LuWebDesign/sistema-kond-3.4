@@ -115,6 +115,7 @@ export function useProducts() {
           ensamble: p.ensamble || 'Sin ensamble',
           imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
           imagenes: p.imagenes_urls || [],
+          description: p.description || '',
           fechaCreacion: p.created_at || new Date().toISOString()
         }
       })

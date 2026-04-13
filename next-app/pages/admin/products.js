@@ -69,7 +69,8 @@ function ProductsComponent() {
     precioPromos: 0,
     ensamble: 'Sin ensamble',
     imagen: '',
-    stock: 0
+    stock: 0,
+    description: ''
   })
 
   // Estados para manejo de imagen en el formulario de agregar
@@ -227,6 +228,7 @@ function ProductsComponent() {
           imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
           imagenes: p.imagenes_urls || [],
           stock: p.stock || 0,
+          description: p.description || '',
           fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
       })
@@ -673,7 +675,8 @@ function ProductsComponent() {
         unidades: finalFormData.unidades,
         stock: finalFormData.stock,
         ensamble: finalFormData.ensamble,
-        imagenes: [] // Array de URLs de imágenes
+        imagenes: [], // Array de URLs de imágenes
+        description: finalFormData.description || ''
       }
 
       // Crear producto en Supabase
@@ -737,7 +740,8 @@ function ProductsComponent() {
         ensamble: 'Sin ensamble',
         imagenes: [],
         stock: 0,
-        publicado: false
+        publicado: false,
+        description: ''
       })
       setImageFiles([])
       setImagePreviews([])
@@ -1669,6 +1673,46 @@ function ProductsComponent() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Descripción */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '20px' }}>📝</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Descripción
+                  </h4>
+                </div>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Descripción del producto (visible en el catálogo)"
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '2px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.95rem',
+                    transition: 'all 0.2s',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                />
               </div>
 
               {/* Sección: Producción y Tiempos */}
@@ -2812,7 +2856,8 @@ function ProductCard({
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
     imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
-    stock: product.stock || 0
+    stock: product.stock || 0,
+    description: product.description || ''
   })
   const initialPreviews = product.imagenes || [product.imagen].filter(Boolean) || []
   const [imagePreviews, setImagePreviews] = useState(initialPreviews)
@@ -2839,7 +2884,8 @@ function ProductCard({
       precioUnitario: product.precioUnitario || 0,
       ensamble: product.ensamble || 'Sin ensamble',
       imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
-      stock: product.stock || 0
+      stock: product.stock || 0,
+      description: product.description || ''
     })
     const initial = product.imagenes || [product.imagen].filter(Boolean) || []
     setImagePreviews(initial)
@@ -3775,7 +3821,31 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
               }}
             />
           </div>
-          
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Descripción
+            </label>
+            <textarea
+              value={editData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Descripción del producto (visible en el catálogo)"
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
           <div>
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Tipo
@@ -4313,6 +4383,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
               <option value="Stock">Stock</option>
             </select>
           </div>
+        </div>
+        <div style={{ marginTop: '14px' }}>
+          <label style={labelStyle}>Descripción</label>
+          <textarea
+            value={editData.description || ''}
+            onChange={e => handleInputChange('description', e.target.value)}
+            placeholder="Descripción del producto (visible en el catálogo)"
+            rows={3}
+            style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
+          />
         </div>
       </div>
 
