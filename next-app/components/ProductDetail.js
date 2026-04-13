@@ -435,9 +435,11 @@ export default function ProductDetail({ product, categories = [] }) {
       <style jsx>{`
         /* ── Layout general (mobile-first) ──────────── */
         .pd-layout {
+          width: 100%;
           max-width: 1000px;
           margin: 0 auto;
           padding: 12px 16px 48px;
+          box-sizing: border-box;
           display: grid;
           gap: 16px;
           grid-template-areas:
@@ -448,7 +450,7 @@ export default function ProductDetail({ product, categories = [] }) {
             "specs"
             "description"
             "categories";
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
 
         /* ── Desktop: 2 columnas ────────────────────── */
@@ -461,18 +463,18 @@ export default function ProductDetail({ product, categories = [] }) {
               "specs       specs"
               "description description"
               "categories  categories";
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           }
         }
 
         /* ── Asignación de áreas ─────────────────────── */
-        .pd-breadcrumb  { grid-area: breadcrumb; }
-        .pd-images      { grid-area: images; }
-        .pd-info-name   { grid-area: info-name; }
-        .pd-actions     { grid-area: actions; }
-        .pd-specs       { grid-area: specs; }
-        .pd-description { grid-area: description; }
-        .pd-categories  { grid-area: categories; }
+        .pd-breadcrumb  { grid-area: breadcrumb; min-width: 0; }
+        .pd-images      { grid-area: images;     min-width: 0; }
+        .pd-info-name   { grid-area: info-name;  min-width: 0; }
+        .pd-actions     { grid-area: actions;    min-width: 0; }
+        .pd-specs       { grid-area: specs;      min-width: 0; }
+        .pd-description { grid-area: description; min-width: 0; }
+        .pd-categories  { grid-area: categories; min-width: 0; }
 
         /* ── Breadcrumb ─────────────────────────────── */
         .pd-breadcrumb {
@@ -489,6 +491,9 @@ export default function ProductDetail({ product, categories = [] }) {
           background: var(--bg-card);
           border-radius: 12px;
           padding: 16px;
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
         }
 
         /* ── Títulos de sección ─────────────────────── */
@@ -558,6 +563,7 @@ export default function ProductDetail({ product, categories = [] }) {
         @media (max-width: 640px) {
           .pd-layout {
             gap: 12px;
+            padding: 12px 12px 48px;
           }
           .pd-images :global(.pd-card) {
             padding: 8px;
