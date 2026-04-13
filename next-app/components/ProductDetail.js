@@ -558,6 +558,26 @@ export default function ProductDetail({ product, categories = [] }) {
           .pd-images :global(.pd-card) {
             padding: 8px;
           }
+          /* Limitar la imagen principal para que no ocupe toda la pantalla en mobile */
+          .pd-images :global(img) {
+            max-height: 48vh;
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+          }
+          /* Thumbnails más pequeños en mobile */
+          .pd-thumbs :global(button) {
+            width: 48px;
+            height: 48px;
+          }
+          /* Forzar botones compactos en mobile (override inline if needed) */
+          .pd-btn-group :global(.pd-btn-primary),
+          .pd-btn-group :global(.pd-btn-wa) {
+            padding: 10px 16px !important;
+            font-size: 0.875rem !important;
+            min-height: 40px !important;
+          }
         }
       `}</style>
     </PublicLayout>
