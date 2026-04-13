@@ -75,20 +75,11 @@ export default function ProductDetail({ product, categories = [] }) {
           <div className="pd-card" style={{ height: 'auto' }}>
             {images.length > 0 ? (
               <>
-                <div style={{
-                  aspectRatio: '1 / 1',
-                  overflow: 'hidden',
-                  borderRadius: 8,
-                  background: 'var(--bg-section)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%'
-                }}>
+                <div className="pd-main-img-wrap">
                   <img
                     src={images[activeImg]}
                     alt={product.nombre}
-                    style={{ maxHeight: '48vh', width: 'auto', objectFit: 'contain' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </div>
                 {images.length > 1 && (
@@ -510,6 +501,18 @@ export default function ProductDetail({ product, categories = [] }) {
           letter-spacing: 0.06em;
         }
 
+        /* ── Imagen principal (contenedor responsive) ─── */
+        .pd-main-img-wrap {
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
+          border-radius: 8px;
+          background: var(--bg-section);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+        }
+
         /* ── Thumbnails (scroll horizontal) ─────────── */
         .pd-thumbs {
           display: flex;
@@ -559,13 +562,10 @@ export default function ProductDetail({ product, categories = [] }) {
           .pd-images :global(.pd-card) {
             padding: 8px;
           }
-          /* Limitar la imagen principal para que no ocupe toda la pantalla en mobile */
-          .pd-images :global(img) {
-            max-height: 48vh;
-            width: auto;
-            max-width: 100%;
-            height: auto;
-            object-fit: contain;
+          /* Imagen principal: sin aspect-ratio cuadrado en mobile, altura fija */
+          .pd-main-img-wrap {
+            aspect-ratio: unset;
+            height: 260px;
           }
           /* Thumbnails más pequeños en mobile */
           .pd-thumbs :global(button) {
