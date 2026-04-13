@@ -72,7 +72,7 @@ export default function ProductDetail({ product, categories = [] }) {
 
         {/* ── Galería de imágenes ───────────────────────── */}
         <div className="pd-images">
-          <div className="pd-card" style={{ height: '100%' }}>
+          <div className="pd-card" style={{ height: 'auto' }}>
             {images.length > 0 ? (
               <>
                 <div style={{
@@ -82,12 +82,13 @@ export default function ProductDetail({ product, categories = [] }) {
                   background: 'var(--bg-section)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  width: '100%'
                 }}>
                   <img
                     src={images[activeImg]}
                     alt={product.nombre}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{ maxHeight: '48vh', width: 'auto', objectFit: 'contain' }}
                   />
                 </div>
                 {images.length > 1 && (
