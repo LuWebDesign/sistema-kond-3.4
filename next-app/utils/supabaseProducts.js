@@ -132,6 +132,7 @@ export async function createProducto(producto) {
       nombre: producto.nombre,
       categoria: producto.categoria,
       tipo: producto.tipo || 'Stock',
+      description: producto.description || producto.descripcion || '',
       medidas: producto.medidas,
       tiempo_unitario: producto.tiempoUnitario || producto.tiempo_unitario || '00:00:30',
       publicado: producto.publicado || false,
@@ -215,6 +216,8 @@ export async function updateProducto(id, producto) {
     if (producto.materialId !== undefined) updateData.material_id = parseMaterialId(producto.materialId);
     if (producto.material_id !== undefined) updateData.material_id = parseMaterialId(producto.material_id);
     if (producto.material !== undefined) updateData.material = producto.material;
+    if (producto.description !== undefined) updateData.description = producto.description;
+    if (producto.descripcion !== undefined) updateData.description = producto.descripcion;
     if (producto.margenMaterial !== undefined) updateData.margen_material = producto.margenMaterial;
     if (producto.margen_material !== undefined) updateData.margen_material = producto.margen_material;
     if (producto.precioUnitario !== undefined) updateData.precio_unitario = producto.precioUnitario;
