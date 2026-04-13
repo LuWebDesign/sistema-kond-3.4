@@ -67,6 +67,11 @@
   --font-size-3xl: 1.875rem;
 }
 
+/* Tarjetas de producto: esquinas superiores rectas, inferiores redondeadas */
+.product-card {
+  border-radius: 0 0 12px 12px !important;
+}
+
 /* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
 @media (max-width: 600px) {
   .kond-viewport,

@@ -72,18 +72,10 @@ export default function ProductDetail({ product, categories = [] }) {
 
         {/* ── Galería de imágenes ───────────────────────── */}
         <div className="pd-images">
-          <div className="pd-card" style={{ height: '100%' }}>
+          <div className="pd-card" style={{ height: 'auto' }}>
             {images.length > 0 ? (
               <>
-                <div style={{
-                  aspectRatio: '1 / 1',
-                  overflow: 'hidden',
-                  borderRadius: 8,
-                  background: 'var(--bg-section)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="pd-main-img-wrap">
                   <img
                     src={images[activeImg]}
                     alt={product.nombre}
@@ -236,38 +228,38 @@ export default function ProductDetail({ product, categories = [] }) {
                 <button
                   onClick={() => setQty(q => Math.max(1, q - 1))}
                   style={{
-                    padding: '10px 18px',
+                    padding: '6px 12px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.2rem',
+                    fontSize: '1rem',
                     lineHeight: 1,
-                    minHeight: 48
+                    minHeight: 36
                   }}
                 >−</button>
                 <span style={{
-                  padding: '10px 18px',
+                  padding: '6px 12px',
                   fontWeight: 600,
                   background: 'var(--bg-input)',
                   color: 'var(--text-primary)',
                   minWidth: 44,
                   textAlign: 'center',
-                  fontSize: '1rem'
+                  fontSize: '0.95rem'
                 }}>
                   {qty}
                 </span>
                 <button
                   onClick={() => setQty(q => q + 1)}
                   style={{
-                    padding: '10px 18px',
+                    padding: '6px 12px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.2rem',
+                    fontSize: '1rem',
                     lineHeight: 1,
-                    minHeight: 48
+                    minHeight: 36
                   }}
                 >+</button>
               </div>
@@ -280,7 +272,7 @@ export default function ProductDetail({ product, categories = [] }) {
                 disabled={!hasStock}
                 className="pd-btn-primary"
                 style={{
-                  padding: '14px 20px',
+                  padding: '10px 16px',
                   borderRadius: 8,
                   border: 'none',
                   cursor: hasStock ? 'pointer' : 'not-allowed',
@@ -291,8 +283,8 @@ export default function ProductDetail({ product, categories = [] }) {
                     ? 'var(--kond-btn-color, #fff)'
                     : 'var(--text-muted)',
                   fontWeight: 600,
-                  fontSize: '0.95rem',
-                  minHeight: 48,
+                  fontSize: '0.875rem',
+                  minHeight: 40,
                   opacity: hasStock ? 1 : 0.6,
                   transition: 'opacity 0.2s'
                 }}
@@ -310,13 +302,13 @@ export default function ProductDetail({ product, categories = [] }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  padding: '14px 20px',
+                  padding: '10px 16px',
                   borderRadius: 8,
                   background: '#25d366',
                   color: '#fff',
                   fontWeight: 600,
-                  fontSize: '0.95rem',
-                  minHeight: 48,
+                  fontSize: '0.875rem',
+                  minHeight: 40,
                   textDecoration: 'none',
                   transition: 'opacity 0.2s'
                 }}
@@ -443,9 +435,11 @@ export default function ProductDetail({ product, categories = [] }) {
       <style jsx>{`
         /* ── Layout general (mobile-first) ──────────── */
         .pd-layout {
+          width: 100%;
           max-width: 1000px;
           margin: 0 auto;
-          padding: 16px 20px 48px;
+          padding: 12px 16px 48px;
+          box-sizing: border-box;
           display: grid;
           gap: 16px;
           grid-template-areas:
@@ -456,7 +450,7 @@ export default function ProductDetail({ product, categories = [] }) {
             "specs"
             "description"
             "categories";
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
 
         /* ── Desktop: 2 columnas ────────────────────── */
@@ -469,18 +463,18 @@ export default function ProductDetail({ product, categories = [] }) {
               "specs       specs"
               "description description"
               "categories  categories";
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           }
         }
 
         /* ── Asignación de áreas ─────────────────────── */
-        .pd-breadcrumb  { grid-area: breadcrumb; }
-        .pd-images      { grid-area: images; }
-        .pd-info-name   { grid-area: info-name; }
-        .pd-actions     { grid-area: actions; }
-        .pd-specs       { grid-area: specs; }
-        .pd-description { grid-area: description; }
-        .pd-categories  { grid-area: categories; }
+        .pd-breadcrumb  { grid-area: breadcrumb; min-width: 0; }
+        .pd-images      { grid-area: images;     min-width: 0; }
+        .pd-info-name   { grid-area: info-name;  min-width: 0; }
+        .pd-actions     { grid-area: actions;    min-width: 0; }
+        .pd-specs       { grid-area: specs;      min-width: 0; }
+        .pd-description { grid-area: description; min-width: 0; }
+        .pd-categories  { grid-area: categories; min-width: 0; }
 
         /* ── Breadcrumb ─────────────────────────────── */
         .pd-breadcrumb {
@@ -497,6 +491,9 @@ export default function ProductDetail({ product, categories = [] }) {
           background: var(--bg-card);
           border-radius: 12px;
           padding: 16px;
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
         }
 
         /* ── Títulos de sección ─────────────────────── */
@@ -507,6 +504,18 @@ export default function ProductDetail({ product, categories = [] }) {
           color: var(--text-primary);
           text-transform: uppercase;
           letter-spacing: 0.06em;
+        }
+
+        /* ── Imagen principal (contenedor responsive) ─── */
+        .pd-main-img-wrap {
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
+          border-radius: 8px;
+          background: var(--bg-section);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
         }
 
         /* ── Thumbnails (scroll horizontal) ─────────── */
@@ -548,6 +557,34 @@ export default function ProductDetail({ product, categories = [] }) {
           overflow-x: auto;
           padding-bottom: 4px;
           scrollbar-width: thin;
+        }
+
+        /* Mobile tweaks: limitar padding de imagen card */
+        @media (max-width: 640px) {
+          .pd-layout {
+            gap: 12px;
+            padding: 12px 12px 48px;
+          }
+          .pd-images :global(.pd-card) {
+            padding: 8px;
+          }
+          /* Imagen principal: sin aspect-ratio cuadrado en mobile, altura fija */
+          .pd-main-img-wrap {
+            aspect-ratio: unset;
+            height: 260px;
+          }
+          /* Thumbnails más pequeños en mobile */
+          .pd-thumbs :global(button) {
+            width: 48px;
+            height: 48px;
+          }
+          /* Forzar botones compactos en mobile (override inline if needed) */
+          .pd-btn-group :global(.pd-btn-primary),
+          .pd-btn-group :global(.pd-btn-wa) {
+            padding: 10px 16px !important;
+            font-size: 0.875rem !important;
+            min-height: 40px !important;
+          }
         }
       `}</style>
     </PublicLayout>

@@ -474,6 +474,7 @@ export default function Catalog() {
               onImageClick={handleImageClick}
               onAddToCart={handleAddToCart}
               materials={materials}
+              showControls={false}
             />
           ))}
         </div>
@@ -686,7 +687,7 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [] }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -760,13 +761,28 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     setQuantity(1)
   }
 
+  const navigateToProduct = () => {
+    try {
+      const catSlug = slugifyPreserveCase(product.categoria)
+      const prodSlug = slugifyPreserveCase(product.nombre)
+      router.push(`/catalog/${catSlug}/${prodSlug}`)
+    } catch (e) {
+      router.push('/catalog')
+    }
+  }
+
   return (
-    <div className="product-card" style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '12px',
-      overflow: 'hidden'
-    }}>
+    <div
+      className="product-card"
+      onClick={navigateToProduct}
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '0 0 12px 12px',
+        overflow: 'hidden',
+        cursor: 'pointer'
+      }}
+    >
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
@@ -779,7 +795,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               src={product.imagenes[imageIndex]}
               alt={product.nombre}
               loading="lazy"
-              onClick={() => onImageClick && onImageClick(product.id, imageIndex)}
+              onClick={(e) => { e.stopPropagation(); onImageClick && onImageClick(product.id, imageIndex) }}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -896,15 +912,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           overflow: 'hidden'
         }}>
           <span
-            onClick={() => {
-              try {
-                const catSlug = slugifyPreserveCase(product.categoria)
-                const prodSlug = slugifyPreserveCase(product.nombre)
-                router.push(`/catalog/${catSlug}/${prodSlug}`)
-              } catch (e) {
-                router.push('/catalog')
-              }
-            }}
+            onClick={(e) => { e.stopPropagation(); navigateToProduct() }}
             style={{ cursor: 'pointer' }}
           >
             {product.nombre}
@@ -1018,7 +1026,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             )}
 
             {/* Indicador de stock al lado del precio (más pequeño, sin icono) */}
-            {product.stock !== undefined && product.stock !== null && (
+            {showControls && product.stock !== undefined && product.stock !== null && (
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1042,64 +1050,68 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '32px'
+          gap: '32px',
+          padding: '0 20px 20px 20px'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              style={{
-                background: 'var(--bg-hover)',
-                border: 'none',
-                padding: '6px 10px',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              −
-            </button>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                width: '40px',
-                textAlign: 'center',
-                padding: '6px 4px',
-                fontSize: '0.9rem'
-              }}
-              min="1"
-              max="999"
-            />
-            <button
-              onClick={() => setQuantity(Math.min(999, quantity + 1))}
-              style={{
-                background: 'var(--bg-hover)',
-                border: 'none',
-                padding: '6px 10px',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              +
-            </button>
-          </div>
+          {/* Selector de cantidad: solo visible cuando showControls=true (carrito/checkout) */}
+          {showControls && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                style={{
+                  background: 'var(--bg-hover)',
+                  border: 'none',
+                  padding: '6px 10px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  width: '40px',
+                  textAlign: 'center',
+                  padding: '6px 4px',
+                  fontSize: '0.9rem'
+                }}
+                min="1"
+                max="999"
+              />
+              <button
+                onClick={() => setQuantity(Math.min(999, quantity + 1))}
+                style={{
+                  background: 'var(--bg-hover)',
+                  border: 'none',
+                  padding: '6px 10px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                +
+              </button>
+            </div>
+          )}
 
           <button
-            onClick={handleAddToCart}
+            onClick={(e) => { e.stopPropagation(); handleAddToCart() }}
             style={{
-              flex: 'none',
-              width: 'auto',
+              flex: showControls ? 'none' : 1,
+              width: showControls ? 'auto' : '100%',
               minWidth: '100px',
               background: 'var(--accent-secondary)',
               color: 'white',
@@ -1114,7 +1126,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               justifyContent: 'center'
             }}
           >
-            Agregar
+            Agregar al carrito
           </button>
         </div>
       </div>
