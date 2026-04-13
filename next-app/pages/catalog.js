@@ -474,6 +474,7 @@ export default function Catalog() {
               onImageClick={handleImageClick}
               onAddToCart={handleAddToCart}
               materials={materials}
+              showControls={false}
             />
           ))}
         </div>
@@ -686,7 +687,7 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [] }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -764,7 +765,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     <div className="product-card" style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border-color)',
-      borderRadius: '12px',
+      borderRadius: '0 0 12px 12px',
       overflow: 'hidden'
     }}>
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
@@ -1018,7 +1019,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             )}
 
             {/* Indicador de stock al lado del precio (más pequeño, sin icono) */}
-            {product.stock !== undefined && product.stock !== null && (
+            {showControls && product.stock !== undefined && product.stock !== null && (
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1038,7 +1039,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         </div>
 
         {/* Controles de cantidad y botón */}
-        <div style={{
+        {showControls && <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1116,7 +1117,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           >
             Agregar
           </button>
-        </div>
+        </div>}
       </div>
     </div>
   )
