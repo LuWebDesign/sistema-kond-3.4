@@ -767,35 +767,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       borderRadius: '12px',
       overflow: 'hidden'
     }}>
-      {/* Título arriba de la imagen */}
-      <div style={{ padding: '12px 20px 16px 20px' }}>
-        <h3 style={{
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          margin: 0,
-          marginBottom: '12px',
-          lineHeight: 1.2
-        }}>
-          <span
-            onClick={() => {
-              try {
-                const catSlug = slugifyPreserveCase(product.categoria)
-                const prodSlug = slugifyPreserveCase(product.nombre)
-                // Navegar a la nueva ruta /catalog/{category}/{product}
-                router.push(`/catalog/${catSlug}/${prodSlug}`)
-              } catch (e) {
-                // fallback a catálogo
-                router.push('/catalog')
-              }
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            {product.nombre}
-          </span>
-        </h3>
-      </div>
-
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
@@ -911,6 +882,34 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
       {/* Info del producto */}
       <div style={{ padding: '16px 20px 20px 20px' }}>
+        {/* Título debajo de la imagen */}
+        <h3 style={{
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          margin: 0,
+          marginBottom: '10px',
+          lineHeight: 1.3,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        }}>
+          <span
+            onClick={() => {
+              try {
+                const catSlug = slugifyPreserveCase(product.categoria)
+                const prodSlug = slugifyPreserveCase(product.nombre)
+                router.push(`/catalog/${catSlug}/${prodSlug}`)
+              } catch (e) {
+                router.push('/catalog')
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            {product.nombre}
+          </span>
+        </h3>
           {(() => {
             const secondaryTextColor = isDarkTheme ? '#d1d5db' : 'var(--text-secondary)'
             const categoryStyle = getCategoryStyle(product.categoria)
