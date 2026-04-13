@@ -1,20 +1,49 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PublicLayout from './PublicLayout'
 import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
+import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 
-export default function ProductDetail({ product }) {
+const SPEC_FIELDS = [
+  { key: 'medidas', label: 'Medidas' },
+  { key: 'material', label: 'Material' },
+  { key: 'tipoMaterial', label: 'Tipo de material' },
+  { key: 'tipo', label: 'Tipo' },
+  { key: 'ensamble', label: 'Ensamble' },
+  { key: 'unidades', label: 'Unidades' },
+]
+
+const OMIT_VALUES = new Set(['Sin ensamble', '', null, undefined])
+
+export default function ProductDetail({ product, categories = [] }) {
   const { addToCart } = useCart()
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
+  const [whatsappNumber, setWhatsappNumber] = useState('1136231857')
+
+  useEffect(() => {
+    getCatalogStyles()
+      .then(s => { if (s && s.whatsappNumber) setWhatsappNumber(s.whatsappNumber) })
+      .catch(() => {})
+  }, [])
 
   if (!product) return null
 
   const images = product.imagenes && product.imagenes.length > 0 ? product.imagenes : []
-  const hasPromo = product.hasPromotion && product.precioPromocional != null && product.precioPromocional !== product.precioUnitario
+  const hasPromo = product.hasPromotion &&
+    product.precioPromocional != null &&
+    product.precioPromocional !== product.precioUnitario
   const displayPrice = hasPromo ? product.precioPromocional : product.precioUnitario
   const hasStock = (product.stock || 0) > 0
+
+  const specs = SPEC_FIELDS.filter(({ key }) => {
+    const val = product[key]
+    return val != null && !OMIT_VALUES.has(val) && val !== 0
+  })
+
+  const waText = encodeURIComponent(`Hola, consulto por el producto: ${product.nombre}`)
+  const waLink = `https://wa.me/${whatsappNumber}?text=${waText}`
 
   const handleAdd = () => {
     addToCart(product, qty)
@@ -23,36 +52,26 @@ export default function ProductDetail({ product }) {
 
   return (
     <PublicLayout title={`${product.nombre} - KOND`}>
-      <div style={{ padding: '16px 20px', maxWidth: 1000, margin: '0 auto' }}>
+      <div className="pd-layout">
 
-        {/* Breadcrumb */}
-        <nav style={{
-          marginBottom: 20,
-          fontSize: '0.85rem',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          flexWrap: 'wrap'
-        }}>
+        {/* ── Breadcrumb ────────────────────────────────── */}
+        <nav className="pd-breadcrumb">
           <Link href="/catalog" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>
             Catálogo
           </Link>
-          <span>›</span>
+          <span className="pd-sep">›</span>
           {product.categoria && (
             <>
               <span>{product.categoria}</span>
-              <span>›</span>
+              <span className="pd-sep">›</span>
             </>
           )}
           <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{product.nombre}</span>
         </nav>
 
-        {/* Main Grid */}
-        <div className="product-detail-grid">
-
-          {/* Panel de imagen */}
-          <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+        {/* ── Galería de imágenes ───────────────────────── */}
+        <div className="pd-images">
+          <div className="pd-card" style={{ height: '100%' }}>
             {images.length > 0 ? (
               <>
                 <div style={{
@@ -71,14 +90,14 @@ export default function ProductDetail({ product }) {
                   />
                 </div>
                 {images.length > 1 && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                  <div className="pd-thumbs">
                     {images.map((img, i) => (
                       <button
                         key={i}
                         onClick={() => setActiveImg(i)}
                         style={{
-                          width: 56,
-                          height: 56,
+                          width: 60,
+                          height: 60,
                           padding: 2,
                           borderRadius: 6,
                           border: i === activeImg
@@ -111,38 +130,29 @@ export default function ProductDetail({ product }) {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Panel de información */}
-          <div style={{
-            background: 'var(--bg-card)',
-            padding: 20,
-            borderRadius: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14
-          }}>
-
-            {/* Badge de categoría */}
+        {/* ── Nombre, precio y badges ───────────────────── */}
+        <div className="pd-info-name">
+          <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {product.categoria && (
-              <div>
-                <span className="category-badge" style={{
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  background: 'var(--kond-badge-bg, var(--bg-section))',
-                  color: 'var(--kond-badge-color, var(--text-secondary))',
-                  border: '1px solid var(--border-color)'
-                }}>
-                  {product.categoria}
-                </span>
-              </div>
+              <span className="category-badge" style={{
+                display: 'inline-block',
+                alignSelf: 'flex-start',
+                padding: '4px 12px',
+                borderRadius: 20,
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                background: 'var(--kond-badge-bg, var(--bg-section))',
+                color: 'var(--kond-badge-color, var(--text-secondary))',
+                border: '1px solid var(--border-color)'
+              }}>
+                {product.categoria}
+              </span>
             )}
 
-            {/* Nombre */}
             <h1 style={{
               margin: 0,
               fontSize: '1.5rem',
@@ -153,7 +163,6 @@ export default function ProductDetail({ product }) {
               {product.nombre}
             </h1>
 
-            {/* Precio */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--accent-blue)' }}>
                 {formatCurrency(displayPrice)}
@@ -169,7 +178,6 @@ export default function ProductDetail({ product }) {
               )}
             </div>
 
-            {/* Badges de promoción */}
             {product.promotionBadges && product.promotionBadges.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {product.promotionBadges.map((badge, i) => (
@@ -186,109 +194,92 @@ export default function ProductDetail({ product }) {
                 ))}
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Medidas */}
-            {product.medidas && (
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Medidas:</span>{' '}
-                {product.medidas}
-              </div>
-            )}
+        {/* ── Acciones: stock · cantidad · botones · envío ─ */}
+        <div className="pd-actions">
+          <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Indicador de stock */}
-            <div style={{ alignSelf: 'flex-start' }}>
+            {/* Stock */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: hasStock ? '#10b981' : '#ef4444',
                 display: 'inline-block',
-                padding: '4px 10px',
-                borderRadius: 20,
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                background: hasStock ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                flexShrink: 0
+              }} />
+              <span style={{
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 color: hasStock ? '#10b981' : '#ef4444'
               }}>
-                {hasStock ? `Stock: ${product.stock}` : 'Sin stock'}
+                {hasStock ? `Stock disponible: ${product.stock} unidades` : 'Sin stock'}
               </span>
             </div>
 
-            {/* Descripción */}
-            {product.descripcion && (
-              <p style={{
-                margin: 0,
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                lineHeight: 1.7
-              }}>
-                {product.descripcion}
-              </p>
-            )}
-
-            {/* Cantidad + Botón agregar */}
-            <div style={{
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              marginTop: 'auto',
-              paddingTop: 8,
-              flexWrap: 'wrap'
-            }}>
-              {/* Selector de cantidad */}
+            {/* Selector de cantidad */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                Cantidad
+              </span>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 border: '1px solid var(--border-color)',
                 borderRadius: 8,
-                overflow: 'hidden',
-                flexShrink: 0
+                overflow: 'hidden'
               }}>
                 <button
                   onClick={() => setQty(q => Math.max(1, q - 1))}
                   style={{
-                    padding: '8px 14px',
+                    padding: '10px 18px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    lineHeight: 1
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                    minHeight: 48
                   }}
-                >
-                  −
-                </button>
+                >−</button>
                 <span style={{
-                  padding: '8px 14px',
+                  padding: '10px 18px',
                   fontWeight: 600,
                   background: 'var(--bg-input)',
                   color: 'var(--text-primary)',
-                  minWidth: 36,
+                  minWidth: 44,
                   textAlign: 'center',
-                  fontSize: '0.95rem'
+                  fontSize: '1rem'
                 }}>
                   {qty}
                 </span>
                 <button
                   onClick={() => setQty(q => q + 1)}
                   style={{
-                    padding: '8px 14px',
+                    padding: '10px 18px',
                     background: 'var(--bg-section)',
                     color: 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    lineHeight: 1
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                    minHeight: 48
                   }}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
+            </div>
 
-              {/* Botón agregar */}
+            {/* Botones */}
+            <div className="pd-btn-group">
               <button
                 onClick={handleAdd}
                 disabled={!hasStock}
+                className="pd-btn-primary"
                 style={{
-                  flex: 1,
-                  minWidth: 140,
-                  padding: '10px 20px',
+                  padding: '14px 20px',
                   borderRadius: 8,
                   border: 'none',
                   cursor: hasStock ? 'pointer' : 'not-allowed',
@@ -300,27 +291,262 @@ export default function ProductDetail({ product }) {
                     : 'var(--text-muted)',
                   fontWeight: 600,
                   fontSize: '0.95rem',
-                  transition: 'opacity 0.2s',
-                  opacity: hasStock ? 1 : 0.6
+                  minHeight: 48,
+                  opacity: hasStock ? 1 : 0.6,
+                  transition: 'opacity 0.2s'
                 }}
               >
                 {hasStock ? 'Agregar al carrito' : 'Sin stock'}
               </button>
+
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pd-btn-wa"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '14px 20px',
+                  borderRadius: 8,
+                  background: '#25d366',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  minHeight: 48,
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.121 1.524 5.855L.057 23.214a.75.75 0 0 0 .92.92l5.356-1.466A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.686-.519-5.215-1.423l-.374-.224-3.878 1.061 1.06-3.88-.224-.374A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                </svg>
+                Consultar por WhatsApp
+              </a>
+            </div>
+
+            {/* Card de envío */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 16px',
+              background: 'var(--bg-section)',
+              borderRadius: 10,
+              border: '1px solid var(--border-color)'
+            }}>
+              <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>🚚</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Consultá opciones de envío al finalizar tu compra
+              </span>
             </div>
           </div>
         </div>
+
+        {/* ── Especificaciones ──────────────────────────── */}
+        {specs.length > 0 && (
+          <div className="pd-specs">
+            <div className="pd-card">
+              <h2 className="pd-section-title">Especificaciones</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {specs.map(({ key, label }) => (
+                  <div key={key} style={{
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    background: 'var(--bg-section)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2
+                  }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontWeight: 600
+                    }}>
+                      {label}
+                    </span>
+                    <span style={{
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)'
+                    }}>
+                      {product[key]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Descripción ───────────────────────────────── */}
+        {product.description && (
+          <div className="pd-description">
+            <div className="pd-card">
+              <h2 className="pd-section-title">Descripción</h2>
+              <p style={{
+                margin: 0,
+                color: 'var(--text-secondary)',
+                fontSize: '0.95rem',
+                lineHeight: 1.7
+              }}>
+                {product.description}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Explorar categorías ───────────────────────── */}
+        {categories.length > 0 && (
+          <div className="pd-categories">
+            <h2 className="pd-section-title">Explorar categorías</h2>
+            <div className="pd-cat-scroll">
+              {categories.map(cat => {
+                const isActive = cat === product.categoria
+                return (
+                  <Link
+                    key={cat}
+                    href={`/catalog?category=${encodeURIComponent(cat)}`}
+                    style={{
+                      display: 'inline-block',
+                      padding: '10px 18px',
+                      borderRadius: 10,
+                      border: isActive
+                        ? '2px solid var(--accent-blue)'
+                        : '1px solid var(--border-color)',
+                      background: isActive ? 'var(--accent-blue)' : 'var(--bg-card)',
+                      color: isActive ? '#fff' : 'var(--text-primary)',
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.9rem',
+                      textDecoration: 'none',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {cat}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <style jsx>{`
-        .product-detail-grid {
+        /* ── Layout general (mobile-first) ──────────── */
+        .pd-layout {
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 16px 20px 48px;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-          gap: 24px;
+          gap: 16px;
+          grid-template-areas:
+            "breadcrumb"
+            "images"
+            "info-name"
+            "actions"
+            "specs"
+            "description"
+            "categories";
+          grid-template-columns: 1fr;
         }
-        @media (max-width: 640px) {
-          .product-detail-grid {
-            grid-template-columns: 1fr;
+
+        /* ── Desktop: 2 columnas ────────────────────── */
+        @media (min-width: 641px) {
+          .pd-layout {
+            grid-template-areas:
+              "breadcrumb  breadcrumb"
+              "images      info-name"
+              "images      actions"
+              "specs       specs"
+              "description description"
+              "categories  categories";
+            grid-template-columns: 1fr 1fr;
           }
+        }
+
+        /* ── Asignación de áreas ─────────────────────── */
+        .pd-breadcrumb  { grid-area: breadcrumb; }
+        .pd-images      { grid-area: images; }
+        .pd-info-name   { grid-area: info-name; }
+        .pd-actions     { grid-area: actions; }
+        .pd-specs       { grid-area: specs; }
+        .pd-description { grid-area: description; }
+        .pd-categories  { grid-area: categories; }
+
+        /* ── Breadcrumb ─────────────────────────────── */
+        .pd-breadcrumb {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+        .pd-sep { margin: 0 6px; }
+
+        /* ── Card base ──────────────────────────────── */
+        :global(.pd-card) {
+          background: var(--bg-card);
+          border-radius: 12px;
+          padding: 16px;
+        }
+
+        /* ── Títulos de sección ─────────────────────── */
+        :global(.pd-section-title) {
+          margin: 0 0 12px 0;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        /* ── Thumbnails (scroll horizontal) ─────────── */
+        .pd-thumbs {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scrollbar-width: thin;
+        }
+
+        /* ── Botones de acción ──────────────────────── */
+        .pd-btn-group {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .pd-btn-primary,
+        .pd-btn-wa {
+          width: 100%;
+        }
+
+        @media (min-width: 641px) {
+          .pd-btn-group {
+            flex-direction: row;
+          }
+          .pd-btn-primary,
+          .pd-btn-wa {
+            flex: 1;
+            width: auto;
+          }
+        }
+
+        /* ── Categorías (scroll horizontal en mobile) ─ */
+        .pd-cat-scroll {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scrollbar-width: thin;
         }
       `}</style>
     </PublicLayout>

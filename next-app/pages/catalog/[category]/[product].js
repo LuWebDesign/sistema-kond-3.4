@@ -6,7 +6,7 @@ import ProductDetail from '../../../components/ProductDetail'
 import { slugifyPreserveCase as slugifyShared } from '../../../utils/slugify'
 
 export default function ProductPage({ params }) {
-  const { products } = useProducts()
+  const { products, categories } = useProducts()
   const { category, product } = params || {}
 
   // find product by matching normalized (lowercased) slugs
@@ -29,7 +29,7 @@ export default function ProductPage({ params }) {
     )
   }
 
-  return <ProductDetail product={found} />
+  return <ProductDetail product={found} categories={categories} />
 }
 
 export async function getServerSideProps(context) {
