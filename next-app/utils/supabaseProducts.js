@@ -150,7 +150,8 @@ export async function createProducto(producto) {
       unidades: parseIntOrNull(producto.unidades) || 1,
       stock: parseIntOrNull(producto.stock) || 0,
       ensamble: producto.ensamble || 'Sin ensamble',
-      active: producto.active !== undefined ? producto.active : true
+      active: producto.active !== undefined ? producto.active : true,
+      description: producto.description || ''
     };
 
     // console.log('📝 Datos del producto a crear:', productData);
@@ -225,6 +226,7 @@ export async function updateProducto(id, producto) {
     if (producto.stock !== undefined) updateData.stock = producto.stock;
     if (producto.ensamble !== undefined) updateData.ensamble = producto.ensamble;
     if (producto.active !== undefined) updateData.active = producto.active;
+    if (producto.description !== undefined) updateData.description = producto.description;
 
     // console.log('📝 Datos del producto a actualizar:', updateData);
 
