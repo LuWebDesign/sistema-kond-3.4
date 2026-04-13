@@ -1039,68 +1039,72 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         </div>
 
         {/* Controles de cantidad y botón */}
-        {showControls && <div style={{
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '32px'
+          gap: '32px',
+          padding: '0 20px 20px 20px'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              style={{
-                background: 'var(--bg-hover)',
-                border: 'none',
-                padding: '6px 10px',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              −
-            </button>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                width: '40px',
-                textAlign: 'center',
-                padding: '6px 4px',
-                fontSize: '0.9rem'
-              }}
-              min="1"
-              max="999"
-            />
-            <button
-              onClick={() => setQuantity(Math.min(999, quantity + 1))}
-              style={{
-                background: 'var(--bg-hover)',
-                border: 'none',
-                padding: '6px 10px',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              +
-            </button>
-          </div>
+          {/* Selector de cantidad: solo visible cuando showControls=true (carrito/checkout) */}
+          {showControls && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                style={{
+                  background: 'var(--bg-hover)',
+                  border: 'none',
+                  padding: '6px 10px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  width: '40px',
+                  textAlign: 'center',
+                  padding: '6px 4px',
+                  fontSize: '0.9rem'
+                }}
+                min="1"
+                max="999"
+              />
+              <button
+                onClick={() => setQuantity(Math.min(999, quantity + 1))}
+                style={{
+                  background: 'var(--bg-hover)',
+                  border: 'none',
+                  padding: '6px 10px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                +
+              </button>
+            </div>
+          )}
 
           <button
             onClick={handleAddToCart}
             style={{
-              flex: 'none',
-              width: 'auto',
+              flex: showControls ? 'none' : 1,
+              width: showControls ? 'auto' : '100%',
               minWidth: '100px',
               background: 'var(--accent-secondary)',
               color: 'white',
@@ -1117,7 +1121,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           >
             Agregar
           </button>
-        </div>}
+        </div>
       </div>
     </div>
   )
