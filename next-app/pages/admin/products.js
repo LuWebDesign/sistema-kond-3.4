@@ -4384,6 +4384,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             </select>
           </div>
         </div>
+        <div style={{ marginTop: '14px' }}>
+          <label style={labelStyle}>Descripción</label>
+          <textarea
+            value={editData.description || ''}
+            onChange={e => handleInputChange('description', e.target.value)}
+            placeholder="Descripción del producto (visible en el catálogo)"
+            rows={3}
+            style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
+          />
+        </div>
       </div>
 
       {/* Material */}
