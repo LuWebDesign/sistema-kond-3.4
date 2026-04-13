@@ -951,7 +951,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     fontSize: '0.9rem',
                     marginBottom: '8px'
                   }}>
-                    📏 {product.medidas}
+                    {product.medidas}
                   </p>
                 )}
 
@@ -1018,21 +1018,20 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               </div>
             )}
 
-            {/* Indicador de stock al lado del precio */}
+            {/* Indicador de stock al lado del precio (más pequeño, sin icono) */}
             {product.stock !== undefined && product.stock !== null && (
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
-                background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.08)' : 'rgba(239, 68, 68, 0.08)',
                 color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
                 border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`
               }}>
-                <span>{product.stock > 0 ? '✓' : '✕'}</span>
                 <span>Stock: {product.stock}</span>
               </div>
             )}
@@ -1102,22 +1101,20 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             style={{
               flex: 'none',
               width: 'auto',
-              minWidth: '120px',
+              minWidth: '100px',
               background: 'var(--accent-secondary)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              padding: '12px 16px',
-              fontSize: '0.9rem',
+              padding: '8px 12px',
+              fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
+              justifyContent: 'center'
             }}
           >
-            <span className="btn-icon" aria-hidden="true">🛒</span>
             Agregar
           </button>
         </div>
