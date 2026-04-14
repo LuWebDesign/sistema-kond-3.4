@@ -139,7 +139,6 @@ export default function ProductDetail({ product, categories = [] }) {
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
                 background: 'var(--kond-badge-bg, var(--bg-section))',
-                color: 'var(--kond-badge-color, var(--text-secondary))',
                 border: '1px solid var(--border-color)'
               }}>
                 {product.categoria}
@@ -156,10 +155,10 @@ export default function ProductDetail({ product, categories = [] }) {
               {product.nombre}
             </h1>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--accent-blue)' }}>
-                {formatCurrency(displayPrice)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+               <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
+                 {formatCurrency(displayPrice)}
+               </span>
               {hasPromo && (
                 <span style={{
                   fontSize: '1rem',

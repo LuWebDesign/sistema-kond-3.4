@@ -1,9 +1,12 @@
 import '../utils/silenceExternalLogs'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { Inter } from 'next/font/google'
 import '../styles/globals.css'
 import '../styles/catalog-next.css'
 import { NotificationsProvider } from '../components/NotificationsProvider'
+
+const inter = Inter({ subsets: ['latin'] })
 
 // Rutas que son del catálogo público (compradores)
 const BUYER_ROUTES = ['/catalog', '/catalog/user', '/catalog/mis-pedidos']
@@ -56,20 +59,22 @@ export default function MyApp({ Component, pageProps }) {
   // Solo currentBuyerEmail necesita 'mounted' porque lee localStorage
   const isBuyerRoutePath = isBuyerRoute(router.pathname)
 
-  if (isBuyerRoutePath) {
-    if (mounted && currentBuyerEmail) {
-      return (
-        <NotificationsProvider targetUser="user" userId={currentBuyerEmail}>
-          <Component {...pageProps} />
-        </NotificationsProvider>
-      )
-    }
-    return <Component {...pageProps} />
+  let content
+  if (isBuyerRoutePath && mounted && currentBuyerEmail) {
+    content = (
+      <NotificationsProvider targetUser="user" userId={currentBuyerEmail}>
+        <Component {...pageProps} />
+      </NotificationsProvider>
+    )
+  } else if (isBuyerRoutePath) {
+    content = <Component {...pageProps} />
+  } else {
+    content = (
+      <NotificationsProvider targetUser="admin">
+        <Component {...pageProps} />
+      </NotificationsProvider>
+    )
   }
 
-  return (
-    <NotificationsProvider targetUser="admin">
-      <Component {...pageProps} />
-    </NotificationsProvider>
-  )
+  return <div className={inter.className}>{content}</div>
 }

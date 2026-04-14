@@ -6,7 +6,7 @@ import ProductDetail from '../../../components/ProductDetail'
 import { slugifyPreserveCase as slugifyShared } from '../../../utils/slugify'
 
 export default function ProductPage({ params }) {
-  const { products, categories } = useProducts()
+  const { products, categories, isLoading } = useProducts()
   const { category, product } = params || {}
 
   // find product by matching normalized (lowercased) slugs
@@ -19,6 +19,8 @@ export default function ProductPage({ params }) {
   useEffect(() => {
     // noop
   }, [found])
+
+  if (isLoading) return null
 
   if (!found) {
     return (
