@@ -283,14 +283,10 @@ export default function ProductDetail({ product, categories = [] }) {
                     flex: 1,
                     padding: '10px 16px',
                     borderRadius: 8,
-                    border: 'none',
+                    border: '2px solid var(--kond-btn-bg, var(--accent-blue))',
                     cursor: hasStock ? 'pointer' : 'not-allowed',
-                    background: hasStock
-                      ? 'var(--kond-btn-bg, var(--accent-blue))'
-                      : 'var(--bg-section)',
-                    color: hasStock
-                      ? 'var(--kond-btn-color, #fff)'
-                      : 'var(--text-muted)',
+                    background: 'transparent',
+                    color: hasStock ? 'var(--kond-btn-bg, var(--accent-blue))' : 'var(--text-muted)',
                     fontWeight: 600,
                     fontSize: '0.875rem',
                     minHeight: 40,
@@ -308,10 +304,10 @@ export default function ProductDetail({ product, categories = [] }) {
                     flex: 1,
                     padding: '10px 16px',
                     borderRadius: 8,
-                    border: '2px solid var(--kond-btn-bg, var(--accent-blue))',
+                    border: 'none',
                     cursor: hasStock ? 'pointer' : 'not-allowed',
-                    background: 'transparent',
-                    color: 'var(--kond-btn-bg, var(--accent-blue))',
+                    background: hasStock ? 'var(--kond-btn-bg, var(--accent-blue))' : 'var(--bg-section)',
+                    color: hasStock ? 'var(--kond-btn-color, #fff)' : 'var(--text-muted)',
                     fontWeight: 600,
                     fontSize: '0.875rem',
                     minHeight: 40,
