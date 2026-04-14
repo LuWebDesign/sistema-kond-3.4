@@ -9,6 +9,7 @@ function CatalogStylesAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
   const [activeSection, setActiveSection] = useState('header')
+  const [activeDevice, setActiveDevice] = useState('desktop')
   const logoInputRef = useRef(null)
 
   useEffect(() => {
@@ -329,46 +330,113 @@ function CatalogStylesAdmin() {
             {activeSection === 'layout' && (
               <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
                 <h3 style={{ margin: '0 0 8px', fontSize: '1.1rem' }}>🔲 Columnas del catálogo</h3>
-                <p style={{ margin: '0 0 24px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  Elegí cuántos productos se muestran por fila en el catálogo público. Se aplica en pantallas grandes; en mobile siempre se adapta automáticamente.
+                <p style={{ margin: '0 0 20px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Configurá cuántos productos se muestran por fila según el dispositivo.
                 </p>
 
-                <div style={fieldGroup}>
-                  <label style={labelStyle}>Columnas por fila</label>
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {[3, 4, 5, 6].map(col => {
-                      const isActive = (Number(styles.gridColumns) || 3) === col
-                      return (
-                        <button
-                          key={col}
-                          onClick={() => updateStyle('gridColumns', col)}
-                          style={{
-                            width: '72px',
-                            padding: '16px 8px',
-                            borderRadius: '10px',
-                            border: isActive ? `2px solid ${previewAccent}` : '2px solid var(--border-color)',
-                            background: isActive ? `${previewAccent}18` : 'var(--bg-secondary)',
-                            color: isActive ? previewAccent : 'var(--text-secondary)',
-                            fontWeight: isActive ? 700 : 400,
-                            fontSize: '1.4rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <span>{col}</span>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>cols</span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                {/* Toggle PC / Mobile */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                  {[
+                    { id: 'desktop', label: '🖥 PC' },
+                    { id: 'mobile', label: '📱 Mobile' },
+                  ].map(({ id, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => setActiveDevice(id)}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        border: activeDevice === id ? `2px solid ${previewAccent}` : '2px solid var(--border-color)',
+                        background: activeDevice === id ? `${previewAccent}18` : 'var(--bg-secondary)',
+                        color: activeDevice === id ? previewAccent : 'var(--text-secondary)',
+                        fontWeight: activeDevice === id ? 700 : 400,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
-                <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  💡 Actualmente: <strong style={{ color: 'var(--text-primary)' }}>{Number(styles.gridColumns) || 3} columnas</strong> — recordá guardar los cambios para que se apliquen en el catálogo.
+                {/* Column picker — PC */}
+                {activeDevice === 'desktop' && (
+                  <div style={fieldGroup}>
+                    <label style={labelStyle}>Columnas por fila (escritorio)</label>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      {[1, 2, 3, 4, 5, 6].map(col => {
+                        const effectiveDesktop = styles.gridColumnsDesktop ?? styles.gridColumns ?? 3
+                        const isActive = Number(effectiveDesktop) === col
+                        return (
+                          <button
+                            key={col}
+                            onClick={() => updateStyle('gridColumnsDesktop', col)}
+                            style={{
+                              width: '72px',
+                              padding: '16px 8px',
+                              borderRadius: '10px',
+                              border: isActive ? `2px solid ${previewAccent}` : '2px solid var(--border-color)',
+                              background: isActive ? `${previewAccent}18` : 'var(--bg-secondary)',
+                              color: isActive ? previewAccent : 'var(--text-secondary)',
+                              fontWeight: isActive ? 700 : 400,
+                              fontSize: '1.4rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <span>{col}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>cols</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Column picker — Mobile */}
+                {activeDevice === 'mobile' && (
+                  <div style={fieldGroup}>
+                    <label style={labelStyle}>Columnas por fila (mobile)</label>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      {[1, 2].map(col => {
+                        const isActive = Number(styles.gridColumnsMobile ?? 2) === col
+                        return (
+                          <button
+                            key={col}
+                            onClick={() => updateStyle('gridColumnsMobile', col)}
+                            style={{
+                              width: '72px',
+                              padding: '16px 8px',
+                              borderRadius: '10px',
+                              border: isActive ? `2px solid ${previewAccent}` : '2px solid var(--border-color)',
+                              background: isActive ? `${previewAccent}18` : 'var(--bg-secondary)',
+                              color: isActive ? previewAccent : 'var(--text-secondary)',
+                              fontWeight: isActive ? 700 : 400,
+                              fontSize: '1.4rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <span>{col}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>cols</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginTop: '8px', padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  💡 Actualmente: <strong style={{ color: 'var(--text-primary)' }}>{Number(styles.gridColumnsDesktop ?? styles.gridColumns ?? 3)} cols</strong> en PC · <strong style={{ color: 'var(--text-primary)' }}>{Number(styles.gridColumnsMobile ?? 2)} cols</strong> en Mobile — recordá guardar para aplicar.
                 </div>
               </div>
             )}

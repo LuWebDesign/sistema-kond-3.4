@@ -119,6 +119,18 @@ body[data-theme="light"] .pd-info-name .category-badge span {
   color: var(--text-primary) !important;
 }
 
+/* Grid del catálogo: columnas configurables por dispositivo vía CSS custom properties.
+   JS setea --catalog-cols-desktop y --catalog-cols-mobile en el inline style del elemento. */
+.products-grid {
+  grid-template-columns: repeat(var(--catalog-cols-desktop, 3), minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(var(--catalog-cols-mobile, 2), minmax(0, 1fr));
+  }
+}
+
 /* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
 @media (max-width: 600px) {
   .kond-viewport,
@@ -162,8 +174,7 @@ body[data-theme="light"] .pd-info-name .category-badge span {
   }
 
   .products-grid {
-    /* Mostrar 2 columnas en mobile para mejor densidad visual */
-    grid-template-columns: repeat(2, 1fr) !important;
+    /* Columnas configurables vía custom properties — ver @media base */
     gap: 12px;
   }
 
@@ -462,7 +473,6 @@ a:hover {
   /* Mostrar 2 columnas en pantallas pequeñas, pero asegurar un ancho mínimo por columna
      para evitar que el contenido quede demasiado apretado en dispositivos muy estrechos. */
   .products-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr)) !important;
     gap: 12px;
   }
 

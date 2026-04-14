@@ -35,6 +35,8 @@ const DEFAULT_STYLES = {
   bannerTextColor: '#ffffff',
   // Layout del catálogo
   gridColumns: 3,
+  gridColumnsDesktop: 3,
+  gridColumnsMobile: 2,
   // Botón flotante WhatsApp
   whatsappEnabled: false,
   whatsappNumber: '',

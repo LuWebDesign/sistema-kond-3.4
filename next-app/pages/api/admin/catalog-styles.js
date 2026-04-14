@@ -26,6 +26,12 @@ const DEFAULT_STYLES = {
   bannerText: '',
   bannerBg: '#3b82f6',
   bannerTextColor: '#ffffff',
+  gridColumns: 3,
+  gridColumnsDesktop: 3,
+  gridColumnsMobile: 2,
+  whatsappEnabled: false,
+  whatsappNumber: '',
+  whatsappMessage: 'Hola! Me gustaría consultar sobre sus productos.',
 }
 
 export default async function handler(req, res) {

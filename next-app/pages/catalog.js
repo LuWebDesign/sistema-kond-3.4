@@ -44,7 +44,8 @@ export default function Catalog() {
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 12
-  const [gridColumns, setGridColumns] = useState(3)
+  const [gridColumnsDesktop, setGridColumnsDesktop] = useState(3)
+  const [gridColumnsMobile, setGridColumnsMobile] = useState(2)
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
@@ -53,17 +54,24 @@ export default function Catalog() {
       const raw = localStorage.getItem('catalogStyles')
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (parsed.gridColumns) setGridColumns(Number(parsed.gridColumns))
+        setGridColumnsDesktop(Number(parsed.gridColumnsDesktop ?? parsed.gridColumns ?? 3))
+        setGridColumnsMobile(Number(parsed.gridColumnsMobile ?? 2))
       }
     } catch {}
 
     // 2. Actualizar desde la API en segundo plano (stale-while-revalidate)
     getCatalogStyles().then(s => {
-      if (s && s.gridColumns) setGridColumns(Number(s.gridColumns))
+      if (s) {
+        setGridColumnsDesktop(Number(s.gridColumnsDesktop ?? s.gridColumns ?? 3))
+        setGridColumnsMobile(Number(s.gridColumnsMobile ?? 2))
+      }
     }).catch(() => {})
 
     const onStylesUpdate = (e) => {
-      if (e.detail && e.detail.gridColumns) setGridColumns(Number(e.detail.gridColumns))
+      if (e.detail) {
+        setGridColumnsDesktop(Number(e.detail.gridColumnsDesktop ?? e.detail.gridColumns ?? 3))
+        setGridColumnsMobile(Number(e.detail.gridColumnsMobile ?? 2))
+      }
     }
     window.addEventListener('catalogStyles:updated', onStylesUpdate)
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
@@ -462,9 +470,10 @@ export default function Catalog() {
         {/* Grid de productos */}
         <div className="products-grid" style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
           gap: '24px',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          '--catalog-cols-desktop': gridColumnsDesktop,
+          '--catalog-cols-mobile': gridColumnsMobile,
         }}>
           {displayedProducts.map(product => (
             <ProductCard 
