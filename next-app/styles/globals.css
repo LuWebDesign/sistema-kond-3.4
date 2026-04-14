@@ -72,6 +72,17 @@
   border-radius: 0 0 12px 12px !important;
 }
 
+/* Hover / focus: cambiar color del título dentro de la tarjeta a azul (usa --accent-blue)
+   Se usa !important para sobreescribir el color inline que el componente aplica.
+   También se aplica focus-within para mejorar accesibilidad por teclado. */
+.product-card:hover h3,
+.product-card:hover h3 span,
+.product-card:focus-within h3,
+.product-card:focus-within h3 span {
+  color: var(--accent-blue) !important;
+  transition: color 150ms ease;
+}
+
 /* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
 @media (max-width: 600px) {
   .kond-viewport,
