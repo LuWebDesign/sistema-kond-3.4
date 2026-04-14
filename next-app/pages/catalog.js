@@ -490,9 +490,9 @@ export default function Catalog() {
               getCategoryStyle={getCategoryStyle}
               onImageClick={handleImageClick}
               onAddToCart={handleAddToCart}
-              onBuyNow={handleBuyNow}
               materials={materials}
               showControls={false}
+              showActions={false}
             />
           ))}
         </div>
@@ -705,7 +705,7 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, getCategoryStyle, onImageClick, materials = [], showControls = false }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -1062,6 +1062,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, 
         </div>
 
         {/* Controles de cantidad y botón */}
+        {showActions && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -1166,6 +1167,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, 
             </button>
           )}
         </div>
+        )}
       </div>
     </div>
   )
@@ -2123,7 +2125,7 @@ function CheckoutModal({
             <>
               <button onClick={handleSubmitOrder} disabled={isSubmitting} style={{ width: '100%', padding: 12, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, marginBottom: 8 }}>{isSubmitting ? '⏳ Procesando...' : paymentMethod === 'whatsapp' ? '💬 Enviar por WhatsApp' : '🚀 Confirmar Pedido'}</button>
 
-              <button onClick={onClose} className="btn-ghost" style={{ width: '100%' }}>Volver al carrito</button>
+              <button onClick={() => router.push('/catalog')} className="btn-ghost" style={{ width: '100%' }}>Volver al catálogo</button>
             </>
           )}
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import PublicLayout from './PublicLayout'
 import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
@@ -19,6 +20,7 @@ const OMIT_VALUES = new Set(['Sin ensamble', '', null, undefined])
 
 export default function ProductDetail({ product, categories = [] }) {
   const { addToCart } = useCart()
+  const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const [whatsappNumber, setWhatsappNumber] = useState('1136231857')
@@ -49,6 +51,11 @@ export default function ProductDetail({ product, categories = [] }) {
   const handleAdd = () => {
     addToCart(product, qty)
     createToast(`${product.nombre} agregado al carrito`, 'success')
+  }
+
+  const handleBuyNow = () => {
+    addToCart(product, qty)
+    router.push('/catalog/mi-carrito')
   }
 
   return (
@@ -266,31 +273,57 @@ export default function ProductDetail({ product, categories = [] }) {
 
             {/* Botones */}
             <div className="pd-btn-group">
-              <button
-                onClick={handleAdd}
-                disabled={!hasStock}
-                className="pd-btn-primary"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: hasStock ? 'pointer' : 'not-allowed',
-                  background: hasStock
-                    ? 'var(--kond-btn-bg, var(--accent-blue))'
-                    : 'var(--bg-section)',
-                  color: hasStock
-                    ? 'var(--kond-btn-color, #fff)'
-                    : 'var(--text-muted)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  minHeight: 40,
-                  opacity: hasStock ? 1 : 0.6,
-                  transition: 'opacity 0.2s'
-                }}
-              >
-                {hasStock ? 'Agregar al carrito' : 'Sin stock'}
-              </button>
+              {/* Fila 1: Agregar al carrito + Comprar */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleAdd}
+                  disabled={!hasStock}
+                  className="pd-btn-primary"
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    cursor: hasStock ? 'pointer' : 'not-allowed',
+                    background: hasStock
+                      ? 'var(--kond-btn-bg, var(--accent-blue))'
+                      : 'var(--bg-section)',
+                    color: hasStock
+                      ? 'var(--kond-btn-color, #fff)'
+                      : 'var(--text-muted)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    minHeight: 40,
+                    opacity: hasStock ? 1 : 0.6,
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  {hasStock ? 'Agregar al carrito' : 'Sin stock'}
+                </button>
 
+                <button
+                  onClick={handleBuyNow}
+                  disabled={!hasStock}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: 8,
+                    border: '2px solid var(--kond-btn-bg, var(--accent-blue))',
+                    cursor: hasStock ? 'pointer' : 'not-allowed',
+                    background: 'transparent',
+                    color: 'var(--kond-btn-bg, var(--accent-blue))',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    minHeight: 40,
+                    opacity: hasStock ? 1 : 0.6,
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  Comprar
+                </button>
+              </div>
+
+              {/* Fila 2: WhatsApp */}
               <a
                 href={waLink}
                 target="_blank"
