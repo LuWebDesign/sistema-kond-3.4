@@ -987,10 +987,9 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
         {/* category badge moved above title; duplicate removed */}
 
-        <div style={{
+        <div className="product-price" style={{
           fontSize: '1.2rem',
           fontWeight: 700,
-          color: 'var(--accent-blue)',
           marginBottom: '16px'
         }}>
           {/* Mostrar precio con promoción si corresponde */}

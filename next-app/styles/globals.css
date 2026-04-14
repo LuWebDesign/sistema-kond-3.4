@@ -83,6 +83,24 @@
   transition: color 150ms ease;
 }
 
+/* Product price color: use text-primary which maps to black in light and white in dark
+   This ensures the product price on catalog cards is black on the light theme
+   and light/white on dark theme. Promotional price elements that set their own
+   inline color (eg. var(--accent-blue)) will keep that color. */
+.product-price {
+  color: var(--text-primary);
+}
+
+/* Fix: in the light theme the category "ticket" could render white in some cases
+   due to inline styles or specificity. Force it to use the text primary color
+   (dark) on the light theme so it remains readable. In dark theme the ticket
+   keeps its current styles. */
+body[data-theme="light"] .product-card .category-badge,
+body[data-theme="light"] .category-badge {
+  color: var(--text-primary) !important;
+  border-color: var(--text-primary) !important;
+}
+
 /* Asegurar que en <=600px el layout sea igual al de 375px (apilado, 1 columna, full width) */
 @media (max-width: 600px) {
   .kond-viewport,
