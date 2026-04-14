@@ -628,7 +628,7 @@ export default function Orders() {
                     >
                       <option value="sin_seña">Sin Seña</option>
                       <option value="seña_pagada">Seña Pagada</option>
-                      <option value="pagado">Pagado</option>
+                      <option value="pagado_total">Pago total</option>
                     </select>
                     
                     <button
@@ -907,7 +907,7 @@ export default function Orders() {
                 </button>
                 
                 <select
-                  value={selectedOrder.estadoPago || 'sin_seña'}
+                  value={selectedOrder.estadoPago || 'pagado_total'}
                   onChange={(e) => {
                     updateOrderPaymentStatus(selectedOrder.id, e.target.value)
                     setSelectedOrder({
@@ -927,7 +927,7 @@ export default function Orders() {
                 >
                   <option value="sin_seña">Sin Seña</option>
                   <option value="seña_pagada">Seña Pagada</option>
-                  <option value="pagado">Pagado Total</option>
+                  <option value="pagado_total">Pago total</option>
                 </select>
                 
                 <select

@@ -576,12 +576,12 @@ export function useOrders() {
       const pedidoData = {
         cliente: orderData.cliente,
         metodoPago: orderData.metodoPago,
-        estadoPago: orderData.estadoPago || 'sin_seña',
+        estadoPago: orderData.estadoPago || 'pagado_total',
         comprobante: orderData.comprobante || null,
         comprobanteOmitido: orderData._comprobanteOmitted || false,
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
         total: orderData.total,
-        montoRecibido: orderData.montoRecibido || 0
+        montoRecibido: orderData.montoRecibido || orderData.total || 0
       }
 
       // Determinar si aplica envío gratis a todo el carrito

@@ -1631,14 +1631,15 @@ function CheckoutModal({
         })),
         metodoPago: paymentMethod,
         metodoEntrega: deliveryMethod,
-        estadoPago: paymentMethod === 'transferencia' ? 'seña_pagada' : 'sin_seña',
+        estadoPago: 'pagado_total',
         fechaSolicitudEntrega: selectedDeliveryDate,
         total: total,
         subtotal: subtotal,
         descuento: discount,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
       }
-      if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
+      // Forzar monto recibido al total (pedidos del catálogo son pagos totales)
+      orderData.montoRecibido = Number(orderData.montoRecibido || orderData.total || 0)
 
       const result = await saveOrder(orderData, handleOrderSuccess)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
@@ -1854,11 +1855,7 @@ function CheckoutModal({
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
                   </div>
                 </button>
-                {paymentMethod === 'transferencia' && (
-                  <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-hover)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    💰 Seña: {formatCurrency(total * 0.5)} — Total: {formatCurrency(total)}
-                  </div>
-                )}
+                {/* Seña eliminada para pedidos de catálogo (pago total por defecto) */}
                 {paymentConfig?.textos?.infoTransferenciaEnabled !== false && paymentMethod === 'transferencia' && (
                   <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', fontSize: 14 }}>
                     <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -1955,8 +1952,7 @@ function CheckoutModal({
                     </>
                   )}
 
-                  <div style={{ color: 'var(--text-secondary)' }}><strong>Seña (50%)</strong></div>
-                  <div style={{ fontWeight: 700, textAlign: 'right' }}>{formatCurrency(total * 0.5)}</div>
+                  {/* Seña eliminada del resumen de transferencia (pago total por defecto) */}
                 </div>
               </div>
 
@@ -2095,11 +2091,11 @@ function CheckoutModal({
             <>
               <button onClick={handleSubmitOrder} disabled={isSubmitting} style={{ width: '100%', padding: 12, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, marginBottom: 8 }}>{isSubmitting ? '⏳ Procesando...' : paymentMethod === 'whatsapp' ? '💬 Enviar por WhatsApp' : '🚀 Confirmar Pedido'}</button>
 
-              <button onClick={() => router.push('/catalog')} className="btn-ghost" style={{ width: '100%' }}>Volver al catálogo</button>
+              <button onClick={() => router.push('/catalog/mi-carrito')} className="btn-ghost" style={{ width: '100%' }}>Volver al carrito</button>
             </>
           )}
 
-          <div style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Los envíos y tiempos se coordinan luego de la confirmación. Para transferencias, la seña es del 50%.</div>
+          <div style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Los envíos y tiempos de entrega se coordinan luego de la confirmación del pago.</div>
         </aside>
         {/* Barra de acciones móvil: fija en la parte inferior para mantener CTA visible en pantallas pequeñas */}
         <div style={{ display: 'none' }} className={stylesResp.mobileActions}>
