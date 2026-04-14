@@ -1631,14 +1631,15 @@ function CheckoutModal({
         })),
         metodoPago: paymentMethod,
         metodoEntrega: deliveryMethod,
-        estadoPago: paymentMethod === 'transferencia' ? 'seña_pagada' : 'sin_seña',
+        estadoPago: 'pagado_total',
         fechaSolicitudEntrega: selectedDeliveryDate,
         total: total,
         subtotal: subtotal,
         descuento: discount,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
       }
-      if (paymentMethod === 'transferencia') orderData.montoRecibido = Number((total || 0) * 0.5)
+      // Forzar monto recibido al total (pedidos del catálogo son pagos totales)
+      orderData.montoRecibido = Number(orderData.montoRecibido || orderData.total || 0)
 
       const result = await saveOrder(orderData, handleOrderSuccess)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
