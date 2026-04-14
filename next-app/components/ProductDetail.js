@@ -563,18 +563,31 @@ export default function ProductDetail({ product, categories = [] }) {
         /* ── Botones de acción ──────────────────────── */
         .pd-btn-group {
           display: flex;
-          flex-direction: column;
+          flex-direction: column; /* keep column so WhatsApp stays below the action row */
           gap: 10px;
+          flex-wrap: wrap; /* allow inner row to occupy full width */
         }
+
+        /* Ensure the first row (buttons) spans full width and lays out its children side-by-side */
+        .pd-btn-group > div {
+          width: 100%;
+          display: flex;
+          gap: 8px;
+        }
+
         .pd-btn-primary,
         .pd-btn-wa {
           width: 100%;
         }
 
         @media (min-width: 641px) {
-          .pd-btn-group {
-            flex-direction: row;
+          /* On desktop keep the same visual order: [Agregar | Comprar] on the first row
+             and [Consultar por WhatsApp] full-width below. Buttons inside the first row
+             will grow equally. */
+          .pd-btn-group > div {
+            width: 100%;
           }
+
           .pd-btn-primary,
           .pd-btn-wa {
             flex: 1;
