@@ -1873,7 +1873,7 @@ function CheckoutModal({
           {paymentMethod === 'transferencia' && (
             <section style={{ marginBottom: 18 }}>
               <div className="transfer-section" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                {paymentConfig?.calendario?.enabled !== false && (
+                {paymentConfig !== null && paymentConfig?.calendario?.enabled !== false && (
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
                     <AvailabilityCalendar className="checkout-calendar" cart={cart} selectedDate={selectedDeliveryDate} onDateSelect={onDateSelect} />
