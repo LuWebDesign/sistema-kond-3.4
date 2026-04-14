@@ -2095,7 +2095,7 @@ function CheckoutModal({
             </>
           )}
 
-          <div style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Los envíos y tiempos se coordinan luego de la confirmación.</div>
+          <div style={{ marginTop: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Los envíos y tiempos de entrega se coordinan luego de la confirmación del pago.</div>
         </aside>
         {/* Barra de acciones móvil: fija en la parte inferior para mantener CTA visible en pantallas pequeñas */}
         <div style={{ display: 'none' }} className={stylesResp.mobileActions}>
