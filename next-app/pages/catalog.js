@@ -21,7 +21,7 @@ import { useNotifications } from '../components/NotificationsProvider'
 
 export default function Catalog() {
   const router = useRouter()
-  const { products, categories, materials } = useProducts()
+  const { products, categories, materials, isLoading } = useProducts()
   const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { activeCoupon, applyCoupon, calculateDiscount } = useCoupons()
   const { saveOrder } = useOrders()
@@ -582,7 +582,7 @@ export default function Catalog() {
           </div>
         )}
 
-        {filteredProducts.length === 0 && (
+        {!isLoading && filteredProducts.length === 0 && (
           <div style={{
             textAlign: 'center',
             padding: '40px',
@@ -1363,7 +1363,7 @@ function CheckoutModal({
   setDeliveryMethod,
   onProfileUpdate
 }) {
-  const [paymentMethod, setPaymentMethod] = useState('whatsapp')
+  const [paymentMethod, setPaymentMethod] = useState('transferencia')
 
   const router = useRouter()
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
@@ -1418,8 +1418,8 @@ function CheckoutModal({
               setPaymentConfig(config)
               // elegir método por defecto según lo disponible
               if (!paymentMethod) {
-                if (config.whatsapp?.enabled) setPaymentMethod('whatsapp')
-                else if (config.transferencia?.enabled) setPaymentMethod('transferencia')
+                if (config.transferencia?.enabled) setPaymentMethod('transferencia')
+                else if (config.whatsapp?.enabled) setPaymentMethod('whatsapp')
                 else if (config.retiro?.enabled) setPaymentMethod('retiro')
                 else setPaymentMethod('')
               }
@@ -1432,8 +1432,8 @@ function CheckoutModal({
                 const cfg = JSON.parse(localConfig)
                 setPaymentConfig(cfg)
                 if (!paymentMethod) {
-                  if (cfg.whatsapp?.enabled) setPaymentMethod('whatsapp')
-                  else if (cfg.transferencia?.enabled) setPaymentMethod('transferencia')
+                  if (cfg.transferencia?.enabled) setPaymentMethod('transferencia')
+                  else if (cfg.whatsapp?.enabled) setPaymentMethod('whatsapp')
                   else if (cfg.retiro?.enabled) setPaymentMethod('retiro')
                   else setPaymentMethod('')
                 }
@@ -1455,8 +1455,8 @@ function CheckoutModal({
               // si el método seleccionado actualmente quedó deshabilitado, elegir uno disponible
               setPaymentMethod((prev) => {
                 if (prev && cfg[prev]?.enabled) return prev
-                if (cfg.whatsapp?.enabled) return 'whatsapp'
                 if (cfg.transferencia?.enabled) return 'transferencia'
+                if (cfg.whatsapp?.enabled) return 'whatsapp'
                 if (cfg.retiro?.enabled) return 'retiro'
                 return ''
               })
