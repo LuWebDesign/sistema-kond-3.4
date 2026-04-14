@@ -300,6 +300,7 @@ export default function ProductDetail({ product, categories = [] }) {
                 <button
                   onClick={handleBuyNow}
                   disabled={!hasStock}
+                  className="pd-btn-buy"
                   style={{
                     flex: 1,
                     padding: '10px 16px',
@@ -626,6 +627,16 @@ export default function ProductDetail({ product, categories = [] }) {
             font-size: 0.875rem !important;
             min-height: 40px !important;
           }
+        }
+        /* ── Botón Comprar — microanimación ────────── */
+        .pd-btn-buy {
+          transition: transform 0.15s ease, opacity 0.2s;
+        }
+        .pd-btn-buy:hover:not(:disabled) {
+          transform: scale(1.03);
+        }
+        .pd-btn-buy:active:not(:disabled) {
+          transform: scale(0.97);
         }
       `}</style>
     </PublicLayout>

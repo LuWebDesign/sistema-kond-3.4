@@ -350,14 +350,6 @@ export default function Catalog() {
     }
   }, [products, addToCart])
 
-  const handleBuyNow = useCallback((productId) => {
-    const productToAdd = products.find(p => p.id === productId)
-    if (productToAdd) {
-      addToCart(productToAdd, 1)
-      router.push('/catalog/mi-carrito/finalizar-compra')
-    }
-  }, [products, addToCart, router])
-
   // Using shared slugify helper from ../utils/slugify
 
   return (
@@ -705,7 +697,7 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
@@ -1144,28 +1136,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, onBuyNow, 
           >
             Agregar al carrito
           </button>
-          {onBuyNow && !showControls && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onBuyNow(product.id) }}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                background: 'transparent',
-                color: 'var(--accent-secondary)',
-                border: '2px solid var(--accent-secondary)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              Comprar
-            </button>
-          )}
         </div>
         )}
       </div>
