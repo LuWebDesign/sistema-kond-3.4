@@ -941,14 +941,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       borderRadius: '12px',
                       fontSize: '0.78rem',
                       fontWeight: 600,
-                      color: badgeTextColor,
                       background: badgeBackground,
                       border: badgeBorder,
                       marginBottom: '10px',
                       cursor: 'default'
                     }}
                   >
-                    <span style={{ color: badgeTextColor }}>{product.categoria}</span>
+                    <span>{product.categoria}</span>
                   </div>
                 )}
                 
