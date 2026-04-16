@@ -581,7 +581,11 @@ export function useOrders() {
         comprobanteOmitido: orderData._comprobanteOmitted || false,
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
         total: orderData.total,
-        montoRecibido: orderData.montoRecibido || orderData.total || 0
+        // Monto recibido: solo considerar el total automáticamente si el método
+        // de pago confirma la transacción (por ejemplo, transferencia).
+        montoRecibido: orderData.metodoPago === 'transferencia'
+          ? Number(orderData.montoRecibido || orderData.total || 0)
+          : Number(orderData.montoRecibido || 0)
       }
 
       // Determinar si aplica envío gratis a todo el carrito

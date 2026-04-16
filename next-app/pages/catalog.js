@@ -1638,8 +1638,14 @@ function CheckoutModal({
         descuento: discount,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null
       }
-      // Forzar monto recibido al total (pedidos del catálogo son pagos totales)
-      orderData.montoRecibido = Number(orderData.montoRecibido || orderData.total || 0)
+      // Monto recibido: solo asignar el total automáticamente para métodos que
+      // confirman el pago (ej. transferencia). Para WhatsApp dejar 0 salvo que
+      // el usuario haya indicado un monto explícito.
+      if (paymentMethod === 'transferencia') {
+        orderData.montoRecibido = Number(orderData.montoRecibido || orderData.total || 0)
+      } else {
+        orderData.montoRecibido = Number(orderData.montoRecibido || 0)
+      }
 
       const result = await saveOrder(orderData, handleOrderSuccess)
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
