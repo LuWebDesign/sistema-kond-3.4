@@ -1,8 +1,8 @@
-# Code Review Rules — Sistema KOND
+# AGENTS — Sistema KOND (compact notes for OpenCode agents)
 
 ## Response Format (MANDATORY)
 
-**ALWAYS start your response with one of these two lines — before any other text:**
+ALWAYS start your response with one of these two lines — before any other text:
 ```
 STATUS: PASSED
 ```
@@ -11,36 +11,48 @@ or
 STATUS: FAILED
 ```
 
-Then provide the detailed analysis below.
+Only include concise analysis after that.
 
-## General
+## Quick, high-signal facts an agent will likely miss
 
-- Use `const`/`let`, never `var`
-- Use arrow functions
-- No `console.log`, `console.error`, or `console.warn` in production code
-- All browser APIs (`window`, `localStorage`, `document`) must be accessed inside `useEffect` or guarded with `typeof window !== 'undefined'`
+- Two parallel code areas: a legacy static site at the repo root (HTML + `js/`) and a migrating Next.js app in `next-app/`. Confirm which target you must change BEFORE editing files.
 
-## React / Next.js
+- Next.js commands and env (work in `next-app/`):
 
-- Use functional components only
-- Page files: default export only. Shared/reusable components: named exports
-- Internal helper components defined inside a page file (not exported, not reused elsewhere) are acceptable as `function` declarations or `const` arrow functions — both styles are allowed for internal-only components
-- Never call `new Date()`, `Date.now()`, or any time/locale-sensitive function **directly inside JSX** (in the render return) — initialize in `useEffect` and store in state to avoid SSR hydration mismatches. Calling `new Date()` inside async data-loading functions (not in the render path) is acceptable
-- Any state that depends on browser-only data (localStorage, window dimensions, etc.) must be read inside `useEffect` or guarded with `typeof window !== 'undefined'`
-- When a page renders conditional text that could differ between SSR and the initial client render, use the `isMounted` pattern:
-  ```js
-  const [isMounted, setIsMounted] = useState(false)
-  useEffect(() => { setIsMounted(true) }, [])
-  if (!isMounted) return null
+  ```bash
+  cd next-app
+  npm install        # or npm ci in CI
+  cp ../.env.example .env.local
+  # set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
+  npm run dev        # dev server at 0.0.0.0:3000
+  npm run build
+  npm start
   ```
-- Use `<Link>` from `next/link` for internal navigation — never bare `<a href>` for internal routes
 
-## Supabase / Data
+- Quick repo health check: run `node verify-setup.js` from the repo root — it detects missing Supabase files and will exit non‑zero if required pieces are missing.
 
-- Always use the dual pattern: Supabase first, localStorage as fallback
-- Never expose admin credentials in client-side code
+- Supabase setup is explicit and manual: execute `supabase/schema.sql` and `supabase/storage-buckets.sql` in the Supabase SQL editor; use the anon key (NOT service key) in `.env.local`. See `supabase/README.md` for the exact steps.
 
-## Commits
+- Migration script: `node supabase/migrate-data.js` (optional). If you change data shapes, update this script and `MIGRACION-SUPABASE.md`.
 
-- Use conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
-- Never use `--no-verify`
+- Canonical Supabase client: `supabase/client.js`. Also check `js/supabase-init.js` and `js/utils.js` before changing data access patterns.
+
+- Important localStorage keys used by the static app: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`. Keep keys stable across static pages and the Next app unless you add a migration.
+
+- Static HTML gotcha: script order matters. Utilities (e.g., `js/utils.js`) must be loaded before scripts that use them — verify `index.html`/`catalog.html` when renaming or moving JS files.
+
+- CI and Node versions: `next-app/package.json` sets `engines.node = 22.x` but `.github/workflows/ci.yml` uses Node 20. If CI or build fails, inspect that mismatch and the workflow's cache key (`cache-dependency-path: next-app/package-lock.json`).
+
+- ESLint in CI is non-fatal: CI runs `npx eslint . --ext .js,.jsx,.ts,.tsx || true`, so lint errors will not fail the job by default. Do not assume CI enforces lint rules.
+
+- Security: never commit `.env.local` or secrets. Frontend must use the Supabase anon key only. NEVER put service/admin keys into client-side code.
+
+- Commits: use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT use `--no-verify`. Do NOT add AI attribution to commits.
+
+- Small style notes that matter here: prefer `const`/`let` over `var`, avoid `console.*` in production code, and guard browser-only APIs with `typeof window !== 'undefined'` (or access them inside `useEffect` in React).
+
+- Next/SSR hydration caution: avoid calling `new Date()` or rendering browser-only values directly in JSX; use an `isMounted` pattern or compute values in effects to prevent mismatches.
+
+- Authoritative docs: prefer executable sources (`verify-setup.js`, `supabase/*.js`, `next-app/package.json`, `.github/workflows/ci.yml`) over prose. If docs conflict with scripts, follow the scripts and update docs.
+
+- If you plan cross-cutting changes (data model, storage keys, auth, build config), STOP and list the files you intend to change — this repo contains two running frontends and migration scripts that must be kept in sync.
