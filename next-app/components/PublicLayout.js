@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
+// SectionSelector is rendered where the catalog layout expects it (not in the global header)
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
@@ -167,6 +168,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   {currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}
                 </Link>
               )}
+
+              {/* Section selector removed from global header — rendered in catalog/product pages */}
             </nav>
           </div>
 
