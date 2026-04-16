@@ -3,13 +3,17 @@
 // Funciones para gestión de productos
 // ============================================
 
-import supabase from './supabaseClient';
+import supabase, { isSupabaseReady } from './supabaseClient';
 
 /**
  * Obtener todos los productos (solo admins)
  */
 export async function getAllProductos() {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping getAllProductos')
+      return { data: null, error: 'Supabase not configured' }
+    }
     const { data, error } = await supabase
       .from('productos')
       .select('*')
@@ -28,6 +32,10 @@ export async function getAllProductos() {
  */
 export async function getProductosPublicados() {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping getProductosPublicados')
+      return { data: null, error: 'Supabase not configured' }
+    }
     const { data, error } = await supabase
       .from('productos')
       .select('*')
@@ -48,6 +56,10 @@ export async function getProductosPublicados() {
  */
 export async function getProductoById(id) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping getProductoById')
+      return { data: null, error: 'Supabase not configured' }
+    }
     const { data, error } = await supabase
       .from('productos')
       .select('*')
@@ -69,7 +81,7 @@ async function generateRandomId() {
   let attempts = 0;
   const maxAttempts = 100;
   
-  while (attempts < maxAttempts) {
+    while (attempts < maxAttempts) {
     // Generar número aleatorio entre 1000 y 9999
     const randomId = Math.floor(Math.random() * 9000) + 1000;
     
@@ -97,6 +109,10 @@ async function generateRandomId() {
  */
 export async function createProducto(producto) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping createProducto')
+      return { data: null, error: 'Supabase not configured' }
+    }
     // Función helper para convertir valores vacíos a null o número válido
     const parseIntOrNull = (value) => {
       if (value === null || value === undefined || value === '') return null;
@@ -175,6 +191,10 @@ export async function createProducto(producto) {
  */
 export async function updateProducto(id, producto) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping updateProducto')
+      return { data: null, error: 'Supabase not configured' }
+    }
     // Helper para parsear material_id correctamente
     const parseMaterialId = (value) => {
       if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
@@ -250,6 +270,10 @@ export async function updateProducto(id, producto) {
  */
 export async function deleteProducto(id) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping deleteProducto')
+      return { error: 'Supabase not configured' }
+    }
     // 1) Revisar si existen referencias en pedidos_catalogo_items
     const { data: items, error: itemsErr } = await supabase
       .from('pedidos_catalogo_items')
@@ -344,6 +368,10 @@ export async function deleteProducto(id) {
  */
 export async function toggleProductoPublicado(id, publicado) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping toggleProductoPublicado')
+      return { data: null, error: 'Supabase not configured' }
+    }
     const { data, error } = await supabase
       .from('productos')
       .update({ publicado })
@@ -364,6 +392,10 @@ export async function toggleProductoPublicado(id, publicado) {
  */
 export async function uploadProductoImagen(file, productoId) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping uploadProductoImagen')
+      return { data: null, error: 'Supabase not configured' }
+    }
     // Comprimir la imagen antes de subir (máx 1200px, quality 0.82 → ~80-180KB típico)
     let fileToUpload = file
     try {
@@ -408,6 +440,10 @@ export async function uploadProductoImagen(file, productoId) {
  */
 export async function deleteProductoImagen(imagePath) {
   try {
+    if (!isSupabaseReady()) {
+      console.warn('Supabase not configured — skipping deleteProductoImagen')
+      return { error: 'Supabase not configured' }
+    }
     const { error } = await supabase.storage
       .from('productos-imagenes')
       .remove([imagePath]);

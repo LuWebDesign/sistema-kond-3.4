@@ -5,6 +5,12 @@
 
 import { supabase, supabaseAdmin } from './supabaseClient';
 
+// Helper to detect whether the Supabase client is initialized. In local dev
+// environments we may not have NEXT_PUBLIC_SUPABASE_URL / ANON_KEY set and the
+// exported `supabase` will be null. Guard calls that assume the client exists
+// so the app can run in offline/fallback mode (localStorage) during development.
+const isSupabaseReady = () => !!(supabase && typeof supabase.from === 'function');
+
 /**
  * Obtener notificaciones para un usuario específico
  * @param {string} targetUser - 'admin' o 'user'
@@ -12,6 +18,32 @@ import { supabase, supabaseAdmin } from './supabaseClient';
  * @returns {Promise<Array>} Lista de notificaciones
  */
 export async function getNotifications(targetUser = 'admin', userId = null) {
+  // If supabase client is not initialized (common in local dev without envs),
+  // fallback to reading notifications from localStorage so the UI doesn't crash.
+  if (!isSupabaseReady()) {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('notifications')
+        const list = stored ? JSON.parse(stored) : []
+        // Filter by targetUser if present
+        const filtered = list.filter(n => {
+          if (!n) return false
+          if (!targetUser) return true
+          return String(n.target_user || 'admin') === String(targetUser)
+        })
+        // If user-specific, further filter by meta.userId when present
+        if (targetUser === 'user' && userId) {
+          return filtered.filter(n => n.meta && String(n.meta.userId) === String(userId))
+        }
+        return filtered
+      } catch (err) {
+        return []
+      }
+    }
+
+    return []
+  }
+
   try {
     let query = supabase
       .from('notifications')
@@ -212,6 +244,25 @@ export async function cleanupOldNotifications() {
  * @returns {Promise<number>} Número de notificaciones no leídas
  */
 export async function getUnreadCount(targetUser = 'admin', userId = null) {
+  // Guard contra falta de cliente Supabase en dev
+  if (!isSupabaseReady()) {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('notifications')
+        const list = stored ? JSON.parse(stored) : []
+        let filtered = list.filter(n => String(n.target_user || 'admin') === String(targetUser))
+        if (targetUser === 'user' && userId) {
+          filtered = filtered.filter(n => n.meta && String(n.meta.userId) === String(userId))
+        }
+        return filtered.filter(n => !n.read).length
+      } catch (err) {
+        return 0
+      }
+    }
+
+    return 0
+  }
+
   try {
     let query = supabase
       .from('notifications')

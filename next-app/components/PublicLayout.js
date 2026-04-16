@@ -198,14 +198,12 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         {/* Panel de notificaciones para el comprador */}
         {currentUser && <NotificationsPanel target="user" isPublic={true} />}
 
-        {/* Section selector — render centered below the header for all /catalog routes */}
-        {typeof window !== 'undefined' && router && router.asPath && router.asPath.startsWith('/catalog') && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: catalogStyles.headerBg || 'transparent' }}>
-            <div style={{ width: '100%', maxWidth: '960px' }}>
-              <SectionSelector />
-            </div>
+        {/* Section selector — render wrapper always to keep DOM stable between SSR and client. */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: catalogStyles.headerBg || 'transparent' }}>
+          <div style={{ width: '100%', maxWidth: '960px' }}>
+            {typeof window !== 'undefined' && router && router.asPath && router.asPath.startsWith('/catalog') ? <SectionSelector /> : null}
           </div>
-        )}
+        </div>
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">
