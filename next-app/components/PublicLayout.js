@@ -1,9 +1,13 @@
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
+import dynamic from 'next/dynamic'
+
+// Lazy-load SectionSelector to avoid SSR issues
+const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
@@ -167,6 +171,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                   {currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}
                 </Link>
               )}
+
+              {/* Section selector (Catálogo · Mis pedidos · Mi cuenta · Carrito) */}
+              <div style={{ marginLeft: 12 }}>
+                <SectionSelector />
+              </div>
             </nav>
           </div>
 
