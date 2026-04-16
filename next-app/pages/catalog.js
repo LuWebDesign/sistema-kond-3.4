@@ -801,7 +801,22 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               src={product.imagenes[imageIndex]}
               alt={product.nombre}
               loading="lazy"
-              onClick={(e) => { e.stopPropagation(); onImageClick && onImageClick(product.id, imageIndex) }}
+              onClick={(e) => {
+                // On mobile we want tapping the image to navigate to the product page
+                // (so the user can open the product), and avoid opening the image
+                // lightbox which would intercept the tap. On desktop keep the
+                // lightbox behavior.
+                try {
+                  if (typeof window !== 'undefined' && window.innerWidth <= 640) {
+                    // allow event to bubble to parent which handles navigation
+                    return
+                  }
+                } catch (err) {
+                  // if any issue reading window, fall back to desktop behavior
+                }
+                e.stopPropagation()
+                onImageClick && onImageClick(product.id, imageIndex)
+              }}
               style={{
                 position: 'absolute',
                 top: 0,
