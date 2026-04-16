@@ -4,10 +4,7 @@ import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
-import dynamic from 'next/dynamic'
-
-// Lazy-load SectionSelector to avoid SSR issues
-const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false })
+// SectionSelector is rendered where the catalog layout expects it (not in the global header)
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')

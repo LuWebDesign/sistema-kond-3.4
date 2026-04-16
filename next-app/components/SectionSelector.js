@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useCart } from '../hooks/useCatalog'
 
 export default function SectionSelector({ className, style }) {
+  // Lightweight selector that can be embedded in the catalog header area.
   const router = useRouter()
   const { totalItems } = useCart()
   const [currentUser, setCurrentUser] = useState(null)
@@ -18,10 +19,10 @@ export default function SectionSelector({ className, style }) {
   }, [])
 
   return (
-    <div className={className} style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, marginLeft: 12, ...style }}>
+    <div className={className} style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, ...style }}>
       <button
         onClick={() => router.push('/catalog')}
-        style={{ background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)', border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+        style={{ background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)', border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
       >
         Catálogo
       </button>
@@ -29,7 +30,7 @@ export default function SectionSelector({ className, style }) {
       {currentUser && (
         <button
           onClick={() => router.push('/catalog/mis-pedidos')}
-          style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+          style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
         >
           Mis Pedidos
         </button>
@@ -37,14 +38,14 @@ export default function SectionSelector({ className, style }) {
 
       <button
         onClick={() => router.push('/catalog/user')}
-        style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+        style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
       >
         {currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}
       </button>
 
       <button
         onClick={() => router.push('/catalog/mi-carrito')}
-        style={{ position: 'relative', background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+        style={{ position: 'relative', background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
       >
         🛒 Carrito
         {totalItems > 0 && (

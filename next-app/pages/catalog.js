@@ -18,6 +18,10 @@ import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
 import { useNotifications } from '../components/NotificationsProvider'
+import dynamic from 'next/dynamic'
+
+// Client-only SectionSelector (keeps selector persistent on product pages)
+const SectionSelector = dynamic(() => import('../components/SectionSelector'), { ssr: false })
 
 export default function Catalog() {
   const router = useRouter()
@@ -364,15 +368,9 @@ export default function Catalog() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>🛒 Nuestros Productos</h1>
 
-            <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: '8px', marginLeft: '12px' }}>
-              <button style={{ background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)', border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Catálogo</button>
-              {currentUserState && <button onClick={() => router.push('/catalog/mis-pedidos')} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>Mis Pedidos</button>}
-              <button onClick={() => { router.push('/catalog/mi-carrito') }} style={{ position: 'relative', background: 'transparent', color: 'var(--text-secondary)', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                🛒 Carrito
-                {totalItems > 0 && (
-                  <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>{totalItems}</span>
-                )}
-              </button>
+            {/* Section selector (placed next to the page title so it matches the original location) */}
+            <div style={{ marginLeft: 12 }}>
+              <SectionSelector />
             </div>
           </div>
         </div>
@@ -403,6 +401,8 @@ export default function Catalog() {
           />
           
           <div style={{ position: 'relative' }}>
+              {/* SectionSelector: render here in the original catalog header area so it
+                  persists across category and product pages when Catalog is mounted. */}
               <select
               value={slugifyPreserveCase(selectedCategory)}
               onChange={(e) => {
