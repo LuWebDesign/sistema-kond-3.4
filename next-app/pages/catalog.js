@@ -18,10 +18,7 @@ import { useRouter } from 'next/router'
 import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
 import { useNotifications } from '../components/NotificationsProvider'
-import dynamic from 'next/dynamic'
-
-// Client-only SectionSelector (keeps selector persistent on product pages)
-const SectionSelector = dynamic(() => import('../components/SectionSelector'), { ssr: false })
+import SectionSelectorClient from '../components/SectionSelectorClient'
 
 export default function Catalog() {
   const router = useRouter()
@@ -370,7 +367,7 @@ export default function Catalog() {
 
             {/* Section selector (placed next to the page title so it matches the original location) */}
             <div style={{ marginLeft: 12 }}>
-              <SectionSelector />
+              <SectionSelectorClient />
             </div>
           </div>
         </div>

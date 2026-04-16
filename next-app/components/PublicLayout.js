@@ -169,10 +169,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 </Link>
               )}
 
-              {/* Section selector (Catálogo · Mis pedidos · Mi cuenta · Carrito) */}
-              <div style={{ marginLeft: 12 }}>
-                <SectionSelector />
-              </div>
+              {/* Section selector removed from global header — rendered in catalog/product pages */}
             </nav>
           </div>
 
