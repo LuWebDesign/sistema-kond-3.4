@@ -5,6 +5,11 @@
 
 import supabase from './supabaseClient';
 
+// Logger silenciado en producción para evitar fugas de info sensible
+const log = process.env.NODE_ENV !== 'production'
+  ? { warn: console.warn.bind(console), error: console.error.bind(console) }
+  : { warn: () => {}, error: () => {} };
+
 /**
  * Generar ID aleatorio de 4 dígitos único para pedidos catálogo
  */
@@ -35,13 +40,12 @@ async function generateRandomPedidoId() {
         continue;
       }
 
-        metodo_entrega: pedido.metodoEntrega || pedido.metodo_entrega || 'envio',
       // Si hay error, intentar otro ID (podría ser problema de permisos)
-      console.warn(`Error verificando ID ${randomId}:`, error);
+      log.warn(`Error verificando ID ${randomId}:`, error);
       attempts++;
 
     } catch (err) {
-      console.warn(`Error verificando ID ${randomId}:`, err);
+      log.warn(`Error verificando ID ${randomId}:`, err);
       attempts++;
     }
   }
@@ -66,7 +70,7 @@ export async function getAllPedidosCatalogo() {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al obtener pedidos catálogo:', error);
+    log.error('Error al obtener pedidos catálogo:', error);
     return { data: null, error: error.message };
   }
 }
@@ -134,7 +138,7 @@ export async function getPedidosCatalogoParaCalendario() {
     
     return { data: mappedData, error: null };
   } catch (error) {
-    console.error('Error al obtener pedidos catálogo para calendario:', error);
+    log.error('Error al obtener pedidos catálogo para calendario:', error);
     return { data: null, error: error.message };
   }
 }
@@ -156,7 +160,7 @@ export async function getPedidoCatalogoById(id) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al obtener pedido catálogo:', error);
+    log.error('Error al obtener pedido catálogo:', error);
     return { data: null, error: error.message };
   }
 }
@@ -183,6 +187,11 @@ export async function createPedidoCatalogo(pedido, items) {
     const randomId = await generateRandomPedidoId();
     
     // 1. Crear el pedido principal
+    // Preservar valores explícitos de montoRecibido, incluso si son 0.
+    const montoRecibidoToInsert = (pedido.montoRecibido !== undefined && pedido.montoRecibido !== null)
+      ? Number(pedido.montoRecibido)
+      : (pedido.total !== undefined && pedido.total !== null ? Number(pedido.total) : 0)
+
     const { data: pedidoData, error: pedidoError } = await supabase
       .from('pedidos_catalogo')
       .insert([{
@@ -198,7 +207,7 @@ export async function createPedidoCatalogo(pedido, items) {
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
         total: Number(pedido.total) || 0,
-        monto_recibido: Number(pedido.montoRecibido || pedido.total || 0),
+        monto_recibido: montoRecibidoToInsert,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
       }])
       .select()
@@ -236,7 +245,7 @@ export async function createPedidoCatalogo(pedido, items) {
       error: null 
     };
   } catch (error) {
-    console.error('Error al crear pedido catálogo:', error);
+    log.error('Error al crear pedido catálogo:', error);
     return { data: null, error: error.message };
   }
 }
@@ -278,7 +287,7 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al actualizar pedido catálogo:', error);
+    log.error('Error al actualizar pedido catálogo:', error);
     return { data: null, error: error.message };
   }
 }
@@ -298,7 +307,7 @@ export async function updateEstadoPago(id, estadoPago) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al actualizar estado de pago:', error);
+    log.error('Error al actualizar estado de pago:', error);
     return { data: null, error: error.message };
   }
 }
@@ -336,7 +345,7 @@ export async function updateMontoRecibido(id, montoRecibido, nuevoEstadoPago) {
 
     return { data: pedidoActualizado, error: null };
   } catch (error) {
-    console.error('Error al actualizar monto recibido:', error);
+    log.error('Error al actualizar monto recibido:', error);
     return { data: null, error: error.message };
   }
 }
@@ -355,7 +364,7 @@ export async function deletePedidoCatalogo(id) {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('Error al eliminar pedido catálogo:', error);
+    log.error('Error al eliminar pedido catálogo:', error);
     return { error: error.message };
   }
 }
@@ -388,7 +397,7 @@ export async function uploadComprobante(file, pedidoId) {
 
     return { data: { path: filePath, url: signedData.signedUrl }, error: null };
   } catch (error) {
-    console.error('Error al subir comprobante:', error);
+    log.error('Error al subir comprobante:', error);
     return { data: null, error: error.message };
   }
 }
@@ -401,6 +410,9 @@ export async function uploadComprobante(file, pedidoId) {
  * @returns {Promise<{data: {path: string, url: string}|null, error: string|null}>}
  */
 export async function uploadComprobanteBase64(base64DataUrl, pedidoId) {
+  if (typeof window === 'undefined') {
+    throw new Error('uploadComprobanteBase64 solo puede ejecutarse en el cliente (browser-only)');
+  }
   try {
     if (!base64DataUrl) throw new Error('No se proporcionó comprobante')
 
@@ -421,7 +433,7 @@ export async function uploadComprobanteBase64(base64DataUrl, pedidoId) {
 
     return uploadComprobante(file, pedidoId)
   } catch (error) {
-    console.error('Error al procesar comprobante base64:', error)
+    log.error('Error al procesar comprobante base64:', error)
     return { data: null, error: error.message }
   }
 }
@@ -438,7 +450,7 @@ export async function getComprobanteSignedUrl(filePath) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al obtener URL firmada:', error);
+    log.error('Error al obtener URL firmada:', error);
     return { data: null, error: error.message };
   }
 }
@@ -460,7 +472,7 @@ export async function getPedidosByEstadoPago(estadoPago) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al filtrar pedidos:', error);
+    log.error('Error al filtrar pedidos:', error);
     return { data: null, error: error.message };
   }
 }
@@ -482,7 +494,7 @@ export async function getPedidosByMetodoPago(metodoPago) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al filtrar pedidos por método:', error);
+    log.error('Error al filtrar pedidos por método:', error);
     return { data: null, error: error.message };
   }
 }
@@ -504,7 +516,7 @@ export async function searchPedidosByCliente(searchTerm) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al buscar pedidos:', error);
+    log.error('Error al buscar pedidos:', error);
     return { data: null, error: error.message };
   }
 }
@@ -527,7 +539,7 @@ export async function getPedidosByEmail(email) {
     // console.log('✅ Pedidos del usuario cargados desde Supabase:', data?.length || 0);
     return { data, error: null };
   } catch (error) {
-    console.error('❌ Error al obtener pedidos del usuario:', error);
+    log.error('❌ Error al obtener pedidos del usuario:', error);
     return { data: null, error: error.message };
   }
 }
