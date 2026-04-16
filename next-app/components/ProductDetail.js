@@ -6,7 +6,8 @@ import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { slugifyPreserveCase } from '../utils/slugify'
-import SectionSelectorClient from './SectionSelectorClient'
+import dynamic from 'next/dynamic'
+const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
 
 const SPEC_FIELDS = [
   { key: 'medidas', label: 'Medidas' },
@@ -80,7 +81,7 @@ export default function ProductDetail({ product, categories = [] }) {
 
         {/* Section selector - same position as in catalog header so navigation persists visually */}
         <div style={{ margin: '12px 0' }}>
-          <SectionSelectorClient />
+          <SectionSelector />
         </div>
 
         {/* ── Galería de imágenes ───────────────────────── */}
