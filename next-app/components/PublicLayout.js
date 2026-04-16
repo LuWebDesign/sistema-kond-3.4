@@ -4,7 +4,10 @@ import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
-// SectionSelector is rendered where the catalog layout expects it (not in the global header)
+import dynamic from 'next/dynamic'
+
+  // Render the SectionSelector client-side only and only for /catalog routes.
+const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
@@ -219,6 +222,13 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
         {/* Panel de notificaciones para el comprador */}
         {currentUser && <NotificationsPanel target="user" isPublic={true} />}
+
+        {/* Section selector — render centered below the header for all /catalog routes */}
+        {typeof window !== 'undefined' && router && router.asPath && router.asPath.startsWith('/catalog') && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: catalogStyles.headerBg || 'transparent' }}>
+            <SectionSelector />
+          </div>
+        )}
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">
