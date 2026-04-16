@@ -310,48 +310,7 @@ export default function MisPedidos() {
               📦 Mis Pedidos
             </h1>
             
-            {/* Botones de navegación */}
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              background: 'var(--bg-section)',
-              padding: '4px',
-              borderRadius: '8px'
-            }}>
-              <button
-                onClick={() => router.push('/catalog')}
-                style={{
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
-              >
-                Catálogo
-              </button>
-              <button
-                style={{
-                  background: 'var(--accent-blue)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Mis Pedidos
-              </button>
-            </div>
+            {/* Navigation buttons removed — SectionSelector (rendered by PublicLayout) provides navigation for /catalog routes */}
           </div>
         </div>
 
