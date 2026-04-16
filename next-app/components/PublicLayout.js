@@ -156,21 +156,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 🛍️ Catálogo
               </Link>
               
-              {/* Solo mostrar Mi Cuenta/Iniciar sesión si no estamos en esa página */}
-              {title !== 'Mi Cuenta - KOND' && (
-                <Link href="/catalog/user" style={{
-                  color: 'var(--text-primary)',
-                  textDecoration: 'none',
-                  fontWeight: 500,
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                  {currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}
-                </Link>
-              )}
+              {/* Mi Cuenta / Iniciar sesión handled by SectionSelector — do not render in header to avoid duplication */}
 
               {/* Section selector removed from global header — rendered in catalog/product pages */}
             </nav>
@@ -181,18 +167,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             alignItems: 'center',
             gap: '16px'
           }}>
-            {/* Mi cuenta visible en la derecha (útil en móvil) - solo mostrar si no estamos en la página de usuario */}
-            {title !== 'Mi Cuenta - KOND' && (
-              <Link href="/catalog/user" style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                border: '1px solid transparent',
-                background: 'transparent',
-                display: 'inline-block'
-              }}>{currentUser ? 'Mi Cuenta' : 'Iniciar sesión'}</Link>
-            )}
+            {/* Account links removed from header — SectionSelector provides account / login actions for catalog pages */}
             
             {/* Botón de tema */}
             <button
