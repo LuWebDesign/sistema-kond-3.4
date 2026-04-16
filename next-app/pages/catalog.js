@@ -1631,7 +1631,7 @@ function CheckoutModal({
         })),
         metodoPago: paymentMethod,
         metodoEntrega: deliveryMethod,
-        estadoPago: 'pagado_total',
+        estadoPago: paymentMethod === 'transferencia' ? 'pagado_total' : 'pendiente',
         fechaSolicitudEntrega: selectedDeliveryDate,
         total: total,
         subtotal: subtotal,

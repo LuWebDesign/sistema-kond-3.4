@@ -614,32 +614,37 @@ export function useOrders() {
 
       // ============================================
       // DESCONTAR STOCK DE PRODUCTOS
+      // Solo se descuenta cuando la venta está confirmada (transferencia, pasarelas de pago).
+      // WhatsApp es una consulta — el stock se descuenta cuando el admin confirma la venta
+      // desde Pedidos Internos.
       // ============================================
-      try {
-        const supabase = (await import('../utils/supabaseClient')).default
+      if (orderData.metodoPago !== 'whatsapp') {
+        try {
+          const supabase = (await import('../utils/supabaseClient')).default
 
-        for (const item of items) {
-          const { data: producto, error: fetchError } = await supabase
-            .from('productos')
-            .select('stock')
-            .eq('id', item.idProducto)
-            .single()
+          for (const item of items) {
+            const { data: producto, error: fetchError } = await supabase
+              .from('productos')
+              .select('stock')
+              .eq('id', item.idProducto)
+              .single()
 
-          if (fetchError) {
-            continue
+            if (fetchError) {
+              continue
+            }
+
+            const nuevoStock = Math.max(0, (producto.stock || 0) - item.quantity)
+
+            const { error: updateError } = await supabase
+              .from('productos')
+              .update({ stock: nuevoStock })
+              .eq('id', item.idProducto)
+
+            if (updateError) {
+            }
           }
-
-          const nuevoStock = Math.max(0, (producto.stock || 0) - item.quantity)
-
-          const { error: updateError } = await supabase
-            .from('productos')
-            .update({ stock: nuevoStock })
-            .eq('id', item.idProducto)
-
-          if (updateError) {
-          }
+        } catch (stockError) {
         }
-      } catch (stockError) {
       }
 
       // ============================================
