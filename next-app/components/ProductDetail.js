@@ -78,10 +78,7 @@ export default function ProductDetail({ product, categories = [] }) {
           <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{product.nombre}</span>
         </nav>
 
-        {/* Section selector - same position as in catalog header so navigation persists visually */}
-        <div style={{ margin: '12px 0' }}>
-          <SectionSelector />
-        </div>
+        {/* Section selector removed — PublicLayout renders it centered below the header for /catalog routes */}
 
         {/* ── Galería de imágenes ───────────────────────── */}
         <div className="pd-images">
