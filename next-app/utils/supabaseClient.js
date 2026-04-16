@@ -28,7 +28,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Exportar el cliente (puede ser null si no hay variables)
-export { supabase };
+// Helper to know if the public supabase client is available
+const isSupabaseReady = () => !!supabase;
+
+export { supabase, isSupabaseReady };
 
 // Cliente con service_role (solo para operaciones server-side)
 // ⚠️ NUNCA usar en el cliente, solo en API routes
