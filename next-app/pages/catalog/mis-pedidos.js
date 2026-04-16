@@ -437,12 +437,7 @@ export default function MisPedidos() {
             </div>
 
             {/* Lista de pedidos */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-              gap: '24px',
-              marginBottom: '32px'
-            }}>
+            <div className="user-orders-grid" style={{ marginBottom: '32px' }}>
               {paginatedOrders.map(order => (
                 <UserOrderCard
                   key={order.id}

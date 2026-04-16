@@ -201,7 +201,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         {/* Section selector — render centered below the header for all /catalog routes */}
         {typeof window !== 'undefined' && router && router.asPath && router.asPath.startsWith('/catalog') && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: catalogStyles.headerBg || 'transparent' }}>
-            <SectionSelector />
+            <div style={{ width: '100%', maxWidth: '960px' }}>
+              <SectionSelector />
+            </div>
           </div>
         )}
 
@@ -390,6 +392,18 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             flex-direction: column;
             gap: 8px;
             align-items: flex-start;
+          }
+          /* Make the SectionSelector and main content respect a centered max-width on mobile */
+          .kond-viewport main > div, .kond-viewport main > section, .kond-viewport main > article, .kond-viewport main > .user-orders-grid {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 12px;
+          }
+          /* Ensure user order cards don't overflow the selector width */
+          .user-orders-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
           }
         }
       `}</style>
