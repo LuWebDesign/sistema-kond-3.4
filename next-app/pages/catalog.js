@@ -19,7 +19,8 @@ import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
 import { useNotifications } from '../components/NotificationsProvider'
 import dynamic from 'next/dynamic'
-const SectionSelector = dynamic(() => import('../components/SectionSelector'), { ssr: false, loading: () => null })
+// SectionSelector is rendered by PublicLayout for all /catalog routes.
+// Remove local import to avoid duplicate selectors.
 
 export default function Catalog() {
   const router = useRouter()
@@ -366,10 +367,7 @@ export default function Catalog() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>🛒 Nuestros Productos</h1>
 
-            {/* Section selector (placed next to the page title so it matches the original location) */}
-            <div style={{ marginLeft: 12 }}>
-              <SectionSelector />
-            </div>
+            {/* Section selector removed from here — PublicLayout renders it centered below the header for /catalog routes */}
           </div>
         </div>
 

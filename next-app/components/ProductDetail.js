@@ -6,8 +6,7 @@ import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { slugifyPreserveCase } from '../utils/slugify'
-import dynamic from 'next/dynamic'
-const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
+// SectionSelector is provided by PublicLayout for /catalog routes — avoid local duplication
 
 const SPEC_FIELDS = [
   { key: 'medidas', label: 'Medidas' },
