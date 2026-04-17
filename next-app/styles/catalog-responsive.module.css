@@ -1,3 +1,37 @@
+/* ── Standalone page layouts (no fixed height, page scrolls naturally) ── */
+.cartPageLayout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.checkoutPageLayout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.pageColumn {
+  padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.pageColumnRight {
+  padding: 24px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .cartModalDialog {
   width: 100%;
   max-width: 900px;
@@ -105,4 +139,15 @@
     box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
   }
   .mobileActions button { font-weight: 700; }
+
+  .cartPageLayout,
+  .checkoutPageLayout {
+    grid-template-columns: 1fr !important;
+    border-radius: 0 !important;
+  }
+  .pageColumnRight {
+    border-left: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    width: 100% !important;
+  }
 }

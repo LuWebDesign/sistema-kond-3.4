@@ -1,21 +1,24 @@
 import Link from 'next/link'
-import { useState, useEffect, Suspense } from 'react'
+import Head from 'next/head'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
 import dynamic from 'next/dynamic'
 
-// Render the SectionSelector and CartModal client-side only and only for /catalog routes.
+// Sanitize admin-provided CSS values to prevent CSS injection via dangerouslySetInnerHTML.
+// Strips characters that could break out of CSS context (<, >, ", \) and blocks JS injection.
+const sanitizeCSSValue = (val) => String(val).replace(/[<>"'\\]/g, '').replace(/javascript:/gi, '')
+
+// Render the SectionSelector client-side only for /catalog and /mi-carrito routes.
 const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
-const CartModal = dynamic(() => import('./CartModal'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [currentUser, setCurrentUser] = useState(null)
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
-  const [showCart, setShowCart] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -45,20 +48,12 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
 
-  // Global cart open listener so any page can open the cart modal without navigating
-  useEffect(() => {
-    const openCartHandler = () => setShowCart(true)
-    if (typeof window !== 'undefined') window.addEventListener('catalog:openCart', openCartHandler)
-    return () => { if (typeof window !== 'undefined') window.removeEventListener('catalog:openCart', openCartHandler) }
-  }, [])
-
   // Update header badge when cart changes in localStorage or when our internal hook dispatches cart:updated
   useEffect(() => {
     const handler = (e) => {
       try {
         // force re-render by reading from localStorage (SectionSelector reads useCart hook)
         // this keeps the badge up-to-date without requiring a full page reload
-        const c = JSON.parse(localStorage.getItem('cart') || '[]')
         // no-op: setting state to trigger rerender
         setCatalogStyles(prev => ({ ...prev }))
       } catch (err) {
@@ -79,7 +74,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       // llevar al catálogo público
       router.push('/catalog')
     } catch (e) {
-      console.error('Logout error', e)
       createToast('No se pudo cerrar sesión', 'error')
     }
   }
@@ -90,7 +84,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       if (e.key === 'currentUser') {
         try {
           setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null)
-        } catch {}
+        } catch { /* invalid JSON in storage event: skip */ }
       }
     }
     window.addEventListener('storage', handleStorage)
@@ -112,7 +106,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
   return (
     <>
-      <title>{title}</title>
+      <Head><title>{title}</title></Head>
 
       {/* Banner superior personalizable */}
       {catalogStyles.bannerEnabled && catalogStyles.bannerText && (
@@ -169,9 +163,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </Link>
           </div>
 
-          {/* Center: SectionSelector (only shown on /catalog routes). Integrated into header for both mobile and desktop. */}
+          {/* Center: SectionSelector (shown on /catalog and /mi-carrito routes). */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          {isClient && router && router.asPath && router.asPath.startsWith('/catalog') && (
+          {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
               <div style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
                 <SectionSelector />
               </div>
@@ -210,10 +204,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         {/* Panel de notificaciones para el comprador */}
         {currentUser && <NotificationsPanel target="user" isPublic={true} />}
 
-        {/* SectionSelector is now integrated into the header center for /catalog routes to avoid duplication. */}
-
-        {/* Global CartModal (client-only) */}
-        {isClient && showCart && <CartModal onClose={() => setShowCart(false)} />}
+        {/* SectionSelector is now integrated into the header center for /catalog and /mi-carrito routes. */}
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">
@@ -291,8 +282,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                       fontSize: '0.9rem',
                       transition: 'color 0.2s'
                     }}
-                    onMouseEnter={(e) => e.target.style.color = 'var(--accent-blue)'}
-                    onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-blue)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}>
                       {currentUser ? 'Mi cuenta' : 'Iniciar sesión'}
                     </Link>
                   )}
@@ -459,22 +450,22 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       {/* Override dinámico de variables CSS según estilos del admin */}
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
-          ${catalogStyles.accentColor ? `--accent-blue: ${catalogStyles.accentColor};` : ''}
-          ${catalogStyles.accentColor ? `--accent-color: ${catalogStyles.accentColor};` : ''}
-          ${catalogStyles.buttonBg ? `--kond-btn-bg: ${catalogStyles.buttonBg};` : ''}
-          ${catalogStyles.buttonTextColor ? `--kond-btn-color: ${catalogStyles.buttonTextColor};` : ''}
-          ${catalogStyles.buttonRadius ? `--kond-btn-radius: ${catalogStyles.buttonRadius}px;` : ''}
-          ${catalogStyles.cardBg ? `--kond-card-bg: ${catalogStyles.cardBg};` : ''}
-          ${catalogStyles.cardBorderColor ? `--kond-card-border: ${catalogStyles.cardBorderColor};` : ''}
-          ${catalogStyles.cardRadius ? `--kond-card-radius: ${catalogStyles.cardRadius}px;` : ''}
-          ${catalogStyles.badgeBg ? `--kond-badge-bg: ${catalogStyles.badgeBg};` : ''}
-          ${catalogStyles.badgeTextColor ? `--kond-badge-color: ${catalogStyles.badgeTextColor};` : ''}
+          ${catalogStyles.accentColor ? `--accent-blue: ${sanitizeCSSValue(catalogStyles.accentColor)};` : ''}
+          ${catalogStyles.accentColor ? `--accent-color: ${sanitizeCSSValue(catalogStyles.accentColor)};` : ''}
+          ${catalogStyles.buttonBg ? `--kond-btn-bg: ${sanitizeCSSValue(catalogStyles.buttonBg)};` : ''}
+          ${catalogStyles.buttonTextColor ? `--kond-btn-color: ${sanitizeCSSValue(catalogStyles.buttonTextColor)};` : ''}
+          ${catalogStyles.buttonRadius ? `--kond-btn-radius: ${sanitizeCSSValue(catalogStyles.buttonRadius)}px;` : ''}
+          ${catalogStyles.cardBg ? `--kond-card-bg: ${sanitizeCSSValue(catalogStyles.cardBg)};` : ''}
+          ${catalogStyles.cardBorderColor ? `--kond-card-border: ${sanitizeCSSValue(catalogStyles.cardBorderColor)};` : ''}
+          ${catalogStyles.cardRadius ? `--kond-card-radius: ${sanitizeCSSValue(catalogStyles.cardRadius)}px;` : ''}
+          ${catalogStyles.badgeBg ? `--kond-badge-bg: ${sanitizeCSSValue(catalogStyles.badgeBg)};` : ''}
+          ${catalogStyles.badgeTextColor ? `--kond-badge-color: ${sanitizeCSSValue(catalogStyles.badgeTextColor)};` : ''}
         }
-        ${catalogStyles.cardBg ? `.product-card { background: ${catalogStyles.cardBg} !important; }` : ''}
-        ${catalogStyles.cardBorderColor ? `.product-card { border-color: ${catalogStyles.cardBorderColor} !important; }` : ''}
-        ${catalogStyles.cardRadius ? `.product-card { border-radius: ${catalogStyles.cardRadius}px !important; }` : ''}
-        ${catalogStyles.badgeBg ? `.category-badge { background: ${catalogStyles.badgeBg} !important; border: none !important; }` : ''}
-        ${catalogStyles.badgeTextColor ? `.category-badge, .category-badge span { color: ${catalogStyles.badgeTextColor} !important; }` : ''}
+        ${catalogStyles.cardBg ? `.product-card { background: ${sanitizeCSSValue(catalogStyles.cardBg)} !important; }` : ''}
+        ${catalogStyles.cardBorderColor ? `.product-card { border-color: ${sanitizeCSSValue(catalogStyles.cardBorderColor)} !important; }` : ''}
+        ${catalogStyles.cardRadius ? `.product-card { border-radius: ${sanitizeCSSValue(catalogStyles.cardRadius)}px !important; }` : ''}
+        ${catalogStyles.badgeBg ? `.category-badge { background: ${sanitizeCSSValue(catalogStyles.badgeBg)} !important; border: none !important; }` : ''}
+        ${catalogStyles.badgeTextColor ? `.category-badge, .category-badge span { color: ${sanitizeCSSValue(catalogStyles.badgeTextColor)} !important; }` : ''}
       ` }} />
     </>
   )
