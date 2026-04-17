@@ -67,7 +67,15 @@ export default function SectionSelector({ className, style }) {
       </button>
 
       <button
-        onClick={() => router.push('/catalog/mi-carrito')}
+        onClick={() => {
+          if (isCarrito) {
+            // Ya estamos en /catalog/mi-carrito — solo abrir el modal directamente
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('catalog:openCart'))
+          } else {
+            // Navegar a /catalog/mi-carrito (la page dispara catalog:openCart al montar)
+            router.push('/catalog/mi-carrito')
+          }
+        }}
         aria-current={isCarrito ? 'page' : undefined}
         style={{ ...baseBtn, ...(isCarrito ? activeStyle : inactiveStyle), position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}
       >
