@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import dynamic from 'next/dynamic'
 import styles from '../styles/catalog-responsive.module.css'
 import { useCart } from '../hooks/useCatalog'
 

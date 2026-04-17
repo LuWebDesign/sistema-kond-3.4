@@ -43,7 +43,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     getCatalogStyles().then(s => { if (s) setCatalogStyles(s) }).catch(() => {})
     // Escuchar actualizaciones en tiempo real desde el admin
     const onStylesUpdate = (e) => { if (e.detail) setCatalogStyles(prev => ({ ...prev, ...e.detail })) }
-    window.addEventListener('catalogStyles:updated', onStylesUpdate)
+    if (typeof window !== 'undefined') window.addEventListener('catalogStyles:updated', onStylesUpdate)
     // mark as mounted/client so we can safely render client-only pieces
     setIsClient(true)
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
@@ -62,9 +62,12 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       }
     }
 
-    window.addEventListener('cart:updated', handler)
-    window.addEventListener('storage', handler)
-    return () => { window.removeEventListener('cart:updated', handler); window.removeEventListener('storage', handler) }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cart:updated', handler)
+      window.addEventListener('storage', handler)
+      return () => { window.removeEventListener('cart:updated', handler); window.removeEventListener('storage', handler) }
+    }
+    return () => {}
   }, [])
 
   const handleLogout = () => {
