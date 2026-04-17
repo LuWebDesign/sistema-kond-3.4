@@ -98,9 +98,10 @@
 
 /* Mobile-specific adjustments */
 @media (max-width: 768px) {
-  /* Hide the central SectionSelector area (header nav) on small screens via existing selectors
-     The existing code uses header nav; this ensures duplication doesn't appear on mobile */
-  header nav { display: none !important; }
+  /* Hide the central SectionSelector area (header nav) on small screens via global selector.
+     CSS Modules require local classes; wrap global selectors with :global(...) so the rule
+     is emitted as a global CSS rule. */
+  :global(header nav) { display: none !important; }
 
   /* Use native scrollbar behavior in mobile drawer */
   .mobileSelectorMenu { -webkit-overflow-scrolling: touch; }
