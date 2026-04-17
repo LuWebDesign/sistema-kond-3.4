@@ -56,3 +56,8 @@ Only include concise analysis after that.
 - Authoritative docs: prefer executable sources (`verify-setup.js`, `supabase/*.js`, `next-app/package.json`, `.github/workflows/ci.yml`) over prose. If docs conflict with scripts, follow the scripts and update docs.
 
 - If you plan cross-cutting changes (data model, storage keys, auth, build config), STOP and list the files you intend to change — this repo contains two running frontends and migration scripts that must be kept in sync.
+
+## Registered project skills
+
+- analytics-cards — Reusable analytics card component and compact rules (skills/analytics-cards/SKILL.md)
+- skill-creator — Skill creation templates and rules (file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md)
