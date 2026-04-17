@@ -86,7 +86,7 @@ export default function CartPage() {
               </div>
             ) : (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className={stylesResp.itemsScroll}>
                   {cart.map((item, idx) => {
                     const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
                     const original = (item.originalPrice !== undefined && item.originalPrice !== null)
