@@ -13,6 +13,7 @@ const sanitizeCSSValue = (val) => String(val).replace(/[<>"'\\]/g, '').replace(/
 
 // Render the SectionSelector client-side only for /catalog and /mi-carrito routes.
 const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
+const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
@@ -165,14 +166,14 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
           {/* Center: SectionSelector (shown on /catalog and /mi-carrito routes). */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
+            {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
               <div style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
                 <SectionSelector />
               </div>
             )}
           </div>
 
-          {/* Right: theme toggle and notifications */}
+          {/* Right: theme toggle, notifications, and mobile selector */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -198,6 +199,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </button>
 
             {currentUser && <NotificationsButton />}
+
+            {/* Mobile selector (renders its own trigger) */}
+            <div>
+              <MobileSectionSelector />
+            </div>
           </div>
         </header>
 
@@ -224,104 +230,104 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             textAlign: 'center',
             color: catalogStyles.footerTextColor || 'var(--text-secondary)'
           }}>
-          <div style={{
-            maxWidth: '1200px',
-            margin: '0 auto'
-          }}>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '32px',
-              marginBottom: '24px'
+              maxWidth: '1200px',
+              margin: '0 auto'
             }}>
-              <div>
-                <h3 style={{
-                  color: catalogStyles.footerTextColor || 'var(--text-primary)',
-                  marginBottom: '16px',
-                  fontSize: '1.1rem',
-                  fontWeight: 600
-                }}>
-                  {catalogStyles.logoText || 'KOND'}
-                </h3>
-                <p style={{
-                  fontSize: '0.9rem',
-                  lineHeight: 1.6
-                }}>
-                  {catalogStyles.footerDescription || 'Tu tienda de confianza para productos de calidad. Comprá fácil y seguro desde la comodidad de tu hogar.'}
-                </p>
-              </div>
-              
-              <div>
-                <h4 style={{
-                  color: 'var(--text-primary)',
-                  marginBottom: '16px',
-                  fontSize: '1rem',
-                  fontWeight: 600
-                }}>
-                  Enlaces útiles
-                </h4>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <Link href="/catalog" style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    transition: 'color 0.2s'
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '32px',
+                marginBottom: '24px'
+              }}>
+                <div>
+                  <h3 style={{
+                    color: catalogStyles.footerTextColor || 'var(--text-primary)',
+                    marginBottom: '16px',
+                    fontSize: '1.1rem',
+                    fontWeight: 600
                   }}>
-                    Catálogo de productos
-                  </Link>
-                  
-                  {/* Solo mostrar Mi cuenta en menú móvil si no estamos en esa página */}
-                  {title !== 'Mi Cuenta - KOND' && (
-                    <Link href="/catalog/user" style={{
+                    {catalogStyles.logoText || 'KOND'}
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    lineHeight: 1.6
+                  }}>
+                    {catalogStyles.footerDescription || 'Tu tienda de confianza para productos de calidad. Comprá fácil y seguro desde la comodidad de tu hogar.'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 style={{
+                    color: 'var(--text-primary)',
+                    marginBottom: '16px',
+                    fontSize: '1rem',
+                    fontWeight: 600
+                  }}>
+                    Enlaces útiles
+                  </h4>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <Link href="/catalog" style={{
                       color: 'var(--text-secondary)',
                       textDecoration: 'none',
                       fontSize: '0.9rem',
                       transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-blue)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}>
-                      {currentUser ? 'Mi cuenta' : 'Iniciar sesión'}
+                    }}>
+                      Catálogo de productos
                     </Link>
-                  )}
+                    
+                    {/* Solo mostrar Mi cuenta en menú móvil si no estamos en esa página */}
+                    {title !== 'Mi Cuenta - KOND' && (
+                      <Link href="/catalog/user" style={{
+                        color: 'var(--text-secondary)',
+                        textDecoration: 'none',
+                        fontSize: '0.9rem',
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-blue)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}>
+                        {currentUser ? 'Mi cuenta' : 'Iniciar sesión'}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 style={{
+                    color: 'var(--text-primary)',
+                    marginBottom: '16px',
+                    fontSize: '1rem',
+                    fontWeight: 600
+                  }}>
+                    Contacto
+                  </h4>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    fontSize: '0.9rem'
+                  }}>
+                    <div>📱 {catalogStyles.footerPhone || '+54 11 1234-5678'}</div>
+                    <div>📧 {catalogStyles.footerEmail || 'info@kond.com'}</div>
+                    <div>📍 {catalogStyles.footerAddress || 'Buenos Aires, Argentina'}</div>
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <h4 style={{
-                  color: 'var(--text-primary)',
-                  marginBottom: '16px',
-                  fontSize: '1rem',
-                  fontWeight: 600
-                }}>
-                  Contacto
-                </h4>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  <div>📱 {catalogStyles.footerPhone || '+54 11 1234-5678'}</div>
-                  <div>📧 {catalogStyles.footerEmail || 'info@kond.com'}</div>
-                  <div>📍 {catalogStyles.footerAddress || 'Buenos Aires, Argentina'}</div>
-                </div>
+              <div style={{
+                paddingTop: '24px',
+                borderTop: '1px solid var(--border-color)',
+                fontSize: '0.8rem'
+              }}>
+                <p>© 2025 KOND. Todos los derechos reservados.</p>
               </div>
             </div>
-            
-            <div style={{
-              paddingTop: '24px',
-              borderTop: '1px solid var(--border-color)',
-              fontSize: '0.8rem'
-            }}>
-              <p>© 2025 KOND. Todos los derechos reservados.</p>
-            </div>
-          </div>
-        </footer>
-      </div>
+          </footer>
+        </div>
       </div>
       
       {/* Variables CSS */}
@@ -347,7 +353,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --finances-color: #eab308;
           --account-color: #6366f1;
         }
-
+        
         body.light {
           --bg-primary: #ffffff;
           --bg-secondary: #f8fafc;
@@ -360,46 +366,46 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --text-muted: #64748b;
           --border-color: #e2e8f0;
         }
-
+        
         * {
           box-sizing: border-box;
         }
-
+        
         body {
           margin: 0;
           padding: 0;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
         }
-
+        
         a {
           color: inherit;
           text-decoration: none;
         }
-
+        
         a:hover {
           color: var(--accent-blue);
         }
-
+        
         /* Responsive */
           @media (max-width: 768px) {
             /* Hide legacy nav inside header on small screens (we use integrated selector) */
             header nav {
               display: none !important;
             }
-
+            
             /* Keep header layout stacked on very narrow screens if needed */
             header {
               padding: 10px 12px;
             }
-
+            
             /* Ensure SectionSelector inside header is centered and full-width on mobile */
             .kond-viewport main > div, .kond-viewport main > section, .kond-viewport main > article, .kond-viewport main > .user-orders-grid {
               max-width: 960px;
               margin: 0 auto;
               padding: 0 12px;
             }
-
+            
             .user-orders-grid {
               display: grid;
               grid-template-columns: 1fr;
@@ -407,7 +413,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             }
           }
       `}</style>
-
+      
       {/* Botón flotante de WhatsApp */}
       {catalogStyles.whatsappEnabled && catalogStyles.whatsappNumber && (
         <a
@@ -446,7 +452,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           </svg>
         </a>
       )}
-
+      
       {/* Override dinámico de variables CSS según estilos del admin */}
       <style dangerouslySetInnerHTML={{ __html: `
         :root {

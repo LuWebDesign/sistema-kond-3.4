@@ -1,237 +1,110 @@
-/* ── Standalone page layouts (no fixed height, page scrolls naturally) ── */
-.cartPageLayout {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: start;
-  background: var(--bg-card);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-.checkoutPageLayout {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: start;
-  background: var(--bg-card);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-.pageColumn {
-  padding: 24px;
-  min-width: 0;
-  box-sizing: border-box;
-}
-.pageColumnRight {
-  padding: 24px;
-  border-left: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  min-width: 0;
-  box-sizing: border-box;
+/* Styles for the mobile section selector (drawer) */
+.mobileSelectorButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-section);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
 }
 
-.cartModalDialog {
-  width: 100%;
-  max-width: 900px;
-  height: 86vh;        /* fixed height so columns can stretch and scroll */
-  border-radius: 12px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: stretch; /* columns fill the full height → overflow-y kicks in */
-  overflow: hidden;
+.mobileSelectorBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 900;
 }
-.checkoutModalDialog {
-  width: 100%;
-  max-width: 960px;
-  height: 86vh;        /* fixed height so columns can stretch and scroll */
-  border-radius: 12px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: stretch; /* columns fill the full height → overflow-y kicks in */
-  overflow: hidden;
-}
-.modalLeft {
-  padding: 20px;
-  overflow-y: auto;
-  min-width: 0;
-  box-sizing: border-box;
-  height: 100%; /* stretch to grid row height so scroll works */
-}
-.modalRight {
-  padding: 20px;
-  border-left: 1px solid var(--border-color);
-  background: var(--bg-tertiary);
-  min-width: 0;
-  overflow-y: auto;
-  box-sizing: border-box;
-  height: 100%; /* stretch to grid row height so scroll works */
-}
-.myOrdersList {
+
+.mobileSelectorDrawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 320px;
+  max-width: 80%;
+  background: var(--bg-card);
+  z-index: 1000;
+  transform: translateX(110%);
+  transition: transform 0.28s ease;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 4px;
-}
-.btnFullMobile {
-  width: 100% !important;
-}
-.cartItemImage {
-  width: 72px;
-  height: 72px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #f6f7f9;
+  padding: 12px;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  box-shadow: -8px 0 24px rgba(0,0,0,0.2);
 }
 
-/* Summary card and compact item styles used in the checkout summary */
-.orderSummaryCard {
-  padding: 12px;
-  border-radius: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+.mobileSelectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
 }
-.summaryItemsList {
+
+.mobileSelectorClose {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.mobileSelectorMenu {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 46vh; /* make the items list use viewport-based height so totals remain visible */
-  overflow-y: auto;
-}
-
-.summaryTotals {
   margin-top: 12px;
+  overflow: auto;
 }
-.summaryItem {
+
+.mobileSelectorItem {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
   align-items: center;
-  padding: 8px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
   border-radius: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-}
-.summaryItemName {
-  font-weight: 700;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.summaryItemPrice {
-  text-align: right;
-}
-.summaryItemTotalPrice {
-  font-weight: 700;
-  color: var(--accent-blue);
-}
-.summaryItemUnitPrice {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-}
-.summaryItemSavings {
-  color: #059669;
-  margin-left: 8px;
-  font-weight: 700;
-}
-
-/* Scrollable items container used in cart and checkout pages */
-.itemsScroll {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 60vh; /* limits height so other controls remain visible */
-  overflow-y: auto;
-  padding-right: 6px; /* leave space for scrollbar */
-}
-
-/* Shared custom scrollbar styling for modern browsers */
-.summaryItemsList, .itemsScroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.10) transparent;
-}
-.summaryItemsList::-webkit-scrollbar, .itemsScroll::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-.summaryItemsList::-webkit-scrollbar-track, .itemsScroll::-webkit-scrollbar-track {
   background: transparent;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
 }
-.summaryItemsList::-webkit-scrollbar-thumb, .itemsScroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-  border-radius: 8px;
-  border: 2px solid transparent; /* visual padding */
-  background-clip: padding-box;
+
+.mobileSelectorItem:active,
+.mobileSelectorItem:focus {
+  outline: none;
+  background: var(--bg-section);
 }
-.summaryItemsList::-webkit-scrollbar-thumb:hover, .itemsScroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+
+.mobileSelectorCartBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-blue);
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
 }
+
+/* Mobile-specific adjustments */
 @media (max-width: 768px) {
-  .cartModalDialog,
-  .checkoutModalDialog {
-    max-width: 100% !important;
-    height: 90vh !important;
-    max-height: calc(100vh - 40px) !important;
-    border-radius: 0 !important;
-    grid-template-columns: 1fr !important;
-    overflow: visible !important;
-  }
-  .modalLeft, .modalRight {
-    padding: 16px !important;
-  }
-  .modalRight {
-    border-left: none !important;
-    border-top: 1px solid var(--border-color) !important;
-    position: static !important;
-    width: 100% !important;
-    min-height: 120px;
-    box-sizing: border-box;
-  }
-  .modalLeft {
-    /* ensure the left column scrolls and doesn't overlap the right section */
-    overflow: auto !important;
-    padding-bottom: 96px !important; /* leave space for actions */
-    padding-top: 24px !important;
-  }
-  .modalRight {
-    padding-bottom: 32px !important;
-  }
-  .myOrdersList {
-    gap: 12px;
-    padding: 6px 4px;
-  }
-  .cartItemImage {
-    width: 56px;
-    height: 56px;
-  }
+  /* Hide the central SectionSelector area (header nav) on small screens via existing selectors
+     The existing code uses header nav; this ensures duplication doesn't appear on mobile */
+  header nav { display: none !important; }
 
-  /* Barra de acciones móvil fija para CTA */
-  .mobileActions {
-    display: flex !important;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border-color);
-    gap: 12px;
-    z-index: 9999;
-    box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
-  }
-  .mobileActions button { font-weight: 700; }
+  /* Use native scrollbar behavior in mobile drawer */
+  .mobileSelectorMenu { -webkit-overflow-scrolling: touch; }
 
-  .cartPageLayout,
-  .checkoutPageLayout {
-    grid-template-columns: 1fr !important;
-    border-radius: 0 !important;
-  }
-  .pageColumnRight {
-    border-left: none !important;
-    border-top: 1px solid var(--border-color) !important;
-    width: 100% !important;
-  }
+  /* Keep button smaller on mobile */
+  .mobileSelectorButton { padding: 6px; }
 }
