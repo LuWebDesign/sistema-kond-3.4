@@ -137,6 +137,38 @@
   margin-left: 8px;
   font-weight: 700;
 }
+
+/* Scrollable items container used in cart and checkout pages */
+.itemsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh; /* limits height so other controls remain visible */
+  overflow-y: auto;
+  padding-right: 6px; /* leave space for scrollbar */
+}
+
+/* Shared custom scrollbar styling for modern browsers */
+.summaryItemsList, .itemsScroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+.summaryItemsList::-webkit-scrollbar, .itemsScroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.summaryItemsList::-webkit-scrollbar-track, .itemsScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.summaryItemsList::-webkit-scrollbar-thumb, .itemsScroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border-radius: 8px;
+  border: 2px solid transparent; /* visual padding */
+  background-clip: padding-box;
+}
+.summaryItemsList::-webkit-scrollbar-thumb:hover, .itemsScroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+}
 @media (max-width: 768px) {
   .cartModalDialog,
   .checkoutModalDialog {
