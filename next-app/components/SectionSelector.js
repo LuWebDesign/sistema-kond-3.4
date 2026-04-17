@@ -26,13 +26,11 @@ export default function SectionSelector({ className, style }) {
   // Normalize path (strip query/hash)
   const path = (router?.asPath ?? '').split(/[?#]/)[0] || '/'
 
-  // Determine which button should be active. We treat some specific
-  // sub-routes as their own sections so "Catálogo" remains active on
-  // category/product pages but not when user/mis-pedidos/mi-carrito are active.
+  // Determine which button should be active.
   const isMisPedidos = path === '/catalog/mis-pedidos' || path.startsWith('/catalog/mis-pedidos/')
   const isUser = path === '/catalog/user' || path.startsWith('/catalog/user/')
-  const isCarrito = path === '/catalog/mi-carrito' || path.startsWith('/catalog/mi-carrito/')
-  const isCatalog = (path === '/catalog' || (path.startsWith('/catalog/') && !isMisPedidos && !isUser && !isCarrito))
+  const isCarrito = path === '/mi-carrito' || path.startsWith('/mi-carrito/')
+  const isCatalog = (path === '/catalog' || (path.startsWith('/catalog/') && !isMisPedidos && !isUser))
 
   const baseBtn = { border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
   const activeStyle = { background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)' }
@@ -67,15 +65,7 @@ export default function SectionSelector({ className, style }) {
       </button>
 
       <button
-        onClick={() => {
-          if (isCarrito) {
-            // Ya estamos en /catalog/mi-carrito — solo abrir el modal directamente
-            if (typeof window !== 'undefined') window.dispatchEvent(new Event('catalog:openCart'))
-          } else {
-            // Navegar a /catalog/mi-carrito (la page dispara catalog:openCart al montar)
-            router.push('/catalog/mi-carrito')
-          }
-        }}
+        onClick={() => router.push('/mi-carrito')}
         aria-current={isCarrito ? 'page' : undefined}
         style={{ ...baseBtn, ...(isCarrito ? activeStyle : inactiveStyle), position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}
       >

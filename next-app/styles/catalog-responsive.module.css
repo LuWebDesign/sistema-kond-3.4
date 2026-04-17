@@ -1,3 +1,37 @@
+/* ── Standalone page layouts (no fixed height, page scrolls naturally) ── */
+.cartPageLayout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.checkoutPageLayout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.pageColumn {
+  padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.pageColumnRight {
+  padding: 24px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .cartModalDialog {
   width: 100%;
   max-width: 900px;
@@ -50,6 +84,90 @@
   overflow: hidden;
   flex-shrink: 0;
   background: #f6f7f9;
+}
+
+/* Summary card and compact item styles used in the checkout summary */
+.orderSummaryCard {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.summaryItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 46vh; /* make the items list use viewport-based height so totals remain visible */
+  overflow-y: auto;
+}
+
+.summaryTotals {
+  margin-top: 12px;
+}
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.summaryItemName {
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.summaryItemPrice {
+  text-align: right;
+}
+.summaryItemTotalPrice {
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+.summaryItemUnitPrice {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.summaryItemSavings {
+  color: #059669;
+  margin-left: 8px;
+  font-weight: 700;
+}
+
+/* Scrollable items container used in cart and checkout pages */
+.itemsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh; /* limits height so other controls remain visible */
+  overflow-y: auto;
+  padding-right: 6px; /* leave space for scrollbar */
+}
+
+/* Shared custom scrollbar styling for modern browsers */
+.summaryItemsList, .itemsScroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+.summaryItemsList::-webkit-scrollbar, .itemsScroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.summaryItemsList::-webkit-scrollbar-track, .itemsScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.summaryItemsList::-webkit-scrollbar-thumb, .itemsScroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border-radius: 8px;
+  border: 2px solid transparent; /* visual padding */
+  background-clip: padding-box;
+}
+.summaryItemsList::-webkit-scrollbar-thumb:hover, .itemsScroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 @media (max-width: 768px) {
   .cartModalDialog,
@@ -105,4 +223,15 @@
     box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
   }
   .mobileActions button { font-weight: 700; }
+
+  .cartPageLayout,
+  .checkoutPageLayout {
+    grid-template-columns: 1fr !important;
+    border-radius: 0 !important;
+  }
+  .pageColumnRight {
+    border-left: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    width: 100% !important;
+  }
 }

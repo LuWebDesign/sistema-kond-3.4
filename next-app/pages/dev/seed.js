@@ -57,7 +57,8 @@ export default function DevSeed() {
 
       setStatus('ok')
     } catch (err) {
-      console.error('Error al sembrar datos de dev:', err)
+      // Solo loguear en desarrollo para no dejar console en producción
+      if (process.env.NODE_ENV !== 'production') console.error('Error al sembrar datos de dev:', err)
       setStatus('error')
     }
   }, [])
@@ -84,7 +85,7 @@ export default function DevSeed() {
         </button>
 
         <button
-          onClick={() => router.push('/catalog/mi-carrito/finalizar-compra')}
+          onClick={() => router.push('/mi-carrito/finalizar-compra')}
           style={{ padding: '8px 12px', cursor: 'pointer' }}
         >
           Abrir checkout (ruta amigable)

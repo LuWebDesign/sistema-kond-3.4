@@ -56,7 +56,8 @@ export default function ProductDetail({ product, categories = [] }) {
 
   const handleBuyNow = () => {
     addToCart(product, qty)
-    router.push('/catalog/mi-carrito')
+    // After adding the product, navigate to the standalone cart page
+    router.push('/mi-carrito')
   }
 
   return (

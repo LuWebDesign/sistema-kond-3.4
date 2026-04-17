@@ -67,7 +67,7 @@ Abre el modal del carrito.
 window.dispatchEvent(new CustomEvent('catalog:openCart'))
 ```
 
-Disparado por: `pages/catalog/mi-carrito/index.js`
+Disparado por: `pages/mi-carrito/index.js`
 
 ---
 
@@ -81,7 +81,7 @@ window.dispatchEvent(new CustomEvent('catalog:openCheckout', {
 }))
 ```
 
-Disparado por: `pages/catalog/mi-carrito/finalizar-compra.js`
+Disparado por: `pages/mi-carrito/finalizar-compra.js`
 
 ---
 
