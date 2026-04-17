@@ -1,5 +1,6 @@
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
+import AnalyticsCard from '../../components/AnalyticsCard'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -1314,30 +1315,34 @@ function ProductsComponent() {
           gap: '16px',
           marginBottom: '24px'
         }}>
-          <MetricCard
+          <AnalyticsCard
             title="Total Productos"
             value={metrics.total}
             icon="📦"
             color="#3b82f6"
+            compact
           />
-          <MetricCard
+          <AnalyticsCard
             title="Valor Total"
             value={formatCurrency(metrics.totalValue)}
             icon="💰"
             color="#f59e0b"
+            compact
             isAmount
           />
-          <MetricCard
+          <AnalyticsCard
             title="Tiempo Total"
             value={formatTime(metrics.totalTime)}
             icon="⏱️"
             color="#8b5cf6"
+            compact
           />
-          <MetricCard
+          <AnalyticsCard
             title="Precio Promedio"
             value={formatCurrency(metrics.averagePrice)}
             icon="📊"
             color="#10b981"
+            compact
             isAmount
           />
         </div>
@@ -2783,47 +2788,7 @@ function ProductsComponent() {
 }
 
 // Componente de tarjeta de métrica
-function MetricCard({ title, value, icon, color, isAmount = false }) {
-  return (
-    <div style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '8px',
-      padding: '16px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px'
-    }}>
-      <div style={{
-        fontSize: '1.5rem',
-        background: `${color}20`,
-        color: color,
-        padding: '8px',
-        borderRadius: '6px'
-      }}>
-        {icon}
-      </div>
-      <div>
-        <h4 style={{
-          fontSize: '0.8rem',
-          color: 'var(--text-secondary)',
-          marginBottom: '4px',
-          fontWeight: 500
-        }}>
-          {title}
-        </h4>
-        <p style={{
-          fontSize: isAmount ? '1.1rem' : '1.3rem',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          margin: 0
-        }}>
-          {value}
-        </p>
-      </div>
-    </div>
-  )
-}
+// MetricCard extracted to components/AnalyticsCard.js
 
 // Componente de tarjeta de producto
 function ProductCard({ 

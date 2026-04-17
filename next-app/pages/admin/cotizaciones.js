@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../../utils/catalogUtils'
 import { getAllCotizaciones, createCotizacion, updateCotizacion, deleteCotizacion } from '../../utils/supabaseCotizaciones'
 import dynamic from 'next/dynamic'
+import AnalyticsCard from '../../components/AnalyticsCard'
 
 const Cotizaciones = dynamic(() => Promise.resolve(CotizacionesComponent), {
   ssr: false,
@@ -464,17 +465,15 @@ function CotizacionesComponent() {
             { label: 'Aprobadas', value: metrics.aprobadas, icon: '✅', color: '#10b981' },
             { label: 'Valor Total', value: formatCurrency(metrics.valorTotal), icon: '💰', color: '#8b5cf6' }
           ].map((m, i) => (
-            <div key={i} style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-              borderRadius: '12px', padding: '20px',
-              borderLeft: `4px solid ${m.color}`
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>{m.icon}</span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{m.label}</span>
-              </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{m.value}</div>
-            </div>
+            <AnalyticsCard
+              key={i}
+              title={m.label}
+              value={m.value}
+              icon={m.icon}
+              color={m.color}
+              compact
+              leftAccent
+            />
           ))}
         </div>
 
