@@ -8,7 +8,7 @@ import {
   getUnreadCount
 } from '../utils/supabaseNotifications'
 import { listenNotifications, unsubscribeNotifications } from '../utils/listenNotifications'
-import { supabase } from '../utils/supabaseClient'
+import { supabase, isSupabaseReady } from '../utils/supabaseClient'
 
 const NotificationsContext = createContext()
 
@@ -245,6 +245,13 @@ export const NotificationsProvider = ({ children, targetUser = 'admin', userId =
 
     const setup = async () => {
       try {
+        // Guard contra entornos de desarrollo sin Supabase configurado.
+        // Use centralized helper to check readiness and avoid TypeErrors when supabase is null.
+        if (!isSupabaseReady() || !supabase || !supabase.auth || typeof supabase.auth.getSession !== 'function') {
+          // No hay cliente Supabase disponible — saltar la suscripción realtime en dev.
+          return
+        }
+
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
 
