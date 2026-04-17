@@ -6,13 +6,16 @@ import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
 import dynamic from 'next/dynamic'
 
-  // Render the SectionSelector client-side only and only for /catalog routes.
+// Render the SectionSelector and CartModal client-side only and only for /catalog routes.
 const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
+const CartModal = dynamic(() => import('./CartModal'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [currentUser, setCurrentUser] = useState(null)
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
+  const [isClient, setIsClient] = useState(false)
+  const [showCart, setShowCart] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -37,7 +40,35 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     // Escuchar actualizaciones en tiempo real desde el admin
     const onStylesUpdate = (e) => { if (e.detail) setCatalogStyles(prev => ({ ...prev, ...e.detail })) }
     window.addEventListener('catalogStyles:updated', onStylesUpdate)
+    // mark as mounted/client so we can safely render client-only pieces
+    setIsClient(true)
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
+  }, [])
+
+  // Global cart open listener so any page can open the cart modal without navigating
+  useEffect(() => {
+    const openCartHandler = () => setShowCart(true)
+    if (typeof window !== 'undefined') window.addEventListener('catalog:openCart', openCartHandler)
+    return () => { if (typeof window !== 'undefined') window.removeEventListener('catalog:openCart', openCartHandler) }
+  }, [])
+
+  // Update header badge when cart changes in localStorage or when our internal hook dispatches cart:updated
+  useEffect(() => {
+    const handler = (e) => {
+      try {
+        // force re-render by reading from localStorage (SectionSelector reads useCart hook)
+        // this keeps the badge up-to-date without requiring a full page reload
+        const c = JSON.parse(localStorage.getItem('cart') || '[]')
+        // no-op: setting state to trigger rerender
+        setCatalogStyles(prev => ({ ...prev }))
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('cart:updated', handler)
+    window.addEventListener('storage', handler)
+    return () => { window.removeEventListener('cart:updated', handler); window.removeEventListener('storage', handler) }
   }, [])
 
   const handleLogout = () => {
@@ -109,21 +140,21 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         <header style={{
           background: catalogStyles.headerBg || 'var(--bg-card)',
           borderBottom: '1px solid var(--border-color)',
-          padding: '16px 20px',
+          padding: '12px 20px',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
           position: 'sticky',
           top: 0,
           zIndex: 100
         }}>
+          {/* Left: logo */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '12px'
           }}>
             <Link href="/catalog" style={{
-              fontSize: '1.5rem',
+              fontSize: '1.25rem',
               fontWeight: 700,
               color: catalogStyles.headerTextColor || 'var(--accent-blue)',
               textDecoration: 'none',
@@ -132,44 +163,27 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               gap: '8px'
             }}>
               {catalogStyles.logoUrl && (
-                <img src={catalogStyles.logoUrl} alt="Logo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                <img src={catalogStyles.logoUrl} alt="Logo" style={{ width: 28, height: 28, objectFit: 'contain' }} />
               )}
               {catalogStyles.logoText || 'KOND'}
             </Link>
-            
-            <nav style={{
-              display: 'flex',
-              gap: '24px',
-              alignItems: 'center'
-            }}>
-              <Link href="/catalog" style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                fontWeight: 500,
-                padding: '8px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                ':hover': {
-                  background: 'var(--bg-hover)'
-                }
-              }}>
-                🛍️ Catálogo
-              </Link>
-              
-              {/* Mi Cuenta / Iniciar sesión handled by SectionSelector — do not render in header to avoid duplication */}
-
-              {/* Section selector removed from global header — rendered in catalog/product pages */}
-            </nav>
           </div>
 
+          {/* Center: SectionSelector (only shown on /catalog routes). Integrated into header for both mobile and desktop. */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {isClient && router && router.asPath && router.asPath.startsWith('/catalog') && (
+              <div style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
+                <SectionSelector />
+              </div>
+            )}
+          </div>
+
+          {/* Right: theme toggle and notifications */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '12px'
           }}>
-            {/* Account links removed from header — SectionSelector provides account / login actions for catalog pages */}
-            
-            {/* Botón de tema */}
             <button
               onClick={toggleTheme}
               style={{
@@ -189,21 +203,17 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
 
-            {/* Campanita de notificaciones (solo si el comprador está logueado) */}
             {currentUser && <NotificationsButton />}
-
           </div>
         </header>
 
         {/* Panel de notificaciones para el comprador */}
         {currentUser && <NotificationsPanel target="user" isPublic={true} />}
 
-        {/* Section selector — render wrapper always to keep DOM stable between SSR and client. */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-color)', background: catalogStyles.headerBg || 'transparent' }}>
-          <div style={{ width: '100%', maxWidth: '960px' }}>
-            {typeof window !== 'undefined' && router && router.asPath && router.asPath.startsWith('/catalog') ? <SectionSelector /> : null}
-          </div>
-        </div>
+        {/* SectionSelector is now integrated into the header center for /catalog routes to avoid duplication. */}
+
+        {/* Global CartModal (client-only) */}
+        {isClient && showCart && <CartModal onClose={() => setShowCart(false)} />}
 
         {/* Contenedor con ancho fijo en móvil */}
         <div className="kond-viewport">
@@ -381,29 +391,30 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-          header nav {
-            display: none !important;
+          @media (max-width: 768px) {
+            /* Hide legacy nav inside header on small screens (we use integrated selector) */
+            header nav {
+              display: none !important;
+            }
+
+            /* Keep header layout stacked on very narrow screens if needed */
+            header {
+              padding: 10px 12px;
+            }
+
+            /* Ensure SectionSelector inside header is centered and full-width on mobile */
+            .kond-viewport main > div, .kond-viewport main > section, .kond-viewport main > article, .kond-viewport main > .user-orders-grid {
+              max-width: 960px;
+              margin: 0 auto;
+              padding: 0 12px;
+            }
+
+            .user-orders-grid {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 16px;
+            }
           }
-          
-          header > div:first-child {
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-start;
-          }
-          /* Make the SectionSelector and main content respect a centered max-width on mobile */
-          .kond-viewport main > div, .kond-viewport main > section, .kond-viewport main > article, .kond-viewport main > .user-orders-grid {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 0 12px;
-          }
-          /* Ensure user order cards don't overflow the selector width */
-          .user-orders-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
-        }
       `}</style>
 
       {/* Botón flotante de WhatsApp */}

@@ -168,6 +168,22 @@ export function useCart() {
     loadCart()
   }, [])
 
+  // Listen for cart updates triggered by other components in the same tab
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e) => {
+      try {
+        const newCart = e && e.detail ? e.detail : JSON.parse(localStorage.getItem('cart') || '[]')
+        setCart(newCart)
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('cart:updated', handler)
+    return () => window.removeEventListener('cart:updated', handler)
+  }, [])
+
   const loadCart = async () => {
     if (typeof window === 'undefined') return
     
@@ -255,9 +271,16 @@ export function useCart() {
 
   const saveCart = (newCart) => {
     if (typeof window === 'undefined') return
-    
     localStorage.setItem('cart', JSON.stringify(newCart))
     setCart(newCart)
+
+    // Broadcast the updated cart to other components in the same tab so
+    // the header badge and other listeners update without needing a page reload
+    try {
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: newCart }))
+    } catch (e) {
+      // ignore if CustomEvent not supported
+    }
   }
 
   const addToCart = (product, quantity = 1) => {

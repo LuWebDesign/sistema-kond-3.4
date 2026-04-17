@@ -36,6 +36,7 @@ export default function Catalog() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  // local fallback state (PublicLayout provides a global cart modal)
   const [showCart, setShowCart] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
   const [checkoutMode, setCheckoutMode] = useState('order') // 'order' | 'edit'
@@ -179,7 +180,10 @@ export default function Catalog() {
 
   // Permitir abrir el carrito o el checkout desde otras rutas/links
   useEffect(() => {
-    const openCartHandler = () => setShowCart(true)
+    const openCartHandler = () => {
+      // If PublicLayout handles the global modal, prefer that. Keep local fallback for older flows.
+      setShowCart(true)
+    }
     const openCheckoutHandler = (e) => {
       try {
         const mode = e && e.detail && e.detail.mode ? e.detail.mode : 'order'
@@ -192,9 +196,9 @@ export default function Catalog() {
 
     // Registrar todos los listeners en un solo lugar y devolver una única función de limpieza.
     if (typeof window !== 'undefined') {
-      window.addEventListener('catalog:openCart', openCartHandler)
-      window.addEventListener('catalog:openCheckout', openCheckoutHandler)
-      window.addEventListener('catalog:setCategory', setCategoryHandler)
+    window.addEventListener('catalog:openCart', openCartHandler)
+    window.addEventListener('catalog:openCheckout', openCheckoutHandler)
+    window.addEventListener('catalog:setCategory', setCategoryHandler)
     }
 
     return () => {
@@ -599,27 +603,7 @@ export default function Catalog() {
         )}
 
         {/* Modal del carrito */}
-        {showCart && (
-          <CartModal
-              cart={cart}
-              products={products}
-              onClose={() => { setShowCart(false); router.push('/catalog') }}
-              onUpdateQuantity={updateQuantity}
-              onRemoveItem={removeItem}
-              onApplyCoupon={(couponCode) => {
-                const result = applyCoupon(couponCode, cart, subtotal)
-                createToast(result.message, result.success ? 'success' : 'error')
-                return result.success
-              }}
-                      onProceedToCheckout={() => { router.push('/catalog/mi-carrito/finalizar-compra') }}
-              subtotal={subtotal}
-              discount={discount}
-              total={total}
-              activeCoupon={activeCoupon}
-              currentUser={currentUserState}
-              onEditProfile={() => { router.push('/catalog/mi-carrito/finalizar-compra?mode=edit') }}
-            />
-        )}
+        {/* Global CartModal is now rendered from PublicLayout; keep local handler only as a fallback if needed */}
 
         {/* Modal de checkout */}
         {showCheckout && (

@@ -1,30 +1,38 @@
-/* Responsive helpers for catalog modals and My Orders */
 .cartModalDialog {
   width: 100%;
   max-width: 900px;
-  height: 86vh;
+  height: 86vh;        /* fixed height so columns can stretch and scroll */
   border-radius: 12px;
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: stretch; /* columns fill the full height → overflow-y kicks in */
   overflow: hidden;
 }
 .checkoutModalDialog {
   width: 100%;
   max-width: 960px;
-  height: 86vh;
+  height: 86vh;        /* fixed height so columns can stretch and scroll */
   border-radius: 12px;
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: stretch; /* columns fill the full height → overflow-y kicks in */
   overflow: hidden;
 }
 .modalLeft {
   padding: 20px;
-  overflow: auto;
+  overflow-y: auto;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%; /* stretch to grid row height so scroll works */
 }
 .modalRight {
   padding: 20px;
   border-left: 1px solid var(--border-color);
   background: var(--bg-tertiary);
+  min-width: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  height: 100%; /* stretch to grid row height so scroll works */
 }
 .myOrdersList {
   display: flex;

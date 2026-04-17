@@ -34,12 +34,12 @@ export default function SectionSelector({ className, style }) {
   const isCarrito = path === '/catalog/mi-carrito' || path.startsWith('/catalog/mi-carrito/')
   const isCatalog = (path === '/catalog' || (path.startsWith('/catalog/') && !isMisPedidos && !isUser && !isCarrito))
 
-  const baseBtn = { border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }
+  const baseBtn = { border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
   const activeStyle = { background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)' }
   const inactiveStyle = { background: 'transparent', color: 'var(--text-secondary)' }
 
   return (
-    <div className={className} style={{ display: 'flex', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, ...style }}>
+    <div className={className} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, ...style }}>
       <button
         onClick={() => router.push('/catalog')}
         aria-current={isCatalog ? 'page' : undefined}
@@ -67,13 +67,21 @@ export default function SectionSelector({ className, style }) {
       </button>
 
       <button
-        onClick={() => router.push('/catalog/mi-carrito')}
+        onClick={() => {
+          if (isCarrito) {
+            // Ya estamos en /catalog/mi-carrito — solo abrir el modal directamente
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('catalog:openCart'))
+          } else {
+            // Navegar a /catalog/mi-carrito (la page dispara catalog:openCart al montar)
+            router.push('/catalog/mi-carrito')
+          }
+        }}
         aria-current={isCarrito ? 'page' : undefined}
         style={{ ...baseBtn, ...(isCarrito ? activeStyle : inactiveStyle), position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}
       >
         🛒 Carrito
         {totalItems > 0 && (
-          <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', marginLeft: 6 }}>{totalItems}</span>
+          <span id="cart-badge" style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', marginLeft: 6 }}>{totalItems}</span>
         )}
       </button>
     </div>
