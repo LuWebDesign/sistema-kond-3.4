@@ -6,6 +6,7 @@ import { formatCurrency } from '../../utils/catalogUtils'
 import { getAllProductos } from '../../utils/supabaseProducts'
 import { getAllPedidosInternos } from '../../utils/supabasePedidosInternos'
 import { getAllPedidosCatalogo } from '../../utils/supabasePedidos'
+import AnalyticsCard from '../../components/AnalyticsCard'
 
 function Dashboard() {
   const [products, setProducts] = useState([])
@@ -263,23 +264,25 @@ function Dashboard() {
           gap: '20px',
           marginBottom: '32px'
         }}>
-          <StatsCard
+          <AnalyticsCard
             title="Productos Publicados"
             value={stats.totalProducts}
             icon="📦"
             color="#3b82f6"
             trend={formatTrend(trends.productsTrend)}
             subtitle="En catálogo"
+            compact
           />
-          <StatsCard
+          <AnalyticsCard
             title="Pedidos Este Mes"
             value={stats.thisMonthOrders}
             icon="📋"
             color="#10b981"
             trend={formatTrend(trends.ordersTrend)}
             subtitle={`${stats.totalOrders} totales`}
+            compact
           />
-          <StatsCard
+          <AnalyticsCard
             title="Ingresos del Mes"
             value={formatCurrency(stats.thisMonthRevenue)}
             icon="💰"
@@ -287,14 +290,16 @@ function Dashboard() {
             isAmount
             trend={formatTrend(trends.revenueTrend)}
             subtitle={`${formatCurrency(stats.thisMonthDelivered)} entregados este mes • ${formatCurrency(stats.totalRevenue)} totales`}
+            compact
           />
-          <StatsCard
+          <AnalyticsCard
             title="Pedidos Pendientes"
             value={stats.pendingOrders}
             icon="⏳"
             color="#ef4444"
             trend={formatTrend(trends.pendingTrend)}
             subtitle={`${formatCurrency(stats.pendingOrdersAmount)} por confirmar${stats.deliveredPendingAmount > 0 ? ` • ${formatCurrency(stats.deliveredPendingAmount)} entregados` : ''}`}
+            compact
           />
         </div>
 
@@ -458,83 +463,7 @@ function Dashboard() {
 }
 
 // Componente de tarjeta de estadística con tendencias
-function StatsCard({ title, value, icon, color, isAmount = false, trend, subtitle }) {
-  return (
-    <div style={{
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '12px',
-      padding: '24px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px'
-      }}>
-        <div style={{
-          fontSize: '2rem',
-          background: `${color}20`,
-          padding: '12px',
-          borderRadius: '8px',
-          color: color
-        }}>
-          {icon}
-        </div>
-        <div style={{ flex: 1 }}>
-          <h3 style={{
-            fontSize: '0.85rem',
-            color: 'var(--text-secondary)',
-            marginBottom: '4px',
-            fontWeight: 500
-          }}>
-            {title}
-          </h3>
-          <p style={{
-            fontSize: isAmount ? '1.4rem' : '1.8rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            margin: 0,
-            lineHeight: 1
-          }}>
-            {value}
-          </p>
-        </div>
-      </div>
-      
-      {/* Tendencia y subtítulo */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: '0.8rem'
-      }}>
-        {subtitle && (
-          <span style={{ color: 'var(--text-secondary)' }}>
-            {subtitle}
-          </span>
-        )}
-        {trend && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            color: trend.color,
-            fontWeight: 600,
-            marginLeft: 'auto'
-          }}>
-            <span>{trend.icon}</span>
-            <span>{trend.text}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+// StatsCard extracted to components/AnalyticsCard.js
 
 // Componente de sección del dashboard
 function DashboardSection({ title, children, href }) {
