@@ -168,13 +168,13 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           </div>
 
           {/* Center: SectionSelector (shown on /catalog and /mi-carrito routes). */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
-              <div style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
+              <div className="header-section-selector" style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
                 <SectionSelector />
               </div>
             )}
-          </div>
+           </div>
 
           {/* Right: theme toggle, notifications, and mobile selector */}
           <div style={{

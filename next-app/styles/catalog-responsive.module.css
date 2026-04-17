@@ -102,6 +102,8 @@
      CSS Modules require local classes; wrap global selectors with :global(...) so the rule
      is emitted as a global CSS rule. */
   :global(header nav) { display: none !important; }
+  /* Also hide the header-mounted SectionSelector wrapper on mobile so options live only in the drawer */
+  :global(.header-section-selector) { display: none !important; }
 
   /* Use native scrollbar behavior in mobile drawer */
   .mobileSelectorMenu { -webkit-overflow-scrolling: touch; }

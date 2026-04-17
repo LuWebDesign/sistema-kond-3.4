@@ -74,6 +74,9 @@ export default function MobileSectionSelector() {
 
         <nav className={styles.mobileSelectorMenu}>
           <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog')}>Catálogo</button>
+          {currentUser && (
+            <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog/mis-pedidos')}>Mis Pedidos</button>
+          )}
           <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog/user')}>{currentUser ? 'Mi cuenta' : 'Iniciar sesión'}</button>
           <button className={styles.mobileSelectorItem} onClick={() => navigate('/mi-carrito')}>
             <span>Mi carrito</span>
