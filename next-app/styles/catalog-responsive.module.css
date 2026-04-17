@@ -85,6 +85,54 @@
   flex-shrink: 0;
   background: #f6f7f9;
 }
+
+/* Summary card and compact item styles used in the checkout summary */
+.orderSummaryCard {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.summaryItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.summaryItemName {
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.summaryItemPrice {
+  text-align: right;
+}
+.summaryItemTotalPrice {
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+.summaryItemUnitPrice {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.summaryItemSavings {
+  color: #059669;
+  margin-left: 8px;
+  font-weight: 700;
+}
 @media (max-width: 768px) {
   .cartModalDialog,
   .checkoutModalDialog {

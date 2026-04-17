@@ -97,8 +97,10 @@ export default function CartPage() {
                       : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
                     const totalLine = unitPrice * item.quantity
 
+                    const keyId = item.productId || item.idProducto || item.id || idx
+
                     return (
-                      <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 12, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                      <div key={keyId} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 12, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                         <div className={stylesResp.cartItemImage}>
                           {item.image
                             ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

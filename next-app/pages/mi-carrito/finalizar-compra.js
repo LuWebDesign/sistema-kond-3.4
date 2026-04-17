@@ -512,50 +512,32 @@ export default function FinalizarCompraPage() {
               </div>
 
               <div style={{ display: 'grid', gap: 12 }}>
-                {/* Cliente */}
-                <div style={{ padding: 12, borderRadius: 8, background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontWeight: 700, marginBottom: 8 }}>Cliente</div>
-                  <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 700 }}>{customerData.name || 'Sin nombre'}{customerData.apellido ? ' ' + customerData.apellido : ''}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{customerData.phone || 'Sin teléfono'}</div>
-                  {customerData.email && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{customerData.email}</div>}
-                  {customerData.address && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)' }}>{customerData.address}</div>}
-                </div>
-
-                {/* Envío */}
-                <div style={{ padding: 12, borderRadius: 8, background: 'var(--bg-section)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>Envío</div>
-                    <div style={{ color: 'var(--text-secondary)' }}>{deliveryMethod === 'retiro' ? 'Retiro por local' : (freeShippingEligible ? 'Envío gratis' : 'A cotizar')}</div>
-                    {selectedDeliveryDate && <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-secondary)' }}>Fecha: {selectedDeliveryDate}</div>}
-                  </div>
-                  <button onClick={() => router.push('/mi-carrito')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}>Editar</button>
-                </div>
-
-                {/* Items list */}
+                {/* Compacto: mostrar sólo nombre y precio (y descuentos por unidad y total, si aplica) */}
                 <div>
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>Artículos</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
+                  <div className={stylesResp.summaryItemsList}>
                     {cart.map((item, idx) => {
+                      const keyId = item.productId || item.idProducto || item.id || idx
                       const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
                       const original = (item.originalPrice !== undefined && item.originalPrice !== null)
                         ? item.originalPrice
                         : (prod ? (prod.precioUnitario || prod.precio) : item.price)
                       const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
                       const lineTotal = unitPrice * item.quantity
+                      const unitSavings = Math.max(0, (original || 0) - unitPrice)
+                      const savings = Math.max(0, unitSavings * item.quantity)
                       return (
-                        <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 8, borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-                          <div style={{ width: 56, height: 56, borderRadius: 6, overflow: 'hidden', background: 'var(--bg-section)', flexShrink: 0 }}>
-                            {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No foto</div>}
+                        <div key={keyId} className={stylesResp.summaryItem}>
+                          <div style={{ minWidth: 0 }}>
+                            <div className={stylesResp.summaryItemName}>{item.name}</div>
+                            <div className={stylesResp.summaryItemUnitPrice}>
+                              {formatCurrency(unitPrice)} × {item.quantity}
+                              {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
+                            </div>
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
-                              <div style={{ fontWeight: 700 }}>{formatCurrency(lineTotal)}</div>
-                            </div>
-                            <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
-                              <div>{item.quantity} × {formatCurrency(unitPrice)}</div>
-                              {original > unitPrice && <div style={{ textDecoration: 'line-through' }}>{formatCurrency(original)}</div>}
-                            </div>
+                          <div className={stylesResp.summaryItemPrice}>
+                            <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
+                            {savings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total ahorro: {formatCurrency(savings)}</div>}
                           </div>
                         </div>
                       )
