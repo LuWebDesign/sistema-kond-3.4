@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function AnalyticsCard({ title, value, icon, color = '#3b82f6', isAmount = false, subtitle, trend, compact = false, leftAccent = false }) {
+export default function AnalyticsCard({ title, value, icon, color = '#3b82f6', isAmount = false, subtitle, trend, compact = false, leftAccent = false, ariaLabel }) {
   const containerStyle = {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
@@ -43,9 +43,14 @@ export default function AnalyticsCard({ title, value, icon, color = '#3b82f6', i
     lineHeight: 1
   }
 
+  // Accessibility props for the icon container:
+  // - If ariaLabel is provided, expose it as an accessible name and set role="img".
+  // - Otherwise mark the icon as decorative with aria-hidden="true".
+  const iconAccessibilityProps = ariaLabel ? { 'aria-label': ariaLabel, role: 'img' } : { 'aria-hidden': true }
+
   return (
     <div style={containerStyle}>
-      <div style={iconStyle}>{icon}</div>
+      <div style={iconStyle} {...iconAccessibilityProps}>{icon}</div>
       <div style={{ flex: 1 }}>
         <h4 style={titleStyle}>{title}</h4>
         <p style={valueStyle}>{value}</p>
