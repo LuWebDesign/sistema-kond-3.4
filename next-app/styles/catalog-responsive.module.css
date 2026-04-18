@@ -119,3 +119,99 @@
   .mobileSelectorBackdrop { display: none !important; }
   .mobileSelectorDrawer { display: none !important; }
 }
+
+/* ====== CART (page /mi-carrito) responsive layout (CSS Module scoped) ====== */
+.cartPageLayout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.pageColumn {
+  min-width: 0;
+}
+
+.pageColumnRight {
+  width: 320px;
+  align-self: start;
+  /* Prefer sticky summary so it's visible on desktop; fall back to static if browser doesn't support */
+  position: sticky;
+  top: calc(var(--header-height, 80px) + 12px);
+}
+
+.itemsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cartItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  align-items: center;
+}
+
+.cartItemImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cartItemImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cartItemImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .cartPageLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .pageColumnRight {
+    position: static;
+    width: 100%;
+    margin-top: 16px;
+    order: 2;
+  }
+
+  .pageColumn {
+    order: 1;
+  }
+
+  .cartItemImage {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cartItem {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cartItemImage {
+    margin-bottom: 8px;
+  }
+}
