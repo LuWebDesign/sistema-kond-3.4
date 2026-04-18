@@ -100,11 +100,11 @@ export default function CartPage() {
                     const keyId = item.productId || item.idProducto || item.id || idx
 
                     return (
-                      <div key={keyId} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 12, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                      <div key={keyId} className={stylesResp.cartItem}>
                         <div className={stylesResp.cartItemImage}>
                           {item.image
-                            ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Sin foto</div>
+                            ? <img src={item.image} alt={item.name} />
+                            : <div className={stylesResp.cartItemImagePlaceholder}>Sin foto</div>
                           }
                         </div>
 
