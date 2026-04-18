@@ -111,3 +111,11 @@
   /* Keep button smaller on mobile */
   .mobileSelectorButton { padding: 6px; }
 }
+
+/* Defensive: always hide mobile selector UI on desktop widths >= 769px
+   This prevents accidental rendering when components are mounted on larger screens. */
+@media (min-width: 769px) {
+  .mobileSelectorButton { display: none !important; }
+  .mobileSelectorBackdrop { display: none !important; }
+  .mobileSelectorDrawer { display: none !important; }
+}

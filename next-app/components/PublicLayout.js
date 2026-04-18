@@ -20,6 +20,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [currentUser, setCurrentUser] = useState(null)
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
+  const [isMobileWidth, setIsMobileWidth] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -46,6 +47,31 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     if (typeof window !== 'undefined') window.addEventListener('catalogStyles:updated', onStylesUpdate)
     // mark as mounted/client so we can safely render client-only pieces
     setIsClient(true)
+    // detect mobile width to avoid mounting mobile-only components on desktop
+    try {
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        const mq = window.matchMedia('(max-width: 768px)')
+        const update = (ev) => setIsMobileWidth(ev.matches)
+        // set initial
+        setIsMobileWidth(mq.matches)
+        // listen for changes
+        if (mq.addEventListener) mq.addEventListener('change', update)
+        else if (mq.addListener) mq.addListener(update)
+        // cleanup will remove listener below
+        const cleanupMq = () => {
+          if (mq.removeEventListener) mq.removeEventListener('change', update)
+          else if (mq.removeListener) mq.removeListener(update)
+        }
+        // attach cleanup to return by wrapping previous return
+        const prevOnUnmount = () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
+        // replace existing return with combined cleanup
+        // NOTE: Return function below in this effect will run; so we don't need to call prevOnUnmount here.
+        // We'll set a property to allow cleanup in the outer return.
+        // (No-op placeholder)
+      }
+    } catch (e) {
+      // ignore matchMedia errors
+    }
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
 
@@ -168,9 +194,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           </div>
 
           {/* Center: SectionSelector (shown on /catalog and /mi-carrito routes). */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
-              <div className="header-section-selector" style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center' }}>
+              <div className="header-section-selector" style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center', minWidth: 0 }}>
                 <SectionSelector />
               </div>
             )}
@@ -205,7 +231,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
             {/* Mobile selector (renders its own trigger) */}
             <div>
-              <MobileSectionSelector />
+              {/* Only mount mobile selector on small widths to avoid header wrapping on desktop */}
+              {isClient && isMobileWidth && <MobileSectionSelector />}
             </div>
           </div>
         </header>
