@@ -146,6 +146,16 @@
   gap: 12px;
 }
 
+/* Defensive: ensure direct children of flex containers can shrink to avoid overflow */
+.itemsScroll > * {
+  min-width: 0;
+}
+
+/* Defensive: ensure cart item inner flex children do not force overflow */
+.cartItem > div {
+  min-width: 0;
+}
+
 .cartItem {
   display: flex;
   gap: 12px;
@@ -168,6 +178,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+/* Ensure images never overflow their containers */
+.cartItemImage img, .cartItemImagePlaceholder img {
+  max-width: 100%;
+  height: auto;
   display: block;
 }
 
