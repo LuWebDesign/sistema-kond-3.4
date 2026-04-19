@@ -527,6 +527,20 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
             display: none !important;
           }
         }
+
+        /* Sidebar link colors: default and hover (both themes use CSS variables) */
+        .sidebar a,
+        .sidebar a:visited {
+          color: var(--text-primary);
+          text-decoration: none;
+        }
+
+        .sidebar a:hover,
+        .sidebar a:focus {
+          color: var(--accent-blue);
+          text-decoration: none;
+          outline: none;
+        }
       `}</style>
     </>
   )
