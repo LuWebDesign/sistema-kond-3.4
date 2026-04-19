@@ -546,7 +546,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 const linkStyle = {
   padding: '10px 16px',
   borderRadius: '8px',
-  color: 'var(--text-primary)',
   background: 'transparent',
   textDecoration: 'none',
   transition: 'all 0.2s ease',
