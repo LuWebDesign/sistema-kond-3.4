@@ -11,53 +11,56 @@ or
 STATUS: FAILED
 ```
 
-Only include concise analysis after that.
+Keep analysis extremely short after that.
 
-## Quick, high-signal facts an agent will likely miss
+## What to know (only repo-specific, high-signal items)
 
-- Two parallel code areas: a legacy static site at the repo root (HTML + `js/`) and a migrating Next.js app in `next-app/`. Confirm which target you must change BEFORE editing files.
+- Two targets: legacy static site at the repo root (HTML + js/) and a migrating Next.js app in `next-app/`. Confirm which you must change before editing any files.
 
-- Next.js commands and env (work in `next-app/`):
+- Next.js quick commands (work in `next-app/`):
 
-  ```bash
   cd next-app
-  npm install        # or npm ci in CI
+  npm install        # or `npm ci` in CI
   cp ../.env.example .env.local
-  # set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
-  npm run dev        # dev server at 0.0.0.0:3000
+  set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
+  npm run dev        # binds 0.0.0.0:3000
   npm run build
   npm start
-  ```
 
-- Quick repo health check: run `node verify-setup.js` from the repo root — it detects missing Supabase files and will exit non‑zero if required pieces are missing.
+- Run `node verify-setup.js` from repo root as a quick pre-check. It verifies presence of required Supabase files and exits non-zero if missing. (It checks: `supabase/client.js`, `supabase/schema.sql`, `supabase/storage-buckets.sql`, `supabase/migrate-data.js`, `supabase/README.md`, `.env.example`, `js/supabase-init.js`, `js/utils.js`, `MIGRACION-SUPABASE.md`.)
 
-- Supabase setup is explicit and manual: execute `supabase/schema.sql` and `supabase/storage-buckets.sql` in the Supabase SQL editor; use the anon key (NOT service key) in `.env.local`. See `supabase/README.md` for the exact steps.
+- Supabase setup: run `supabase/schema.sql` then `supabase/storage-buckets.sql` in Supabase SQL Editor. Use the anon key (NEXT_PUBLIC_SUPABASE_ANON_KEY) for frontend; NEVER put service-role/admin keys in client code or commit them.
 
-- Migration script: `node supabase/migrate-data.js` (optional). If you change data shapes, update this script and `MIGRACION-SUPABASE.md`.
+- Migration: `node supabase/migrate-data.js` is for one-time migration and REQUIRES SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the environment (service role key = secret). The script expects a `data-export.json` produced from browser localStorage (see comments in the script). Treat the service key as a secret.
 
-- Canonical Supabase client: `supabase/client.js`. Also check `js/supabase-init.js` and `js/utils.js` before changing data access patterns.
+- Canonical client/init: `supabase/client.js` is the authoritative Supabase client. Also review `js/supabase-init.js` and `js/utils.js` before changing data access or storage keys.
 
-- Important localStorage keys used by the static app: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`. Keep keys stable across static pages and the Next app unless you add a migration.
+- Legacy localStorage keys you will encounter: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`. If you change keys or shapes, add a migration or keep backward compatibility.
 
-- Static HTML gotcha: script order matters. Utilities (e.g., `js/utils.js`) must be loaded before scripts that use them — verify `index.html`/`catalog.html` when renaming or moving JS files.
+- Static HTML gotcha: script order matters (utils must be loaded before scripts that use them). Verify `index.html` / `catalog.html` when renaming/moving JS files.
 
-- CI and Node versions: `next-app/package.json` sets `engines.node = 22.x` but `.github/workflows/ci.yml` uses Node 20. If CI or build fails, inspect that mismatch and the workflow's cache key (`cache-dependency-path: next-app/package-lock.json`).
+- CI notes: `.github/workflows/ci.yml` runs npm ci and build from `next-app/` using Node 20. `next-app/package.json` declares engines.node = 22.x — if builds fail check this mismatch and the cache key `next-app/package-lock.json`.
 
-- ESLint in CI is non-fatal: CI runs `npx eslint . --ext .js,.jsx,.ts,.tsx || true`, so lint errors will not fail the job by default. Do not assume CI enforces lint rules.
+- ESLint in CI is non-fatal: CI runs `npx eslint ... || true`. Do not rely on CI to block lint issues; run lint locally if enforcement is required.
 
-- Security: never commit `.env.local` or secrets. Frontend must use the Supabase anon key only. NEVER put service/admin keys into client-side code.
+- Security & commits: never commit `.env.local` or any secrets. Use only the Supabase anon key in frontend. Use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT add AI attribution to commits and do NOT use `--no-verify` unless asked.
 
-- Commits: use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT use `--no-verify`. Do NOT add AI attribution to commits.
+- Next/SSR cautions: guard browser-only APIs with `typeof window !== 'undefined'` or call them inside `useEffect`. Avoid rendering browser-only values at build time (use an isMounted pattern) to prevent hydration mismatches.
 
-- Small style notes that matter here: prefer `const`/`let` over `var`, avoid `console.*` in production code, and guard browser-only APIs with `typeof window !== 'undefined'` (or access them inside `useEffect` in React).
+- Authoritative sources (trust these first): `verify-setup.js`, `supabase/*` (sql/js), `supabase/migrate-data.js`, `next-app/package.json`, `.github/workflows/ci.yml`, `.github/copilot-instructions.md`. If prose docs conflict, prefer the executable scripts and update docs.
 
-- Next/SSR hydration caution: avoid calling `new Date()` or rendering browser-only values directly in JSX; use an `isMounted` pattern or compute values in effects to prevent mismatches.
+- If you plan cross-cutting changes (DB shapes, storage keys, auth, build config): STOP and list files you intend to change in the PR description — this repo runs two frontends and migration scripts that must be coordinated.
 
-- Authoritative docs: prefer executable sources (`verify-setup.js`, `supabase/*.js`, `next-app/package.json`, `.github/workflows/ci.yml`) over prose. If docs conflict with scripts, follow the scripts and update docs.
+## Quick file checklist (open these first)
 
-- If you plan cross-cutting changes (data model, storage keys, auth, build config), STOP and list the files you intend to change — this repo contains two running frontends and migration scripts that must be kept in sync.
-
-## Registered project skills
-
-- analytics-cards — Reusable analytics card component and compact rules (skills/analytics-cards/SKILL.md)
-- skill-creator — Skill creation templates and rules (file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md)
+- README.md
+- supabase/README.md
+- supabase/schema.sql
+- supabase/storage-buckets.sql
+- supabase/migrate-data.js
+- supabase/client.js
+- js/supabase-init.js
+- js/utils.js
+- next-app/package.json
+- .github/workflows/ci.yml
+- .github/copilot-instructions.md
