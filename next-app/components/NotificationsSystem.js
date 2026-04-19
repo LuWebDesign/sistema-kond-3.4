@@ -127,9 +127,11 @@ export const NotificationsPanel = ({ target = undefined, isPublic = false }) => 
       style={{
         position: 'fixed',
         top: '70px',
+        left: '12px',
         right: '12px',
-        width: '400px',
-        maxWidth: 'calc(100vw - 24px)',
+        width: 'auto',
+        maxWidth: '400px',
+        boxSizing: 'border-box',
         maxHeight: '80vh',
         background: 'var(--bg-card)',
         border: '2px solid var(--accent-blue)',

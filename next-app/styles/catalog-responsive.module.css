@@ -111,3 +111,200 @@
   /* Keep button smaller on mobile */
   .mobileSelectorButton { padding: 6px; }
 }
+
+/* Defensive: always hide mobile selector UI on desktop widths >= 769px
+   This prevents accidental rendering when components are mounted on larger screens. */
+@media (min-width: 769px) {
+  .mobileSelectorButton { display: none !important; }
+  .mobileSelectorBackdrop { display: none !important; }
+  .mobileSelectorDrawer { display: none !important; }
+}
+
+/* ====== CART (page /mi-carrito) responsive layout (CSS Module scoped) ====== */
+.cartPageLayout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.pageColumn {
+  min-width: 0;
+}
+
+.pageColumnRight {
+  width: 320px;
+  align-self: start;
+  /* Prefer sticky summary so it's visible on desktop; fall back to static if browser doesn't support */
+  position: sticky;
+  top: calc(var(--header-height, 80px) + 12px);
+}
+
+.itemsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Defensive: ensure direct children of flex containers can shrink to avoid overflow */
+.itemsScroll > * {
+  min-width: 0;
+}
+
+/* Defensive: ensure cart item inner flex children do not force overflow */
+.cartItem > div {
+  min-width: 0;
+}
+
+.cartItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  align-items: center;
+}
+
+.cartItemImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cartItemImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Ensure images never overflow their containers */
+.cartItemImage img, .cartItemImagePlaceholder img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cartItemImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .cartPageLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .pageColumnRight {
+    position: static;
+    width: 100%;
+    margin-top: 16px;
+    order: 2;
+  }
+
+  .pageColumn {
+    order: 1;
+  }
+
+  .cartItemImage {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Checkout layout and order summary card (scoped) */
+.checkoutPageLayout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+  max-width: 100%;
+}
+
+.orderSummaryCard {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.summaryItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.summaryItemName {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summaryItemUnitPrice {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.summaryItemSavings {
+  font-size: 0.85rem;
+  color: var(--accent-secondary, #059669);
+  margin-left: 6px;
+}
+
+.summaryItemPrice {
+  text-align: right;
+  min-width: 80px;
+}
+
+.summaryItemTotalPrice {
+  font-weight: 800;
+}
+
+.summaryTotals {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .checkoutPageLayout {
+    grid-template-columns: 1fr;
+  }
+  .pageColumnRight {
+    position: static;
+    width: 100%;
+    margin-top: 16px;
+    order: 2;
+  }
+  .pageColumn { order: 1; }
+}
+
+@media (max-width: 480px) {
+  .cartItem {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cartItemImage {
+    margin-bottom: 8px;
+  }
+}

@@ -100,11 +100,11 @@ export default function CartPage() {
                     const keyId = item.productId || item.idProducto || item.id || idx
 
                     return (
-                      <div key={keyId} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 12, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                      <div key={keyId} className={stylesResp.cartItem}>
                         <div className={stylesResp.cartItemImage}>
                           {item.image
-                            ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Sin foto</div>
+                            ? <img src={item.image} alt={item.name} />
+                            : <div className={stylesResp.cartItemImagePlaceholder}>Sin foto</div>
                           }
                         </div>
 
@@ -183,28 +183,68 @@ export default function CartPage() {
             )}
           </div>
 
-          {/* Columna derecha: resumen y acciones */}
+          {/* Columna derecha: resumen y acciones (itemized) */}
           <div className={stylesResp.pageColumnRight}>
-            <div style={{ marginBottom: 16 }}>
+            <div className={stylesResp.orderSummaryCard} style={{ marginBottom: 12 }}>
               <div style={{ color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 12, fontSize: '1rem' }}>Resumen del pedido</div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</div>
-                <div style={{ color: 'var(--text-primary)' }}>{formatCurrency(subtotal)}</div>
+              <div className={stylesResp.summaryItemsList}>
+                {cart.map((item, idx) => {
+                  const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+                  const original = (item.originalPrice !== undefined && item.originalPrice !== null)
+                    ? item.originalPrice
+                    : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+                  const unitPrice = item.price !== undefined
+                    ? item.price
+                    : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+                  const lineTotal = unitPrice * item.quantity
+                  const unitSavings = Math.max(0, (original || 0) - unitPrice)
+                  const lineSavings = unitSavings * item.quantity
+                  const keyId = item.productId || item.idProducto || item.id || idx
+
+                  return (
+                    <div key={keyId} className={stylesResp.summaryItem}>
+                      <div style={{ minWidth: 0 }}>
+                        <div className={stylesResp.summaryItemName} title={item.name}>{item.name}</div>
+                        <div className={stylesResp.summaryItemUnitPrice}>
+                          {formatCurrency(unitPrice)} × {item.quantity}
+                          {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
+                        </div>
+                        {lineSavings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Total ahorro: {formatCurrency(lineSavings)}</div>}
+                      </div>
+
+                      <div className={stylesResp.summaryItemPrice}>
+                        <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
 
-              {discount > 0 && (
+              <div className={stylesResp.summaryTotals} style={{ marginTop: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ color: 'var(--text-secondary)' }}>Descuento</div>
-                  <div style={{ color: 'var(--accent-secondary)' }}>-{formatCurrency(discount)}</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</div>
+                  <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
                 </div>
-              )}
 
-              <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
+                {discount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ color: 'var(--accent-secondary)' }}>Descuento</div>
+                    <div style={{ color: 'var(--accent-secondary)' }}>-{formatCurrency(discount)}</div>
+                  </div>
+                )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, marginBottom: 20 }}>
-                <div style={{ color: 'var(--text-primary)' }}>Total</div>
-                <div style={{ color: 'var(--text-primary)' }}>{formatCurrency(total)}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
+                  <div style={{ fontWeight: 700 }}>A cotizar</div>
+                </div>
+
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>
+                  <div style={{ color: 'var(--text-primary)' }}>Total</div>
+                  <div style={{ color: 'var(--text-primary)' }}>{formatCurrency(total)}</div>
+                </div>
               </div>
             </div>
 

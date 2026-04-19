@@ -505,14 +505,14 @@ export default function FinalizarCompraPage() {
 
           {/* Columna derecha: resumen del pedido (restructurado visualmente) */}
           <aside className={stylesResp.pageColumnRight}>
-          <div className={stylesResp.orderSummaryCard}>
+            <div className={stylesResp.orderSummaryCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Resumen</div>
               <div style={{ fontWeight: 700 }}>{cart.length} items</div>
             </div>
 
             {/* Compacto: mostrar sólo nombre y precio (y descuentos por unidad y total, si aplica) */}
-            <div className={stylesResp.summaryItemsList}>
+              <div className={stylesResp.summaryItemsList}>
               {cart.map((item, idx) => {
                 const keyId = item.productId || item.idProducto || item.id || idx
                 const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
@@ -541,7 +541,7 @@ export default function FinalizarCompraPage() {
               })}
             </div>
 
-            <div className={stylesResp.summaryTotals}>
+              <div className={stylesResp.summaryTotals}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
                 <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
