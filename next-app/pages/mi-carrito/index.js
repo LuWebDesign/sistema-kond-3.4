@@ -36,6 +36,18 @@ export default function CartPage() {
 
   const discount = calculateDiscount(subtotal)
   const total = Math.max(0, subtotal - discount)
+  // Total savings: sum of per-line savings (original - unitPrice) * qty when original > unitPrice
+  const totalSavings = cart.reduce((acc, item) => {
+    const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+    const original = (item.originalPrice !== undefined && item.originalPrice !== null)
+      ? item.originalPrice
+      : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+    const unitPrice = item.price !== undefined
+      ? item.price
+      : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+    const unitSavings = Math.max(0, (original || 0) - unitPrice)
+    return acc + unitSavings * (item.quantity || 0)
+  }, 0)
 
   return (
     <PublicLayout title="Mi Carrito - KOND">
@@ -221,11 +233,17 @@ export default function CartPage() {
                 })}
               </div>
 
-              <div className={stylesResp.summaryTotals} style={{ marginTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</div>
-                  <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
-                </div>
+                <div className={stylesResp.summaryTotals} style={{ marginTop: 12 }}>
+                {totalSavings > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>Total ahorro:</div>
+                    <div style={{ color: 'var(--accent-secondary)', fontWeight: 700 }}>{formatCurrency(totalSavings)}</div>
+                  </div>
+                )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</div>
+                    <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
+                  </div>
 
                 {discount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>

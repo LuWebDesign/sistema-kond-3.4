@@ -242,7 +242,9 @@
   flex-direction: column;
   gap: 10px;
   max-height: 320px;
-  overflow: auto;
+  /* Allow vertical scrolling but prevent horizontal scrollbars caused by tiny overflows */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .summaryItem {
@@ -251,6 +253,12 @@
   gap: 12px;
   align-items: center;
   min-width: 0;
+}
+
+/* Subtle separator between items for visual order */
+.summaryItem:not(:last-child) {
+  /* Only a hairline separator so we don't change the item's box model or spacing */
+  border-bottom: 1px solid var(--border-color);
 }
 
 .summaryItemName {
@@ -306,5 +314,21 @@
 
   .cartItemImage {
     margin-bottom: 8px;
+  }
+}
+
+/* Fix: avoid abrupt internal scrolling and heavy separators on small viewports (<650px)
+   Keep items compact and rely on page scroll for better fluidity */
+@media (max-width: 650px) {
+  .summaryItemsList {
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: hidden;
+    gap: 8px;
+  }
+
+  /* Remove separators on very small screens to avoid visual clutter */
+  .summaryItem:not(:last-child) {
+    border-bottom: none;
   }
 }
