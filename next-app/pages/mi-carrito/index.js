@@ -234,36 +234,36 @@ export default function CartPage() {
               </div>
 
                 <div className={stylesResp.summaryTotals} style={{ marginTop: 12 }}>
-                {totalSavings > 0 && (
+                  {/* Reordered per specification: Total items -> Total ahorro -> Envío -> Total */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>Total ahorro:</div>
-                    <div style={{ color: 'var(--accent-secondary)', fontWeight: 700 }}>{formatCurrency(totalSavings)}</div>
-                  </div>
-                )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
                     <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
                   </div>
 
-                {discount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ color: 'var(--accent-secondary)' }}>Descuento</div>
-                    <div style={{ color: 'var(--accent-secondary)' }}>-{formatCurrency(discount)}</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</div>
+                    <div></div> {/* Empty div to maintain flex layout for spacing if needed */}
                   </div>
-                )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
-                  <div style={{ fontWeight: 700 }}>A cotizar</div>
+                  {totalSavings > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ color: 'var(--text-secondary)' }}>Total ahorro:</div>
+                      <div style={{ color: 'var(--accent-secondary)', fontWeight: 700 }}>{formatCurrency(totalSavings)}</div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
+                    <div style={{ fontWeight: 700 }}>A cotizar</div>
+                  </div>
+
+                  <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>
+                    <div style={{ color: 'var(--text-primary)' }}>Total</div>
+                    <div style={{ color: 'var(--text-primary)' }}>{formatCurrency(total)}</div>
+                  </div>
                 </div>
-
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>
-                  <div style={{ color: 'var(--text-primary)' }}>Total</div>
-                  <div style={{ color: 'var(--text-primary)' }}>{formatCurrency(total)}</div>
-                </div>
-              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

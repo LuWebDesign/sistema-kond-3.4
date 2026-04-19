@@ -123,7 +123,8 @@
 /* ====== CART (page /mi-carrito) responsive layout (CSS Module scoped) ====== */
 .cartPageLayout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  /* Allow the right column to shrink when needed to avoid forcing overflow on narrow viewports */
+  grid-template-columns: 1fr minmax(0, 320px);
   gap: 16px;
   align-items: start;
 }
@@ -133,7 +134,11 @@
 }
 
 .pageColumnRight {
-  width: 320px;
+  /* Make the right column flexible: fill its grid track but never exceed 320px.
+     This prevents a hard 320px width from forcing overflow on narrow viewports while
+     keeping the desired fixed max width on wide screens. */
+  max-width: 320px;
+  width: 100%;
   align-self: start;
   /* Prefer sticky summary so it's visible on desktop; fall back to static if browser doesn't support */
   position: sticky;
@@ -224,7 +229,8 @@
 /* Checkout layout and order summary card (scoped) */
 .checkoutPageLayout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  /* Same defensive layout as cart: allow the aside to shrink instead of forcing overflow */
+  grid-template-columns: 1fr minmax(0, 320px);
   gap: 16px;
   align-items: start;
   max-width: 100%;
@@ -331,4 +337,42 @@
   .summaryItem:not(:last-child) {
     border-bottom: none;
   }
+  /* Allow summary item names to wrap and adjust price min-width for better responsiveness */
+  .summaryItemName {
+    white-space: normal; /* Allow text to wrap */
+  }
+  .summaryItemPrice {
+    min-width: unset; /* Allow price column to shrink more */
+    flex-shrink: 1; /* Ensure it can shrink */
+  }
+}
+
+/* Mobile override: ensure the order summary uses the full width available on mobile
+   and visually matches product cards (padding, border-radius). This only affects
+   screens <= 768px so desktop stays unchanged. */
+@media (max-width: 768px) {
+  .pageColumnRight,
+  .orderSummaryCard {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* match visual spacing of product cards on mobile */
+  .orderSummaryCard {
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .summaryItemsList,
+  .summaryTotals {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* make summary item names wrap and prices be flexible */
+  .summaryItemName { white-space: normal !important; }
+  .summaryItemPrice { min-width: unset !important; flex-shrink: 1 !important; }
 }

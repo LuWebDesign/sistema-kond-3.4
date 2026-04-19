@@ -143,9 +143,10 @@ export default function CartModal({ onClose }) {
 
         {/* Right column: summary/actions */}
         <div className={stylesResp.modalRight}>
+          {/* Reordered summary totals to: Total items -> Total ahorro -> Envío -> Total */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ color: 'var(--text-secondary)' }}>Resumen</div>
-            <div style={{ fontWeight: 700 }}>{cart.length} items</div>
+            <div style={{ fontWeight: 700 }}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -160,12 +161,10 @@ export default function CartModal({ onClose }) {
             </div>
           )}
 
-          {discount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ color: 'var(--text-secondary)' }}>Descuento</div>
-              <div style={{ color: 'var(--accent-secondary)' }}>- {formatCurrency(discount)}</div>
-            </div>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
+            <div style={{ fontWeight: 700 }}>A cotizar</div>
+          </div>
 
           <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
 
