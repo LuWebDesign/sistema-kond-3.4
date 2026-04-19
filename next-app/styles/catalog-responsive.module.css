@@ -337,4 +337,42 @@
   .summaryItem:not(:last-child) {
     border-bottom: none;
   }
+  /* Allow summary item names to wrap and adjust price min-width for better responsiveness */
+  .summaryItemName {
+    white-space: normal; /* Allow text to wrap */
+  }
+  .summaryItemPrice {
+    min-width: unset; /* Allow price column to shrink more */
+    flex-shrink: 1; /* Ensure it can shrink */
+  }
+}
+
+/* Mobile override: ensure the order summary uses the full width available on mobile
+   and visually matches product cards (padding, border-radius). This only affects
+   screens <= 768px so desktop stays unchanged. */
+@media (max-width: 768px) {
+  .pageColumnRight,
+  .orderSummaryCard {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* match visual spacing of product cards on mobile */
+  .orderSummaryCard {
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .summaryItemsList,
+  .summaryTotals {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* make summary item names wrap and prices be flexible */
+  .summaryItemName { white-space: normal !important; }
+  .summaryItemPrice { min-width: unset !important; flex-shrink: 1 !important; }
 }

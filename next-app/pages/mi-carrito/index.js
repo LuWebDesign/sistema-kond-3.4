@@ -236,8 +236,13 @@ export default function CartPage() {
                 <div className={stylesResp.summaryTotals} style={{ marginTop: 12 }}>
                   {/* Reordered per specification: Total items -> Total ahorro -> Envío -> Total */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
                     <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>{cart.length} {cart.length === 1 ? 'item' : 'items'}</div>
+                    <div></div> {/* Empty div to maintain flex layout for spacing if needed */}
                   </div>
 
                   {totalSavings > 0 && (
