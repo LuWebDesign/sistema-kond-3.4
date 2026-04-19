@@ -234,39 +234,35 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
                   Cerrar Sesión
                 </button>
               )}
+
+              {/* Theme Toggle moved here so it appears immediately under the "Cerrar Sesión" button */}
+              <div style={{ marginTop: 8 }}>
+                <button
+                  onClick={toggleTheme}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: '500',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-card)' }}
+                >
+                  {theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
+                </button>
+              </div>
             </div>
           </nav>
-
-          {/* Theme Toggle */}
-          <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
-            <button
-              onClick={toggleTheme}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                fontWeight: '500',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'var(--bg-card)'
-              }}
-            >
-              {theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
-            </button>
-          </div>
         </aside>
 
         {/* Main Content */}
@@ -526,6 +522,20 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           .user-info {
             display: none !important;
           }
+        }
+
+        /* Sidebar link colors: default and hover (both themes use CSS variables) */
+        .sidebar a,
+        .sidebar a:visited {
+          color: var(--text-primary);
+          text-decoration: none;
+        }
+
+        .sidebar a:hover,
+        .sidebar a:focus {
+          color: var(--accent-blue);
+          text-decoration: none;
+          outline: none;
         }
       `}</style>
     </>
