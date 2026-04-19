@@ -123,7 +123,8 @@
 /* ====== CART (page /mi-carrito) responsive layout (CSS Module scoped) ====== */
 .cartPageLayout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  /* Allow the right column to shrink when needed to avoid forcing overflow on narrow viewports */
+  grid-template-columns: 1fr minmax(0, 320px);
   gap: 16px;
   align-items: start;
 }
@@ -133,7 +134,11 @@
 }
 
 .pageColumnRight {
-  width: 320px;
+  /* Make the right column flexible: fill its grid track but never exceed 320px.
+     This prevents a hard 320px width from forcing overflow on narrow viewports while
+     keeping the desired fixed max width on wide screens. */
+  max-width: 320px;
+  width: 100%;
   align-self: start;
   /* Prefer sticky summary so it's visible on desktop; fall back to static if browser doesn't support */
   position: sticky;
@@ -224,7 +229,8 @@
 /* Checkout layout and order summary card (scoped) */
 .checkoutPageLayout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  /* Same defensive layout as cart: allow the aside to shrink instead of forcing overflow */
+  grid-template-columns: 1fr minmax(0, 320px);
   gap: 16px;
   align-items: start;
   max-width: 100%;
