@@ -316,3 +316,19 @@
     margin-bottom: 8px;
   }
 }
+
+/* Fix: avoid abrupt internal scrolling and heavy separators on small viewports (<650px)
+   Keep items compact and rely on page scroll for better fluidity */
+@media (max-width: 650px) {
+  .summaryItemsList {
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: hidden;
+    gap: 8px;
+  }
+
+  /* Remove separators on very small screens to avoid visual clutter */
+  .summaryItem:not(:last-child) {
+    border-bottom: none;
+  }
+}
