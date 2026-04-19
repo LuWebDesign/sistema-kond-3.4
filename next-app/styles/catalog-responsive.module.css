@@ -242,7 +242,9 @@
   flex-direction: column;
   gap: 10px;
   max-height: 320px;
-  overflow: auto;
+  /* Allow vertical scrolling but prevent horizontal scrollbars caused by tiny overflows */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .summaryItem {
@@ -251,6 +253,13 @@
   gap: 12px;
   align-items: center;
   min-width: 0;
+}
+
+/* Subtle separator between items for visual order */
+.summaryItem:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .summaryItemName {
