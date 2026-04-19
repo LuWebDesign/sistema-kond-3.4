@@ -257,9 +257,8 @@
 
 /* Subtle separator between items for visual order */
 .summaryItem:not(:last-child) {
+  /* Only a hairline separator so we don't change the item's box model or spacing */
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
-  margin-bottom: 8px;
 }
 
 .summaryItemName {
