@@ -670,36 +670,37 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       }}>
         {product.imagenes && product.imagenes.length > 0 ? (
           <>
-            <img
-              src={product.imagenes[imageIndex]}
-              alt={product.nombre}
-              loading="lazy"
-              onClick={(e) => {
-                // On mobile we want tapping the image to navigate to the product page
-                // (so the user can open the product), and avoid opening the image
-                // lightbox which would intercept the tap. On desktop keep the
-                // lightbox behavior.
-                try {
-                  if (typeof window !== 'undefined' && window.innerWidth <= 640) {
-                    // allow event to bubble to parent which handles navigation
-                    return
+              <img
+                src={product.imagenes[imageIndex]}
+                alt={product.nombre}
+                loading="lazy"
+                onClick={(e) => {
+                  // On mobile we want tapping the image to navigate to the product page.
+                  // Use an explicit navigation fallback for small viewports so taps
+                  // reach the product page even if an overlay/control intercepts the event.
+                  try {
+                    if (typeof window !== 'undefined' && window.innerWidth <= 640) {
+                      // Explicitly navigate to the product page on mobile.
+                      navigateToProduct()
+                      return
+                    }
+                  } catch (err) {
+                    // if any issue reading window, fall back to desktop behavior
                   }
-                } catch (err) {
-                  // if any issue reading window, fall back to desktop behavior
-                }
-                e.stopPropagation()
-                onImageClick && onImageClick(product.id, imageIndex)
-              }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                cursor: 'zoom-in'
-              }}
-            />
+                  // Desktop: open image lightbox
+                  e.stopPropagation()
+                  onImageClick && onImageClick(product.id, imageIndex)
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  cursor: 'zoom-in'
+                }}
+              />
 
             {/* Prev / Next buttons */}
             {product.imagenes.length > 1 && (

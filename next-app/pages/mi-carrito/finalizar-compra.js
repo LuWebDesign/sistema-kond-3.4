@@ -540,51 +540,44 @@ export default function FinalizarCompraPage() {
                 )
               })}
             </div>
-
               <div className={stylesResp.summaryTotals}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
-                <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
-              </div>
-
-              {discount > 0 && (
+                {/* Simplified aside per spec: Resumen + Productos(N) + Subtotal + Envío + Total */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ color: 'var(--accent-secondary)' }}>Descuento</div>
-                  <div style={{ color: 'var(--accent-secondary)' }}>-{formatCurrency(discount)}</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
+                  <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
                 </div>
-              )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
-                <div style={{ fontWeight: 700 }}>{deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
+                  <div style={{ fontWeight: 700 }}>{deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}</div>
+                </div>
+
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', marginBottom: 12 }}>
+                  <div style={{ color: 'var(--text-primary)' }}>Total</div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem' }}>{formatCurrency(total)}</div>
+                </div>
+
+                <button
+                  onClick={handleSubmitOrder}
+                  disabled={isSubmitting}
+                  style={{ width: '100%', padding: 14, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10 }}
+                >
+                  {isSubmitting ? 'Procesando...' : paymentMethod === 'whatsapp' ? 'Enviar por WhatsApp' : 'Confirmar pedido'}
+                </button>
+
+                <button
+                  onClick={() => router.push('/mi-carrito')}
+                  style={{ width: '100%', padding: 10, borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 500 }}
+                >
+                  Volver al carrito
+                </button>
+
+                <div style={{ marginTop: 12, color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
+                  Los envíos y tiempos de entrega se coordinan luego de la confirmación del pago.
+                </div>
               </div>
-
-              <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', marginBottom: 12 }}>
-                <div style={{ color: 'var(--text-primary)' }}>Total</div>
-                <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem' }}>{formatCurrency(total)}</div>
-              </div>
-
-              <button
-                onClick={handleSubmitOrder}
-                disabled={isSubmitting}
-                style={{ width: '100%', padding: 14, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10 }}
-              >
-                {isSubmitting ? 'Procesando...' : paymentMethod === 'whatsapp' ? 'Enviar por WhatsApp' : 'Confirmar pedido'}
-              </button>
-
-              <button
-                onClick={() => router.push('/mi-carrito')}
-                style={{ width: '100%', padding: 10, borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 500 }}
-              >
-                Volver al carrito
-              </button>
-
-              <div style={{ marginTop: 12, color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
-                Los envíos y tiempos de entrega se coordinan luego de la confirmación del pago.
-              </div>
-            </div>
           </div>
           </aside>
         </div>
