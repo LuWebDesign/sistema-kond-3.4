@@ -325,18 +325,18 @@
 
 /* Explicit divider element used between items when cart has more than one product */
 .summaryDivider {
-  /* Make the divider thin but visible: use a stronger alpha so it contrasts
-     against the order card background. Keep it 1px tall for crispness. */
+  /* Slightly more visible thin divider (1px) to clearly separate products.
+     Increase alpha to make it visible but still subtle. */
   height: 1px;
   width: 100%;
-  background: rgba(var(--border-rgb), 0.12);
+  background: rgba(var(--border-rgb), 0.22);
   margin: 8px 0;
 }
 
 /* Subtle dividers within the totals block to separate subtotal, savings, shipping, and total */
 .summaryTotals > div {
   padding: 8px 0;
-  border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.12);
 }
 .summaryTotals > div:last-child { border-bottom: none; }
 
