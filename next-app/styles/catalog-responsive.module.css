@@ -446,3 +446,39 @@
   .summaryItemName { white-space: normal !important; }
   .summaryItemPrice { min-width: unset !important; flex-shrink: 1 !important; }
 }
+
+/* Product-card image controls UX
+   - Hide preview controls on small viewports to avoid intercepting taps
+   - On desktop, show controls only on hover or when the card has keyboard focus
+   Use :global(...) because ProductCard uses the global class name `product-card`. */
+@media (max-width: 640px) {
+  :global(.product-card) button[aria-label="Anterior"],
+  :global(.product-card) button[aria-label="Siguiente"],
+  :global(.product-card) button[aria-label^="Mostrar imagen"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  :global(.product-card) button[aria-label="Anterior"],
+  :global(.product-card) button[aria-label="Siguiente"],
+  :global(.product-card) button[aria-label^="Mostrar imagen"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 120ms ease, visibility 120ms ease;
+  }
+
+  :global(.product-card:hover) button[aria-label="Anterior"],
+  :global(.product-card:hover) button[aria-label="Siguiente"],
+  :global(.product-card:hover) button[aria-label^="Mostrar imagen"],
+  :global(.product-card:focus-within) button[aria-label="Anterior"],
+  :global(.product-card:focus-within) button[aria-label="Siguiente"],
+  :global(.product-card:focus-within) button[aria-label^="Mostrar imagen"] {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
