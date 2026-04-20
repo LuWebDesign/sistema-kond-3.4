@@ -325,9 +325,11 @@
 
 /* Explicit divider element used between items when cart has more than one product */
 .summaryDivider {
+  /* Make the divider thin but visible: use a stronger alpha so it contrasts
+     against the order card background. Keep it 1px tall for crispness. */
   height: 1px;
   width: 100%;
-  background: rgba(var(--border-rgb), 0.06);
+  background: rgba(var(--border-rgb), 0.12);
   margin: 8px 0;
 }
 
