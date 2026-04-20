@@ -289,7 +289,7 @@
 /* Subtle separator between items for visual order */
 .summaryItem:not(:last-child) {
   /* Only a hairline separator so we don't change the item's box model or spacing */
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
 }
 
 .summaryItemName {
@@ -322,6 +322,23 @@
 .summaryTotals {
   margin-top: 8px;
 }
+
+/* Explicit divider element used between items when cart has more than one product */
+.summaryDivider {
+  /* Slightly more visible thin divider (1px) to clearly separate products.
+     Increase alpha to make it visible but still subtle. */
+  height: 1px;
+  width: 100%;
+  background: rgba(var(--border-rgb), 0.22);
+  margin: 8px 0;
+}
+
+/* Subtle dividers within the totals block to separate subtotal, savings, shipping, and total */
+.summaryTotals > div {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.12);
+}
+.summaryTotals > div:last-child { border-bottom: none; }
 
 @media (max-width: 768px) {
   .checkoutPageLayout {

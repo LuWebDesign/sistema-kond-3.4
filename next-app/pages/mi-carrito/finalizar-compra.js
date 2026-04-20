@@ -511,7 +511,7 @@ export default function FinalizarCompraPage() {
               <div style={{ fontWeight: 700 }}>{cart.length} items</div>
             </div>
 
-            {/* Compacto: mostrar sólo nombre y precio (y descuentos por unidad y total, si aplica) */}
+              {/* Compacto: mostrar sólo nombre y precio (y descuentos por unidad y total, si aplica) */}
               <div className={stylesResp.summaryItemsList}>
               {cart.map((item, idx) => {
                 const keyId = item.productId || item.idProducto || item.id || idx
@@ -524,18 +524,25 @@ export default function FinalizarCompraPage() {
                 const unitSavings = Math.max(0, (original || 0) - unitPrice)
                 const savings = Math.max(0, unitSavings * item.quantity)
                 return (
-                  <div key={keyId} className={stylesResp.summaryItem}>
-                    <div style={{ minWidth: 0 }}>
-                      <div className={stylesResp.summaryItemName}>{item.name}</div>
-                      <div className={stylesResp.summaryItemUnitPrice}>
-                        {formatCurrency(unitPrice)} × {item.quantity}
-                        {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
+                  <div key={keyId}>
+                    <div className={stylesResp.summaryItem}>
+                      <div style={{ minWidth: 0 }}>
+                        <div className={stylesResp.summaryItemName}>{item.name}</div>
+                        <div className={stylesResp.summaryItemUnitPrice}>
+                          {formatCurrency(unitPrice)} × {item.quantity}
+                          {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
+                        </div>
+                        {savings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Total ahorro: {formatCurrency(savings)}</div>}
+                      </div>
+
+                      <div className={stylesResp.summaryItemPrice}>
+                        <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
                       </div>
                     </div>
-                    <div className={stylesResp.summaryItemPrice}>
-                      <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
-                      {savings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total ahorro: {formatCurrency(savings)}</div>}
-                    </div>
+                    {/* show thin divider between products when there is more than one item */}
+                    {cart.length > 1 && idx !== cart.length - 1 && (
+                      <div className={stylesResp.summaryDivider} aria-hidden="true"></div>
+                    )}
                   </div>
                 )
               })}
@@ -552,7 +559,7 @@ export default function FinalizarCompraPage() {
                   <div style={{ fontWeight: 700 }}>{deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}</div>
                 </div>
 
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
+                <div className={stylesResp.summaryDivider} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', marginBottom: 12 }}>
                   <div style={{ color: 'var(--text-primary)' }}>Total</div>

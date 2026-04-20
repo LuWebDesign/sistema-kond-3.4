@@ -373,6 +373,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --text-secondary: #cbd5e1;
           --text-muted: #94a3b8;
           --border-color: #475569;
+          /* RGB form of border color so we can create subtle dividers with alpha */
+          --border-rgb: 71,85,105;
           --accent-blue: #3b82f6;
           --accent-secondary: #10b981;
           --person-color: #8b5cf6;
@@ -395,6 +397,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --text-secondary: #475569;
           --text-muted: #64748b;
           --border-color: #e2e8f0;
+          --border-rgb: 226,232,240;
         }
         
         * {

@@ -214,8 +214,9 @@ export default function CartPage() {
                   const lineSavings = unitSavings * item.quantity
                   const keyId = item.productId || item.idProducto || item.id || idx
 
-                  return (
-                    <div key={keyId} className={stylesResp.summaryItem}>
+                    return (
+                    <div key={keyId}>
+                      <div className={stylesResp.summaryItem}>
                       <div style={{ minWidth: 0 }}>
                         <div className={stylesResp.summaryItemName} title={item.name}>{item.name}</div>
                         <div className={stylesResp.summaryItemUnitPrice}>
@@ -228,6 +229,11 @@ export default function CartPage() {
                       <div className={stylesResp.summaryItemPrice}>
                         <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
                       </div>
+                      </div>
+                      {/* show thin divider between products when there is more than one item */}
+                      {cart.length > 1 && idx !== cart.length - 1 && (
+                        <div className={stylesResp.summaryDivider} aria-hidden="true"></div>
+                      )}
                     </div>
                   )
                 })}
