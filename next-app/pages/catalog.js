@@ -8,7 +8,6 @@ import {
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
-import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
 // SectionSelector is rendered by PublicLayout for all /catalog routes.
 // Remove local import to avoid duplicate selectors.
@@ -16,7 +15,7 @@ import { slugifyPreserveCase } from '../utils/slugify'
 export default function Catalog() {
   const router = useRouter()
   const { products, categories, materials, isLoading } = useProducts()
-  const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
+  const { addToCart, subtotal } = useCart()
   const { calculateDiscount } = useCoupons()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -635,6 +634,15 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     setImageIndex(0)
   }, [product.imagenes?.length])
 
+  // --- Accessibility / behavior: on small viewports tapping the image should
+  // navigate to the product page instead of changing the preview. For desktop
+  // we keep the ability to change the preview via arrows/dots. We guard image
+  // preview controls so they only act on pointer events when viewport width
+  // is > 640px; on smaller screens we let the image click navigate.
+  const isSmallViewport = () => {
+    try { return typeof window !== 'undefined' && window.innerWidth <= 640 } catch { return false }
+  }
+
   const handleAddToCart = () => {
     onAddToCart(product.id, quantity)
     setQuantity(1)
@@ -670,44 +678,42 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       }}>
         {product.imagenes && product.imagenes.length > 0 ? (
           <>
-              <img
-                src={product.imagenes[imageIndex]}
-                alt={product.nombre}
-                loading="lazy"
-                onClick={(e) => {
-                  // On mobile we want tapping the image to navigate to the product page.
-                  // Use an explicit navigation fallback for small viewports so taps
-                  // reach the product page even if an overlay/control intercepts the event.
-                  try {
-                    if (typeof window !== 'undefined' && window.innerWidth <= 640) {
-                      // Explicitly navigate to the product page on mobile.
-                      navigateToProduct()
-                      return
-                    }
-                  } catch (err) {
-                    // if any issue reading window, fall back to desktop behavior
-                  }
-                  // Desktop: open image lightbox
-                  e.stopPropagation()
-                  onImageClick && onImageClick(product.id, imageIndex)
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  cursor: 'zoom-in'
-                }}
-              />
+                <img
+                  src={product.imagenes[imageIndex]}
+                  alt={product.nombre}
+                  loading="lazy"
+                  onClick={(e) => {
+                    // On small viewports we want tapping the image to navigate to the product page.
+                    // Desktop behavior: open image lightbox. We must prevent the preview controls
+                    // (prev/next/dots) from being interactive on small viewports so the tap navigates.
+                    try {
+                      if (isSmallViewport()) {
+                        navigateToProduct()
+                        return
+                      }
+                    } catch (err) { /* ignore and continue with desktop behavior */ }
+
+                    // Desktop: open image lightbox
+                    e.stopPropagation()
+                    onImageClick && onImageClick(product.id, imageIndex)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    cursor: 'zoom-in'
+                  }}
+                />
 
             {/* Prev / Next buttons */}
             {product.imagenes.length > 1 && (
               <>
                 <button
                   aria-label="Anterior"
-                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     left: 8,
@@ -725,7 +731,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
                 <button
                   aria-label="Siguiente"
-                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i + 1) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(i => (i + 1) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     right: 8,
@@ -757,7 +763,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                 {product.imagenes.map((_, index) => (
                   <button
                     key={index}
-                    onClick={(e) => { e.stopPropagation(); setImageIndex(index) }}
+                    onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(index) }}
                     aria-label={`Mostrar imagen ${index + 1}`}
                     style={{
                       width: index === imageIndex ? 10 : 8,
