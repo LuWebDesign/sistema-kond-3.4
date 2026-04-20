@@ -15,46 +15,50 @@ Keep analysis extremely short after that.
 
 ## High-signal facts (what an agent would likely miss)
 
-- Two targets: legacy static site at the repo root (HTML + js/) and a migrating Next.js app in `next-app/`. Confirm which target you must change before editing files.
+- Two targets: legacy static site at the repo root (HTML + js/) and a migrating Next.js app in `next-app/`. Confirm which target you'll change before editing files.
 
 - Next.js quick dev (work in `next-app/`):
-  cd next-app
-  npm ci
-  cp ../.env.example .env.local
-  set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
-  npm run dev    # binds 0.0.0.0:3000
-  npm run build
-  npm start
+  - cd next-app
+  - npm ci   # use `npm ci` in CI/automation; `npm install` is fine for local work
+  - cp ../.env.example .env.local
+  - Edit `.env.local` and set: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
+  - npm run dev    # dev server binds 0.0.0.0:3000 per package.json
+  - npm run build
+  - npm start
+  - Note: `next-app/package.json` lists engines.node = 22.x but CI uses Node 20 (see .github/workflows/ci.yml). Reconcile Node versions if you hit build/runtime issues.
 
-- Pre-check: run `node verify-setup.js` from the repo root. It exits non-zero when required Supabase files or docs are missing.
+- Pre-check: run `node verify-setup.js` from the repo root. It exits non-zero when key Supabase files or docs (e.g. MIGRACION-SUPABASE.md) are missing.
 
-- Supabase notes:
-  - Apply `supabase/schema.sql` then `supabase/storage-buckets.sql` in the Supabase SQL Editor.
-  - Use the anon key (NEXT_PUBLIC_SUPABASE_ANON_KEY) in frontend code. NEVER commit service-role/admin keys or put them in client code.
-  - Data migration: `node supabase/migrate-data.js` requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in env and expects a local `data-export.json`. Treat the service key as secret.
+- Supabase (practical gotchas):
+  - Apply `supabase/schema.sql` first, then `supabase/storage-buckets.sql` in the Supabase SQL Editor.
+  - storage-buckets.sql creates: `comprobantes` (private) and `productos` (public); review storage policies before changing behavior.
+  - Frontend must use the anon key: NEXT_PUBLIC_SUPABASE_ANON_KEY. NEVER commit or expose SUPABASE_SERVICE_ROLE_KEY.
+  - Migration script: `node supabase/migrate-data.js` requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and a local `data-export.json`. Run migrations only in secure environments and always take backups.
 
-- Canonical client: `supabase/client.js`. If you change data access or storage keys, update this file and re-check `js/supabase-init.js` and `js/utils.js` (legacy site).
+- Canonical client and static-site integration:
+  - Canonical Supabase client: `supabase/client.js` → update this if you change env names or helpers.
+  - Static HTML uses `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js`; check both when changing config loading.
 
-- Legacy localStorage keys: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`. Changing keys or shapes requires a migration or compatibility layer (both frontends read the same keys).
+- Legacy localStorage keys (both frontends read these): `productosBase`, `pedidos`, `pedidosCatalogo`, `cart` (also `notifications`). Changing keys or shapes requires a migration or compatibility layer.
 
 - Static-site gotchas:
-  - Script order matters: load utilities (`utils.js`) before files that use them. Verify `index.html` / `catalog.html` when renaming/moving scripts.
-  - The code contains quota-handling fallbacks (omit comprobante) — don't remove without a migration.
+  - Script order matters: load `js/utils.js` and `js/supabase-init.js` before scripts that depend on them. Verify `index.html` / `catalog.html` when moving/renaming files.
+  - Quota fallback: `js/utils.js` implements `safeLocalStorageSetItem` that can omit `comprobante` on QuotaExceededError — do NOT remove this behavior without planning a migration.
 
 - CI & Node:
-  - CI (`.github/workflows/ci.yml`) builds `next-app/` on Node 20. `next-app/package.json` declares `engines.node = 22.x` — a mismatch that can break builds.
-  - CI caches `next-app/package-lock.json`; check cache key if builds misbehave.
-  - ESLint in CI is non-fatal (`npx eslint . || true`) — run lint locally when enforcing style.
+  - CI (.github/workflows/ci.yml) sets up Node 20 and caches `next-app/package-lock.json` (cache-dependency-path). If builds fail, check Node version mismatch and cache key first.
+  - ESLint in CI is intentionally non-fatal (`npx eslint . || true`). Run lint locally when style matters.
 
-- Security & commits: never commit `.env.local` or secrets. Use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT add AI attribution and avoid `--no-verify` unless requested.
+- Security & commits: never commit `.env.local` or any service-role/admin keys. Use conventional commit messages (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT add AI attribution to commits. Avoid `--no-verify` unless requested.
 
-- Next/SSR caution: guard browser-only APIs (use `typeof window !== 'undefined'` or `useEffect`) to avoid hydration mismatches.
+- Next/SSR caution: guard browser-only APIs (use `typeof window !== 'undefined'` or React `useEffect`) to avoid hydration/runtime mismatches in Next.js.
 
-- Cross-cutting changes (DB schema, storage keys, auth, build config): STOP and list affected files in the PR description; coordinate changes across both frontends and migration scripts.
+- Cross-cutting changes (DB schema, storage keys, auth, build config): STOP. Document affected files in the PR description (include `supabase/*.sql`, `supabase/migrate-data.js`, `js/utils.js`, `supabase/client.js`, and `next-app/` changes) and coordinate both frontends and migration scripts.
 
 ## Files to open first
 
 - verify-setup.js
+- MIGRACION-SUPABASE.md
 - README.md
 - supabase/README.md
 - supabase/schema.sql
@@ -64,7 +68,8 @@ Keep analysis extremely short after that.
 - js/supabase-init.js
 - js/utils.js
 - next-app/package.json
+- next-app/migrations/
 - .github/workflows/ci.yml
 - .github/copilot-instructions.md
 
-Keep this file short; only add items an agent would likely miss.
+Keep this file short; add only items an agent would likely miss.
