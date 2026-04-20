@@ -634,14 +634,18 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     setImageIndex(0)
   }, [product.imagenes?.length])
 
-  // --- Accessibility / behavior: on small viewports tapping the image should
-  // navigate to the product page instead of changing the preview. For desktop
-  // we keep the ability to change the preview via arrows/dots. We guard image
-  // preview controls so they only act on pointer events when viewport width
-  // is > 640px; on smaller screens we let the image click navigate.
-  const isSmallViewport = () => {
-    try { return typeof window !== 'undefined' && window.innerWidth <= 640 } catch { return false }
-  }
+  // Track small viewport on the client to avoid intercepting taps with
+  // preview controls on mobile. We initialize as false (safe for SSR) and
+  // update on mount and resize.
+  const [isClientMobile, setIsClientMobile] = useState(false)
+  useEffect(() => {
+    const check = () => {
+      try { setIsClientMobile(typeof window !== 'undefined' && window.innerWidth <= 640) } catch { setIsClientMobile(false) }
+    }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const handleAddToCart = () => {
     onAddToCart(product.id, quantity)
@@ -686,12 +690,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                     // On small viewports we want tapping the image to navigate to the product page.
                     // Desktop behavior: open image lightbox. We must prevent the preview controls
                     // (prev/next/dots) from being interactive on small viewports so the tap navigates.
-                    try {
-                      if (isSmallViewport()) {
-                        navigateToProduct()
-                        return
-                      }
-                    } catch (err) { /* ignore and continue with desktop behavior */ }
+                    // If client mobile, navigate immediately and stop further handling.
+                    if (isClientMobile) {
+                      // stopPropagation to avoid the parent onClick navigate firing twice
+                      e.stopPropagation && e.stopPropagation()
+                      navigateToProduct()
+                      return
+                    }
 
                     // Desktop: open image lightbox
                     e.stopPropagation()
@@ -713,7 +718,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               <>
                 <button
                   aria-label="Anterior"
-                  onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     left: 8,
@@ -731,7 +736,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
                 <button
                   aria-label="Siguiente"
-                  onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(i => (i + 1) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(i => (i + 1) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     right: 8,
@@ -763,7 +768,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                 {product.imagenes.map((_, index) => (
                   <button
                     key={index}
-                    onClick={(e) => { e.stopPropagation(); if (!isSmallViewport()) setImageIndex(index) }}
+                    onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(index) }}
                     aria-label={`Mostrar imagen ${index + 1}`}
                     style={{
                       width: index === imageIndex ? 10 : 8,
