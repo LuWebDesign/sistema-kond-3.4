@@ -323,6 +323,14 @@
   margin-top: 8px;
 }
 
+/* Explicit divider element used between items when cart has more than one product */
+.summaryDivider {
+  height: 1px;
+  width: 100%;
+  background: rgba(var(--border-rgb), 0.06);
+  margin: 8px 0;
+}
+
 /* Subtle dividers within the totals block to separate subtotal, savings, shipping, and total */
 .summaryTotals > div {
   padding: 8px 0;
