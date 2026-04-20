@@ -8,7 +8,6 @@ import {
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
-import stylesResp from '../styles/catalog-responsive.module.css'
 import { slugifyPreserveCase } from '../utils/slugify'
 // SectionSelector is rendered by PublicLayout for all /catalog routes.
 // Remove local import to avoid duplicate selectors.
@@ -16,7 +15,7 @@ import { slugifyPreserveCase } from '../utils/slugify'
 export default function Catalog() {
   const router = useRouter()
   const { products, categories, materials, isLoading } = useProducts()
-  const { cart, addToCart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
+  const { addToCart, subtotal } = useCart()
   const { calculateDiscount } = useCoupons()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -635,6 +634,19 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     setImageIndex(0)
   }, [product.imagenes?.length])
 
+  // Track small viewport on the client to avoid intercepting taps with
+  // preview controls on mobile. We initialize as false (safe for SSR) and
+  // update on mount and resize.
+  const [isClientMobile, setIsClientMobile] = useState(false)
+  useEffect(() => {
+    const check = () => {
+      try { setIsClientMobile(typeof window !== 'undefined' && window.innerWidth <= 640) } catch { setIsClientMobile(false) }
+    }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const handleAddToCart = () => {
     onAddToCart(product.id, quantity)
     setQuantity(1)
@@ -670,44 +682,43 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       }}>
         {product.imagenes && product.imagenes.length > 0 ? (
           <>
-              <img
-                src={product.imagenes[imageIndex]}
-                alt={product.nombre}
-                loading="lazy"
-                onClick={(e) => {
-                  // On mobile we want tapping the image to navigate to the product page.
-                  // Use an explicit navigation fallback for small viewports so taps
-                  // reach the product page even if an overlay/control intercepts the event.
-                  try {
-                    if (typeof window !== 'undefined' && window.innerWidth <= 640) {
-                      // Explicitly navigate to the product page on mobile.
+                <img
+                  src={product.imagenes[imageIndex]}
+                  alt={product.nombre}
+                  loading="lazy"
+                  onClick={(e) => {
+                    // On small viewports we want tapping the image to navigate to the product page.
+                    // Desktop behavior: open image lightbox. We must prevent the preview controls
+                    // (prev/next/dots) from being interactive on small viewports so the tap navigates.
+                    // If client mobile, navigate immediately and stop further handling.
+                    if (isClientMobile) {
+                      // stopPropagation to avoid the parent onClick navigate firing twice
+                      e.stopPropagation && e.stopPropagation()
                       navigateToProduct()
                       return
                     }
-                  } catch (err) {
-                    // if any issue reading window, fall back to desktop behavior
-                  }
-                  // Desktop: open image lightbox
-                  e.stopPropagation()
-                  onImageClick && onImageClick(product.id, imageIndex)
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  cursor: 'zoom-in'
-                }}
-              />
+
+                    // Desktop: open image lightbox
+                    e.stopPropagation()
+                    onImageClick && onImageClick(product.id, imageIndex)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    cursor: 'zoom-in'
+                  }}
+                />
 
             {/* Prev / Next buttons */}
             {product.imagenes.length > 1 && (
               <>
                 <button
                   aria-label="Anterior"
-                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(i => (i - 1 + product.imagenes.length) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     left: 8,
@@ -725,7 +736,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
                 <button
                   aria-label="Siguiente"
-                  onClick={(e) => { e.stopPropagation(); setImageIndex(i => (i + 1) % product.imagenes.length) }}
+                  onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(i => (i + 1) % product.imagenes.length) }}
                   style={{
                     position: 'absolute',
                     right: 8,
@@ -757,7 +768,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                 {product.imagenes.map((_, index) => (
                   <button
                     key={index}
-                    onClick={(e) => { e.stopPropagation(); setImageIndex(index) }}
+                    onClick={(e) => { e.stopPropagation(); if (!isClientMobile) setImageIndex(index) }}
                     aria-label={`Mostrar imagen ${index + 1}`}
                     style={{
                       width: index === imageIndex ? 10 : 8,
