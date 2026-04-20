@@ -121,13 +121,13 @@ export default function CartPage() {
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                          <div className={stylesResp.cartItemHeader}>
+                            <div className={stylesResp.cartItemHeaderLeft}>
+                              <div className={stylesResp.cartItemTitle} title={item.name}>{item.name}</div>
                               <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{item.measures}</div>
                             </div>
 
-                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div className={stylesResp.cartItemPriceBlock}>
                               {original > unitPrice ? (
                                 <>
                                   <div style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(totalLine)}</div>
