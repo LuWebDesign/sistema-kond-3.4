@@ -35,3 +35,9 @@ export async function updateUserProfile(userPartial, attempts = 3) {
 }
 
 export default { updateUserProfile }
+
+// Minimal changePassword stub — real implementation will use Supabase Auth
+export async function changePassword(userId, { currentPassword, newPassword } = {}) {
+  // For now, simulate async operation and resolve
+  return new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 300))
+}

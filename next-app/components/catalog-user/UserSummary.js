@@ -10,7 +10,6 @@ export default function UserSummary({ user = {}, onEditProfile = () => {} }) {
     <div className={styles.card} data-testid="user-summary-card">
       <div className={styles.avatar} data-testid="user-summary-avatar">
         {avatar ? (
-          // lazy load and guard window usage by relying on img loading attribute
           <img src={avatar} alt={`${name} avatar`} loading="lazy" />
         ) : (
           <div aria-hidden className={styles.avatarPlaceholder}>👤</div>
@@ -26,7 +25,7 @@ export default function UserSummary({ user = {}, onEditProfile = () => {} }) {
         <button
           type="button"
           onClick={onEditProfile}
-          data-testid="user-summary-edit-button"
+          data-testid="user-summary-edit"
           className={styles.editBtn}
         >
           Editar perfil

@@ -3,6 +3,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createToast, formatCurrency, formatDate } from '../../utils/catalogUtils'
 import { loginWithEmail, getCurrentSession, loginWithGoogle, handleOAuthCallback, registerWithEmail, logoutClient } from '../../utils/supabaseAuthV2'
+import UserSummary from '../../components/catalog-user/UserSummary'
+import AddressForm from '../../components/catalog-user/AddressForm'
+import SecurityCard from '../../components/catalog-user/SecurityCard'
+import PreferencesCard from '../../components/catalog-user/PreferencesCard'
+import ProfileProgress from '../../components/catalog-user/ProfileProgress'
+import * as localStorageUser from '../../utils/localStorageUser'
+import supabaseAuthAdapter from '../../utils/supabaseAuthAdapter'
 
 export default function User() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -52,10 +59,9 @@ export default function User() {
               return
             }
           }
-        } catch (error) {
-          console.error('Error en OAuth callback:', error)
-          createToast('Error al procesar login con Google', 'error')
-        }
+          } catch (error) {
+            createToast('Error al procesar login con Google', 'error')
+          }
       }
 
       // Cargar sesión actual de Supabase
@@ -124,7 +130,7 @@ export default function User() {
     setIsLoading(true)
 
     try {
-      console.log('🔐 Intentando login con:', formData.email)
+      // attempt login
       // Primero intentar login con Supabase Auth
       const result = await loginWithEmail(formData.email, formData.password)
       
@@ -160,7 +166,6 @@ export default function User() {
         direccion: '', localidad: '', cp: '', provincia: '', observaciones: ''
       })
     } catch (error) {
-      console.error('Error en login:', error)
       createToast('Error al iniciar sesión', 'error')
     } finally {
       setIsLoading(false)
@@ -234,7 +239,6 @@ export default function User() {
         createToast('No se pudo iniciar sesión con Google', 'error')
       }
     } catch (error) {
-      console.error('Error en login con Google:', error)
       createToast('Error al iniciar sesión con Google', 'error')
     } finally {
       setIsLoading(false)
@@ -266,198 +270,71 @@ export default function User() {
   if (currentUser) {
     return (
       <PublicLayout title="Mi Cuenta - KOND">
-        <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '32px'
-          }}>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'var(--accent-blue)'
-            }}>
-              👤 Mi Cuenta
-            </h1>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: 'transparent',
-                color: 'var(--text-muted)',
-                border: '1px solid var(--border-color)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'var(--bg-hover)'
-                e.target.style.borderColor = 'var(--accent-primary)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'transparent'
-                e.target.style.borderColor = 'var(--border-color)'
-              }}
-            >
-              🚪 Cerrar Sesión
-            </button>
-          </div>
-
-          <div className="account-grid" style={{
-            display: 'grid',
-            gap: '32px'
-          }}>
-            {/* Profile Header */}
-            <div className="profile-card-left" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '24px',
-              textAlign: 'center',
-              height: 'fit-content'
-            }}>
-              {/* Avatar */}
-              <div style={{
-                position: 'relative',
-                display: 'inline-block',
-                marginBottom: '16px'
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-blue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '2rem',
-                  fontWeight: 700,
-                  margin: '0 auto'
-                }}>
-                  {currentUser.nombre?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              </div>
-
-              <h2 style={{
-                fontSize: '1.3rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '8px'
-              }}>
-                {currentUser.nombre} {currentUser.apellido || ''}
-              </h2>
-              
-              <p style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '20px'
-              }}>
-                {currentUser.email}
-              </p>
-
-              {/* Editar perfil */}
-              <button
-                onClick={() => router.push('/catalog/user/perfil')}
-                style={{
-                  background: 'var(--accent-blue)',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500
-                }}
-              >
-                ✏️ Editar perfil
-              </button>
-            </div>
-            
-            {/* Account Info Card: Información de cuenta (datos de logeo) */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '16px',
-              color: 'var(--text-primary)'
-            }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-blue)' }}>🔒 Información de cuenta</h3>
-              <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', alignItems: 'start' }}>
-                {/** Each info block is a small card for clearer two-column layout */}
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Email</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700, wordBreak: 'break-all' }}>{currentUser.email}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Registrado</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.fechaRegistro ? formatDate(currentUser.fechaRegistro) : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>ID</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.id || '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Último acceso</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.lastLogin ? formatDate(currentUser.lastLogin) : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Contraseña</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.password ? '••••••••' : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Teléfono</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.telefono || '—'}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Información del Perfil */}
-            <div
-              onClick={() => router.push('/catalog/user/perfil')}
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '20px 24px',
-                background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
-                color: 'white'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.5rem' }}>✏️</span>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: 'white' }}>Información del Perfil</h3>
-                    <p style={{ fontSize: '0.85rem', margin: '2px 0 0 0', opacity: 0.9 }}>Gestioná tus datos personales</p>
-                  </div>
-                </div>
-                <span style={{ fontSize: '1.2rem' }}>→</span>
-              </div>
+        <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }} data-testid="catalog-user-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)', margin: 0 }}>👤 Mi Cuenta</h1>
+            <div>
+              <button onClick={handleLogout} data-testid="catalog-logout" style={{ background: 'transparent', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 8 }}>🚪 Cerrar Sesión</button>
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>
+            <aside>
+              <UserSummary user={currentUser} onEditProfile={() => router.push('/catalog/user/perfil')} />
+              <div style={{ height: 12 }} />
+              <ProfileProgress completeness={
+                ((currentUser.nombre ? 20 : 0) + (currentUser.email ? 20 : 0) + (currentUser.direccion ? 20 : 0) + (currentUser.telefono ? 20 : 0) + (currentUser.avatar ? 20 : 0))
+              } />
+            </aside>
 
-      </div>
-    </PublicLayout>
-  )
-}
+            <main>
+              <div style={{ display: 'grid', gap: 16 }}>
+                <section>
+                  <h3 style={{ margin: '0 0 8px 0' }}>Dirección</h3>
+                  <AddressForm initialAddress={{ street: currentUser.direccion || '', city: currentUser.localidad || '', postalCode: currentUser.cp || '', phone: currentUser.telefono || '' }} onSave={async (addr) => {
+                    const prev = currentUser
+                    const updated = { ...currentUser, direccion: addr.street, localidad: addr.city, cp: addr.postalCode, telefono: addr.phone }
+                    // optimistic UI
+                    setCurrentUser(updated)
+                    try {
+                      await supabaseAuthAdapter.updateUserProfile({ id: currentUser.id, direccion: addr.street, localidad: addr.city, cp: addr.postalCode, telefono: addr.phone })
+                      localStorageUser.setUser(updated)
+                      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('user:updated', { detail: updated }))
+                      createToast('Dirección actualizada', 'success')
+                    } catch (err) {
+                      setCurrentUser(prev)
+                      createToast('Error al actualizar dirección', 'error')
+                    }
+                  }} />
+                </section>
+
+                <section>
+                  <SecurityCard userId={currentUser.id} />
+                </section>
+
+                <section>
+                  <PreferencesCard preferences={currentUser.preferences || {}} onSave={async (prefs) => {
+                    const prev = currentUser
+                    const updated = { ...currentUser, preferences: prefs }
+                    setCurrentUser(updated)
+                    try {
+                      await supabaseAuthAdapter.updateUserProfile({ id: currentUser.id, preferences: prefs })
+                      localStorageUser.setUser(updated)
+                      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('user:updated', { detail: updated }))
+                      createToast('Preferencias guardadas', 'success')
+                    } catch (err) {
+                      setCurrentUser(prev)
+                      createToast('Error al guardar preferencias', 'error')
+                    }
+                  }} />
+                </section>
+              </div>
+            </main>
+          </div>
+        </div>
+      </PublicLayout>
+    )
+  }
 
   // Si no está logueado, mostrar login/registro
   return (
@@ -506,7 +383,6 @@ export default function User() {
                   try {
                     await loginWithGoogle()
                   } catch (error) {
-                    console.error('Error al iniciar login con Google:', error)
                     createToast('Error al conectar con Google', 'error')
                   }
                 }}

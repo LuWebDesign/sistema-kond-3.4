@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createToast } from '../../../utils/catalogUtils'
 import { getCurrentSession, updateUserProfile } from '../../../utils/supabaseAuthV2'
+import UserSummary from '../../../components/catalog-user/UserSummary'
+import AddressForm from '../../../components/catalog-user/AddressForm'
+import * as localStorageUser from '../../../utils/localStorageUser'
 
 export default function Perfil() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -141,161 +144,70 @@ export default function Perfil() {
 
   return (
     <PublicLayout title="Editar Perfil - KOND">
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
-            <button
-              onClick={() => router.push('/catalog/user')}
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '8px', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}
-            >
-              ← Volver a Mi Cuenta
-            </button>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)', margin: 0 }}>
-              ✏️ Editar Perfil
-            </h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div>
+              <button onClick={() => router.push('/catalog/user')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>← Volver a Mi Cuenta</button>
+              <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)', margin: '8px 0 0 0' }}>✏️ Editar Perfil</h1>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>
+            <aside>
+              <UserSummary user={currentUser} onEditProfile={() => {}} />
+            </aside>
+
+            <main>
+              <form onSubmit={handleUpdateProfile} style={{ display: 'grid', gap: 24 }}>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24 }}>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: avatar ? `url(${avatar}) center/cover` : 'var(--accent-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2rem', fontWeight: 700 }}>{!avatar && (currentUser?.nombre?.charAt(0)?.toUpperCase() || 'U')}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <label style={{ background: 'var(--accent-blue)', color: 'white', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' }}>📷 Cambiar foto<input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} /></label>
+                      {avatar && <button type="button" onClick={() => setAvatar(null)} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', borderRadius: 8 }}>🗑️ Eliminar</button>}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+                    {[
+                      { label: 'Nombre *', name: 'nombre', required: true },
+                      { label: 'Apellido', name: 'apellido' },
+                      { label: 'Email *', name: 'email', type: 'email', required: true },
+                      { label: 'Teléfono', name: 'telefono', type: 'tel' },
+                    ].map(({ label, name, type = 'text', required }) => (
+                      <div key={name}>
+                        <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: 6 }}>{label}</label>
+                        <input type={type} name={name} value={formData[name]} onChange={handleInputChange} required={required} style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)' }} />
+                      </div>
+                    ))}
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: 6 }}>🔑 Contraseña (dejar vacío para no cambiarla)</label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••" style={{ flex: 1, padding: 12, borderRadius: 8, border: '1px solid var(--border-color)' }} />
+                        <button type="button" onClick={() => setShowPassword(s => !s)} style={{ padding: '8px 12px', borderRadius: 8 }}>{showPassword ? 'Ocultar' : 'Mostrar'}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24 }}>
+                  <h4>Dirección de Envío</h4>
+                  <AddressForm initialAddress={{ street: formData.direccion || '', city: formData.localidad || '', postalCode: formData.cp || '', phone: formData.telefono || '' }} onSave={async (addr) => {
+                    setFormData(prev => ({ ...prev, direccion: addr.street, localidad: addr.city, cp: addr.postalCode, telefono: addr.phone }))
+                  }} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                  <button type="button" onClick={() => router.push('/catalog/user')} style={{ background: 'var(--bg-section)', padding: '12px 20px', borderRadius: 8 }}>❌ Cancelar</button>
+                  <button type="submit" disabled={isSaving} style={{ background: isSaving ? 'var(--text-muted)' : 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)', color: 'white', padding: '12px 24px', borderRadius: 8 }}>{isSaving ? '⏳ Guardando...' : '💾 Guardar Cambios'}</button>
+                </div>
+              </form>
+            </main>
           </div>
         </div>
-
-        <form onSubmit={handleUpdateProfile} style={{ display: 'grid', gap: '24px' }}>
-
-          {/* Avatar */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{
-              width: '80px', height: '80px', borderRadius: '50%', flexShrink: 0,
-              background: avatar ? `url(${avatar}) center/cover` : 'var(--accent-blue)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontSize: '2rem', fontWeight: 700
-            }}>
-              {!avatar && (currentUser?.nombre?.charAt(0)?.toUpperCase() || 'U')}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <label style={{ background: 'var(--accent-blue)', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500 }}>
-                📷 Cambiar foto
-                <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
-              </label>
-              {avatar && (
-                <button type="button" onClick={() => setAvatar(null)}
-                  style={{ background: '#ef4444', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  🗑️ Eliminar
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Información Personal */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid var(--accent-blue)' }}>
-              <span style={{ fontSize: '1.2rem' }}>👤</span>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Información Personal</h3>
-            </div>
-
-            <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-              {[
-                { label: 'Nombre *', name: 'nombre', icon: '👤', required: true },
-                { label: 'Apellido', name: 'apellido', icon: '📛' },
-                { label: 'Email *', name: 'email', icon: '📧', type: 'email', required: true },
-                { label: 'Teléfono', name: 'telefono', icon: '📱', type: 'tel' },
-              ].map(({ label, name, icon, type = 'text', required }) => (
-                <div key={name} style={{ position: 'relative' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>
-                    {icon} {label}
-                  </label>
-                  <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleInputChange}
-                    required={required}
-                    style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                  />
-                </div>
-              ))}
-
-              {/* Contraseña */}
-              <div style={{ position: 'relative', gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>
-                  🔑 Contraseña (dejar vacío para no cambiarla)
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    style={{ flex: 1, padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                  />
-                  <button type="button" onClick={() => setShowPassword(s => !s)}
-                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    {showPassword ? 'Ocultar' : 'Mostrar'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Dirección de Envío */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid var(--accent-secondary)' }}>
-              <span style={{ fontSize: '1.2rem' }}>🏠</span>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Dirección de Envío</h3>
-            </div>
-
-            <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>🏠 Dirección</label>
-                <input type="text" name="direccion" value={formData.direccion} onChange={handleInputChange}
-                  style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
-              </div>
-
-              {[
-                { label: 'Localidad', name: 'localidad', icon: '🏙️' },
-                { label: 'Código Postal', name: 'cp', icon: '📮' },
-                { label: 'Provincia', name: 'provincia', icon: '🗺️' },
-              ].map(({ label, name, icon }) => (
-                <div key={name}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>{icon} {label}</label>
-                  <input type="text" name={name} value={formData[name]} onChange={handleInputChange}
-                    style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
-                </div>
-              ))}
-
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>📝 Observaciones</label>
-                <textarea name="observaciones" value={formData.observaciones} onChange={handleInputChange}
-                  placeholder="Ej: Llamar al timbre, dejar en conserjería, horario de entrega preferido..."
-                  style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontFamily: 'inherit', outline: 'none', resize: 'vertical', minHeight: '80px', maxHeight: '120px', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
-              </div>
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingBottom: '24px' }}>
-            <button type="button" onClick={() => router.push('/catalog/user')}
-              style={{ background: 'var(--bg-section)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '12px 24px', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' }}>
-              ❌ Cancelar
-            </button>
-            <button type="submit" disabled={isSaving}
-              style={{ background: isSaving ? 'var(--text-muted)' : 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)', color: 'white', border: 'none', padding: '12px 32px', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer', boxShadow: isSaving ? 'none' : '0 4px 12px rgba(59,130,246,0.3)' }}>
-              {isSaving ? '⏳ Guardando...' : '💾 Guardar Cambios'}
-            </button>
-          </div>
-
-        </form>
-      </div>
-    </PublicLayout>
-  )
+      </PublicLayout>
+    )
 }
