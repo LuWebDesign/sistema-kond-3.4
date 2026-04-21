@@ -76,6 +76,7 @@ export function useProducts() {
       // Obtener productos publicados desde Supabase
       const { data: productosBase, error } = await getProductosPublicados()
       
+      
       if (error) {
         setProducts([])
         setCategories([])
@@ -120,9 +121,13 @@ export function useProducts() {
         }
       })
       
-      const validProducts = mappedProducts.filter(p => 
-        p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
-      )
+        
+
+        const validProducts = mappedProducts.filter(p => 
+          p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
+        )
+
+        
       
       // Enriquecer productos con información de promociones
       const enriched = validProducts.map(p => {
@@ -142,6 +147,8 @@ export function useProducts() {
       })
 
       setProducts(enriched)
+
+      
       
       // Extraer categorías únicas
       const uniqueCategories = [...new Set(validProducts
@@ -149,6 +156,7 @@ export function useProducts() {
         .filter(cat => cat && cat.trim() !== ''))]
       
       setCategories(uniqueCategories)
+      
     } catch (error) {
       setProducts([])
       setCategories([])
@@ -157,7 +165,7 @@ export function useProducts() {
     }
   }
 
-  return { products, categories, isLoading, reloadProducts: loadProducts }
+  return { products, categories, materials, isLoading, reloadProducts: loadProducts }
 }
 
 // Hook para gestionar el carrito

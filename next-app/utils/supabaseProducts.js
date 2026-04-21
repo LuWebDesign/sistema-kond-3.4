@@ -45,10 +45,21 @@ export async function getAllProductos() {
 export async function getProductosPublicados() {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping getProductosPublicados')
-      return { data: null, error: 'Supabase not configured' }
+      console.warn('Supabase not configured — falling back to server API /api/productos for getProductosPublicados')
+      try {
+        const resp = await fetch('/api/productos?page=1&per_page=200')
+        if (!resp.ok) throw new Error('Server API /api/productos returned ' + resp.status)
+        const body = await resp.json()
+        const productos = body && body.productos ? body.productos : []
+        // aplicar filtros equivalentes: publicado = true && hidden_in_productos = false
+        const filtered = (productos || []).filter(p => p.publicado && !p.hidden_in_productos)
+        return { data: filtered, error: null }
+      } catch (err) {
+        console.warn('Fallback to /api/productos failed:', err)
+        return { data: null, error: err.message || String(err) }
+      }
     }
-    const cols = ['id','nombre','categoria','precio_unitario','imagenes_urls','publicado'].join(',');
+    const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado'].join(',');
     try {
       const { data, error } = await supabase
         .from('productos')
@@ -72,8 +83,19 @@ export async function getProductosPublicados() {
       return { data, error: null };
     }
   } catch (error) {
-    console.error('Error al obtener productos publicados:', error);
-    return { data: null, error: error.message };
+    console.error('Error al obtener productos publicados via Supabase client:', error);
+    // Intentar fallback a la API server-side para evitar que la página quede vacía
+    try {
+      const resp = await fetch('/api/productos?page=1&per_page=200')
+      if (!resp.ok) throw new Error('Server API /api/productos returned ' + resp.status)
+      const body = await resp.json()
+      const productos = body && body.productos ? body.productos : []
+      const filtered = (productos || []).filter(p => p.publicado && !p.hidden_in_productos)
+      return { data: filtered, error: null }
+    } catch (err) {
+      console.warn('Fallback to /api/productos also failed:', err)
+      return { data: null, error: error.message || String(error) }
+    }
   }
 }
 
