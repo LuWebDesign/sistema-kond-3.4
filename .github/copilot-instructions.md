@@ -1,4 +1,14 @@
-﻿# Sistema KOND 3.4 ÔÇö Instrucciones para AI Assistants
+﻿# BOOTSTRAP RÁPIDO — Inicio en este repositorio
+
+- **Comandos rápidos**:
+  - `node verify-setup.js` — Verifica archivos y estado de migración.
+  - `cd next-app && cp ../.env.example .env.local && npm install && npm run dev` — Iniciar la app Next.js en desarrollo.
+  - Ejecutar SQL de Supabase en este orden: `supabase/schema.sql` -> `supabase/storage-buckets.sql`.
+
+- **Archivos y rutas clave**: AGENTS.md, README.md, `verify-setup.js`, `supabase/`, `js/`, `next-app/`, `.github/copilot-instructions.md`.
+- **Reglas críticas**: Nunca exponer `SUPABASE_SERVICE_ROLE_KEY` en cliente o en el repo. Mantener `NEXT_PUBLIC_USE_SUPABASE` consistente entre frontends.
+
+# Sistema KOND 3.4 ÔÇö Instrucciones para AI Assistants
 
 > Este archivo es le├¡do autom├íticamente por GitHub Copilot (VS Code) y por opencode.
 > Contiene el contexto t├®cnico completo del proyecto para que el asistente genere c├│digo correcto sin necesidad de re-explicar la arquitectura en cada sesi├│n.

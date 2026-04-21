@@ -632,7 +632,7 @@ function initUserPage() {
     } catch (err) { /* no-op */ }
   });
 
-  // Polling fallback: check every 3s if pedidosCatalogo changed in same-tab edits
+  // Polling fallback: check every 15s if pedidosCatalogo changed in same-tab edits
   let _lastPedidosSnapshot = JSON.stringify(JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]'));
   setInterval(() => {
     try {
@@ -645,7 +645,7 @@ function initUserPage() {
         renderMisCompras(currentTab, currentTab === 'activas' ? activasPage : entregadasPage);
       }
     } catch (err) { /* ignore parse errors */ }
-  }, 3000);
+  }, 15000);
 
   // Configurar tabs
   setupTabs();
