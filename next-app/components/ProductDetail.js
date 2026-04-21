@@ -34,12 +34,13 @@ const DEFAULT_CATEGORY_IMAGES = {
 
 function getCategoryImage(catName, products) {
   if (!catName) return null
-  const fromMap = DEFAULT_CATEGORY_IMAGES[catName]
-  if (fromMap) return fromMap
-  if (!products || products.length === 0) return null
-  const catProducts = products.filter(p => p.categoria === catName && p.imagenes && p.imagenes.length > 0)
-  if (catProducts.length > 0) return catProducts[0].imagenes[0]
-  return null
+  // Primero buscar imagen de producto real
+  if (products && products.length > 0) {
+    const catProducts = products.filter(p => p.categoria === catName && p.imagenes && p.imagenes.length > 0)
+    if (catProducts.length > 0) return catProducts[0].imagenes[0]
+  }
+  // Fallback a imagen por defecto
+  return DEFAULT_CATEGORY_IMAGES[catName] || null
 }
 
 export default function ProductDetail({ product, categories = [], products = [] }) {
