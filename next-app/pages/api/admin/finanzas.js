@@ -10,20 +10,32 @@ export default async function handler(req, res) {
       const type = req.query.type || 'movimientos'
 
       if (type === 'movimientos') {
-        const { data, error } = await supabase
+        // Paginación y selección de columnas para reducir egress
+        const page = Math.max(1, parseInt(req.query.page || '1', 10))
+        const perPage = Math.min(200, Math.max(1, parseInt(req.query.per_page || '100', 10)))
+        const start = (page - 1) * perPage
+        const end = start + perPage - 1
+
+        const cols = [
+          'id', 'fecha', 'hora', 'tipo', 'monto', 'categoria', 'descripcion', 'metodo_pago', 'pedido_catalogo_id', 'created_at'
+        ].join(',')
+
+        const { data, error, count } = await supabase
           .from('movimientos_financieros')
-          .select('*')
+          .select(cols, { count: 'exact' })
           .order('fecha', { ascending: false })
           .order('hora', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
+          .range(start, end)
+
         if (error) throw error
-        return res.status(200).json({ data })
+        return res.status(200).json({ data, pagination: { page, perPage, total: count || (data ? data.length : 0) } })
       }
 
       if (type === 'categorias') {
         const { data, error } = await supabase
           .from('categorias_financieras')
-          .select('*')
+          .select('id,nombre')
           .order('nombre', { ascending: true })
         if (error) throw error
         return res.status(200).json({ data })
@@ -32,25 +44,38 @@ export default async function handler(req, res) {
       if (type === 'registros') {
         const { data, error } = await supabase
           .from('registros_cierre')
-          .select('*')
+          .select('id,fecha,total,created_at')
           .order('fecha', { ascending: false })
         if (error) throw error
         return res.status(200).json({ data })
       }
 
       if (type === 'all') {
-        const [movs, cats, regs] = await Promise.all([
-          supabase.from('movimientos_financieros').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false }),
-          supabase.from('categorias_financieras').select('*').order('nombre', { ascending: true }),
-          supabase.from('registros_cierre').select('*').order('fecha', { ascending: false })
-        ])
+        // Para 'all' limitamos movimientos a un conjunto razonable
+        const page = Math.max(1, parseInt(req.query.page || '1', 10))
+        const perPage = Math.min(200, Math.max(1, parseInt(req.query.per_page || '100', 10)))
+        const start = (page - 1) * perPage
+        const end = start + perPage - 1
+
+        const movs = await supabase
+          .from('movimientos_financieros')
+          .select('id,fecha,hora,tipo,monto,categoria,descripcion,metodo_pago,created_at')
+          .order('fecha', { ascending: false })
+          .order('created_at', { ascending: false })
+          .range(start, end)
+
+        const cats = await supabase.from('categorias_financieras').select('id,nombre').order('nombre', { ascending: true })
+        const regs = await supabase.from('registros_cierre').select('id,fecha,total').order('fecha', { ascending: false })
+
         if (movs.error) throw movs.error
         if (cats.error) throw cats.error
         if (regs.error) throw regs.error
+
         return res.status(200).json({
           movimientos: movs.data,
           categorias: cats.data,
-          registros: regs.data
+          registros: regs.data,
+          pagination: { page, perPage }
         })
       }
 

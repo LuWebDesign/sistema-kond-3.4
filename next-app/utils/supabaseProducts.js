@@ -14,13 +14,25 @@ export async function getAllProductos() {
       console.warn('Supabase not configured — skipping getAllProductos')
       return { data: null, error: 'Supabase not configured' }
     }
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return { data, error: null };
+    const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','tags','created_at'].join(',');
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select(cols)
+        .order('created_at', { ascending: false })
+        .range(0, 999);
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err) {
+      console.warn('getAllProductos: select(cols) failed, falling back to select(*):', err.message || err);
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(0, 999);
+      if (error) return { data: null, error: error.message };
+      return { data, error: null };
+    }
   } catch (error) {
     console.error('Error al obtener productos:', error);
     return { data: null, error: error.message };
@@ -36,15 +48,29 @@ export async function getProductosPublicados() {
       console.warn('Supabase not configured — skipping getProductosPublicados')
       return { data: null, error: 'Supabase not configured' }
     }
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .eq('publicado', true)
-      .eq('hidden_in_productos', false)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return { data, error: null };
+    const cols = ['id','nombre','categoria','precio_unitario','imagenes_urls','publicado','tags'].join(',');
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select(cols)
+        .eq('publicado', true)
+        .eq('hidden_in_productos', false)
+        .order('created_at', { ascending: false })
+        .range(0, 199);
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err) {
+      console.warn('getProductosPublicados: select(cols) failed, falling back to select(*):', err.message || err);
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('publicado', true)
+        .eq('hidden_in_productos', false)
+        .order('created_at', { ascending: false })
+        .range(0, 199);
+      if (error) return { data: null, error: error.message };
+      return { data, error: null };
+    }
   } catch (error) {
     console.error('Error al obtener productos publicados:', error);
     return { data: null, error: error.message };
@@ -60,14 +86,25 @@ export async function getProductoById(id) {
       console.warn('Supabase not configured — skipping getProductoById')
       return { data: null, error: 'Supabase not configured' }
     }
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','dimensiones','material','created_at','updated_at'].join(',');
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select(cols)
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err) {
+      console.warn('getProductoById: select(cols) failed, falling back to select(*):', err.message || err);
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return { data: null, error: error.message };
+      return { data, error: null };
+    }
   } catch (error) {
     console.error('Error al obtener producto:', error);
     return { data: null, error: error.message };

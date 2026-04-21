@@ -51,3 +51,31 @@ export const supabaseAdmin = () => {
 };
 
 export default supabase;
+
+/**
+ * Generar una URL firmada para un comprobante en el bucket `comprobantes`.
+ * Devuelve `null` si no fue posible generar la URL.
+ * @param {string} path Ruta u objeto almacenado (ej: 'comprobantes/archivo.png' o 'archivo.png')
+ * @param {number} expires Segundos de validez (por defecto 1 hora)
+ */
+export async function createSignedUrlForComprobante(path, expires = 60 * 60) {
+  try {
+    const client = supabaseAdmin();
+
+    if (!path) return null;
+
+    // Normalizar: si viene con prefijo 'comprobantes/' removerlo
+    let objectPath = path.replace(/^comprobantes\//, '');
+
+    const { data, error } = await client.storage.from('comprobantes').createSignedUrl(objectPath, expires);
+    if (error) {
+      console.error('Error creando signed URL:', error);
+      return null;
+    }
+    // data { signedUrl }
+    return data?.signedUrl || null;
+  } catch (err) {
+    console.error('createSignedUrlForComprobante error:', err);
+    return null;
+  }
+}

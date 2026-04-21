@@ -41,10 +41,10 @@ function Dashboard() {
     setIsMounted(true)
     loadDashboardData()
     
-    // Recargar cada 30 segundos para mantener datos frescos
+    // Recargar cada 60 segundos para reducir carga/egress
     const interval = setInterval(() => {
       loadDashboardData()
-    }, 30000)
+    }, 60000)
     
     return () => clearInterval(interval)
   }, [])

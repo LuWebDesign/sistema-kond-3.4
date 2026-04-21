@@ -231,10 +231,16 @@ async function saveProductos(productos) {
 async function loadProductos() {
   if (isSupabaseEnabled() && window.supabaseClient) {
     try {
+      // Seleccionar solo columnas necesarias para evitar payloads enormes
+      const cols = [
+        'id', 'nombre', 'categoria', 'tipo', 'precio_unitario', 'imagenes_urls', 'publicado', 'tags'
+      ].join(',');
+
       const { data, error } = await window.supabaseClient
         .from('productos')
-        .select('*')
-        .order('id', { ascending: true });
+        .select(cols)
+        .order('id', { ascending: true })
+        .range(0, 499); // limitar a 500 filas por defecto para controlar egress
       
       if (error) throw error;
       
