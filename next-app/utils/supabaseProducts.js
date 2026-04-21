@@ -14,7 +14,7 @@ export async function getAllProductos() {
       console.warn('Supabase not configured — skipping getAllProductos')
       return { data: null, error: 'Supabase not configured' }
     }
-    const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','tags','created_at'].join(',');
+    const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','created_at'].join(',');
     try {
       const { data, error } = await supabase
         .from('productos')
@@ -48,7 +48,7 @@ export async function getProductosPublicados() {
       console.warn('Supabase not configured — skipping getProductosPublicados')
       return { data: null, error: 'Supabase not configured' }
     }
-    const cols = ['id','nombre','categoria','precio_unitario','imagenes_urls','publicado','tags'].join(',');
+    const cols = ['id','nombre','categoria','precio_unitario','imagenes_urls','publicado'].join(',');
     try {
       const { data, error } = await supabase
         .from('productos')

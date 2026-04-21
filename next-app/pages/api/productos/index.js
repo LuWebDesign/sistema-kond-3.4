@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const end = start + perPage - 1;
 
     const cols = [
-      'id', 'nombre', 'categoria', 'tipo', 'precio_unitario', 'imagenes_urls', 'publicado', 'tags', 'created_at'
+      'id', 'nombre', 'categoria', 'tipo', 'precio_unitario', 'imagenes_urls', 'publicado', 'created_at'
     ].join(',');
 
     let productos = null;
