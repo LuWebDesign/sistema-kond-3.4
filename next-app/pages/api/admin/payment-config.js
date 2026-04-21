@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../../../utils/supabaseClient'
 const DEFAULT_CONFIG = {
   transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
   whatsapp: { enabled: true, numero: '', mensaje: '' },
-  retiro: { enabled: true, direccion: '', horarios: '' }
+  retiro: { enabled: true, direccion: '', direccionLink: '', horarios: '' }
 }
 
 export default async function handler(req, res) {

@@ -302,7 +302,10 @@ export default function FinalizarCompraPage() {
           <div className={stylesResp.pageColumn}>
 
             {/* Datos del usuario (colapsable) */}
-            <div style={{ marginBottom: 18, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
+            {(() => {
+              const isDataIncomplete = !customerData.name?.trim() || !customerData.phone?.trim()
+              return (
+            <div style={{ marginBottom: 18, border: '1px solid', borderColor: isDataIncomplete ? '#ef4444' : 'var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
               <button
                 onClick={() => setIsProfileCollapsed(!isProfileCollapsed)}
                 style={{
@@ -320,7 +323,7 @@ export default function FinalizarCompraPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: '1.2rem' }}>👤</span>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Tus datos</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Tus datos {isDataIncomplete && <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>}</div>
                     {isProfileCollapsed && customerData.name && (
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                         {customerData.name} {customerData.apellido} • {customerData.phone}
@@ -328,8 +331,13 @@ export default function FinalizarCompraPage() {
                     )}
                   </div>
                 </div>
-                <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', transform: isProfileCollapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s ease' }}>▼</span>
+                <span style={{ fontSize: '1.2rem', color: isDataIncomplete ? '#ef4444' : 'var(--text-secondary)', transform: isProfileCollapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s ease' }}>▼</span>
               </button>
+              {isDataIncomplete && !isProfileCollapsed && (
+                <div style={{ padding: '10px 16px', background: '#fef2f2', borderTop: '1px solid #ef4444', color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>
+                  ⚠️ Completa tus datos para realizar la compra
+                </div>
+              )}
 
               {!isProfileCollapsed && (
                 <div style={{ padding: 16 }}>
@@ -360,6 +368,8 @@ export default function FinalizarCompraPage() {
                 </div>
               )}
             </div>
+              )
+            })()}
 
             {/* Método de entrega */}
             <div style={{ marginBottom: 18 }}>
@@ -452,8 +462,8 @@ export default function FinalizarCompraPage() {
                       <><div style={{ color: 'var(--text-secondary)' }}><strong>CBU</strong></div>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
                         <div style={{ fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '6px 8px', borderRadius: 6 }}>{paymentConfig.transferencia.cbu}</div>
-                        <button onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }} aria-label="Copiar CBU" style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
+                        <button onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.cbu); createToast('CBU copiado', 'success') }} aria-label="Copiar CBU" style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+                          Copiar CBU
                         </button>
                       </div></>
                     )}
@@ -461,8 +471,8 @@ export default function FinalizarCompraPage() {
                       <><div style={{ color: 'var(--text-secondary)' }}><strong>Alias</strong></div>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
                         <div style={{ fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '6px 8px', borderRadius: 6 }}>{paymentConfig.transferencia.alias}</div>
-                        <button onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }} aria-label="Copiar alias" style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-hover)', cursor: 'pointer' }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
+                        <button onClick={() => { navigator.clipboard?.writeText(paymentConfig.transferencia.alias); createToast('Alias copiado', 'success') }} aria-label="Copiar alias" style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+                          Copiar alias
                         </button>
                       </div></>
                     )}
@@ -476,26 +486,38 @@ export default function FinalizarCompraPage() {
                     <button
                       type="button"
                       onClick={() => { const el = document.getElementById('comprobante-file'); if (el) el.click() }}
-                      style={{ padding: '10px 14px', borderRadius: 8, border: comprobante ? '2px solid var(--accent-secondary)' : '1.5px solid var(--border-color)', background: comprobante ? 'var(--bg-hover)' : 'var(--bg-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}
+                      style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: comprobante ? 'var(--accent-secondary)' : 'var(--accent-blue)', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}
                     >
-                      {comprobante ? 'Comprobante cargado' : 'Subir comprobante'}
+                      {comprobante ? '✓ Comprobante cargado' : 'Subir comprobante'}
                     </button>
                     {comprobante && <img src={comprobante} alt="comprobante" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }} />}
                   </div>
                 </div>
 
                 {/* Retiro en local */}
-                {paymentConfig?.retiro?.enabled && paymentConfig?.textos?.infoRetiroEnabled !== false && (
+                {paymentConfig?.retiro?.enabled && (paymentConfig.retiro.direccion || paymentConfig.retiro.direccionLink || paymentConfig.retiro.horarios) && (
                   <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                     <div style={{ fontWeight: 700 }}>Retiro en local</div>
                     <div style={{ marginTop: 8, fontSize: 13 }}>
-                      {paymentConfig?.textos?.infoRetiro
-                        ? <div style={{ whiteSpace: 'pre-line' }}>{paymentConfig.textos.infoRetiro}</div>
-                        : <>
-                            {paymentConfig.retiro.direccion && <div><strong>Dirección:</strong> {paymentConfig.retiro.direccion}</div>}
-                            {paymentConfig.retiro.horarios && <div style={{ marginTop: 4 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>}
-                          </>
-                      }
+                      {paymentConfig?.textos?.infoRetiro && paymentConfig?.textos?.infoRetiroEnabled !== false && paymentConfig?.textos?.infoRetiro?.trim() && (
+                        <div style={{ whiteSpace: 'pre-line', marginBottom: 8 }}>{paymentConfig.textos.infoRetiro}</div>
+                      )}
+                      {paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.trim() && (
+                        <div style={{ marginBottom: paymentConfig.retiro.direccionLink ? 8 : 0 }}>
+                          <strong>Dirección:</strong> {paymentConfig.retiro.direccion}
+                        </div>
+                      )}
+                      {paymentConfig.retiro.direccionLink && paymentConfig.retiro.direccionLink.trim() && (
+                        <a
+                          href={paymentConfig.retiro.direccionLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ padding: '8px 14px', borderRadius: 6, background: 'var(--accent-blue)', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}
+                        >
+                          📍 Ver en Google Maps
+                        </a>
+                      )}
+                      {paymentConfig.retiro.horarios && paymentConfig.retiro.horarios.trim() && <div style={{ marginTop: 8 }}><strong>Horarios:</strong> {paymentConfig.retiro.horarios}</div>}
                     </div>
                   </div>
                 )}

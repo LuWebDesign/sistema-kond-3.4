@@ -9,7 +9,7 @@ function PaymentConfigAdmin() {
   const [paymentConfig, setPaymentConfig] = useState({
     transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
     whatsapp: { enabled: true, numero: '', mensaje: '' },
-    retiro: { enabled: true, direccion: '', horarios: '' },
+    retiro: { enabled: true, direccion: '', direccionLink: '', horarios: '' },
     calendario: { enabled: true },
     textos: {
       infoTransferencia: 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.',
@@ -52,7 +52,7 @@ function PaymentConfigAdmin() {
       if (paymentConfig.whatsapp.numero) {
         setIsWhatsappCollapsed(true)
       }
-      if (paymentConfig.retiro.direccion) {
+      if (paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.length > 3) {
         setIsRetiroCollapsed(true)
       }
       if (paymentConfig.textos?.infoTransferencia) {
@@ -65,7 +65,7 @@ function PaymentConfigAdmin() {
         setIsTextoRetiroCollapsed(true)
       }
     }
-  }, [isLoading, paymentConfig.transferencia.alias, paymentConfig.transferencia.cbu, paymentConfig.whatsapp.numero, paymentConfig.retiro.direccion])
+  }, [isLoading])
 
   const loadConfig = async () => {
     setIsLoading(true)
@@ -96,6 +96,13 @@ function PaymentConfigAdmin() {
         // keep local copy as backup
         if (typeof window !== 'undefined') localStorage.setItem('paymentConfig', JSON.stringify(paymentConfig))
         setSaveMessage('✅ Configuración guardada exitosamente')
+        // Collapse all sections after saving
+        setIsTransferenciaCollapsed(true)
+        setIsWhatsappCollapsed(true)
+        setIsRetiroCollapsed(true)
+        setIsTextoTransferenciaCollapsed(true)
+        setIsTextoWhatsappCollapsed(true)
+        setIsTextoRetiroCollapsed(true)
         setTimeout(() => setSaveMessage(''), 3000)
       } else {
         const errObj = result?.error
@@ -300,6 +307,7 @@ function PaymentConfigAdmin() {
             {!isRetiroCollapsed && (
               <div style={{ marginTop: 12 }}>
                 <input placeholder="Dirección" value={paymentConfig.retiro.direccion} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, direccion: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8 }} />
+                <input placeholder="Link de Google Maps (https://goo.gl/maps/...)" value={paymentConfig.retiro.direccionLink || ''} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, direccionLink: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
                 <input placeholder="Horarios" value={paymentConfig.retiro.horarios} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, horarios: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
               </div>
             )}

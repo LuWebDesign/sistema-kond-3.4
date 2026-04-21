@@ -31,7 +31,7 @@ export default function ProductPage({ params }) {
     )
   }
 
-  return <ProductDetail product={found} categories={categories} />
+  return <ProductDetail product={found} categories={categories} products={products} />
 }
 
 export async function getServerSideProps(context) {
