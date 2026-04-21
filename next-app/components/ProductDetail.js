@@ -65,8 +65,8 @@ export default function ProductDetail({ product, categories = [], products = [] 
     setCatPage(0)
   }, [categories.length, isMobile])
 
-  // Cantidad de categorías por página: 4 desktop, 3 mobile
-  const CAT_PER_PAGE = isMobile ? 3 : 4
+  // Cantidad de categorías por página: 5 desktop, scroll en mobile
+  const CAT_PER_PAGE = isMobile ? 20 : 5
   const totalCatPages = Math.ceil(categories.length / CAT_PER_PAGE)
   const paginatedCats = categories.slice(catPage * CAT_PER_PAGE, (catPage + 1) * CAT_PER_PAGE)
 
@@ -479,9 +479,10 @@ export default function ProductDetail({ product, categories = [], products = [] 
         {categories.length > 0 && (
           <div className="pd-categories">
             <h2 className="pd-section-title">Explorar categorías</h2>
+            {/* Mobile: scrollable horizontal | Desktop: con flechas */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Flecha izquierda */}
-              {catPage > 0 && (
+              {/* Desktop: flecha izquierda (ocultar en mobile) */}
+              {!isMobile && catPage > 0 && (
                 <button
                   onClick={prevCatPage}
                   style={{
@@ -504,7 +505,17 @@ export default function ProductDetail({ product, categories = [], products = [] 
                 </button>
               )}
               
-              <div style={{ display: 'flex', gap: 14, overflow: 'hidden', flex: 1, justifyContent: 'center' }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: 14, 
+                overflowX: isMobile ? 'auto' : 'hidden', 
+                flex: 1, 
+                justifyContent: isMobile ? 'flex-start' : 'center',
+                paddingLeft: isMobile ? 8 : 0,
+                paddingRight: isMobile ? 8 : 0,
+                scrollSnapType: isMobile ? 'x mandatory' : 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}>
                 {paginatedCats.map(cat => {
                   const isActive = cat === product.categoria
                   const catImage = getCategoryImage(cat, products)
@@ -516,9 +527,9 @@ export default function ProductDetail({ product, categories = [], products = [] 
                         display: 'inline-flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        width: 160,
-                        padding: '14px 14px 16px',
-                        borderRadius: 16,
+                        width: isMobile ? 130 : 160,
+                        padding: isMobile ? '10px 10px 12px' : '14px 14px 16px',
+                        borderRadius: isMobile ? 12 : 16,
                         border: isActive
                           ? '2px solid var(--accent-blue)'
                           : '1px solid var(--border-color)',
@@ -530,17 +541,18 @@ export default function ProductDetail({ product, categories = [], products = [] 
                         textAlign: 'center',
                         flexShrink: 0,
                         transition: 'all 0.2s',
-                        maxWidth: 160
+                        maxWidth: isMobile ? 130 : 160,
+                        scrollSnapAlign: 'center'
                       }}
                     >
                       <div style={{
-                        width: 130,
-                        height: 130,
-                        borderRadius: 12,
+                        width: isMobile ? 90 : 130,
+                        height: isMobile ? 90 : 130,
+                        borderRadius: isMobile ? 8 : 12,
                         overflow: 'hidden',
                         background: '#fff',
                         position: 'relative',
-                        marginBottom: 10
+                        marginBottom: isMobile ? 6 : 10
                       }}>
                         {catImage ? (
                           <img
@@ -572,8 +584,8 @@ export default function ProductDetail({ product, categories = [], products = [] 
                 })}
               </div>
 
-              {/* Flecha derecha */}
-              {catPage < totalCatPages - 1 && (
+              {/* Desktop: flecha derecha (ocultar en mobile) */}
+              {!isMobile && catPage < totalCatPages - 1 && (
                 <button
                   onClick={nextCatPage}
                   style={{
@@ -596,8 +608,8 @@ export default function ProductDetail({ product, categories = [], products = [] 
                 </button>
               )}
             </div>
-            {/* Indicadores de página */}
-            {totalCatPages > 1 && (
+            {/* Desktop: indicadores de página (ocultar en mobile) */}
+            {!isMobile && totalCatPages > 1 && (
               <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 8 }}>
                 {Array.from({ length: totalCatPages }).map((_, i) => (
                   <span

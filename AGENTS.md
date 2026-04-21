@@ -38,8 +38,12 @@ Keep analysis extremely short after that.
   - Keys to preserve/consider: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `notifications`. Changing shapes or names requires a migration/compat layer.
   - `js/utils.js` implements `safeLocalStorageSetItem` which may omit `comprobante` on QuotaExceededError — do NOT remove this fallback without planning data handling.
 
-- Static-site gotchas:
-  - Script order matters: load `js/utils.js` and `js/supabase-init.js` before scripts that depend on them. Verify `index.html` / `catalog.html` when moving/renaming files.
+- Static-site entry points:
+  - `index.html` — admin dashboard
+  - `home.html` — main landing
+  - `marketing.html` — promotions management
+  - `catalog.html` — public catalog (in `backup-archivos-originales/`)
+  - Script order: load `js/utils.js` and `js/supabase-init.js` before dependent scripts.
 
 - CI & tooling:
   - CI sets up Node 20 and caches `next-app/package-lock.json` (see `.github/workflows/ci.yml`). Use `npm ci` in CI; local `npm install` is fine.

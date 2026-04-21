@@ -4,6 +4,8 @@ import PublicLayout from '../../components/PublicLayout'
 import stylesResp from '../../styles/catalog-responsive.module.css'
 import { useCart, useProducts, useCoupons } from '../../hooks/useCatalog'
 import { formatCurrency, getCurrentUser, createToast } from '../../utils/catalogUtils'
+import { getPromocionesActivas } from '../../utils/supabaseMarketing'
+import { applyPromotionsToCart } from '../../utils/promoEngine'
 
 export default function CartPage() {
   const router = useRouter()
@@ -13,6 +15,13 @@ export default function CartPage() {
 
   const [couponInput, setCouponInput] = useState('')
   const [currentUser, setCurrentUser] = useState(null)
+  const [freeShippingEligible, setFreeShippingEligible] = useState(false)
+  const [deliveryMethod, setDeliveryMethod] = useState(() => {
+    if (typeof window === 'undefined') return 'retiro'
+    try {
+      return localStorage.getItem('checkoutDeliveryMethod') || 'retiro'
+    } catch { return 'retiro' }
+  })
 
   useEffect(() => {
     try {
@@ -22,6 +31,32 @@ export default function CartPage() {
       setCurrentUser(null)
     }
   }, [])
+
+  // Calcular envío gratis
+  useEffect(() => {
+    let mounted = true
+    const compute = async () => {
+      try {
+        const { data, error } = await getPromocionesActivas()
+        if (error || !mounted) return
+        const promos = (data || []).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          tipo: p.tipo,
+          aplicaA: p.aplica_a,
+          categoria: p.categoria,
+          productoId: p.producto_id,
+          activo: p.activo,
+          descuentoMonto: p.descuento_monto,
+          config: p.configuracion || p.config
+        }))
+        const result = applyPromotionsToCart(cart || [], promos)
+        if (mounted) setFreeShippingEligible(!!result.freeShipping)
+      } catch { /* optional computation: ignore if promo data unavailable */ }
+    }
+    compute()
+    return () => { mounted = false }
+  }, [cart])
 
   const handleApplyCoupon = () => {
     if (!couponInput) return
@@ -258,9 +293,55 @@ export default function CartPage() {
                     </div>
                   )}
 
+                  {/* Método de entrega */}
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                      <button
+                        onClick={() => {
+                          setDeliveryMethod('retiro')
+                          try { localStorage.setItem('checkoutDeliveryMethod', 'retiro') } catch {}
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          border: deliveryMethod === 'retiro' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                          background: deliveryMethod === 'retiro' ? 'var(--bg-hover)' : 'transparent',
+                          cursor: 'pointer',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8rem',
+                          fontWeight: deliveryMethod === 'retiro' ? 700 : 400
+                        }}
+                      >
+                        Retiro
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeliveryMethod('envio')
+                          try { localStorage.setItem('checkoutDeliveryMethod', 'envio') } catch {}
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          border: deliveryMethod === 'envio' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)',
+                          background: deliveryMethod === 'envio' ? 'var(--bg-hover)' : 'transparent',
+                          cursor: 'pointer',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8rem',
+                          fontWeight: deliveryMethod === 'envio' ? 700 : 400
+                        }}
+                      >
+                        Envío
+                      </button>
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
-                    <div style={{ fontWeight: 700 }}>A cotizar</div>
+                    <div style={{ fontWeight: 700, color: freeShippingEligible && deliveryMethod === 'envio' ? 'var(--accent-secondary)' : 'inherit' }}>
+                      {deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}
+                    </div>
                   </div>
 
                   <div style={{ height: 1, background: 'var(--border-color)', margin: '12px 0' }} />
