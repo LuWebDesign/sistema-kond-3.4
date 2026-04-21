@@ -21,7 +21,26 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
   const [isMobileWidth, setIsMobileWidth] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
   const router = useRouter()
+
+  // Cargar cantidad del carrito desde localStorage
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]')
+        const count = cart.reduce((sum, item) => sum + (item.quantity || 1), 0)
+        setCartCount(count)
+      } catch (e) { setCartCount(0) }
+    }
+    updateCartCount()
+    window.addEventListener('storage', updateCartCount)
+    window.addEventListener('cart:updated', updateCartCount)
+    return () => {
+      window.removeEventListener('storage', updateCartCount)
+      window.removeEventListener('cart:updated', updateCartCount)
+    }
+  }, [])
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark'
@@ -202,14 +221,15 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             )}
            </div>
 
-          {/* Right: theme toggle, notifications, and mobile selector */}
+{/* Right: cart (always visible), notifications (if logged in), and mobile selector */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '12px'
           }}>
+            {/* Cart icon - ALWAYS visible, even before notifications */}
             <button
-              onClick={toggleTheme}
+              onClick={() => router.push('/mi-carrito')}
               style={{
                 padding: '8px',
                 borderRadius: '8px',
@@ -220,13 +240,34 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                position: 'relative'
               }}
-              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              title="Mi carrito"
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              🛒
+              {cartCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  background: 'var(--accent-secondary)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: 18,
+                  height: 18,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
             </button>
 
+            {/* Notifications - only if user is logged in */}
             {currentUser && <NotificationsButton />}
 
             {/* Mobile selector (renders its own trigger) */}
@@ -252,7 +293,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             {children}
           </main>
 
-          {/* Footer público */}
+          {/* Footer público - hide on mobile for cart pages */}
+          {!(isMobileWidth && router && (router.asPath === '/mi-carrito' || router.asPath.startsWith('/mi-carrito/'))) && (
           <footer style={{
             background: catalogStyles.footerBg || 'var(--bg-card)',
             borderTop: '1px solid var(--border-color)',
@@ -357,6 +399,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               </div>
             </div>
           </footer>
+          )}
         </div>
       </div>
       

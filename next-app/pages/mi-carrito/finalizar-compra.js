@@ -30,7 +30,12 @@ export default function FinalizarCompraPage() {
   const total = Math.max(0, subtotal - discount)
 
   const [paymentMethod, setPaymentMethod] = useState('transferencia')
-  const [deliveryMethod, setDeliveryMethod] = useState('retiro')
+  const [deliveryMethod, setDeliveryMethod] = useState(() => {
+    if (typeof window === 'undefined') return 'retiro'
+    try {
+      return localStorage.getItem('checkoutDeliveryMethod') || 'retiro'
+    } catch { return 'retiro' }
+  })
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
@@ -494,8 +499,8 @@ export default function FinalizarCompraPage() {
                   </div>
                 </div>
 
-                {/* Retiro en local */}
-                {paymentConfig?.retiro?.enabled && (paymentConfig.retiro.direccion || paymentConfig.retiro.direccionLink || paymentConfig.retiro.horarios) && (
+                {/* Retiro en local: solo mostrar cuando deliveryMethod NO es envio */}
+                {deliveryMethod !== 'envio' && paymentConfig?.retiro?.enabled && (paymentConfig.retiro.direccion || paymentConfig.retiro.direccionLink || paymentConfig.retiro.horarios) && (
                   <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
                     <div style={{ fontWeight: 700 }}>Retiro en local</div>
                     <div style={{ marginTop: 8, fontSize: 13 }}>
