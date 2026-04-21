@@ -19,12 +19,59 @@ const SPEC_FIELDS = [
 
 const OMIT_VALUES = new Set(['Sin ensamble', '', null, undefined])
 
-export default function ProductDetail({ product, categories = [] }) {
+const DEFAULT_CATEGORY_IMAGES = {
+  'Packaging': 'https://images.unsplash.com/photo-1607166452427-b4d6c4b2d2a4?w=100&h=100&fit=crop',
+  'Decorativo': 'https://images.unsplash.com/photo-1513519245088-0e129025e35a?w=100&h=100&fit=crop',
+  'Accesorios': 'https://images.unsplash.com/photo-1618331835717-801e9768da2d?w=100&h=100&fit=crop',
+  'Etiquetado': 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=100&h=100&fit=crop',
+  'Cajas': 'https://images.unsplash.com/photo-1607124008736-1dec64c5ef73?w=100&h=100&fit=crop',
+  'Bolígrafos': 'https://images.unsplash.com/photo-1583485088034-697b5bc54d53?w=100&h=100&fit=crop',
+  'Regalos': 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=100&h=100&fit=crop',
+  'Invitaciones': 'https://images.unsplash.com/photo-1579762715118-a6f1e4b1e5b2?w=100&h=100&fit=crop',
+  'Impresión': 'https://images.unsplash.com/photo-1562564055-71e051d33c19?w=100&h=100&fit=crop',
+  'Stickers': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=100&h=100&fit=crop',
+}
+
+function getCategoryImage(catName, products) {
+  if (!catName) return null
+  // Primero buscar imagen de producto real
+  if (products && products.length > 0) {
+    const catProducts = products.filter(p => p.categoria === catName && p.imagenes && p.imagenes.length > 0)
+    if (catProducts.length > 0) return catProducts[0].imagenes[0]
+  }
+  // Fallback a imagen por defecto
+  return DEFAULT_CATEGORY_IMAGES[catName] || null
+}
+
+export default function ProductDetail({ product, categories = [], products = [] }) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const [whatsappNumber, setWhatsappNumber] = useState('1136231857')
+  const [catPage, setCatPage] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detectar tamaño de pantalla
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Reset catPage when categories or mobile state changes
+  useEffect(() => {
+    setCatPage(0)
+  }, [categories.length, isMobile])
+
+  // Cantidad de categorías por página: 4 desktop, 3 mobile
+  const CAT_PER_PAGE = isMobile ? 3 : 4
+  const totalCatPages = Math.ceil(categories.length / CAT_PER_PAGE)
+  const paginatedCats = categories.slice(catPage * CAT_PER_PAGE, (catPage + 1) * CAT_PER_PAGE)
+
+  const nextCatPage = () => setCatPage(p => Math.min(p + 1, totalCatPages - 1))
+  const prevCatPage = () => setCatPage(p => Math.max(p - 1, 0))
 
   useEffect(() => {
     getCatalogStyles()
@@ -432,35 +479,139 @@ export default function ProductDetail({ product, categories = [] }) {
         {categories.length > 0 && (
           <div className="pd-categories">
             <h2 className="pd-section-title">Explorar categorías</h2>
-            <div className="pd-cat-scroll">
-              {categories.map(cat => {
-                const isActive = cat === product.categoria
-                return (
-                  <Link
-                    key={cat}
-                    href={`/catalog/${slugifyPreserveCase(cat)}`}
-                    style={{
-                      display: 'inline-block',
-                      padding: '10px 18px',
-                      borderRadius: 10,
-                      border: isActive
-                        ? '2px solid var(--accent-blue)'
-                        : '1px solid var(--border-color)',
-                      background: isActive ? 'var(--accent-blue)' : 'var(--bg-card)',
-                      color: isActive ? '#fff' : 'var(--text-primary)',
-                      fontWeight: isActive ? 700 : 500,
-                      fontSize: '0.9rem',
-                      textDecoration: 'none',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {cat}
-                  </Link>
-                )
-              })}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Flecha izquierda */}
+              {catPage > 0 && (
+                <button
+                  onClick={prevCatPage}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--accent-blue)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 24,
+                    fontWeight: 'bold',
+                    flexShrink: 0
+                  }}
+                >
+                  ‹
+                </button>
+              )}
+              
+              <div style={{ display: 'flex', gap: 14, overflow: 'hidden', flex: 1, justifyContent: 'center' }}>
+                {paginatedCats.map(cat => {
+                  const isActive = cat === product.categoria
+                  const catImage = getCategoryImage(cat, products)
+                  return (
+                    <Link
+                      key={cat}
+                      href={`/catalog/${slugifyPreserveCase(cat)}`}
+                      style={{
+                        display: 'inline-flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        width: 160,
+                        padding: '14px 14px 16px',
+                        borderRadius: 16,
+                        border: isActive
+                          ? '2px solid var(--accent-blue)'
+                          : '1px solid var(--border-color)',
+                        background: isActive ? 'var(--accent-blue)' : 'var(--bg-card)',
+                        color: isActive ? '#fff' : 'var(--text-primary)',
+                        fontWeight: isActive ? 700 : 500,
+                        textDecoration: 'none',
+                        whiteSpace: 'normal',
+                        textAlign: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.2s',
+                        maxWidth: 160
+                      }}
+                    >
+                      <div style={{
+                        width: 130,
+                        height: 130,
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        background: '#fff',
+                        position: 'relative',
+                        marginBottom: 10
+                      }}>
+                        {catImage ? (
+                          <img
+                            src={catImage}
+                            alt={cat}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              filter: isActive ? 'brightness(1.05)' : 'none'
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 48
+                          }}>
+                            📁
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.2 }}>{cat}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {/* Flecha derecha */}
+              {catPage < totalCatPages - 1 && (
+                <button
+                  onClick={nextCatPage}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--accent-blue)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 24,
+                    fontWeight: 'bold',
+                    flexShrink: 0
+                  }}
+                >
+                  ›
+                </button>
+              )}
             </div>
+            {/* Indicadores de página */}
+            {totalCatPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 8 }}>
+                {Array.from({ length: totalCatPages }).map((_, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: i === catPage ? 'var(--accent-blue)' : 'var(--border-color)'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

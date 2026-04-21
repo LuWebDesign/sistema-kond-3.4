@@ -15,45 +15,44 @@ Keep analysis extremely short after that.
 
 ## High-signal facts (what an agent would likely miss)
 
-- Two targets: legacy static site at the repo root (HTML + js/) and a migrating Next.js app in `next-app/`. Confirm which target you'll change before editing files.
+- Two targets: static site at the repo root (HTML + js/) and a migrating Next.js app in `next-app/`. Always confirm which target you'll change before editing files.
 
-- Next.js quick dev (work in `next-app/`):
-  - cd next-app
-  - npm ci   # use `npm ci` in CI/automation; `npm install` is fine for local work
-  - cp ../.env.example .env.local
-  - Edit `.env.local` and set: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
-  - npm run dev    # dev server binds 0.0.0.0:3000 per package.json
-  - npm run build
-  - npm start
-  - Note: `next-app/package.json` lists engines.node = 22.x but CI uses Node 20 (see .github/workflows/ci.yml). Reconcile Node versions if you hit build/runtime issues.
+- Next.js (quick dev):
+  - workdir: `next-app`
+  - Install: `npm ci` (CI). `npm install` is acceptable for local dev.
+  - Create env: `cp ../.env.example .env.local` and set: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
+  - Run: `npm run dev` (binds 0.0.0.0:3000 per package.json). Build: `npm run build`. Start: `npm start`.
+  - NOTE: `next-app/package.json` lists engines.node = 22.x but CI uses Node 20 (.github/workflows/ci.yml). If you hit build/runtime errors check Node version and the CI cache (cache-dependency-path: next-app/package-lock.json).
 
-- Pre-check: run `node verify-setup.js` from the repo root. It exits non-zero when key Supabase files or docs (e.g. MIGRACION-SUPABASE.md) are missing.
+- Pre-check (always run before making infra changes): `node verify-setup.js` from repo root — it fails (non-zero) when key Supabase files or docs are missing.
 
-- Supabase (practical gotchas):
-  - Apply `supabase/schema.sql` first, then `supabase/storage-buckets.sql` in the Supabase SQL Editor.
-  - storage-buckets.sql creates: `comprobantes` (private) and `productos` (public); review storage policies before changing behavior.
-  - Frontend must use the anon key: NEXT_PUBLIC_SUPABASE_ANON_KEY. NEVER commit or expose SUPABASE_SERVICE_ROLE_KEY.
-  - Migration script: `node supabase/migrate-data.js` requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and a local `data-export.json`. Run migrations only in secure environments and always take backups.
+- Supabase (must-read):
+  - Apply SQL in this order in Supabase SQL Editor: `supabase/schema.sql` then `supabase/storage-buckets.sql`.
+  - Buckets created: `comprobantes` (private) and `productos` (public). Review `supabase/storage-buckets.sql` policies before edits.
+  - Frontends must use the anon key (NEXT_PUBLIC_SUPABASE_ANON_KEY). NEVER commit or expose SUPABASE_SERVICE_ROLE_KEY (server-only).
+  - `supabase/migrate-data.js` requires SUPABASE_SERVICE_ROLE_KEY + SUPABASE_URL and a local `data-export.json`. Run migrations only in secure environments and take backups.
+  - Canonical client: `supabase/client.js`. Static HTML expects `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js` — update both when changing env names or loading behavior.
+  - RLS and storage policies are defined in `supabase/schema.sql` and `supabase/storage-buckets.sql` — changing them affects both frontends.
 
-- Canonical client and static-site integration:
-  - Canonical Supabase client: `supabase/client.js` → update this if you change env names or helpers.
-  - Static HTML uses `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js`; check both when changing config loading.
-
-- Legacy localStorage keys (both frontends read these): `productosBase`, `pedidos`, `pedidosCatalogo`, `cart` (also `notifications`). Changing keys or shapes requires a migration or compatibility layer.
+- LocalStorage & migration gotchas:
+  - Keys to preserve/consider: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `notifications`. Changing shapes or names requires a migration/compat layer.
+  - `js/utils.js` implements `safeLocalStorageSetItem` which may omit `comprobante` on QuotaExceededError — do NOT remove this fallback without planning data handling.
 
 - Static-site gotchas:
   - Script order matters: load `js/utils.js` and `js/supabase-init.js` before scripts that depend on them. Verify `index.html` / `catalog.html` when moving/renaming files.
-  - Quota fallback: `js/utils.js` implements `safeLocalStorageSetItem` that can omit `comprobante` on QuotaExceededError — do NOT remove this behavior without planning a migration.
 
-- CI & Node:
-  - CI (.github/workflows/ci.yml) sets up Node 20 and caches `next-app/package-lock.json` (cache-dependency-path). If builds fail, check Node version mismatch and cache key first.
-  - ESLint in CI is intentionally non-fatal (`npx eslint . || true`). Run lint locally when style matters.
+- CI & tooling:
+  - CI sets up Node 20 and caches `next-app/package-lock.json` (see `.github/workflows/ci.yml`). Use `npm ci` in CI; local `npm install` is fine.
+  - ESLint in CI is non-fatal (`npx eslint . || true`). Run lint locally if style matters.
 
-- Security & commits: never commit `.env.local` or any service-role/admin keys. Use conventional commit messages (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`). Do NOT add AI attribution to commits. Avoid `--no-verify` unless requested.
+- Security & commits:
+  - Never commit `.env.local` or any service-role/admin keys. Follow conventional commits (`feat:`, `fix:`, `chore:`). Do NOT add AI attribution to commits.
 
-- Next/SSR caution: guard browser-only APIs (use `typeof window !== 'undefined'` or React `useEffect`) to avoid hydration/runtime mismatches in Next.js.
+- Next/SSR caution:
+  - Guard browser-only APIs (use `typeof window !== 'undefined'` or React `useEffect`) to avoid hydration/runtime mismatches in Next.js.
 
-- Cross-cutting changes (DB schema, storage keys, auth, build config): STOP. Document affected files in the PR description (include `supabase/*.sql`, `supabase/migrate-data.js`, `js/utils.js`, `supabase/client.js`, and `next-app/` changes) and coordinate both frontends and migration scripts.
+- Cross-cutting changes (STOP):
+  - For DB schema, storage keys, auth, or build/config changes: STOP and coordinate. In the PR description list affected artifacts: `supabase/*.sql`, `supabase/migrate-data.js`, `js/utils.js`, `supabase/client.js`, and any `next-app/` changes. Both frontends must be considered.
 
 ## Files to open first
 

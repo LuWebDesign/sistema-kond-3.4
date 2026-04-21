@@ -29,7 +29,7 @@ export async function getPaymentConfig() {
       return {
         transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
         whatsapp: { enabled: true, numero: '', mensaje: '' },
-        retiro: { enabled: true, direccion: '', horarios: '' }
+        retiro: { enabled: true, direccion: '', direccionLink: '', horarios: '' }
       }
     }
 
@@ -39,7 +39,7 @@ export async function getPaymentConfig() {
         return {
           transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
           whatsapp: { enabled: true, numero: '', mensaje: '' },
-          retiro: { enabled: true, direccion: '', horarios: '' }
+          retiro: { enabled: true, direccion: '', direccionLink: '', horarios: '' }
         }
       }
       throw error
