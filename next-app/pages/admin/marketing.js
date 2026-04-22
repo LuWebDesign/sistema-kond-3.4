@@ -20,6 +20,8 @@ import {
   updateCupon,
   deleteCupon
 } from '../../utils/supabaseMarketing';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
 
 function Marketing() {
   const router = useRouter();
@@ -32,11 +34,7 @@ function Marketing() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Local state for UI-managed lists — React Query is the source of truth for network data.
 
   // Sincronizar modal con query params de la URL
   useEffect(() => {
@@ -84,88 +82,164 @@ function Marketing() {
 
 
 
-  const loadData = async () => {
-    if (typeof window === 'undefined') return;
-    
-    setIsLoading(true);
-    try {
-      // Cargar promociones desde Supabase
-      const { data: promos, error: promosError } = await getPromociones();
-      if (promosError) {
-        console.error('Error loading promociones:', promosError);
-      } else {
-        // Mapear campos de snake_case a camelCase
-        const mappedPromos = (promos || []).map(p => ({
-          id: p.id,
-          nombre: p.nombre,
-          tipo: p.tipo,
-          valor: p.valor,
-          aplicaA: p.aplica_a,
-          categoria: p.categoria,
-          productoId: p.producto_id,
-          fechaInicio: p.fecha_inicio,
-          fechaFin: p.fecha_fin,
-          activo: p.activo,
-          prioridad: p.prioridad,
-          badgeTexto: p.badge_texto,
-          badgeColor: p.badge_color,
-          badgeTextColor: p.badge_text_color,
-          descuentoPorcentaje: p.descuento_porcentaje,
-          descuentoMonto: p.descuento_monto,
-          precioEspecial: p.precio_especial,
-          config: p.config,
-          createdAt: p.created_at
-        }));
-        setPromotions(mappedPromos);
-      }
+  // React Query: fetch promociones, cupones y productos (client-only)
+  const queryClient = useQueryClient()
 
-      // Cargar cupones desde Supabase
-      const { data: cups, error: cupsError } = await getCupones();
-      if (cupsError) {
-        console.error('Error loading cupones:', cupsError);
-      } else {
-        // Mapear campos de snake_case a camelCase
-        const mappedCups = (cups || []).map(c => ({
-          id: c.id,
-          codigo: c.codigo,
-          nombre: c.nombre,
-          tipo: c.tipo,
-          valor: c.valor,
-          montoMinimo: c.monto_minimo,
-          usosMaximos: c.usos_maximos,
-          usosActuales: c.usos_actuales,
-          fechaInicio: c.fecha_inicio,
-          fechaExpiracion: c.fecha_expiracion,
-          activo: c.activo,
-          createdAt: c.created_at
-        }));
-        setCoupons(mappedCups);
-      }
+  const COUPONS_KEY = QUERY_KEYS.cupones.list()
 
-      // Cargar productos desde Supabase
-      const { data: prods, error: prodsError } = await getAllProductos();
-      if (prodsError) {
-        console.error('Error loading productos:', prodsError);
-      } else {
-        // Mapear y filtrar productos que permiten promociones
-        const mappedProds = (prods || [])
-          .filter(p => p.allow_promotions !== false)
-          .map(p => ({
-            id: p.id,
-            nombre: p.nombre,
-            categoria: p.categoria,
-            tipo: p.tipo,
-            precioUnitario: p.precio_unitario || 0,
-            allowPromotions: p.allow_promotions !== false
-          }));
-        setProducts(mappedProds);
-      }
-    } catch (e) {
-      console.error('Error loading marketing data:', e);
-    } finally {
-      setIsLoading(false);
+  const { data: promosData = [], isLoading: loadingPromos } = useQuery({
+    queryKey: QUERY_KEYS.promociones.all,
+    queryFn: async () => {
+      const { data, error } = await getPromociones()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.promociones,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const { data: cupsData = [], isLoading: loadingCoupons } = useQuery({
+    queryKey: COUPONS_KEY,
+    queryFn: async () => {
+      const { data, error } = await getCupones()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.cupones,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const { data: prodsData = [], isLoading: loadingProducts } = useQuery({
+    queryKey: QUERY_KEYS.productos.list(),
+    queryFn: async () => {
+      const { data, error } = await getAllProductos()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.productos_admin,
+    enabled: typeof window !== 'undefined',
+  })
+
+  // Map query results into local UI state (keeps existing modal/edit flows intact)
+  useEffect(() => {
+    const mappedPromos = (promosData || []).map(p => ({
+      id: p.id,
+      nombre: p.nombre,
+      tipo: p.tipo,
+      valor: p.valor,
+      aplicaA: p.aplica_a,
+      categoria: p.categoria,
+      productoId: p.producto_id,
+      fechaInicio: p.fecha_inicio,
+      fechaFin: p.fecha_fin,
+      activo: p.activo,
+      prioridad: p.prioridad,
+      badgeTexto: p.badge_texto,
+      badgeColor: p.badge_color,
+      badgeTextColor: p.badge_text_color,
+      descuentoPorcentaje: p.descuento_porcentaje,
+      descuentoMonto: p.descuento_monto,
+      precioEspecial: p.precio_especial,
+      config: p.config,
+      createdAt: p.created_at
+    }))
+    setPromotions(mappedPromos)
+  }, [promosData])
+
+  useEffect(() => {
+    const mappedCups = (cupsData || []).map(c => ({
+      id: c.id,
+      codigo: c.codigo,
+      nombre: c.nombre,
+      tipo: c.tipo,
+      valor: c.valor,
+      montoMinimo: c.monto_minimo,
+      usosMaximos: c.usos_maximos,
+      usosActuales: c.usos_actuales,
+      fechaInicio: c.fecha_inicio,
+      fechaExpiracion: c.fecha_expiracion,
+      activo: c.activo,
+      createdAt: c.created_at
+    }))
+    setCoupons(mappedCups)
+  }, [cupsData])
+
+  useEffect(() => {
+    const mappedProds = (prodsData || [])
+      .filter(p => p.allow_promotions !== false)
+      .map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        categoria: p.categoria,
+        tipo: p.tipo,
+        precioUnitario: p.precio_unitario || 0,
+        allowPromotions: p.allow_promotions !== false
+      }))
+    setProducts(mappedProds)
+  }, [prodsData])
+
+  const isLoading = loadingPromos || loadingCoupons || loadingProducts
+
+  // Mutations: wrap utils and throw on error so useMutation considers failures
+  const createPromoMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await createPromocion(payload)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
     }
-  };
+  })
+
+  const updatePromoMutation = useMutation({
+    mutationFn: async ({ id, payload }) => {
+      const res = await updatePromocion(id, payload)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
+    }
+  })
+
+  const deletePromoMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await deletePromocion(id)
+      if (res.error) throw new Error(res.error)
+      return res
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+  })
+
+  const createCouponMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await createCupon(payload)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: COUPONS_KEY })
+  })
+
+  const updateCouponMutation = useMutation({
+    mutationFn: async ({ id, payload }) => {
+      const res = await updateCupon(id, payload)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: COUPONS_KEY })
+  })
+
+  const deleteCouponMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await deleteCupon(id)
+      if (res.error) throw new Error(res.error)
+      return res
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: COUPONS_KEY })
+  })
 
   // Ya no guardamos en localStorage, solo actualizamos el estado
   const savePromotions = (list) => {
@@ -208,60 +282,30 @@ function Marketing() {
   const handlePromoSubmit = async (promoData) => {
     try {
       if (editingPromo) {
-        // Actualizar promoción existente
-        const { data, error } = await updatePromocion(editingPromo.id, promoData);
-        if (error) {
-          console.error('❌ Error updating promocion:', error);
-          alert('Error al actualizar la promoción: ' + error);
-          return;
-        }
+        await updatePromoMutation.mutateAsync({ id: editingPromo.id, payload: promoData })
       } else {
-        // Crear nueva promoción
-        const { data, error } = await createPromocion(promoData);
-        if (error) {
-          console.error('❌ Error creating promocion:', error);
-          alert('Error al crear la promoción: ' + error);
-          return;
-        }
+        await createPromoMutation.mutateAsync(promoData)
       }
-      
-      console.log('✅ Promoción guardada, recargando datos...');
-      // Recargar datos
-      await loadData();
-      console.log('✅ Datos recargados, cerrando modal');
-      closePromoModal();
+
+      closePromoModal()
     } catch (e) {
-      console.error('💥 Error in handlePromoSubmit:', e);
-      alert('Error al guardar la promoción: ' + e.message);
+      console.error('💥 Error in handlePromoSubmit:', e)
+      alert('Error al guardar la promoción: ' + (e.message || e))
     }
   };
 
   const handleCouponSubmit = async (couponData) => {
     try {
       if (editingCoupon) {
-        // Actualizar cupón existente
-        const { error } = await updateCupon(editingCoupon.id, couponData);
-        if (error) {
-          console.error('Error updating cupon:', error);
-          alert('Error al actualizar el cupón');
-          return;
-        }
+        await updateCouponMutation.mutateAsync({ id: editingCoupon.id, payload: couponData })
       } else {
-        // Crear nuevo cupón
-        const { error } = await createCupon(couponData);
-        if (error) {
-          console.error('Error creating cupon:', error);
-          alert('Error al crear el cupón');
-          return;
-        }
+        await createCouponMutation.mutateAsync(couponData)
       }
-      
-      // Recargar datos
-      await loadData();
-      closeCouponModal();
+
+      closeCouponModal()
     } catch (e) {
-      console.error('Error in handleCouponSubmit:', e);
-      alert('Error al guardar el cupón');
+      console.error('Error in handleCouponSubmit:', e)
+      alert('Error al guardar el cupón: ' + (e.message || e))
     }
   };
 
@@ -269,70 +313,58 @@ function Marketing() {
     const promo = promotions.find(p => p.id === id);
     if (!promo) return;
     
-    const { error } = await updatePromocion(id, { activo: !promo.activo });
-    if (error) {
-      console.error('Error toggling promocion:', error);
-      alert('Error al cambiar el estado de la promoción');
-      return;
+    try {
+      await updatePromoMutation.mutateAsync({ id, payload: { activo: !promo.activo } })
+    } catch (e) {
+      console.error('Error toggling promocion:', e)
+      alert('Error al cambiar el estado de la promoción')
     }
-    
-    // Recargar datos
-    await loadData();
   };
 
   const deletePromo = async (id) => {
     const promo = promotions.find(p => p.id === id);
     if (!confirm(`¿Eliminar la promoción "${promo?.nombre}" permanentemente?`)) return;
     
-    const { error } = await deletePromocion(id);
-    if (error) {
-      console.error('Error deleting promocion:', error);
-      alert('Error al eliminar la promoción');
-      return;
+    try {
+      await deletePromoMutation.mutateAsync(id)
+    } catch (e) {
+      console.error('Error deleting promocion:', e)
+      alert('Error al eliminar la promoción')
     }
-    
-    // Recargar datos
-    await loadData();
   };
 
   const toggleCoupon = async (id) => {
     const coupon = coupons.find(c => c.id === id);
     if (!coupon) return;
     
-    const { error } = await updateCupon(id, { activo: !coupon.activo });
-    if (error) {
-      console.error('Error toggling cupon:', error);
-      alert('Error al cambiar el estado del cupón');
-      return;
+    try {
+      await updateCouponMutation.mutateAsync({ id, payload: { activo: !coupon.activo } })
+    } catch (e) {
+      console.error('Error toggling cupon:', e)
+      alert('Error al cambiar el estado del cupón')
     }
-    
-    // Recargar datos
-    await loadData();
   };
 
   const deleteCoupon = async (id) => {
     const coupon = coupons.find(c => c.id === id);
     if (!confirm(`¿Eliminar el cupón "${coupon?.codigo}" permanentemente?`)) return;
     
-    const { error } = await deleteCupon(id);
-    if (error) {
-      console.error('Error deleting cupon:', error);
-      alert('Error al eliminar el cupón');
-      return;
+    try {
+      await deleteCouponMutation.mutateAsync(id)
+    } catch (e) {
+      console.error('Error deleting cupon:', e)
+      alert('Error al eliminar el cupón')
     }
-    
-    // Recargar datos
-    await loadData();
   };
 
   const filteredPromotions = promotions.filter(p => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (p.title || '').toLowerCase().includes(q) ||
-      (p.summary || '').toLowerCase().includes(q) ||
-      (p.badge || '').toLowerCase().includes(q) ||
-      (p.tags || []).some(t => (t || '').toLowerCase().includes(q))
+      (p.nombre || '').toLowerCase().includes(q) ||
+      (p.tipo || '').toLowerCase().includes(q) ||
+      (p.badgeTexto || '').toLowerCase().includes(q) ||
+      (p.categoria || '').toLowerCase().includes(q)
     );
   });
 
@@ -340,8 +372,8 @@ function Marketing() {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      c.code.toLowerCase().includes(q) ||
-      (c.description && c.description.toLowerCase().includes(q))
+      (c.codigo || '').toLowerCase().includes(q) ||
+      (c.nombre && c.nombre.toLowerCase().includes(q))
     );
   });
 

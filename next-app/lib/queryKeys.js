@@ -25,6 +25,16 @@ export const QUERY_KEYS = {
     catalogo: () => ['pedidos', 'catalogo'],
     byId:     (id) => ['pedidos', id],
   },
+  cupones: {
+    all:  ['cupones'],
+    list: () => ['cupones', 'list'],
+    byId: (id) => ['cupones', id],
+  },
+  cotizaciones: {
+    all:  ['cotizaciones'],
+    list: () => ['cotizaciones', 'list'],
+    byId: (id) => ['cotizaciones', id],
+  },
 }
 
 // staleTime values in milliseconds — DO NOT change without team approval
@@ -35,4 +45,5 @@ export const STALE_TIMES = {
   promociones:       5  * 60 * 1000,  // 5 min
   pedidos:           0,               // never cache — real-time
   stock:             0,               // never cache — critical precision
+  cupones:           5  * 60 * 1000,  // 5 min — discount codes change occasionally
 }

@@ -2,25 +2,10 @@ import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../../utils/catalogUtils'
-import { getAllCotizaciones, createCotizacion, updateCotizacion, deleteCotizacion } from '../../utils/supabaseCotizaciones'
-import dynamic from 'next/dynamic'
 import AnalyticsCard from '../../components/AnalyticsCard'
-
-const Cotizaciones = dynamic(() => Promise.resolve(CotizacionesComponent), {
-  ssr: false,
-  loading: () => (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f5f5f5',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      <div>Cargando cotizaciones...</div>
-    </div>
-  )
-})
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
+import { getAllCotizaciones, createCotizacion, updateCotizacion, deleteCotizacion } from '../../utils/supabaseCotizaciones'
 
 function CotizacionesComponent() {
   // Estados principales
@@ -66,67 +51,74 @@ function CotizacionesComponent() {
     notas: ''
   })
 
-  // Cargar cotizaciones
-  const loadCotizaciones = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    try {
-      const { data, error } = await getAllCotizaciones()
-      if (error) {
-        console.error('Error loading cotizaciones:', error)
-        setCotizaciones([])
-        return
-      }
-      const mapped = (data || []).map(c => ({
-        id: c.id,
-        clienteNombre: c.cliente_nombre,
-        clienteTelefono: c.cliente_telefono,
-        clienteEmail: c.cliente_email,
-        descripcion: c.descripcion,
-        medidas: c.medidas,
-        cantidad: c.cantidad,
-        materialId: c.material_id,
-        materialNombre: c.material_nombre,
-        costoMaterial: c.costo_material || 0,
-        tiempoMaquina: c.tiempo_maquina || '00:00:00',
-        costoHoraMaquina: c.costo_hora_maquina || 0,
-        costoTiempoMaquina: c.costo_tiempo_maquina || 0,
-        costoDiseno: c.costo_diseno || 0,
-        subtotal: c.subtotal || 0,
-        margen: c.margen || 0,
-        total: c.total || 0,
-        estado: c.estado || 'pendiente',
-        notas: c.notas,
-        createdAt: c.created_at
-      }))
-      setCotizaciones(mapped)
-    } catch (err) {
-      console.error('Error:', err)
-      setCotizaciones([])
-    }
-  }, [])
+  const queryClient = useQueryClient()
 
-  // Cargar materiales
-  const loadMaterials = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    try {
+  const { data: cotizacionesRaw = [], isLoading: loadingCotizaciones } = useQuery({
+    queryKey: QUERY_KEYS.cotizaciones.list(),
+    queryFn: async () => {
+      const { data, error } = await getAllCotizaciones()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: 0,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const loadCotizaciones = useCallback(() => {
+    const mapped = (cotizacionesRaw || []).map(c => ({
+      id: c.id,
+      clienteNombre: c.cliente_nombre,
+      clienteTelefono: c.cliente_telefono,
+      clienteEmail: c.cliente_email,
+      descripcion: c.descripcion,
+      medidas: c.medidas,
+      cantidad: c.cantidad,
+      materialId: c.material_id,
+      materialNombre: c.material_nombre,
+      costoMaterial: c.costo_material || 0,
+      tiempoMaquina: c.tiempo_maquina || '00:00:00',
+      costoHoraMaquina: c.costo_hora_maquina || 0,
+      costoTiempoMaquina: c.costo_tiempo_maquina || 0,
+      costoDiseno: c.costo_diseno || 0,
+      subtotal: c.subtotal || 0,
+      margen: c.margen || 0,
+      total: c.total || 0,
+      estado: c.estado || 'pendiente',
+      notas: c.notas,
+      createdAt: c.created_at
+    }))
+    setCotizaciones(mapped)
+  }, [cotizacionesRaw])
+
+  // Use React Query for materiales (cached)
+  const { data: materialesRaw = [], isLoading: loadingMateriales } = useQuery({
+    queryKey: QUERY_KEYS.materiales.list(),
+    queryFn: async () => {
       const { getAllMateriales } = await import('../../utils/supabaseMateriales')
       const { data, error } = await getAllMateriales()
-      if (data && !error) {
-        setMaterials(data.map(m => ({
-          id: m.id,
-          nombre: m.nombre,
-          tipo: m.tipo,
-          espesor: m.espesor,
-          costoUnitario: m.costo_unitario
-        })))
-      }
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.materiales,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const loadMaterials = useCallback(() => {
+    try {
+      setMaterials((materialesRaw || []).map(m => ({
+        id: m.id,
+        nombre: m.nombre,
+        tipo: m.tipo,
+        espesor: m.espesor,
+        costoUnitario: m.costo_unitario
+      })))
     } catch {
       try {
         const raw = localStorage.getItem('materiales')
         setMaterials(raw ? JSON.parse(raw) : [])
       } catch { setMaterials([]) }
     }
-  }, [])
+  }, [materialesRaw])
 
   useEffect(() => {
     loadCotizaciones()
@@ -180,29 +172,54 @@ function CotizacionesComponent() {
   }
 
   // Guardar cotización
+  // Mutations for cotizaciones
+  const createCotizacionMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await createCotizacion(payload)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.list() })
+  })
+
+  const updateCotizacionMutation = useMutation({
+    mutationFn: async ({ id, updates }) => {
+      const res = await updateCotizacion(id, updates)
+      if (res.error) throw new Error(res.error)
+      return res.data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.list() })
+  })
+
+  const deleteCotizacionMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await deleteCotizacion(id)
+      if (res.error) throw new Error(res.error)
+      return res
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cotizaciones.list() })
+  })
+
   const handleSaveCotizacion = async () => {
     try {
-      const { data, error } = await createCotizacion(formData)
-      if (error) {
-        alert('Error al crear cotización: ' + error)
-        return
-      }
-      await loadCotizaciones()
+      await createCotizacionMutation.mutateAsync(formData)
       resetForm()
       setShowForm(false)
       showNotification('Cotización creada exitosamente')
     } catch (err) {
       console.error('Error:', err)
-      alert('Error al crear la cotización')
+      alert('Error al crear la cotización: ' + (err.message || err))
     }
   }
 
   // Cambiar estado de cotización  
   const handleChangeEstado = async (id, nuevoEstado) => {
-    const { error } = await updateCotizacion(id, { estado: nuevoEstado })
-    if (!error) {
-      await loadCotizaciones()
+    try {
+      await updateCotizacionMutation.mutateAsync({ id, updates: { estado: nuevoEstado } })
       showNotification('Estado actualizado')
+    } catch (e) {
+      console.error('Error updating estado:', e)
+      alert('Error al actualizar estado')
     }
   }
 
@@ -213,11 +230,13 @@ function CotizacionesComponent() {
 
   const confirmDelete = async () => {
     if (!deleteConfirm) return
-    const { error } = await deleteCotizacion(deleteConfirm.id)
-    setDeleteConfirm(null)
-    if (!error) {
-      await loadCotizaciones()
+    try {
+      await deleteCotizacionMutation.mutateAsync(deleteConfirm.id)
+      setDeleteConfirm(null)
       showNotification('Cotización eliminada')
+    } catch (e) {
+      console.error('Error deleting cotizacion:', e)
+      alert('Error al eliminar la cotización')
     }
   }
 
@@ -1584,4 +1603,4 @@ function CotizacionesComponent() {
   )
 }
 
-export default withAdminAuth(Cotizaciones)
+export default withAdminAuth(CotizacionesComponent)
