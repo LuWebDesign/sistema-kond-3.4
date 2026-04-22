@@ -58,6 +58,9 @@ Keep analysis extremely short after that.
 - Cross-cutting changes (STOP):
   - For DB schema, storage keys, auth, or build/config changes: STOP and coordinate. In the PR description list affected artifacts: `supabase/*.sql`, `supabase/migrate-data.js`, `js/utils.js`, `supabase/client.js`, and any `next-app/` changes. Both frontends must be considered.
 
+- Skills registry:
+  - Available skills for this project: `catalog-user-design` - Defines user profile page design and adaptation for admin area [SKILL.md](next-app/skills/catalog-user-design/SKILL.md)
+
 ## Files to open first
 
 - verify-setup.js
