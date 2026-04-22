@@ -52,6 +52,18 @@ This file contains compact, machine-friendly rules for project skills. The orche
 - NEVER call `refetch()` after mutations — always use `invalidateQueries`
 - ReactQueryDevtools: only in development (`process.env.NODE_ENV === 'development'`)
 
+### supabase-egress-best-practices (auto-resolved)
+- Skill file: skills/supabase-egress-best-practices/SKILL.md
+- NEVER use `select('*')` — always project explicit columns
+- Filter server-side (.eq/.gte/.lte/.in/.ilike) — never fetch-all then filter in JS
+- Paginate: 50 rows admin / 20 rows catalog — always add .range() or .limit()
+- Cache-Control on every API route: s-maxage=120 (live data) or s-maxage=900 (reference data) + stale-while-revalidate
+- Client-side cache: use prebuilt hooks from `next-app/hooks/useSupabaseQuery.js` — never call supabase directly from components
+- Polling allowed: dashboard (5 min), pedidos live (30 s) only — all others refetchInterval:false
+- Import from `supabaseProducts.js` (NOT supabaseProductos.js) — canonical file has isSupabaseReady guard
+- New query types → add to `next-app/lib/queryKeys.js` — NEVER hardcode key strings in components
+- PR gate checklist: no select(*), server-side filters, pagination, Cache-Control, queryKeys entry, staleTime assigned
+
 ### skill-creator (auto-resolved)
 - Location (local tool template): file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md
 - When creating new skills, follow the SKILL.md template. Frontmatter MUST include: name, description, license (Apache-2.0), metadata.author, metadata.version.
@@ -62,6 +74,7 @@ This file contains compact, machine-friendly rules for project skills. The orche
 ## User Skills (trigger table)
 | Skill | Trigger keywords | Path |
 |-------|------------------|------|
+| supabase-egress-best-practices | supabase query, select*, egress, column projection, Cache-Control, paginate, supabase util | skills/supabase-egress-best-practices/SKILL.md |
 | react-query-kond | react query, useQuery, useMutation, tanstack, query keys, staleTime | skills/react-query-kond/SKILL.md |
 | analytics-cards | analytics card, metric card, stats card, tarjeta analitica | skills/analytics-cards/SKILL.md |
 | skill-creator | create skill, skill-creator, new skill | file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md |
