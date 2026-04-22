@@ -59,11 +59,18 @@ async function generateRandomPedidoId() {
  */
 export async function getAllPedidosCatalogo() {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
       .select(`
-        *,
-        items:pedidos_catalogo_items(*)
+        id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+        metodo_pago, metodo_entrega, estado_pago, estado,
+        comprobante_url, comprobante_omitido,
+        fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
+        total, monto_recibido, envio_gratis,
+        asignado_al_calendario,
+        created_at, updated_at,
+        items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
       .order('fecha_creacion', { ascending: false });
 
@@ -148,11 +155,18 @@ export async function getPedidosCatalogoParaCalendario() {
  */
 export async function getPedidoCatalogoById(id) {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
       .select(`
-        *,
-        items:pedidos_catalogo_items(*)
+        id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+        metodo_pago, metodo_entrega, estado_pago, estado,
+        comprobante_url, comprobante_omitido,
+        fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
+        total, monto_recibido, envio_gratis,
+        asignado_al_calendario,
+        created_at, updated_at,
+        items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
       .eq('id', id)
       .single();
@@ -458,14 +472,24 @@ export async function getComprobanteSignedUrl(filePath) {
 /**
  * Filtrar pedidos por estado de pago
  */
+// Shared column projection for pedidos_catalogo reads
+const PEDIDO_SELECT = `
+  id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+  metodo_pago, metodo_entrega, estado_pago, estado,
+  comprobante_url, comprobante_omitido,
+  fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
+  total, monto_recibido, envio_gratis,
+  asignado_al_calendario,
+  created_at, updated_at,
+  items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
+`
+
 export async function getPedidosByEstadoPago(estadoPago) {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
-      .select(`
-        *,
-        items:pedidos_catalogo_items(*)
-      `)
+      .select(PEDIDO_SELECT)
       .eq('estado_pago', estadoPago)
       .order('fecha_creacion', { ascending: false });
 
@@ -482,12 +506,10 @@ export async function getPedidosByEstadoPago(estadoPago) {
  */
 export async function getPedidosByMetodoPago(metodoPago) {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
-      .select(`
-        *,
-        items:pedidos_catalogo_items(*)
-      `)
+      .select(PEDIDO_SELECT)
       .eq('metodo_pago', metodoPago)
       .order('fecha_creacion', { ascending: false });
 
@@ -504,12 +526,10 @@ export async function getPedidosByMetodoPago(metodoPago) {
  */
 export async function searchPedidosByCliente(searchTerm) {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
-      .select(`
-        *,
-        items:pedidos_catalogo_items(*)
-      `)
+      .select(PEDIDO_SELECT)
       .or(`cliente_nombre.ilike.%${searchTerm}%,cliente_telefono.ilike.%${searchTerm}%,cliente_email.ilike.%${searchTerm}%`)
       .order('fecha_creacion', { ascending: false });
 
@@ -526,12 +546,10 @@ export async function searchPedidosByCliente(searchTerm) {
  */
 export async function getPedidosByEmail(email) {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('pedidos_catalogo')
-      .select(`
-        *,
-        items:pedidos_catalogo_items(*)
-      `)
+      .select(PEDIDO_SELECT)
       .eq('cliente_email', email)
       .order('fecha_creacion', { ascending: false });
 

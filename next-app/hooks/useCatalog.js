@@ -1,172 +1,184 @@
 // Hooks personalizados para el catálogo
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
-import { getProductosPublicados } from '../utils/supabaseProducts'
-import { getPromocionesActivas } from '../utils/supabaseMarketing'
-import { getAllMateriales } from '../utils/supabaseMateriales'
-import supabase from '../utils/supabaseClient'
+import { useProductosPublicados, useMateriales, usePromocionesActivas } from './useSupabaseQuery'
+
+// ---------------------------------------------------------------------------
+// Helpers de mapeo (snake_case → camelCase) — usados por múltiples hooks
+// ---------------------------------------------------------------------------
+
+function mapPromo(p) {
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    tipo: p.tipo,
+    valor: p.valor,
+    aplicaA: p.aplica_a,
+    categoria: p.categoria,
+    productoId: p.producto_id,
+    fechaInicio: p.fecha_inicio,
+    fechaFin: p.fecha_fin,
+    activo: p.activo,
+    prioridad: p.prioridad,
+    badgeTexto: p.badge_texto,
+    badgeColor: p.badge_color,
+    badgeTextColor: p.badge_text_color,
+    descuentoPorcentaje: p.descuento_porcentaje,
+    descuentoMonto: p.descuento_monto,
+    precioEspecial: p.precio_especial,
+    config: p.configuracion || p.config
+  }
+}
+
+function mapProducto(p) {
+  const unidadesPorPlaca = p.unidades_por_placa || 1
+  const costoPlaca = p.costo_placa || 0
+  const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    categoria: p.categoria,
+    tipo: p.tipo,
+    medidas: p.medidas,
+    tiempoUnitario: p.tiempo_unitario || '00:00:30',
+    active: p.active !== undefined ? p.active : true,
+    publicado: p.publicado !== undefined ? p.publicado : false,
+    hiddenInProductos: p.hidden_in_productos || false,
+    unidadesPorPlaca,
+    usoPlacas: p.uso_placas || 0,
+    costoPlaca,
+    costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+    materialId: p.material_id || '',
+    material: p.material || '',
+    tipoMaterial: p.tipo_material || '',
+    margenMaterial: p.margen_material || 0,
+    precioUnitario: p.precio_unitario || 0,
+    precioPromos: p.precio_promos || 0,
+    stock: p.stock || 0,
+    unidades: p.unidades || 1,
+    ensamble: p.ensamble || 'Sin ensamble',
+    imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
+    imagenes: p.imagenes_urls || [],
+    description: p.description || '',
+    fechaCreacion: p.created_at || new Date().toISOString()
+  }
+}
 
 // Hook para gestionar productos
 export function useProducts() {
-  const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [promociones, setPromociones] = useState([])
-  const [materials, setMaterials] = useState([])
-  
-  useEffect(() => {
-    loadProducts()
-  }, [])
+  // React Query — data is cached and shared across hook instances (5 min staleTime)
+  const { data: productosRaw, isLoading: loadingProductos } = useProductosPublicados()
+  const { data: promosRaw, isLoading: loadingPromos } = usePromocionesActivas()
+  const { data: materialesRaw, isLoading: loadingMateriales } = useMateriales()
 
-  const loadProducts = async () => {
-    if (typeof window === 'undefined') return
-    
-    setIsLoading(true)
-    try {
-      // Cargar materiales desde Supabase
-      const { data: materialesData, error: materialesError } = await getAllMateriales()
-      if (materialesError) {
-        // materiales no disponibles
-      } else {
-        // Mapear de snake_case a camelCase
-        const mappedMateriales = (materialesData || []).map(m => ({
-          id: m.id,
-          nombre: m.nombre,
-          tipo: m.tipo,
-          tamano: m.tamano,
-          espesor: m.espesor,
-          unidad: m.unidad,
-          costoUnitario: m.costo_unitario,
-          proveedor: m.proveedor,
-          stock: m.stock,
-          notas: m.notas
-        }))
-        setMaterials(mappedMateriales)
-      }
-      
-      // Cargar promociones activas desde Supabase
-      const { data: promosData, error: promosError } = await getPromocionesActivas()
-      if (promosError) {
-        // promociones no disponibles
-      }
-      
-      const promocionesActivas = (promosData || []).map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        tipo: p.tipo,
-        valor: p.valor,
-        aplicaA: p.aplica_a,
-        categoria: p.categoria,
-        productoId: p.producto_id,
-        fechaInicio: p.fecha_inicio,
-        fechaFin: p.fecha_fin,
-        activo: p.activo,
-        prioridad: p.prioridad,
-        badgeTexto: p.badge_texto,
-        badgeColor: p.badge_color,
-        badgeTextColor: p.badge_text_color,
-        descuentoPorcentaje: p.descuento_porcentaje,
-        descuentoMonto: p.descuento_monto,
-        precioEspecial: p.precio_especial
-      }))
-      
-      setPromociones(promocionesActivas)
-      
-      // Obtener productos publicados desde Supabase
-      const { data: productosBase, error } = await getProductosPublicados()
-      
-      if (error) {
-        setProducts([])
-        setCategories([])
-        setIsLoading(false)
-        return
-      }
-      
-      // Mapear campos de snake_case a camelCase
-      const mappedProducts = (productosBase || []).map(p => {
-        // Calcular costo material
-        const unidadesPorPlaca = p.unidades_por_placa || 1
-        const costoPlaca = p.costo_placa || 0
-        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
-        
+  const isLoading = loadingProductos || loadingPromos || loadingMateriales
+
+  const promociones = useMemo(() => (promosRaw?.data || []).map(mapPromo), [promosRaw])
+
+  const materials = useMemo(() =>
+    (materialesRaw?.data || []).map(m => ({
+      id: m.id,
+      nombre: m.nombre,
+      tipo: m.tipo,
+      tamano: m.tamano,
+      espesor: m.espesor,
+      unidad: m.unidad,
+      costoUnitario: m.costo_unitario,
+      proveedor: m.proveedor,
+      stock: m.stock,
+      notas: m.notas
+    })), [materialesRaw])
+
+  const { products, categories } = useMemo(() => {
+    const productosBase = productosRaw?.data || []
+    const mapped = productosBase.map(mapProducto)
+    const valid = mapped.filter(p => p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock'))
+    const enriched = valid.map(p => {
+      try {
+        const promo = applyPromotionsToProduct(p, promociones)
         return {
-          id: p.id,
-          nombre: p.nombre,
-          categoria: p.categoria,
-          tipo: p.tipo,
-          medidas: p.medidas,
-          tiempoUnitario: p.tiempo_unitario || '00:00:30',
-          active: p.active !== undefined ? p.active : true,
-          publicado: p.publicado !== undefined ? p.publicado : false,
-          hiddenInProductos: p.hidden_in_productos || false,
-          unidadesPorPlaca: unidadesPorPlaca,
-          usoPlacas: p.uso_placas || 0,
-          costoPlaca: costoPlaca,
-          costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
-          materialId: p.material_id || '',
-          material: p.material || '',
-          tipoMaterial: p.tipo_material || '',
-          margenMaterial: p.margen_material || 0,
-          precioUnitario: p.precio_unitario || 0,
-          precioPromos: p.precio_promos || 0,
-          stock: p.stock || 0,
-          unidades: p.unidades || 1,
-          ensamble: p.ensamble || 'Sin ensamble',
-          imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
-          imagenes: p.imagenes_urls || [],
-          description: p.description || '',
-          fechaCreacion: p.created_at || new Date().toISOString()
+          ...p,
+          promoResult: promo,
+          precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precioUnitario,
+          hasPromotion: !!(promo && promo.hasPromotion),
+          promotionBadges: promo && promo.badges ? promo.badges : []
         }
-      })
-      
-      const validProducts = mappedProducts.filter(p => 
-        p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock')
-      )
-      
-      // Enriquecer productos con información de promociones
-      const enriched = validProducts.map(p => {
-        try {
-          const promo = applyPromotionsToProduct(p, promocionesActivas)
-          return {
-            ...p,
-            promoResult: promo,
-            precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precioUnitario,
-            hasPromotion: !!(promo && promo.hasPromotion),
-            promotionBadges: promo && promo.badges ? promo.badges : []
-          }
-        } catch (e) {
-          // Si algo falla con el motor de promociones, devolver el producto original
-          return p
-        }
-      })
+      } catch (e) {
+        return p
+      }
+    })
+    const uniqueCategories = [...new Set(valid.map(p => p.categoria).filter(cat => cat && cat.trim() !== ''))]
+    return { products: enriched, categories: uniqueCategories }
+  }, [productosRaw, promociones])
 
-      setProducts(enriched)
-      
-      // Extraer categorías únicas
-      const uniqueCategories = [...new Set(validProducts
-        .map(p => p.categoria)
-        .filter(cat => cat && cat.trim() !== ''))]
-      
-      setCategories(uniqueCategories)
-    } catch (error) {
-      setProducts([])
-      setCategories([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // reloadProducts is a no-op — React Query handles refetching via invalidateQueries
+  const reloadProducts = useCallback(() => {}, [])
 
-  return { products, categories, isLoading, reloadProducts: loadProducts }
+  return { products, categories, isLoading, reloadProducts, promociones, materials }
 }
 
 // Hook para gestionar el carrito
+// Price normalization reads from the React Query cache (shared with useProducts).
+// No direct Supabase fetches — data is already cached by useProductosPublicados / usePromocionesActivas.
 export function useCart() {
   const [cart, setCart] = useState([])
 
+  // Pull from React Query cache — zero extra network requests when useProducts was already called
+  const { data: productosRaw } = useProductosPublicados()
+  const { data: promosRaw } = usePromocionesActivas()
+
+  // Normalize cart prices using the cached data already in memory.
   useEffect(() => {
-    loadCart()
-  }, [])
+    if (typeof window === 'undefined') return
+    const savedCart = (() => {
+      try { return JSON.parse(localStorage.getItem('cart')) || [] } catch { return [] }
+    })()
+
+    if (savedCart.length === 0) {
+      setCart([])
+      return
+    }
+
+    const cachedProductos = productosRaw?.data || null
+    const cachedPromociones = promosRaw?.data ? promosRaw.data.map(mapPromo) : []
+
+    // If cached data not yet available, show cart as-is; will re-run when data arrives
+    if (!cachedProductos) {
+      setCart(savedCart)
+      return
+    }
+
+    const normalized = savedCart.map(item => {
+      try {
+        const prod = cachedProductos.find(p => String(p.id) === String(item.productId || item.idProducto))
+        if (!prod) return item
+        const productoMapeado = {
+          id: prod.id,
+          nombre: prod.nombre,
+          categoria: prod.categoria,
+          tipo: prod.tipo,
+          precioUnitario: prod.precio_unitario || 0,
+          medidas: prod.medidas
+        }
+        const promo = applyPromotionsToProduct(productoMapeado, cachedPromociones)
+        const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : productoMapeado.precioUnitario
+        const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (productoMapeado.precioUnitario || item.price || 0)
+        return {
+          ...item,
+          price: unitPrice,
+          originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice)
+        }
+      } catch (e) {
+        return item
+      }
+    })
+
+    localStorage.setItem('cart', JSON.stringify(normalized))
+    setCart(normalized)
+  // Re-run when React Query cache delivers fresh data
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productosRaw, promosRaw])
 
   // Listen for cart updates triggered by other components in the same tab
   useEffect(() => {
@@ -183,91 +195,6 @@ export function useCart() {
     window.addEventListener('cart:updated', handler)
     return () => window.removeEventListener('cart:updated', handler)
   }, [])
-
-  const loadCart = async () => {
-    if (typeof window === 'undefined') return
-    
-    try {
-      const savedCart = JSON.parse(localStorage.getItem('cart')) || []
-      
-      // Cargar productos desde Supabase en lugar de localStorage
-      const { data: productosBase, error: productosError } = await getProductosPublicados()
-      
-      if (productosError || !productosBase) {
-        // Fallback: usar los datos del carrito tal como están
-        setCart(savedCart)
-        return
-      }
-
-      // Cargar promociones activas desde Supabase para aplicarlas al carrito
-      let promocionesActivas = []
-      try {
-        const { data: promosData, error: promosError } = await getPromocionesActivas()
-        if (!promosError && promosData) {
-          promocionesActivas = (promosData || []).map(p => ({
-            id: p.id,
-            nombre: p.nombre,
-            tipo: p.tipo,
-            valor: p.valor,
-            aplicaA: p.aplica_a,
-            categoria: p.categoria,
-            productoId: p.producto_id,
-            fechaInicio: p.fecha_inicio,
-            fechaFin: p.fecha_fin,
-            activo: p.activo,
-            prioridad: p.prioridad,
-            badgeTexto: p.badge_texto,
-            badgeColor: p.badge_color,
-            badgeTextColor: p.badge_text_color,
-            descuentoPorcentaje: p.descuento_porcentaje,
-            descuentoMonto: p.descuento_monto,
-            precioEspecial: p.precio_especial,
-            config: p.configuracion || p.config
-          }))
-        }
-      } catch (err) {
-        // promos no disponibles
-      }
-
-      const normalized = savedCart.map(item => {
-        try {
-          // Buscar producto en la data de Supabase
-          const prod = productosBase.find(p => String(p.id) === String(item.productId || item.idProducto))
-          if (!prod) return item
-          
-          // Mapear producto a formato frontend
-          const productoMapeado = {
-            id: prod.id,
-            nombre: prod.nombre,
-            categoria: prod.categoria,
-            tipo: prod.tipo,
-            precioUnitario: prod.precio_unitario || 0,
-            medidas: prod.medidas
-          }
-          
-          // Aplicar motor de promociones al producto
-          const promo = applyPromotionsToProduct(productoMapeado, promocionesActivas)
-          const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : productoMapeado.precioUnitario
-          const unitPrice = promoPrice !== undefined && promoPrice !== null ? promoPrice : (productoMapeado.precioUnitario || item.price || 0)
-          
-          return {
-            ...item,
-            price: unitPrice,
-            originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice)
-          }
-        } catch (e) {
-          return item
-        }
-      })
-
-      // Persistir la versión normalizada para evitar discrepancias visuales
-      localStorage.setItem('cart', JSON.stringify(normalized))
-      setCart(normalized)
-    } catch (err) {
-      const fallback = JSON.parse(localStorage.getItem('cart') || '[]')
-      setCart(fallback)
-    }
-  }
 
   const saveCart = (newCart) => {
     if (typeof window === 'undefined') return
@@ -614,8 +541,12 @@ export function useOrders() {
       // Determinar si aplica envío gratis a todo el carrito
       try {
         const { applyPromotionsToCart } = await import('../utils/promoEngine')
-        const { getPromocionesActivas } = await import('../utils/supabaseMarketing')
-        const { data: promosData } = await getPromocionesActivas()
+        // NOTE (React Query): getPromocionesActivas() is called here inside an async mutation path
+        // (saveOrder). React Query hooks cannot be called inside async functions, so we keep
+        // this direct fetch. Impact is low: it only fires when the user submits an order.
+        // Future improvement: pass promociones as a parameter from the component that calls useOrders.
+        const { getPromocionesActivas: fetchPromos } = await import('../utils/supabaseMarketing')
+        const { data: promosData } = await fetchPromos()
         const promoResult = applyPromotionsToCart(orderData.items || [], promosData || [])
         pedidoData.envioGratis = !!promoResult.freeShipping
       } catch (promoErr) {
@@ -649,6 +580,13 @@ export function useOrders() {
         try {
           const supabase = (await import('../utils/supabaseClient')).default
 
+          // NOTE (T2.2 — N+1 stock update): This loop issues one SELECT + one UPDATE per cart item.
+          // Batching is not attempted here because Supabase does not support a single atomic
+          // "decrement by variable amounts for different rows" RPC without a custom DB function.
+          // Risk of introducing a race condition or off-by-one on partial failures outweighs the
+          // egress savings (this path only executes once per checkout, not on every page mount).
+          // Future improvement: create a Postgres function `decrement_stock(items jsonb)` callable
+          // via supabase.rpc() to collapse this into a single round-trip.
           for (const item of items) {
             const { data: producto, error: fetchError } = await supabase
               .from('productos')
