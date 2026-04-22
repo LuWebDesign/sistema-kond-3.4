@@ -141,84 +141,65 @@ export default function Perfil() {
 
   return (
     <PublicLayout title="Editar Perfil - KOND">
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ padding: '24px 20px', maxWidth: '640px', margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
-            <button
-              onClick={() => router.push('/catalog/user')}
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '8px', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}
-            >
-              ← Volver a Mi Cuenta
-            </button>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)', margin: 0 }}>
-              ✏️ Editar Perfil
-            </h1>
-          </div>
+        <div style={{ marginBottom: '28px' }}>
+          <button
+            onClick={() => router.push('/catalog/user')}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '12px', padding: 0, display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.15s ease' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            ← Mi cuenta
+          </button>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Editar perfil
+          </h1>
         </div>
 
-        <form onSubmit={handleUpdateProfile} style={{ display: 'grid', gap: '24px' }}>
+        <form onSubmit={handleUpdateProfile} style={{ display: 'grid', gap: '20px' }}>
 
           {/* Avatar */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '80px', height: '80px', borderRadius: '50%', flexShrink: 0,
+              width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
               background: avatar ? `url(${avatar}) center/cover` : 'var(--accent-blue)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontSize: '2rem', fontWeight: 700
+              color: 'white', fontSize: '1.1rem', fontWeight: 600
             }}>
               {!avatar && (currentUser?.nombre?.charAt(0)?.toUpperCase() || 'U')}
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <label style={{ background: 'var(--accent-blue)', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500 }}>
-                📷 Cambiar foto
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <label style={{ background: 'var(--accent-blue)', color: 'white', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}>
+                Cambiar foto
                 <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
               </label>
               {avatar && (
                 <button type="button" onClick={() => setAvatar(null)}
-                  style={{ background: '#ef4444', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  🗑️ Eliminar
+                  style={{ background: 'transparent', color: 'var(--text-muted)', padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}>
+                  Quitar
                 </button>
               )}
             </div>
           </div>
 
-          {/* Información Personal */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid var(--accent-blue)' }}>
-              <span style={{ fontSize: '1.2rem' }}>👤</span>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Información Personal</h3>
-            </div>
+          {/* Datos personales */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
+              Datos personales
+            </h3>
 
-            <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-              {[
-                { label: 'Nombre *', name: 'nombre', icon: '👤', required: true },
-                { label: 'Apellido', name: 'apellido', icon: '📛' },
-                { label: 'Email *', name: 'email', icon: '📧', type: 'email', required: true },
-                { label: 'Teléfono', name: 'telefono', icon: '📱', type: 'tel' },
-              ].map(({ label, name, icon, type = 'text', required }) => (
-                <div key={name} style={{ position: 'relative' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>
-                    {icon} {label}
-                  </label>
-                  <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleInputChange}
-                    required={required}
-                    style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                  />
-                </div>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
+              <Field label="Nombre" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
+              <Field label="Apellido" name="apellido" value={formData.apellido} onChange={handleInputChange} />
+              <Field label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
+              <Field label="Teléfono" name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} />
 
-              {/* Contraseña */}
-              <div style={{ position: 'relative', gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>
-                  🔑 Contraseña (dejar vacío para no cambiarla)
+              {/* Contraseña - full width */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+                  Contraseña
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
@@ -226,14 +207,12 @@ export default function Perfil() {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    placeholder="••••••••"
+                    placeholder="Dejar vacío para no cambiarla"
                     autoComplete="new-password"
-                    style={{ flex: 1, padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                    style={{ ...inputStyle, flex: 1 }}
                   />
                   <button type="button" onClick={() => setShowPassword(s => !s)}
-                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                     {showPassword ? 'Ocultar' : 'Mostrar'}
                   </button>
                 </div>
@@ -241,56 +220,44 @@ export default function Perfil() {
             </div>
           </div>
 
-          {/* Dirección de Envío */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid var(--accent-secondary)' }}>
-              <span style={{ fontSize: '1.2rem' }}>🏠</span>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Dirección de Envío</h3>
-            </div>
+          {/* Dirección de envío */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
+              Dirección de envío
+            </h3>
 
-            <div className="profile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>🏠 Dirección</label>
-                <input type="text" name="direccion" value={formData.direccion} onChange={handleInputChange}
-                  style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
+                <Field label="Dirección" name="direccion" value={formData.direccion} onChange={handleInputChange} />
               </div>
 
-              {[
-                { label: 'Localidad', name: 'localidad', icon: '🏙️' },
-                { label: 'Código Postal', name: 'cp', icon: '📮' },
-                { label: 'Provincia', name: 'provincia', icon: '🗺️' },
-              ].map(({ label, name, icon }) => (
-                <div key={name}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>{icon} {label}</label>
-                  <input type="text" name={name} value={formData[name]} onChange={handleInputChange}
-                    style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
-                </div>
-              ))}
+              <Field label="Localidad" name="localidad" value={formData.localidad} onChange={handleInputChange} />
+              <Field label="Código Postal" name="cp" value={formData.cp} onChange={handleInputChange} />
+              <Field label="Provincia" name="provincia" value={formData.provincia} onChange={handleInputChange} />
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px' }}>📝 Observaciones</label>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+                  Observaciones
+                </label>
                 <textarea name="observaciones" value={formData.observaciones} onChange={handleInputChange}
-                  placeholder="Ej: Llamar al timbre, dejar en conserjería, horario de entrega preferido..."
-                  style={{ width: '100%', padding: '14px 16px', border: '2px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '1rem', fontFamily: 'inherit', outline: 'none', resize: 'vertical', minHeight: '80px', maxHeight: '120px', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-blue)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'} />
+                  placeholder="Ej: Llamar al timbre, horario de entrega preferido..."
+                  style={{ ...inputStyle, resize: 'vertical', minHeight: '70px', maxHeight: '100px', fontFamily: 'inherit' }} />
               </div>
             </div>
           </div>
 
           {/* Botones */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
             <button type="button" onClick={() => router.push('/catalog/user')}
-              style={{ background: 'var(--bg-section)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '12px 24px', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' }}>
-              ❌ Cancelar
+              style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s ease' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
+            >
+              Cancelar
             </button>
             <button type="submit" disabled={isSaving}
-              style={{ background: isSaving ? 'var(--text-muted)' : 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)', color: 'white', border: 'none', padding: '12px 32px', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer', boxShadow: isSaving ? 'none' : '0 4px 12px rgba(59,130,246,0.3)' }}>
-              {isSaving ? '⏳ Guardando...' : '💾 Guardar Cambios'}
+              style={{ background: isSaving ? 'var(--text-muted)' : 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 28px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer', transition: 'background 0.15s ease' }}>
+              {isSaving ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
 
@@ -298,4 +265,35 @@ export default function Perfil() {
       </div>
     </PublicLayout>
   )
+}
+
+function Field({ label, name, type = 'text', value, onChange, required }) {
+  return (
+    <div>
+      <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        style={inputStyle}
+      />
+    </div>
+  )
+}
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid var(--border-color)',
+  borderRadius: '8px',
+  background: 'var(--bg-input)',
+  color: 'var(--text-primary)',
+  fontSize: '0.9rem',
+  outline: 'none',
+  transition: 'border-color 0.15s ease',
+  boxSizing: 'border-box'
 }

@@ -266,198 +266,127 @@ export default function User() {
   if (currentUser) {
     return (
       <PublicLayout title="Mi Cuenta - KOND">
-        <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '32px'
-          }}>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'var(--accent-blue)'
-            }}>
-              👤 Mi Cuenta
+        <div style={{ padding: '24px 20px', maxWidth: '640px', margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Mi cuenta
             </h1>
             <button
               onClick={handleLogout}
+              className="btn-ghost"
               style={{
                 background: 'transparent',
                 color: 'var(--text-muted)',
                 border: '1px solid var(--border-color)',
-                padding: '8px 16px',
+                padding: '6px 14px',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease'
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                transition: 'all 0.15s ease'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'var(--bg-hover)'
-                e.target.style.borderColor = 'var(--accent-primary)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'transparent'
-                e.target.style.borderColor = 'var(--border-color)'
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
             >
-              🚪 Cerrar Sesión
+              Cerrar sesión
             </button>
           </div>
 
-          <div className="account-grid" style={{
-            display: 'grid',
-            gap: '32px'
+          {/* Profile Card */}
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '20px'
           }}>
-            {/* Profile Header */}
-            <div className="profile-card-left" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '24px',
-              textAlign: 'center',
-              height: 'fit-content'
-            }}>
-              {/* Avatar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{
-                position: 'relative',
-                display: 'inline-block',
-                marginBottom: '16px'
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-blue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '2rem',
-                  fontWeight: 700,
-                  margin: '0 auto'
-                }}>
-                  {currentUser.nombre?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              </div>
-
-              <h2 style={{
-                fontSize: '1.3rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '8px'
-              }}>
-                {currentUser.nombre} {currentUser.apellido || ''}
-              </h2>
-              
-              <p style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '20px'
-              }}>
-                {currentUser.email}
-              </p>
-
-              {/* Editar perfil */}
-              <button
-                onClick={() => router.push('/catalog/user/perfil')}
-                style={{
-                  background: 'var(--accent-blue)',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500
-                }}
-              >
-                ✏️ Editar perfil
-              </button>
-            </div>
-            
-            {/* Account Info Card: Información de cuenta (datos de logeo) */}
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '16px',
-              color: 'var(--text-primary)'
-            }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-blue)' }}>🔒 Información de cuenta</h3>
-              <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', alignItems: 'start' }}>
-                {/** Each info block is a small card for clearer two-column layout */}
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Email</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700, wordBreak: 'break-all' }}>{currentUser.email}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Registrado</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.fechaRegistro ? formatDate(currentUser.fechaRegistro) : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>ID</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.id || '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Último acceso</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.lastLogin ? formatDate(currentUser.lastLogin) : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Contraseña</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.password ? '••••••••' : '—'}</div>
-                </div>
-
-                <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-section)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 6 }}>Teléfono</div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentUser.telefono || '—'}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Información del Perfil */}
-            <div
-              onClick={() => router.push('/catalog/user/perfil')}
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'var(--accent-blue)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '20px 24px',
-                background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-secondary) 100%)',
-                color: 'white'
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                flexShrink: 0
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.5rem' }}>✏️</span>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: 'white' }}>Información del Perfil</h3>
-                    <p style={{ fontSize: '0.85rem', margin: '2px 0 0 0', opacity: 0.9 }}>Gestioná tus datos personales</p>
-                  </div>
-                </div>
-                <span style={{ fontSize: '1.2rem' }}>→</span>
+                {currentUser.nombre?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                  {currentUser.nombre} {currentUser.apellido || ''}
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentUser.email}
+                </p>
               </div>
             </div>
           </div>
 
+          {/* Info Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            {[
+              { label: 'Teléfono', value: currentUser.telefono || '—' },
+              { label: 'Localidad', value: currentUser.localidad || '—' },
+              { label: 'Provincia', value: currentUser.provincia || '—' },
+              { label: 'Miembro desde', value: currentUser.fechaRegistro ? formatDate(currentUser.fechaRegistro) : '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '10px',
+                padding: '14px 16px'
+              }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                  {label}
+                </div>
+                <div style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 500 }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
 
-      </div>
-    </PublicLayout>
-  )
-}
+          {/* Action: Edit Profile */}
+          <button
+            onClick={() => router.push('/catalog/user/perfil')}
+            style={{
+              width: '100%',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
+          >
+            <div>
+              <div style={{ color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600 }}>Editar perfil</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '2px' }}>Nombre, dirección, contraseña</div>
+            </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>→</span>
+          </button>
+
+        </div>
+      </PublicLayout>
+    )
+  }
 
   // Si no está logueado, mostrar login/registro
   return (
@@ -472,113 +401,33 @@ export default function User() {
         <div style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '40px',
-          maxWidth: '400px',
+          borderRadius: '12px',
+          padding: '32px',
+          maxWidth: '380px',
           width: '100%'
         }}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
             <h1 style={{
-              fontSize: '2rem',
+              fontSize: '1.5rem',
               fontWeight: 700,
-              color: 'var(--person-color)',
-              marginBottom: '8px'
+              color: 'var(--text-primary)',
+              marginBottom: '6px'
             }}>
-              👤 {isLoginMode ? 'Iniciar Sesión' : 'Registrarse'}
+              {isLoginMode ? 'Iniciar sesión' : 'Crear cuenta'}
             </h1>
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '1rem'
-            }}>
-              {isLoginMode 
-                ? 'Accede a tu cuenta para gestionar tus pedidos'
-                : 'Crea una cuenta nueva para realizar pedidos'
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+              {isLoginMode
+                ? 'Ingresá con tu email y contraseña'
+                : 'Completá los datos para registrarte'
               }
             </p>
           </div>
 
-          {/* Botón de Google Login deshabilitado - proveedor no configurado */}
-          {false && isLoginMode && (
-            <>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await loginWithGoogle()
-                  } catch (error) {
-                    console.error('Error al iniciar login con Google:', error)
-                    createToast('Error al conectar con Google', 'error')
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  marginBottom: '20px',
-                  backgroundColor: '#4285f4',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  transition: 'background-color 0.2s',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#3367d6'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#4285f4'}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continuar con Google
-              </button>
-
-              <div style={{
-                margin: '16px 0',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.9rem',
-                position: 'relative'
-              }}>
-                <span style={{
-                  background: 'var(--bg-primary)',
-                  padding: '0 16px',
-                  position: 'relative',
-                  zIndex: 1
-                }}>
-                  o
-                </span>
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'var(--border-color)',
-                  zIndex: 0
-                }}></div>
-              </div>
-            </>
-          )}
-
           <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
             {!isLoginMode && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  marginBottom: '4px'
-                }}>
-                  Nombre *
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+                  Nombre
                 </label>
                 <input
                   type="text"
@@ -586,29 +435,15 @@ export default function User() {
                   value={formData.nombre}
                   onChange={handleInputChange}
                   autoComplete="name"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    background: 'var(--bg-input)',
-                    color: 'var(--text-primary)',
-                    fontSize: '1rem'
-                  }}
+                  style={inputStyle}
                   required={!isLoginMode}
                 />
               </div>
             )}
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-                marginBottom: '4px'
-              }}>
-                Email *
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+                Email
               </label>
               <input
                 type="email"
@@ -616,28 +451,14 @@ export default function User() {
                 value={formData.email}
                 onChange={handleInputChange}
                 autoComplete="email"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  background: 'var(--bg-input)',
-                  color: 'var(--text-primary)',
-                  fontSize: '1rem'
-                }}
+                style={inputStyle}
                 required
               />
             </div>
 
             <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-                marginBottom: '4px'
-              }}>
-                Contraseña *
+              <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
+                Contraseña
               </label>
               <input
                 type="password"
@@ -645,15 +466,7 @@ export default function User() {
                 value={formData.password}
                 onChange={handleInputChange}
                 autoComplete={isLoginMode ? 'current-password' : 'new-password'}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  background: 'var(--bg-input)',
-                  color: 'var(--text-primary)',
-                  fontSize: '1rem'
-                }}
+                style={inputStyle}
                 required
               />
             </div>
@@ -663,71 +476,53 @@ export default function User() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                background: isLoading ? 'var(--text-muted)' : 'var(--accent-secondary)',
+                background: isLoading ? 'var(--text-muted)' : 'var(--accent-blue)',
                 color: 'white',
                 border: 'none',
-                padding: '16px',
+                padding: '12px',
                 borderRadius: '8px',
-                fontSize: '1.1rem',
+                fontSize: '0.95rem',
                 fontWeight: 600,
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                marginBottom: '16px'
+                transition: 'background 0.15s ease',
+                marginBottom: '20px'
               }}
             >
-              {isLoading 
-                ? '⏳ Procesando...' 
-                : (isLoginMode ? '🚀 Iniciar Sesión' : '📝 Registrarse')
-              }
+              {isLoading ? 'Procesando...' : (isLoginMode ? 'Iniciar sesión' : 'Registrarse')}
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
-              <p style={{ margin: '0 0 8px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                ¿No tienes cuenta?
+            {/* Toggle login/register */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ margin: '0 0 10px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                {isLoginMode ? '¿No tenés cuenta?' : '¿Ya tenés cuenta?'}
               </p>
-              <a 
-                href="/catalog/register"
+              <button
+                type="button"
+                onClick={() => setIsLoginMode(!isLoginMode)}
                 style={{
-                  display: 'inline-block',
-                  padding: '10px 20px',
-                  background: 'var(--bg-tertiary, #f3f4f6)',
-                  color: 'var(--text-primary)',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  fontSize: '0.95rem',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent-blue)',
+                  fontSize: '0.9rem',
                   fontWeight: 600,
-                  transition: 'all 0.2s',
-                  border: '1px solid var(--border-color, #e5e7eb)'
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  transition: 'background 0.15s ease'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-hover, #e5e7eb)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'var(--bg-tertiary, #f3f4f6)'}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-section)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
               >
-                Crear cuenta nueva
-              </a>
+                {isLoginMode ? 'Crear una cuenta' : 'Iniciar sesión'}
+              </button>
             </div>
 
-            <div style={{ 
-              margin: '24px 0',
-              textAlign: 'center',
-              position: 'relative'
-            }}>
-              <span style={{
-                display: 'inline-block',
-                background: 'var(--bg-primary)',
-                padding: '0 12px',
-                color: 'var(--text-muted)',
-                fontSize: '0.85rem',
-                position: 'relative',
-                zIndex: 1
-              }}>o continúa con</span>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                right: 0,
-                height: '1px',
-                background: 'var(--border-color)',
-                zIndex: 0
-              }}></div>
+            {/* Divider + Google */}
+            <div style={{ margin: '24px 0', textAlign: 'center', position: 'relative' }}>
+              <span style={{ display: 'inline-block', background: 'var(--bg-card)', padding: '0 12px', color: 'var(--text-muted)', fontSize: '0.8rem', position: 'relative', zIndex: 1 }}>
+                o continuá con
+              </span>
+              <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--border-color)', zIndex: 0 }}></div>
             </div>
 
             <button
@@ -736,34 +531,47 @@ export default function User() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                background: '#fff',
-                color: '#1f1f1f',
+                background: 'var(--bg-input)',
+                color: 'var(--text-primary)',
                 border: '1px solid var(--border-color)',
-                padding: '14px',
+                padding: '10px',
                 borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: 600,
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '12px',
-                transition: 'all 0.2s'
+                gap: '10px',
+                transition: 'all 0.15s ease'
               }}
-              onMouseOver={(e) => !isLoading && (e.currentTarget.style.background = '#f8f8f8')}
-              onMouseOut={(e) => !isLoading && (e.currentTarget.style.background = '#fff')}
+              onMouseOver={(e) => !isLoading && (e.currentTarget.style.borderColor = 'var(--text-muted)')}
+              onMouseOut={(e) => !isLoading && (e.currentTarget.style.borderColor = 'var(--border-color)')}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <path d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 0 1-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z" fill="#4285F4"/>
                 <path d="M10 20c2.7 0 4.964-.895 6.618-2.423l-3.232-2.509c-.895.6-2.04.955-3.386.955-2.605 0-4.81-1.76-5.595-4.123H1.064v2.59A9.996 9.996 0 0 0 10 20z" fill="#34A853"/>
                 <path d="M4.405 11.9c-.2-.6-.314-1.24-.314-1.9 0-.66.114-1.3.314-1.9V5.51H1.064A9.996 9.996 0 0 0 0 10c0 1.614.386 3.14 1.064 4.49l3.34-2.59z" fill="#FBBC05"/>
                 <path d="M10 3.977c1.468 0 2.786.505 3.823 1.496l2.868-2.868C14.959.99 12.695 0 10 0 6.09 0 2.71 2.24 1.064 5.51l3.34 2.59C5.19 5.736 7.395 3.977 10 3.977z" fill="#EA4335"/>
               </svg>
-              Iniciar sesión con Google
+              Google
             </button>
           </form>
         </div>
       </div>
     </PublicLayout>
   )
+}
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid var(--border-color)',
+  borderRadius: '8px',
+  background: 'var(--bg-input)',
+  color: 'var(--text-primary)',
+  fontSize: '0.95rem',
+  outline: 'none',
+  transition: 'border-color 0.15s ease',
+  boxSizing: 'border-box'
 }
