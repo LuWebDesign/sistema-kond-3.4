@@ -9,14 +9,18 @@ import supabase from './supabaseClient';
 // PROMOCIONES
 // ============================================
 
+// Shared column projection for promociones reads
+const PROMO_SELECT = 'id, nombre, tipo, valor, aplica_a, categoria, producto_id, fecha_inicio, fecha_fin, activo, prioridad, badge_texto, badge_color, badge_text_color, descuento_porcentaje, descuento_monto, precio_especial, config, created_at, updated_at'
+
 /**
  * Obtener todas las promociones
  */
 export async function getPromociones() {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('promociones')
-      .select('*')
+      .select(PROMO_SELECT)
       .order('prioridad', { ascending: false })
       .order('created_at', { ascending: false });
 
@@ -33,9 +37,10 @@ export async function getPromociones() {
  */
 export async function getPromocionesActivas() {
   try {
+    // egress: optimized - only fetch needed columns
     const { data, error } = await supabase
       .from('promociones')
-      .select('*')
+      .select(PROMO_SELECT)
       .eq('activo', true)
       .order('prioridad', { ascending: false })
       .order('created_at', { ascending: false });

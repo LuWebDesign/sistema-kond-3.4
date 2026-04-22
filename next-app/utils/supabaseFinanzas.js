@@ -87,13 +87,10 @@ export async function getMovimientos() {
 }
 
 export async function getMovimientosByDateRange(fechaInicio, fechaFin) {
-  // Para rangos de fecha, obtenemos todos y filtramos client-side
+  // Push date range filter to server instead of fetching all rows client-side
   try {
-    const result = await apiCall('GET', null, 'type=movimientos');
-    const filtered = (result.data || []).filter(m =>
-      m.fecha >= fechaInicio && m.fecha <= fechaFin
-    );
-    return { data: filtered, error: null };
+    const result = await apiCall('GET', null, `type=movimientos&fechaInicio=${encodeURIComponent(fechaInicio)}&fechaFin=${encodeURIComponent(fechaFin)}`);
+    return { data: result.data, error: null };
   } catch (error) {
     console.error('Error al obtener movimientos por fecha:', error);
     return { data: null, error: error.message };

@@ -10,13 +10,19 @@ export default async function handler(req, res) {
       const type = req.query.type || 'movimientos'
 
       if (type === 'movimientos') {
-        const { data, error } = await supabase
+        // egress: optimized - push date filter to server when provided
+        const { fechaInicio, fechaFin } = req.query
+        let query = supabase
           .from('movimientos_financieros')
           .select('*')
           .order('fecha', { ascending: false })
           .order('hora', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
+        if (fechaInicio) query = query.gte('fecha', fechaInicio)
+        if (fechaFin) query = query.lte('fecha', fechaFin)
+        const { data, error } = await query
         if (error) throw error
+        res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
         return res.status(200).json({ data })
       }
 

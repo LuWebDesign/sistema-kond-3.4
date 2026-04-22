@@ -190,6 +190,12 @@ export function useCart() {
     try {
       const savedCart = JSON.parse(localStorage.getItem('cart')) || []
       
+      // Skip Supabase fetch if cart is empty — nothing to normalize
+      if (savedCart.length === 0) {
+        setCart([])
+        return
+      }
+
       // Cargar productos desde Supabase en lugar de localStorage
       const { data: productosBase, error: productosError } = await getProductosPublicados()
       

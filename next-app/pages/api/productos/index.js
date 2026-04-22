@@ -9,15 +9,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    // egress: optimized - only fetch needed columns
     const { data: productos, error } = await supabase
       .from('productos')
-      .select('*')
+      .select('id, nombre, categoria, tipo, medidas, precio_unitario, precio_promos, publicado, active, hidden_in_productos, stock, imagenes_urls, description, allow_promotions, tags, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
       throw error;
     }
 
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     return res.status(200).json({ success: true, productos });
 
   } catch (error) {

@@ -41,10 +41,10 @@ function Dashboard() {
     setIsMounted(true)
     loadDashboardData()
     
-    // Recargar cada 30 segundos para mantener datos frescos
+    // Recargar cada 5 minutos para mantener datos frescos
     const interval = setInterval(() => {
       loadDashboardData()
-    }, 30000)
+    }, 300000)
     
     return () => clearInterval(interval)
   }, [])
@@ -433,7 +433,7 @@ function Dashboard() {
               <SystemStatusItem
                 label="Sincronización"
                 status="operational"
-                value="Automática cada 30s"
+                value="Automática cada 5min"
               />
             </div>
           </DashboardSection>
