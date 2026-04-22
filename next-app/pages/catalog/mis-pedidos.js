@@ -41,15 +41,15 @@ const statusColors = {
 const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   if (!pedidoDB) return null
   
-  return {
-    id: pedidoDB.id,
-    cliente: {
-      nombre: pedidoDB.cliente_nombre || '',
-      apellido: pedidoDB.cliente_apellido || '',
-      telefono: pedidoDB.cliente_telefono || '',
-      email: pedidoDB.cliente_email || '',
-      direccion: pedidoDB.cliente_direccion || ''
-    },
+    return {
+      id: String(pedidoDB.id),
+      cliente: {
+        nombre: pedidoDB.cliente_nombre || '',
+        apellido: pedidoDB.cliente_apellido || '',
+        telefono: pedidoDB.cliente_telefono || '',
+        email: pedidoDB.cliente_email || '',
+        direccion: pedidoDB.cliente_direccion || ''
+      },
     items: (pedidoDB.items || []).map(item => {
       const producto = productosBase.find(p => p.id === item.producto_id)
       return {
