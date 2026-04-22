@@ -31,13 +31,14 @@ export default function MobileSectionSelector() {
   }, [])
 
   const toggleTheme = () => {
-    // Leer el estado actual del documento
-    const currentTheme = document.documentElement.getAttribute('data-theme') || theme
+    const currentTheme = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme') || theme
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     try {
       localStorage.setItem('theme', newTheme)
       document.documentElement.setAttribute('data-theme', newTheme)
+      document.body.setAttribute('data-theme', newTheme)
+      document.body.className = newTheme
     } catch (e) { /* ignore */ }
   }
 

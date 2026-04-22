@@ -10,17 +10,18 @@ import Link from 'next/link'
 
 // Format date to locale string safely
 const formatDate = (dateStr) => {
-  if (!dateStr) return '—'
+  if (!dateStr) return ''
   try {
-    return new Date(dateStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   } catch {
-    return '—'
+    return ''
   }
 }
 
 // Status label map
 const statusLabels = {
   pendiente: 'Pendiente',
+  confirmado: 'Confirmado',
   en_preparacion: 'En preparación',
   listo: 'Listo para retirar',
   entregado: 'Entregado',
@@ -28,12 +29,31 @@ const statusLabels = {
 }
 
 const statusColors = {
-  pendiente: 'var(--accent-blue)',
-  en_preparacion: 'var(--orders-color)',
+  pendiente: 'var(--orders-color)',
+  confirmado: 'var(--accent-blue)',
+  en_preparacion: 'var(--person-color)',
   listo: 'var(--accent-secondary)',
-  delivered: 'var(--accent-secondary)',
   entregado: 'var(--accent-secondary)',
   cancelado: 'var(--text-muted)',
+}
+
+const paymentLabels = {
+  sin_seña: 'Sin seña',
+  seña_pagada: 'Seña pagada',
+  pagado: 'Pago total',
+  pagado_total: 'Pago total',
+}
+
+const paymentColors = {
+  sin_seña: 'var(--text-muted)',
+  seña_pagada: 'var(--orders-color)',
+  pagado: 'var(--accent-secondary)',
+  pagado_total: 'var(--accent-secondary)',
+}
+
+const formatCurrency = (val) => {
+  const n = Number(val || 0)
+  return n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 })
 }
 
 // Mapea pedido de Supabase (snake_case) a formato frontend (camelCase)
@@ -313,57 +333,88 @@ export default function MisPedidos() {
           <>
             {/* Order list */}
             <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
-              {paginatedOrders.map(order => (
-                <button
-                  key={order.id}
-                  onClick={() => handleOrderClick(order)}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '16px 20px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'border-color 0.15s ease',
-                    display: 'grid',
-                    gap: '10px'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
-                >
-                  {/* Row 1: ID + status badge */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      Pedido #{order.id?.slice(0, 8) || order.id}
-                    </span>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: statusColors[order.estado] || 'var(--text-muted)',
-                      background: 'transparent',
-                      border: `1px solid ${statusColors[order.estado] || 'var(--border-color)'}`,
-                      borderRadius: '6px',
-                      padding: '3px 10px',
-                      textTransform: 'capitalize'
-                    }}>
-                      {statusLabels[order.estado] || order.estado || 'Pendiente'}
-                    </span>
-                  </div>
+              {paginatedOrders.map(order => {
+                const isFullyPaid = (order.estadoPago || '').toLowerCase().includes('pagado')
+                const sena = isFullyPaid ? order.total : (Number(order.montoRecibido) || (order.estadoPago === 'seña_pagada' ? order.total * 0.5 : 0))
+                const restante = Math.max(0, order.total - sena)
+                const entregaFecha = order.fechaConfirmadaEntrega || order.fechaSolicitudEntrega || order.fechaEntrega
+                const isDelayed = order.fechaConfirmadaEntrega && order.estado !== 'entregado' && new Date(order.fechaConfirmadaEntrega + 'T00:00:00') < new Date(new Date().toDateString())
 
-                  {/* Row 2: date + items count + total */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {formatDate(order.fechaCreacion)}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      {order.items?.length || 0} {order.items?.length === 1 ? 'producto' : 'productos'}
-                    </span>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-secondary)' }}>
-                      ${order.total?.toLocaleString('es-AR') || '0'}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                return (
+                  <button
+                    key={order.id}
+                    onClick={() => handleOrderClick(order)}
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'border-color 0.15s ease',
+                      display: 'grid',
+                      gap: '12px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
+                  >
+                    {/* Row 1: ID + Status + Payment */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        #{order.id?.toString().slice(0, 8) || order.id}
+                      </span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <span style={{
+                          fontSize: '0.7rem', fontWeight: 600,
+                          color: statusColors[order.estado] || 'var(--text-muted)',
+                          border: `1px solid ${statusColors[order.estado] || 'var(--border-color)'}`,
+                          borderRadius: '6px', padding: '3px 8px'
+                        }}>
+                          {statusLabels[order.estado] || order.estado || 'Pendiente'}
+                        </span>
+                        <span style={{
+                          fontSize: '0.7rem', fontWeight: 600,
+                          color: paymentColors[order.estadoPago] || 'var(--text-muted)',
+                          border: `1px solid ${paymentColors[order.estadoPago] || 'var(--border-color)'}`,
+                          borderRadius: '6px', padding: '3px 8px'
+                        }}>
+                          {paymentLabels[order.estadoPago] || order.estadoPago || 'Sin seña'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Row 2: Dates */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <div>📅 Pedido: <strong style={{ color: 'var(--text-primary)' }}>{formatDate(order.fechaCreacion)}</strong></div>
+                      {entregaFecha && (
+                        <div style={isDelayed ? { color: 'var(--orders-color)' } : {}}>
+                          🚚 {order.fechaConfirmadaEntrega ? 'Entrega confirmada:' : 'Entrega solicitada:'} <strong style={{ color: 'var(--text-primary)' }}>{formatDate(entregaFecha)}</strong>
+                          {isDelayed && <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '2px' }}>⚠️ Entrega con demora. Contáctate para info.</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Row 3: Products preview + Total + Seña/Restante */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {order.items?.length || 0} {order.items?.length === 1 ? 'producto' : 'productos'}
+                        {order.items?.[0]?.nombre && ` • ${order.items[0].nombre}`}
+                        {order.items?.length > 1 && ` +${order.items.length - 1}`}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-secondary)' }}>
+                          {formatCurrency(order.total)}
+                        </div>
+                        {!isFullyPaid && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Seña: {formatCurrency(sena)} • Restante: {formatCurrency(restante)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
 
             {/* Pagination */}

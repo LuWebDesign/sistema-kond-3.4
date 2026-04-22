@@ -91,7 +91,7 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
       <div className={inter.className}>{content}</div>
-      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />}
     </QueryClientProvider>
   )
 }
