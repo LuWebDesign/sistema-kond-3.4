@@ -5,13 +5,30 @@
 
 import supabase, { isSupabaseReady } from './supabaseClient';
 
+// ── Module-level helpers ─────────────────────────────────────────────────────
+
+/**
+ * Parse a material_id value: accepts numbers, numeric strings, or Date.now()
+ * timestamps. Returns null for empty/invalid values.
+ */
+function parseMaterialId(value) {
+  if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
+    return null;
+  }
+  const str = String(value).trim();
+  if (str === '') return null;
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 /**
  * Obtener todos los productos (solo admins)
  */
 export async function getAllProductos() {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping getAllProductos')
       return { data: null, error: 'Supabase not configured' }
     }
     const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','created_at'].join(',');
@@ -24,7 +41,6 @@ export async function getAllProductos() {
       if (error) throw error;
       return { data, error: null };
     } catch (err) {
-      console.warn('getAllProductos: select(cols) failed, falling back to select(*):', err.message || err);
       const { data, error } = await supabase
         .from('productos')
         .select('*')
@@ -34,7 +50,6 @@ export async function getAllProductos() {
       return { data, error: null };
     }
   } catch (error) {
-    console.error('Error al obtener productos:', error);
     return { data: null, error: error.message };
   }
 }
@@ -45,7 +60,6 @@ export async function getAllProductos() {
 export async function getProductosPublicados() {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — falling back to server API /api/productos for getProductosPublicados')
       try {
         const resp = await fetch('/api/productos?page=1&per_page=200')
         if (!resp.ok) throw new Error('Server API /api/productos returned ' + resp.status)
@@ -55,7 +69,6 @@ export async function getProductosPublicados() {
         const filtered = (productos || []).filter(p => p.publicado && !p.hidden_in_productos)
         return { data: filtered, error: null }
       } catch (err) {
-        console.warn('Fallback to /api/productos failed:', err)
         return { data: null, error: err.message || String(err) }
       }
     }
@@ -71,7 +84,6 @@ export async function getProductosPublicados() {
       if (error) throw error;
       return { data, error: null };
     } catch (err) {
-      console.warn('getProductosPublicados: select(cols) failed, falling back to select(*):', err.message || err);
       const { data, error } = await supabase
         .from('productos')
         .select('*')
@@ -83,7 +95,6 @@ export async function getProductosPublicados() {
       return { data, error: null };
     }
   } catch (error) {
-    console.error('Error al obtener productos publicados via Supabase client:', error);
     // Intentar fallback a la API server-side para evitar que la página quede vacía
     try {
       const resp = await fetch('/api/productos?page=1&per_page=200')
@@ -93,7 +104,6 @@ export async function getProductosPublicados() {
       const filtered = (productos || []).filter(p => p.publicado && !p.hidden_in_productos)
       return { data: filtered, error: null }
     } catch (err) {
-      console.warn('Fallback to /api/productos also failed:', err)
       return { data: null, error: error.message || String(error) }
     }
   }
@@ -105,7 +115,6 @@ export async function getProductosPublicados() {
 export async function getProductoById(id) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping getProductoById')
       return { data: null, error: 'Supabase not configured' }
     }
     const cols = ['id','nombre','categoria','tipo','precio_unitario','imagenes_urls','publicado','dimensiones','material','created_at','updated_at'].join(',');
@@ -118,7 +127,6 @@ export async function getProductoById(id) {
       if (error) throw error;
       return { data, error: null };
     } catch (err) {
-      console.warn('getProductoById: select(cols) failed, falling back to select(*):', err.message || err);
       const { data, error } = await supabase
         .from('productos')
         .select('*')
@@ -128,7 +136,6 @@ export async function getProductoById(id) {
       return { data, error: null };
     }
   } catch (error) {
-    console.error('Error al obtener producto:', error);
     return { data: null, error: error.message };
   }
 }
@@ -169,7 +176,6 @@ async function generateRandomId() {
 export async function createProducto(producto) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping createProducto')
       return { data: null, error: 'Supabase not configured' }
     }
     // Función helper para convertir valores vacíos a null o número válido
@@ -185,23 +191,12 @@ export async function createProducto(producto) {
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    // Para material_id, permitir números grandes (timestamps de Date.now())
-    const parseMaterialId = (value) => {
-      // Si el valor es null, undefined, string vacío, o string con solo espacios → retornar null
-      if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
-        return null;
-      }
-      // Convertir a string primero para evitar problemas con números grandes
-      const str = String(value).trim();
-      // Si después de hacer trim queda vacío, retornar null
-      if (str === '') return null;
-      const parsed = parseInt(str, 10);
-      return isNaN(parsed) ? null : parsed;
-    };
-
     // Generar ID aleatorio de 4 dígitos
     const randomId = await generateRandomId();
 
+    // Construir payload compatible con el schema actual (compatibilidad hacia atrás):
+    // - La BBDD canonical en repo usa `imagen` (URL simple) y `stock_actual`.
+    // - Mantenemos valores derivados (material como string) para evitar escribir columnas inexistentes.
     const productData = {
       id: randomId,
       nombre: producto.nombre,
@@ -214,22 +209,23 @@ export async function createProducto(producto) {
       unidades_por_placa: parseIntOrNull(producto.unidadesPorPlaca || producto.unidades_por_placa) || 1,
       uso_placas: parseIntOrNull(producto.usoPlacas || producto.uso_placas) || 0,
       costo_placa: parseFloatOrZero(producto.costoPlaca || producto.costo_placa),
-      // costo_material: NO se guarda, se calcula automáticamente como costoPlaca / unidadesPorPlaca
-      // Usar `imagenes_urls` como campo fuente de verdad para múltiples imágenes.
-      imagenes_urls: producto.imagenes || (producto.imagen ? [producto.imagen] : []),
-      material_id: parseMaterialId(producto.materialId || producto.material_id),
+      // Compatibilidad: la BBDD puede tener `imagen` (url única) o `imagenes_urls` (array).
+      // Guardar siempre `imagen` con la primera imagen disponible (si existe) para maximizar compatibilidad.
+      imagen: (producto.imagenes && producto.imagenes.length > 0)
+        ? producto.imagenes[0]
+        : (producto.imagen || null),
+      // Guardar material como string (campo presente en schema.sql). Evitar escribir material_id por defecto.
       material: producto.material || '',
       margen_material: parseFloatOrZero(producto.margenMaterial || producto.margen_material),
       precio_unitario: parseFloatOrZero(producto.precioUnitario || producto.precio_unitario),
       precio_promos: parseFloatOrZero(producto.precioPromos || producto.precio_promos),
       unidades: parseIntOrNull(producto.unidades) || 1,
-      stock: parseIntOrNull(producto.stock) || 0,
+      // Usar stock_actual que existe en schema.sql
+      stock_actual: parseIntOrNull(producto.stock) || 0,
       ensamble: producto.ensamble || 'Sin ensamble',
       active: producto.active !== undefined ? producto.active : true,
       description: producto.description || ''
     };
-
-    // console.log('📝 Datos del producto a crear:', productData);
 
     const { data, error } = await supabase
       .from('productos')
@@ -240,7 +236,6 @@ export async function createProducto(producto) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al crear producto:', error);
     return { data: null, error: error.message };
   }
 }
@@ -251,20 +246,8 @@ export async function createProducto(producto) {
 export async function updateProducto(id, producto) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping updateProducto')
       return { data: null, error: 'Supabase not configured' }
     }
-    // Helper para parsear material_id correctamente
-    const parseMaterialId = (value) => {
-      if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
-        return null;
-      }
-      const str = String(value).trim();
-      if (str === '') return null;
-      const parsed = parseInt(str, 10);
-      return isNaN(parsed) ? null : parsed;
-    };
-
     const updateData = {};
     
     // Mapear campos camelCase a snake_case
@@ -284,11 +267,24 @@ export async function updateProducto(id, producto) {
     if (producto.costoPlaca !== undefined) updateData.costo_placa = producto.costoPlaca;
     if (producto.costo_placa !== undefined) updateData.costo_placa = producto.costo_placa;
     // costo_material: NO se actualiza, se calcula automáticamente como costoPlaca / unidadesPorPlaca
-    // Actualizar `imagenes_urls` desde cualquiera de las formas aceptadas.
+    // Actualizar `imagen` / `imagenes_urls` desde cualquiera de las formas aceptadas.
+    // Preferimos escribir `imagen` (cadena) para compatibilidad con schema.sql; si se proporcionan múltiples
+    // imágenes, también intentamos escribir `imagenes_urls` cuando sea posible.
     if (producto.imagenes !== undefined) {
-      updateData.imagenes_urls = producto.imagenes;
+      // Si viene un array, usar la primera como `imagen` y mantener el array en `imagenes_urls` si deseado
+      if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+        updateData.imagen = producto.imagenes[0];
+        updateData.imagenes_urls = producto.imagenes;
+      } else if (typeof producto.imagenes === 'string') {
+        updateData.imagen = producto.imagenes;
+      }
     } else if (producto.imagen !== undefined) {
-      updateData.imagenes_urls = Array.isArray(producto.imagen) ? producto.imagen : [producto.imagen];
+      if (Array.isArray(producto.imagen) && producto.imagen.length > 0) {
+        updateData.imagen = producto.imagen[0];
+        updateData.imagenes_urls = producto.imagen;
+      } else if (typeof producto.imagen === 'string') {
+        updateData.imagen = producto.imagen;
+      }
     }
     
     // Nuevos campos - con parseo especial para material_id
@@ -302,12 +298,11 @@ export async function updateProducto(id, producto) {
     if (producto.precioPromos !== undefined) updateData.precio_promos = producto.precioPromos;
     if (producto.precio_promos !== undefined) updateData.precio_promos = producto.precio_promos;
     if (producto.unidades !== undefined) updateData.unidades = producto.unidades;
-    if (producto.stock !== undefined) updateData.stock = producto.stock;
+    // Compatibilidad con schema: escribir stock_actual si llega stock
+    if (producto.stock !== undefined) updateData.stock_actual = producto.stock;
     if (producto.ensamble !== undefined) updateData.ensamble = producto.ensamble;
     if (producto.active !== undefined) updateData.active = producto.active;
     if (producto.description !== undefined) updateData.description = producto.description;
-
-    // console.log('📝 Datos del producto a actualizar:', updateData);
 
     const { data, error } = await supabase
       .from('productos')
@@ -319,7 +314,6 @@ export async function updateProducto(id, producto) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al actualizar producto:', error);
     return { data: null, error: error.message };
   }
 }
@@ -330,7 +324,6 @@ export async function updateProducto(id, producto) {
 export async function deleteProducto(id) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping deleteProducto')
       return { error: 'Supabase not configured' }
     }
     // 1) Revisar si existen referencias en pedidos_catalogo_items
@@ -341,7 +334,6 @@ export async function deleteProducto(id) {
 
     if (itemsErr) {
       // Fallback: intentar borrado directo y retornar error si falla
-      console.error('Error consultando items de pedidos antes de borrar producto:', itemsErr);
       const { error } = await supabase.from('productos').delete().eq('id', id);
       if (error) throw error;
       return { error: null };
@@ -375,7 +367,6 @@ export async function deleteProducto(id) {
         .in('id', toRemove);
 
       if (delItemsErr) {
-        console.error('Error eliminando items de pedidos no entregados antes de borrar producto:', delItemsErr);
         throw delItemsErr;
       }
     }
@@ -386,7 +377,6 @@ export async function deleteProducto(id) {
       // Obtener datos actuales del producto para rellenar nombre/precio si es necesario
       const { data: prod, error: prodErr } = await supabase.from('productos').select('*').eq('id', id).single();
       if (prodErr) {
-        console.error('Error obteniendo producto para preservar datos históricos:', prodErr);
         throw prodErr;
       }
 
@@ -402,7 +392,6 @@ export async function deleteProducto(id) {
         .in('id', toKeep);
 
       if (updateItemsErr) {
-        console.error('Error desvinculando producto en items entregados:', updateItemsErr);
         throw updateItemsErr;
       }
     }
@@ -411,13 +400,11 @@ export async function deleteProducto(id) {
     const { error: finalDelErr } = await supabase.from('productos').delete().eq('id', id);
     if (finalDelErr) {
       // Si por alguna razón falla, loguear y devolver error
-      console.error('Error borrando producto después de limpiar referencias:', finalDelErr);
       throw finalDelErr;
     }
 
     return { error: null, deleted: true };
   } catch (error) {
-    console.error('Error al eliminar producto:', error);
     return { error: error.message };
   }
 }
@@ -428,7 +415,6 @@ export async function deleteProducto(id) {
 export async function toggleProductoPublicado(id, publicado) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping toggleProductoPublicado')
       return { data: null, error: 'Supabase not configured' }
     }
     const { data, error } = await supabase
@@ -441,7 +427,6 @@ export async function toggleProductoPublicado(id, publicado) {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error al cambiar visibilidad:', error);
     return { data: null, error: error.message };
   }
 }
@@ -452,7 +437,6 @@ export async function toggleProductoPublicado(id, publicado) {
 export async function uploadProductoImagen(file, productoId) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping uploadProductoImagen')
       return { data: null, error: 'Supabase not configured' }
     }
     // Comprimir la imagen antes de subir (máx 1200px, quality 0.82 → ~80-180KB típico)
@@ -466,7 +450,6 @@ export async function uploadProductoImagen(file, productoId) {
         }
       }
     } catch (compressErr) {
-      console.warn('No se pudo comprimir la imagen, se sube el original:', compressErr)
     }
 
     const fileName = `${productoId}-${Date.now()}.jpg`;
@@ -489,7 +472,6 @@ export async function uploadProductoImagen(file, productoId) {
 
     return { data: { path: filePath, url: urlData.publicUrl }, error: null };
   } catch (error) {
-    console.error('Error al subir imagen:', error);
     return { data: null, error: error.message };
   }
 }
@@ -500,7 +482,6 @@ export async function uploadProductoImagen(file, productoId) {
 export async function deleteProductoImagen(imagePath) {
   try {
     if (!isSupabaseReady()) {
-      console.warn('Supabase not configured — skipping deleteProductoImagen')
       return { error: 'Supabase not configured' }
     }
     const { error } = await supabase.storage
@@ -510,7 +491,6 @@ export async function deleteProductoImagen(imagePath) {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('Error al eliminar imagen:', error);
     return { error: error.message };
   }
 }

@@ -3,7 +3,7 @@ import withAdminAuth from '../../components/withAdminAuth'
 import AnalyticsCard from '../../components/AnalyticsCard'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../utils/catalogUtils'
 import { 
   getAllProductos, 
@@ -193,7 +193,6 @@ function ProductsComponent() {
       const { data: productList, error } = await getAllProductos()
       
       if (error) {
-        console.error('Error loading products from Supabase:', error)
         setProducts([])
         return
       }
@@ -236,19 +235,18 @@ function ProductsComponent() {
 
       setProducts(initializedProducts)
     } catch (error) {
-      console.error('Error loading products:', error)
       setProducts([])
     }
   }, [])
 
   // Función para verificar conexión con base de datos de materiales
   const checkMaterialsConnection = () => {
+    if (typeof window === 'undefined') return false
     try {
       const raw = localStorage.getItem('materiales')
       const list = raw ? JSON.parse(raw) : []
       return list.length > 0
     } catch (e) {
-      console.error('Error conectando con base de datos materiales:', e)
       return false
     }
   }
@@ -309,7 +307,6 @@ function ProductsComponent() {
           throw new Error('Supabase update failed')
         }
       } catch (supabaseError) {
-        console.warn('⚠️ Fallback a localStorage para actualizar material')
         
         // Fallback: localStorage
         const updatedMaterials = materials.map(m => 
@@ -338,7 +335,6 @@ function ProductsComponent() {
         alert('Material actualizado correctamente')
       }
     } catch (error) {
-      console.error('Error al guardar material:', error)
       alert('Error al guardar el material')
     }
   }
@@ -374,7 +370,6 @@ function ProductsComponent() {
         throw new Error('Supabase failed')
       }
     } catch (supabaseError) {
-      console.warn('⚠️ Fallback a localStorage para materiales en products')
       
       // Fallback: localStorage
       try {
@@ -383,7 +378,6 @@ function ProductsComponent() {
         setMaterials(list)
         checkMaterialsConnection()
       } catch (e) { 
-        console.error('Error cargando materiales:', e) 
       }
     }
   }
@@ -392,11 +386,6 @@ function ProductsComponent() {
     loadMaterials()
   }, [])
 
-  // Guardar productos ya no necesita hacer nada (Supabase guarda automáticamente)
-  // Mantenemos la función por compatibilidad pero vacía
-  const saveProducts = useCallback((productList) => {
-    // No-op: Supabase guarda automáticamente en cada operación
-  }, [])
 
   // Calcular productos filtrados con useMemo (optimización)
   const filteredProducts = useMemo(() => {
@@ -614,7 +603,6 @@ function ProductsComponent() {
         return { ...prev, tiempoTotal: newTiempoTotal, precioPorMinuto: newPrecioPorMinuto }
       })
     } catch (e) {
-      console.error('Error al actualizar campos calculados:', e)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.tiempoUnitario, formData.unidades, formData.unidadesPorPlaca, formData.costoPlaca, formData.costoMaterial, formData.margenMaterial, formData.precioUnitario, calculatedFields.isUsoPlacasManual, calculatedFields.isCostoMaterialManual, calculatedFields.isPrecioUnitarioManual])
@@ -684,7 +672,6 @@ function ProductsComponent() {
       const { data: createdProduct, error } = await createProducto(newProductData)
       
       if (error) {
-        console.error('Error creating product:', error)
         alert('Error al crear el producto: ' + error)
         return
       }
@@ -704,7 +691,6 @@ function ProductsComponent() {
             await updateProducto(createdProduct.id, { imagenes: imageUrls })
           }
         } catch (uploadErr) {
-          console.warn('No se pudieron subir algunas imágenes:', uploadErr)
         }
       }
 
@@ -718,7 +704,6 @@ function ProductsComponent() {
           localStorage.setItem('productos_updated', Date.now().toString())
         }
       } catch (e) {
-        console.warn('No se pudo despachar evento de productos actualizados:', e)
       }
       
       // Resetear formulario
@@ -761,7 +746,6 @@ function ProductsComponent() {
         setTimeout(() => notification.remove(), 3000)
       }
     } catch (error) {
-      console.error('Error adding product:', error)
       alert('Error al agregar el producto')
     }
   }
@@ -781,7 +765,6 @@ function ProductsComponent() {
       const res = await deleteProducto(id)
 
       if (res.error) {
-        console.error('Error deleting product:', res.error)
         alert('Error al eliminar el producto')
         return
       }
@@ -807,7 +790,6 @@ function ProductsComponent() {
         }
       } catch (e) {}
     } catch (error) {
-      console.error('Error deleting product:', error)
       alert('Error al eliminar el producto')
     }
   }
@@ -820,7 +802,6 @@ function ProductsComponent() {
     const { error } = await updateProducto(id, { active: !product.active })
     
     if (error) {
-      console.error('Error toggling visibility:', error)
       return
     }
 
@@ -845,7 +826,6 @@ function ProductsComponent() {
     const { error } = await toggleProductoPublicado(id, !publicado)
     
     if (error) {
-      console.error('Error toggling publication:', error)
       return
     }
 
@@ -904,7 +884,6 @@ function ProductsComponent() {
       const { error } = await updateProducto(id, newData)
       
       if (error) {
-        console.error('Error al guardar producto:', error)
         alert('Error al guardar el producto')
         return
       }
@@ -940,7 +919,6 @@ function ProductsComponent() {
       // Recargar productos desde Supabase en background (sin bloquear el cierre)
       loadProducts()
     } catch (error) {
-      console.error('Error al guardar producto:', error)
       if (typeof window !== 'undefined') {
         alert('Error al guardar el producto')
       }
@@ -2829,33 +2807,38 @@ function ProductCard({
   // imageFiles is aligned with imagePreviews: null for existing images, File for newly selected
   const [imageFiles, setImageFiles] = useState(initialPreviews.map(() => null))
 
-  // Actualizar editData cuando cambie el producto (por ejemplo, cuando se actualiza el stock desde database)
-  // NO resetear si el usuario está editando, para no perder imágenes/datos no guardados
+  // Detectar transición isEditing false → true para inicializar editData con datos frescos
+  const prevIsEditingRef = useRef(false)
   useEffect(() => {
-    if (isEditing) return;
-    setEditData({
-      nombre: product.nombre || '',
-      categoria: product.categoria || '',
-      medidas: product.medidas || '',
-      tipo: product.tipo || 'Stock',
-      tiempoUnitario: product.tiempoUnitario || '00:00:30',
-      unidades: product.unidades || 1,
-      unidadesPorPlaca: product.unidadesPorPlaca || 1,
-      usoPlacas: product.usoPlacas || 0,
-      costoPlaca: product.costoPlaca || 0,
-      costoMaterial: product.costoMaterial || 0,
-      materialId: product.materialId || '',
-      margenMaterial: product.margenMaterial || 0,
-      precioUnitario: product.precioUnitario || 0,
-      ensamble: product.ensamble || 'Sin ensamble',
-      imagenes: product.imagenes || [product.imagen].filter(Boolean) || [],
-      stock: product.stock || 0,
-      description: product.description || ''
-    })
-    const initial = product.imagenes || [product.imagen].filter(Boolean) || []
-    setImagePreviews(initial)
-    setImageFiles(initial.map(() => null))
-  }, [product, isEditing])
+    if (isEditing && !prevIsEditingRef.current) {
+      // isEditing just became true — initialize editData with fresh product data
+      setEditData({
+        nombre: product.nombre || '',
+        categoria: product.categoria || '',
+        categoriaPersonalizada: '',
+        tipo: product.tipo || 'Stock',
+        medidas: product.medidas || '',
+        tiempoUnitario: product.tiempoUnitario || product.tiempo_unitario || '00:00:30',
+        material: product.material || '',
+        materialId: product.materialId || product.material_id || '',
+        margenMaterial: product.margenMaterial ?? product.margen_material ?? 0,
+        precioUnitario: product.precioUnitario ?? product.precio_unitario ?? 0,
+        precioPromos: product.precioPromos ?? product.precio_promos ?? 0,
+        unidades: product.unidades || 1,
+        stock: product.stock ?? product.stock_actual ?? 0,
+        ensamble: product.ensamble || 'Sin ensamble',
+        publicado: product.publicado || false,
+        hiddenInProductos: product.hiddenInProductos || product.hidden_in_productos || false,
+        unidadesPorPlaca: product.unidadesPorPlaca || product.unidades_por_placa || 1,
+        usoPlacas: product.usoPlacas || product.uso_placas || 0,
+        costoPlaca: product.costoPlaca || product.costo_placa || 0,
+        description: product.description || '',
+        active: product.active !== undefined ? product.active : true,
+      })
+      setImagePreviews(product.imagenes || (product.imagen ? [product.imagen] : []))
+    }
+    prevIsEditingRef.current = isEditing
+  }, [isEditing])
 
   // Estados para controlar modos manuales en edición
   const [editCalculatedFields, setEditCalculatedFields] = useState({
@@ -3076,7 +3059,6 @@ function ProductCard({
         // Verificar si hubo errores en las subidas
         const failedUploads = uploadResults.filter(r => r.res && r.res.error)
         if (failedUploads.length > 0) {
-          console.error('Errores al subir imágenes:', failedUploads.map(f => f.res.error))
         }
 
         // Construir arreglo final de URLs según el orden actual en imagePreviews
@@ -3098,7 +3080,6 @@ function ProductCard({
                 })
                 if (base64) finalUrls.push(base64)
               } catch (b64Err) {
-                console.warn('No se pudo convertir imagen a base64:', b64Err)
               }
             }
           } else {
@@ -3118,7 +3099,6 @@ function ProductCard({
           alert(`⚠️ ${failedUploads.length} imagen(es) no se pudieron subir al almacenamiento. Se guardaron como respaldo local.`)
         }
       } catch (uploadErr) {
-        console.error('Error general al procesar imágenes:', uploadErr)
         alert('⚠️ Hubo un error al subir las imágenes. Los demás cambios se guardarán.')
       }
 
@@ -3142,7 +3122,6 @@ function ProductCard({
 
       await onSaveChanges(product.id, finalData)
     } catch (error) {
-      console.error('Error al guardar:', error)
       alert('Error al guardar los cambios')
     }
   }
@@ -4004,7 +3983,7 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     // Trigger parent save if provided
-                    try { onSave && onSave() } catch (err) { console.error(err) }
+                    try { onSave && onSave() } catch (err) { /* error handled by caller */ }
                   }
                 }}
                 style={{
@@ -4500,103 +4479,3 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
 
 // Exportar componente protegido con autenticación de admin
 export default withAdminAuth(Products)
-
-// Estilos CSS para responsive
-const styles = `
-<style jsx global>{\`
-  @media (max-width: 768px) {
-    .product-card-admin {
-      padding: 12px !important;
-    }
-
-    .product-card-header {
-      gap: 10px !important;
-    }
-
-    .product-card-title h3 {
-      font-size: 1rem !important;
-    }
-
-    .product-card-title span {
-      font-size: 0.65rem !important;
-      padding: 2px 4px !important;
-    }
-
-    .product-card-actions button {
-      padding: 8px 10px !important;
-      font-size: 0.75rem !important;
-    }
-
-    /* Estilos para la sección de filtros en móvil */
-    .filters-section {
-      flex-direction: column !important;
-      gap: 12px !important;
-    }
-
-    .filters-input-row {
-      flex-direction: column !important;
-      gap: 8px !important;
-      width: 100% !important;
-    }
-
-    .filters-input-row input {
-      width: 100% !important;
-    }
-
-    .filters-input-row select {
-      width: 100% !important;
-      display: none !important;
-    }
-
-    /* Estilos para los botones en móvil */
-    .buttons-section {
-      flex-wrap: wrap !important;
-      gap: 8px !important;
-    }
-
-    .buttons-section button,
-    .buttons-section a {
-      flex: 1 !important;
-      min-width: 120px !important;
-      height: 44px !important;
-      box-sizing: border-box !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .product-card-admin {
-      padding: 10px !important;
-    }
-
-    .product-card-header {
-      gap: 8px !important;
-    }
-
-    .product-card-title {
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 6px !important;
-    }
-
-    .product-card-title h3 {
-      font-size: 0.95rem !important;
-      line-height: 1.3 !important;
-    }
-
-    .product-card-actions {
-      gap: 6px !important;
-    }
-
-    .product-card-actions button {
-      flex: 1;
-      min-width: 40px;
-      padding: 6px 8px !important;
-    }
-
-    .product-card-actions button:first-child,
-    .product-card-actions button:nth-child(2) {
-      min-width: 80px;
-    }
-  }
-\`}</style>
-`

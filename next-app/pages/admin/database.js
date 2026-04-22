@@ -1,4 +1,4 @@
-import Layout from '../../components/Layout'
+﻿import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../../utils/catalogUtils'
@@ -37,6 +37,20 @@ function DatabaseComponent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
+  // Inyectar animación CSS para el spinner de carga
+  useEffect(() => {
+    if (document.querySelector('style[data-database-animations]')) return
+    const style = document.createElement('style')
+    style.setAttribute('data-database-animations', 'true')
+    style.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `
+    document.head.appendChild(style)
+  }, [])
+
   // Cargar productos desde Supabase
   const loadProducts = useCallback(async () => {
     if (typeof window === 'undefined') return
@@ -46,7 +60,6 @@ function DatabaseComponent() {
       const { data: productList, error } = await getAllProductos()
       
       if (error) {
-        console.error('Error loading products from Supabase:', error)
         setProducts([])
         return
       }
@@ -73,22 +86,22 @@ function DatabaseComponent() {
           margenMaterial: p.margen_material || 0,
           precioUnitario: p.precio_unitario || 0,
           precioPromos: p.precio_promos || 0,
-          stock: p.stock || 0,
+          // Leer stock_actual (schema canónico) con fallback a stock (legacy)
+          stock: (p.stock_actual !== undefined ? p.stock_actual : (p.stock !== undefined ? p.stock : 0)),
           ensamble: p.ensamble || 'Sin ensamble',
           material: p.material || '',
           materialId: p.material_id || '',
           active: p.active !== undefined ? p.active : true,
           publicado: p.publicado !== undefined ? p.publicado : false,
           hiddenInProductos: p.hidden_in_productos || false,
-          imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
-          imagenes: p.imagenes_urls || [],
+          imagen: p.imagen || '',
+          imagenes: p.imagen ? [p.imagen] : [],
           fechaCreacion: p.created_at || new Date().toISOString()
         }
       })
       
       setProducts(mappedProducts)
     } catch (error) {
-      console.error('Error loading products:', error)
       setProducts([])
     } finally {
       setIsLoading(false)
@@ -125,31 +138,18 @@ function DatabaseComponent() {
       }
       
       // Fallback: localStorage si Supabase está vacío o falla
-      console.warn('⚠️ Fallback a localStorage para materiales en database')
       const stored = localStorage.getItem('materiales')
       const materialList = stored ? JSON.parse(stored) : []
       setMaterials(materialList)
     } catch (error) {
-      console.error('Error loading materials:', error)
       // Último recurso: localStorage
       try {
         const stored = localStorage.getItem('materiales')
         const materialList = stored ? JSON.parse(stored) : []
         setMaterials(materialList)
       } catch (e) {
-        console.error('Error loading materials from localStorage:', e)
         setMaterials([])
       }
-    }
-  }, [])
-
-  // Ya no guardamos en localStorage, se guarda directamente en Supabase
-  // Esta función ya no es necesaria pero la mantenemos para compatibilidad
-  const saveProducts = useCallback((productList) => {
-    try {
-      localStorage.setItem('productosBase', JSON.stringify(productList))
-    } catch (error) {
-      console.error('Error saving products:', error)
     }
   }, [])
 
@@ -295,7 +295,6 @@ function DatabaseComponent() {
       const { error } = await updateProducto(id, { active: newActiveState })
       
       if (error) {
-        console.error('Error updating visibility:', error)
         alert('Error al cambiar la visibilidad del producto')
         return
       }
@@ -306,7 +305,6 @@ function DatabaseComponent() {
       )
       setProducts(updatedProducts)
     } catch (error) {
-      console.error('Error updating visibility:', error)
       alert('Error al cambiar la visibilidad del producto')
     }
   }
@@ -322,7 +320,6 @@ function DatabaseComponent() {
       const { error } = await updateProducto(id, { publicado: newPublishedState })
       
       if (error) {
-        console.error('Error updating published state:', error)
         alert('Error al cambiar el estado de publicación')
         return
       }
@@ -333,7 +330,6 @@ function DatabaseComponent() {
       )
       setProducts(updatedProducts)
     } catch (error) {
-      console.error('Error updating published state:', error)
       alert('Error al cambiar el estado de publicación')
     }
   }
@@ -348,7 +344,6 @@ function DatabaseComponent() {
       const res = await deleteProducto(id)
 
       if (res.error) {
-        console.error('Error deleting product:', res.error)
         alert('Error al eliminar el producto')
         return
       }
@@ -366,7 +361,6 @@ function DatabaseComponent() {
       setProducts(updatedProducts)
       alert('Producto eliminado exitosamente')
     } catch (error) {
-      console.error('Error deleting product:', error)
       alert('Error al eliminar el producto')
     }
   }
@@ -817,7 +811,6 @@ function ProductRow({ product, isEven, materials, onToggleVisibility, onTogglePu
       const { data, error } = await updateProducto(product.id, { stock: parseInt(stockValue) || 0 })
       
       if (error) {
-        console.error('Error al actualizar stock:', error)
         alert('Error al actualizar el stock')
         return
       }
@@ -826,7 +819,6 @@ function ProductRow({ product, isEven, materials, onToggleVisibility, onTogglePu
       window.dispatchEvent(new CustomEvent('productos:updated'))
       setEditingStock(false)
     } catch (error) {
-      console.error('Error:', error)
       alert('Error al actualizar el stock')
     } finally {
       setIsSaving(false)
@@ -1066,18 +1058,3 @@ const tdStyle = {
 }
 
 export default withAdminAuth(Database)
-
-// Agregar estilos de animación
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = `
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-  `
-  if (!document.querySelector('style[data-database-animations]')) {
-    style.setAttribute('data-database-animations', 'true')
-    document.head.appendChild(style)
-  }
-}
