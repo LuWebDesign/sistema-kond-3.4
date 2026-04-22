@@ -1,25 +1,45 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import styles from '../../styles/materiales.module.css'
 import { createToast } from '../../utils/catalogUtils'
+import { useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
+import {
+  useMateriales,
+  useProveedores,
+  useTamanos,
+  useEspesores,
+} from '../../hooks/useSupabaseQuery'
+import {
+  createMaterial,
+  updateMaterial,
+  deleteMaterial,
+  createProveedor,
+  createTamano,
+  createEspesor,
+} from '../../utils/supabaseMateriales'
 
 const STORAGE_KEY = 'materiales'
 
+// Safe localStorage set — handles QuotaExceededError gracefully
+const safeSetItem = (key, value) => {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(key, value) } catch (err) {
+    console.warn(`⚠️ localStorage setItem failed for "${key}":`, err.message)
+  }
+}
+
 function Materiales() {
-  const [materiales, setMateriales] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [proveedores, setProveedores] = useState([])
   const [showNewProveedor, setShowNewProveedor] = useState(false)
   const [newProveedor, setNewProveedor] = useState('')
-  const [tamanos, setTamanos] = useState([])
   const [showNewTamano, setShowNewTamano] = useState(false)
   const [newTamano, setNewTamano] = useState('')
-  const [espesores, setEspesores] = useState([])
   const [showNewEspesor, setShowNewEspesor] = useState(false)
   const [newEspesor, setNewEspesor] = useState('')
-  
+
   // Inicializar darkMode desde localStorage inmediatamente para evitar flash
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -32,8 +52,7 @@ function Materiales() {
     }
     return false
   })
-  
-  const [isLoading, setIsLoading] = useState(true)
+
   const [form, setForm] = useState({
     nombre: '',
     tipo: '',
@@ -46,137 +65,89 @@ function Materiales() {
     notas: ''
   })
   const nombreRef = useRef(null)
+  const queryClient = useQueryClient()
 
-  // Memoizar loadData con useCallback
-  const loadData = useCallback(async () => {
-    setIsLoading(true)
-    
-    try {
-      // 🆕 Intentar cargar materiales desde Supabase primero
-      const { getAllMateriales, getAllProveedores, getAllTamanos, getAllEspesores } = await import('../../utils/supabaseMateriales')
-      
-      // Cargar materiales
-      const { data: materialesSupabase, error: errorMateriales } = await getAllMateriales()
-      
-      if (materialesSupabase && !errorMateriales) {
-        // Mapear de snake_case a camelCase
-        const mappedMateriales = materialesSupabase.map(m => ({
-          id: m.id,
-          nombre: m.nombre,
-          tipo: m.tipo,
-          tamano: m.tamano,
-          espesor: m.espesor,
-          unidad: m.unidad,
-          costoUnitario: m.costo_unitario,
-          proveedor: m.proveedor,
-          stock: m.stock,
-          notas: m.notas
-        }))
-        
-        setMateriales(mappedMateriales)
-      } else {
-        throw new Error('Supabase materiales failed')
-      }
-      
-      // 🆕 Cargar proveedores desde Supabase
-      try {
-        const { data: proveedoresSupabase } = await getAllProveedores()
-        if (proveedoresSupabase && proveedoresSupabase.length > 0) {
-          const nombresProveedores = proveedoresSupabase.map(p => p.nombre)
-          setProveedores(nombresProveedores)
+  // React Query: fetch data (client-only for SSR safety)
+  const { data: materialesRaw = [], isLoading: loadingMateriales } = useMateriales()
+  const { data: proveedoresRaw = [], isLoading: loadingProveedores } = useProveedores()
+  const { data: tamanosRaw = [], isLoading: loadingTamanos } = useTamanos()
+  const { data: espesoresRaw = [], isLoading: loadingEspesores } = useEspesores()
 
-        } else {
-          // Fallback a localStorage
-          const rawP = localStorage.getItem('proveedores')
-          if (rawP) setProveedores(JSON.parse(rawP))
-        }
-      } catch (e) {
-        console.warn('⚠️ Fallback a localStorage para proveedores')
-        const rawP = localStorage.getItem('proveedores')
-        if (rawP) setProveedores(JSON.parse(rawP))
-      }
-      
-      // 🆕 Cargar tamaños desde Supabase
-      try {
-        const { data: tamanosSupabase } = await getAllTamanos()
-        if (tamanosSupabase && tamanosSupabase.length > 0) {
-          const valoresTamanos = tamanosSupabase.map(t => t.valor)
-          setTamanos(valoresTamanos)
+  // Map raw data to UI-friendly format
+  const materiales = useMemo(() =>
+    (materialesRaw || []).map(m => ({
+      id: m.id,
+      nombre: m.nombre,
+      tipo: m.tipo,
+      tamano: m.tamano,
+      espesor: m.espesor,
+      unidad: m.unidad,
+      costoUnitario: m.costo_unitario,
+      proveedor: m.proveedor,
+      stock: m.stock,
+      notas: m.notas
+    })), [materialesRaw])
 
-        } else {
-          // Fallback a localStorage
-          const rawT = localStorage.getItem('tamanos')
-          if (rawT) setTamanos(JSON.parse(rawT))
-        }
-      } catch (e) {
-        console.warn('⚠️ Fallback a localStorage para tamaños')
-        const rawT = localStorage.getItem('tamanos')
-        if (rawT) setTamanos(JSON.parse(rawT))
-      }
-      
-      // 🆕 Cargar espesores desde Supabase
-      try {
-        const { data: espesoresSupabase } = await getAllEspesores()
-        if (espesoresSupabase && espesoresSupabase.length > 0) {
-          const valoresEspesores = espesoresSupabase.map(e => e.valor)
-          setEspesores(valoresEspesores)
+  const proveedores = useMemo(() =>
+    (proveedoresRaw || []).map(p => p.nombre), [proveedoresRaw])
 
-        } else {
-          // Fallback a localStorage
-          const rawE = localStorage.getItem('espesores')
-          if (rawE) setEspesores(JSON.parse(rawE))
-        }
-      } catch (e) {
-        console.warn('⚠️ Fallback a localStorage para espesores')
-        const rawE = localStorage.getItem('espesores')
-        if (rawE) setEspesores(JSON.parse(rawE))
-      }
-      
-    } catch (supabaseError) {
-      console.warn('⚠️ Fallback completo a localStorage')
-      
-      // Fallback: localStorage
+  const tamanos = useMemo(() =>
+    (tamanosRaw || []).map(t => t.valor), [tamanosRaw])
+
+  const espesores = useMemo(() =>
+    (espesoresRaw || []).map(e => e.valor), [espesoresRaw])
+
+  const isLoading = loadingMateriales || loadingProveedores || loadingTamanos || loadingEspesores
+
+  // Fallback to localStorage if React Query data is empty
+  const [localMateriales, setLocalMateriales] = useState(() => {
+    if (typeof window !== 'undefined') {
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
-        if (raw) setMateriales(JSON.parse(raw))
-      } catch (e) { 
-        console.error('load materiales', e) 
-      }
-      
-      try {
-        const rawP = localStorage.getItem('proveedores')
-        if (rawP) setProveedores(JSON.parse(rawP))
-      } catch (e) { console.error('load proveedores', e) }
-      
-      try {
-        const rawT = localStorage.getItem('tamanos')
-        if (rawT) setTamanos(JSON.parse(rawT))
-      } catch (e) { console.error('load tamanos', e) }
-      
-      try {
-        const rawE = localStorage.getItem('espesores')
-        if (rawE) setEspesores(JSON.parse(rawE))
-      } catch (e) { console.error('load espesores', e) }
+        return raw ? JSON.parse(raw) : []
+      } catch { return [] }
     }
-    
-    // Ya no necesitamos cargar darkMode aquí porque se inicializa en useState
-    
-    setIsLoading(false)
-  }, [])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  const save = useCallback(async (items, skipReload = false) => {
-    setMateriales(items)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch (err) {}
-    if (!skipReload) {
-      await loadData()
+    return []
+  })
+  const [localProveedores, setLocalProveedores] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('proveedores')
+        return raw ? JSON.parse(raw) : []
+      } catch { return [] }
     }
-  }, [loadData])
+    return []
+  })
+  const [localTamanos, setLocalTamanos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('tamanos')
+        return raw ? JSON.parse(raw) : []
+      } catch { return [] }
+    }
+    return []
+  })
+  const [localEspesores, setLocalEspesores] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('espesores')
+        return raw ? JSON.parse(raw) : []
+      } catch { return [] }
+    }
+    return []
+  })
 
-  // reset form; if keepOpen === true the form remains visible (useful to create multiple items quickly)
+  // Use Supabase data if available, otherwise fallback to localStorage
+  const displayMateriales = materiales.length > 0 ? materiales : localMateriales
+  const displayProveedores = proveedores.length > 0 ? proveedores : localProveedores
+  const displayTamanos = tamanos.length > 0 ? tamanos : localTamanos
+  const displayEspesores = espesores.length > 0 ? espesores : localEspesores
+
+  // Mutations for materiales
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.materiales.all })
+  }
+
   const resetForm = (keepOpen = false) => {
     setForm({ nombre: '', tipo: '', tamano: '', espesor: '', costoUnitario: '', proveedor: '', stock: '', unidad: 'cm', notas: '' })
     setEditingId(null)
@@ -185,59 +156,59 @@ function Materiales() {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    
+
     try {
       if (editingId) {
-        // 🆕 ACTUALIZAR en Supabase
-        const { updateMaterial } = await import('../../utils/supabaseMateriales')
         const { data, error } = await updateMaterial(editingId, form)
-        
         if (data && !error) {
-
-          await loadData() // Recargar desde Supabase
+          invalidateAll()
           resetForm(false)
           createToast('✅ Material actualizado correctamente', 'success')
         } else {
-          throw new Error('Supabase update failed')
+          throw new Error(error || 'Update failed')
         }
       } else {
-        // 🆕 CREAR en Supabase
-        const { createMaterial } = await import('../../utils/supabaseMateriales')
         const { data, error } = await createMaterial(form)
-        
         if (data && !error) {
-
-          await loadData() // Recargar desde Supabase
-          resetForm(true) // Mantener form abierto para crear más
+          invalidateAll()
+          resetForm(true)
           createToast('✅ Material creado correctamente', 'success')
-          setTimeout(() => { 
-            try { 
+          setTimeout(() => {
+            try {
               nombreRef.current && nombreRef.current.focus()
               nombreRef.current && nombreRef.current.select()
-            } catch (err) {} 
+            } catch (err) {}
           }, 50)
         } else {
-          throw new Error('Supabase create failed')
+          throw new Error(error || 'Create failed')
         }
       }
     } catch (supabaseError) {
       console.warn('⚠️ Fallback a localStorage:', supabaseError.message)
-      
-      // Fallback: localStorage (código original)
+
+      // Fallback: localStorage
       const payload = { ...form, id: editingId || Date.now() }
       if (editingId) {
-        save(materiales.map(m => m.id === editingId ? payload : m))
+        setLocalMateriales(prev => {
+          const next = prev.map(m => m.id === editingId ? payload : m)
+          safeSetItem(STORAGE_KEY, JSON.stringify(next))
+          return next
+        })
         resetForm(false)
         createToast('✅ Material actualizado (local)', 'success')
       } else {
-        save([ ...materiales, payload ])
+        setLocalMateriales(prev => {
+          const next = [...prev, payload]
+          safeSetItem(STORAGE_KEY, JSON.stringify(next))
+          return next
+        })
         resetForm(true)
         createToast('✅ Material creado (local)', 'success')
-        setTimeout(() => { 
-          try { 
+        setTimeout(() => {
+          try {
             nombreRef.current && nombreRef.current.focus()
             nombreRef.current && nombreRef.current.select()
-          } catch (err) {} 
+          } catch (err) {}
         }, 50)
       }
     }
@@ -262,23 +233,26 @@ function Materiales() {
   }
 
   const handleDelete = (id) => {
-    const material = materiales.find(m => m.id === id)
+    const material = displayMateriales.find(m => m.id === id)
     const nombre = material ? material.nombre : 'este material'
     showConfirm(
       'Eliminar material',
       `¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`,
       async () => {
         try {
-          const { deleteMaterial } = await import('../../utils/supabaseMateriales')
           const { error } = await deleteMaterial(id)
           if (!error) {
-            await loadData()
+            invalidateAll()
           } else {
-            throw new Error('Supabase delete failed')
+            throw new Error(error)
           }
         } catch (supabaseError) {
           console.warn('⚠️ Fallback a localStorage para eliminar')
-          save(materiales.filter(m => m.id !== id))
+          setLocalMateriales(prev => {
+            const next = prev.filter(m => m.id !== id)
+            safeSetItem(STORAGE_KEY, JSON.stringify(next))
+            return next
+          })
         }
       }
     )
@@ -309,28 +283,28 @@ function Materiales() {
           </div>
         </div>
 
-        {!isLoading && materiales.length > 0 && (
+        {!isLoading && displayMateriales.length > 0 && (
           <div className={styles.kpiStrip}>
             <div className={styles.kpiCard}>
               <span className={styles.kpiIcon}>📦</span>
               <div>
                 <div className={styles.kpiLabel}>Materiales</div>
-                <div className={styles.kpiValue}>{materiales.length}</div>
+                <div className={styles.kpiValue}>{displayMateriales.length}</div>
               </div>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiIcon}>🗂️</span>
               <div>
                 <div className={styles.kpiLabel}>Tipos</div>
-                <div className={styles.kpiValue}>{[...new Set(materiales.filter(m => m.tipo).map(m => m.tipo))].length}</div>
+                <div className={styles.kpiValue}>{[...new Set(displayMateriales.filter(m => m.tipo).map(m => m.tipo))].length}</div>
               </div>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiIcon}>⚠️</span>
               <div>
                 <div className={styles.kpiLabel}>Sin stock</div>
-                <div className={`${styles.kpiValue} ${materiales.filter(m => !m.stock || Number(m.stock) <= 0).length > 0 ? styles.kpiAlert : ''}`}>
-                  {materiales.filter(m => !m.stock || Number(m.stock) <= 0).length}
+                <div className={`${styles.kpiValue} ${displayMateriales.filter(m => !m.stock || Number(m.stock) <= 0).length > 0 ? styles.kpiAlert : ''}`}>
+                  {displayMateriales.filter(m => !m.stock || Number(m.stock) <= 0).length}
                 </div>
               </div>
             </div>
@@ -341,14 +315,14 @@ function Materiales() {
           <div className={styles.list}>
             {isLoading ? (
               <div className={styles.loading}>Cargando materiales…</div>
-            ) : materiales.length === 0 ? (
+            ) : displayMateriales.length === 0 ? (
               <div className={styles.empty}>
                 <div className={styles.emptyIcon}>📦</div>
                 <div className={styles.emptyText}>No hay materiales definidos</div>
                 <div className={styles.emptyHint}>Usá el botón «+ Nuevo material» para agregar el primero</div>
               </div>
             ) : (
-              materiales.map(m => (
+              displayMateriales.map(m => (
                 <div key={m.id} className={styles.card} style={{ borderLeftColor: tipoColor(m.tipo) }}>
                   <div className={styles.cardHeader}>
                     <div className={styles.cardTitleRow}>
@@ -438,8 +412,8 @@ function Materiales() {
                       else setForm(prev => ({ ...prev, tamano: v }))
                     }}>
                       <option value="">— seleccionar —</option>
-                      {form.tamano && !tamanos.includes(form.tamano) && <option value={form.tamano}>{form.tamano}</option>}
-                      {tamanos.map((t, i) => <option key={i} value={t}>{t}</option>)}
+                      {form.tamano && !displayTamanos.includes(form.tamano) && <option value={form.tamano}>{form.tamano}</option>}
+                      {displayTamanos.map((t, i) => <option key={i} value={t}>{t}</option>)}
                       <option value="__new__">+ Crear nuevo tamaño...</option>
                     </select>
                     <button type="button" className={styles.btnSmall} onClick={() => setShowNewTamano(true)}>+</button>
@@ -453,15 +427,11 @@ function Materiales() {
                           const v = (newTamano || '').trim()
                           if (!v) return
                           
-                          // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createTamano } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createTamano(v)
                             
                             if (data && !error) {
-
-                              // Recargar catálogos
-                              await loadData()
+                              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.materiales.tamanos() })
                               setForm(prev => ({ ...prev, tamano: v }))
                               setNewTamano('')
                               setShowNewTamano(false)
@@ -472,10 +442,9 @@ function Materiales() {
                           } catch (supabaseError) {
                             console.warn('⚠️ Fallback a localStorage para tamaño')
                             
-                            // Fallback: localStorage
-                            const next = Array.from(new Set([...(tamanos || []), v]))
-                            setTamanos(next)
-                            try { localStorage.setItem('tamanos', JSON.stringify(next)) } catch (err) { console.error('save tamanos', err) }
+                            const next = Array.from(new Set([...(localTamanos || []), v]))
+                            setLocalTamanos(next)
+                            safeSetItem('tamanos', JSON.stringify(next))
                             setForm(prev => ({ ...prev, tamano: v }))
                             setNewTamano('')
                             setShowNewTamano(false)
@@ -506,8 +475,8 @@ function Materiales() {
                       else setForm(prev => ({ ...prev, espesor: v }))
                     }}>
                       <option value="">— seleccionar —</option>
-                      {form.espesor && !espesores.includes(form.espesor) && <option value={form.espesor}>{form.espesor}</option>}
-                      {espesores.map((t, i) => <option key={i} value={t}>{t}</option>)}
+                      {form.espesor && !displayEspesores.includes(form.espesor) && <option value={form.espesor}>{form.espesor}</option>}
+                      {displayEspesores.map((t, i) => <option key={i} value={t}>{t}</option>)}
                       <option value="__new__">+ Crear nuevo espesor...</option>
                     </select>
                     <button type="button" className={styles.btnSmall} onClick={() => setShowNewEspesor(true)}>+</button>
@@ -521,15 +490,11 @@ function Materiales() {
                           const v = (newEspesor || '').trim()
                           if (!v) return
                           
-                          // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createEspesor } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createEspesor(v)
                             
                             if (data && !error) {
-
-                              // Recargar catálogos
-                              await loadData()
+                              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.materiales.espesores() })
                               setForm(prev => ({ ...prev, espesor: v }))
                               setNewEspesor('')
                               setShowNewEspesor(false)
@@ -540,10 +505,9 @@ function Materiales() {
                           } catch (supabaseError) {
                             console.warn('⚠️ Fallback a localStorage para espesor')
                             
-                            // Fallback: localStorage
-                            const next = Array.from(new Set([...(espesores || []), v]))
-                            setEspesores(next)
-                            try { localStorage.setItem('espesores', JSON.stringify(next)) } catch (err) { console.error('save espesores', err) }
+                            const next = Array.from(new Set([...(localEspesores || []), v]))
+                            setLocalEspesores(next)
+                            safeSetItem('espesores', JSON.stringify(next))
                             setForm(prev => ({ ...prev, espesor: v }))
                             setNewEspesor('')
                             setShowNewEspesor(false)
@@ -570,7 +534,7 @@ function Materiales() {
                       else setForm(prev => ({ ...prev, proveedor: v }))
                     }}>
                       <option value="">— seleccionar —</option>
-                      {proveedores.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                      {displayProveedores.map((p, i) => <option key={i} value={p}>{p}</option>)}
                       <option value="__new__">+ Crear nuevo proveedor...</option>
                     </select>
                     <button type="button" className={styles.btnSmall} onClick={() => setShowNewProveedor(true)}>+</button>
@@ -584,15 +548,11 @@ function Materiales() {
                           const v = (newProveedor || '').trim()
                           if (!v) return
                           
-                          // 🆕 Intentar guardar en Supabase
                           try {
-                            const { createProveedor } = await import('../../utils/supabaseMateriales')
                             const { data, error } = await createProveedor({ nombre: v })
                             
                             if (data && !error) {
-
-                              // Recargar catálogos
-                              await loadData()
+                              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.materiales.proveedores() })
                               setForm(prev => ({ ...prev, proveedor: v }))
                               setNewProveedor('')
                               setShowNewProveedor(false)
@@ -603,10 +563,9 @@ function Materiales() {
                           } catch (supabaseError) {
                             console.warn('⚠️ Fallback a localStorage para proveedor')
                             
-                            // Fallback: localStorage
-                            const next = Array.from(new Set([...(proveedores || []), v]))
-                            setProveedores(next)
-                            try { localStorage.setItem('proveedores', JSON.stringify(next)) } catch (err) { console.error('save proveedores', err) }
+                            const next = Array.from(new Set([...(localProveedores || []), v]))
+                            setLocalProveedores(next)
+                            safeSetItem('proveedores', JSON.stringify(next))
                             setForm(prev => ({ ...prev, proveedor: v }))
                             setNewProveedor('')
                             setShowNewProveedor(false)
