@@ -35,6 +35,12 @@ export const QUERY_KEYS = {
     list: () => ['cotizaciones', 'list'],
     byId: (id) => ['cotizaciones', id],
   },
+  finanzas: {
+    all:            ['finanzas'],
+    movimientos:    () => ['finanzas', 'movimientos'],
+    categorias:     () => ['finanzas', 'categorias'],
+    registrosCierre: () => ['finanzas', 'registrosCierre'],
+  },
 }
 
 // staleTime values in milliseconds — DO NOT change without team approval
@@ -46,4 +52,7 @@ export const STALE_TIMES = {
   pedidos:           0,               // never cache — real-time
   stock:             0,               // never cache — critical precision
   cupones:           5  * 60 * 1000,  // 5 min — discount codes change occasionally
+  finanzas_movs:     0,               // never cache — real-time financial data
+  finanzas_cats:     15 * 60 * 1000,  // 15 min — reference data
+  finanzas_regs:     5  * 60 * 1000,  // 5 min — close-of-day records
 }

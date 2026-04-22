@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import styles from '../../styles/finanzas.module.css';
@@ -8,13 +8,12 @@ import {
   getRegistrosCierre, upsertRegistroCierre
 } from '../../utils/supabaseFinanzas';
 import { getPedidosCatalogoParaCalendario } from '../../utils/supabasePedidos';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
 
 export default function Finanzas() {
   const [mounted, setMounted] = useState(false);
-  const [movimientos, setMovimientos] = useState([]);
-  const [registros, setRegistros] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [pedidosCatalogo, setPedidosCatalogo] = useState([]);
+  const queryClient = useQueryClient()
   
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -63,42 +62,72 @@ export default function Finanzas() {
     setFormData(prev => ({ ...prev, fecha: hoy }));
     setRegistroFecha(hoy);
     setMounted(true);
-    loadData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Recargar cuando otro módulo registre un movimiento o cambie pedidos
+  // React Query: fetch data (client-only for SSR safety)
+  const { data: movimientosRaw = [], isLoading: loadingMovimientos } = useQuery({
+    queryKey: QUERY_KEYS.finanzas.movimientos(),
+    queryFn: async () => {
+      const { data, error } = await getMovimientos()
+      if (error) throw new Error(error)
+      return (data || []).map(m => ({ ...m, metodoPago: m.metodo_pago || 'efectivo' }))
+    },
+    staleTime: STALE_TIMES.finanzas_movs,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const { data: categoriasRaw = [] } = useQuery({
+    queryKey: QUERY_KEYS.finanzas.categorias(),
+    queryFn: async () => {
+      const { data, error } = await getCategorias()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.finanzas_cats,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const { data: registrosRaw = [] } = useQuery({
+    queryKey: QUERY_KEYS.finanzas.registrosCierre(),
+    queryFn: async () => {
+      const { data, error } = await getRegistrosCierre()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.finanzas_regs,
+    enabled: typeof window !== 'undefined',
+  })
+
+  const { data: pedidosRaw = [] } = useQuery({
+    queryKey: QUERY_KEYS.pedidos.catalogo(),
+    queryFn: async () => {
+      const { data, error } = await getPedidosCatalogoParaCalendario()
+      if (error) throw new Error(error)
+      return data || []
+    },
+    staleTime: STALE_TIMES.pedidos,
+    enabled: typeof window !== 'undefined',
+  })
+
+  // Use query data directly (no intermediate state needed)
+  const movimientos = movimientosRaw
+  const categorias = categoriasRaw
+  const registros = registrosRaw
+  const pedidosCatalogo = pedidosRaw
+
+  // Event listeners for cross-module updates — invalidate cache instead of reloading
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleUpdate = () => loadData();
-    window.addEventListener('finanzasUpdated', handleUpdate);
-    window.addEventListener('pedidosCatalogo:updated', handleUpdate);
-    return () => {
-      window.removeEventListener('finanzasUpdated', handleUpdate);
-      window.removeEventListener('pedidosCatalogo:updated', handleUpdate);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const mapMov = (m) => ({ ...m, metodoPago: m.metodo_pago || 'efectivo' });
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [movsResult, catsResult, regsResult, pedidosResult] = await Promise.all([
-        getMovimientos(),
-        getCategorias(),
-        getRegistrosCierre(),
-        getPedidosCatalogoParaCalendario()
-      ]);
-      if (movsResult.data) setMovimientos(movsResult.data.map(mapMov));
-      if (catsResult.data) setCategorias(catsResult.data);
-      if (regsResult.data) setRegistros(regsResult.data);
-      if (pedidosResult.data) setPedidosCatalogo(pedidosResult.data);
-    } catch (e) {
-      console.error('Error loading finanzas:', e);
-    } finally {
-      setLoading(false);
+    if (typeof window === 'undefined') return
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.finanzas.all })
     }
-  };
+    window.addEventListener('finanzasUpdated', handleUpdate)
+    window.addEventListener('pedidosCatalogo:updated', handleUpdate)
+    return () => {
+      window.removeEventListener('finanzasUpdated', handleUpdate)
+      window.removeEventListener('pedidosCatalogo:updated', handleUpdate)
+    }
+  }, [queryClient])
 
 
 
@@ -138,7 +167,55 @@ export default function Finanzas() {
     return { ingresosHoy, egresosHoy, equilibrioHoy, balance, porCobrar };
   };
 
-  const resumen = calcularResumen();
+  const resumen = calcularResumen()
+
+  // Mutations
+  const invalidateFinanzas = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.finanzas.all })
+  }
+
+  const createMovMutation = useMutation({
+    mutationFn: async (payload) => {
+      const { data, error } = await createMovimiento(payload)
+      if (error) throw new Error(error)
+      return data
+    },
+    onSuccess: invalidateFinanzas,
+  })
+
+  const updateMovMutation = useMutation({
+    mutationFn: async ({ id, payload }) => {
+      const { data, error } = await updateMovimiento(id, payload)
+      if (error) throw new Error(error)
+      return data
+    },
+    onSuccess: invalidateFinanzas,
+  })
+
+  const deleteMovMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await deleteMovimiento(id)
+      if (error) throw new Error(error)
+    },
+    onSuccess: invalidateFinanzas,
+  })
+
+  const createCatMutation = useMutation({
+    mutationFn: async (nombre) => {
+      const { data, error } = await createCategoria(nombre)
+      if (error) throw new Error(error)
+      return data
+    },
+    onSuccess: invalidateFinanzas,
+  })
+
+  const deleteCatMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await deleteCategoria(id)
+      if (error) throw new Error(error)
+    },
+    onSuccess: invalidateFinanzas,
+  })
 
   // Handlers
   const handleSubmit = async (e) => {
@@ -147,14 +224,17 @@ export default function Finanzas() {
     if (monto <= 0) { alert('Ingrese un monto válido'); return; }
     const hora = formData.hora || new Date().toTimeString().slice(0, 8);
 
-    if (editingId) {
-      const { data } = await updateMovimiento(editingId, { ...formData, monto, hora });
-      if (data) setMovimientos(movimientos.map(m => m.id === editingId ? mapMov(data) : m));
-    } else {
-      const { data } = await createMovimiento({ ...formData, monto, hora });
-      if (data) setMovimientos([mapMov(data), ...movimientos]);
+    try {
+      if (editingId) {
+        await updateMovMutation.mutateAsync({ id: editingId, payload: { ...formData, monto, hora } })
+      } else {
+        await createMovMutation.mutateAsync({ ...formData, monto, hora })
+      }
+      resetForm();
+    } catch (err) {
+      console.error('Error saving movimiento:', err)
+      alert('Error al guardar el movimiento: ' + err.message)
     }
-    resetForm();
   };
 
   const resetForm = () => {
@@ -187,8 +267,12 @@ export default function Finanzas() {
 
   const handleDelete = (id) => {
     const doDelete = async () => {
-      const { error } = await deleteMovimiento(id);
-      if (!error) setMovimientos(movimientos.filter(m => m.id !== id));
+      try {
+        await deleteMovMutation.mutateAsync(id)
+      } catch (err) {
+        console.error('Error deleting movimiento:', err)
+        alert('Error al eliminar el movimiento')
+      }
     };
     showConfirm('Eliminar movimiento', '¿Eliminar este movimiento? Esta acción no se puede deshacer.', doDelete);
   };
@@ -197,16 +281,24 @@ export default function Finanzas() {
     const name = newCategoryName.trim();
     if (!name) { alert('Ingrese el nombre de la categoría'); return; }
     if (categorias.some(c => c.nombre === name)) { alert('La categoría ya existe'); return; }
-    const { data } = await createCategoria(name);
-    if (data) setCategorias([...categorias, data]);
-    setNewCategoryName('');
-    setShowAddCategory(false);
+    try {
+      await createCatMutation.mutateAsync(name)
+      setNewCategoryName('');
+      setShowAddCategory(false);
+    } catch (err) {
+      console.error('Error creating category:', err)
+      alert('Error al crear la categoría: ' + err.message)
+    }
   };
 
   const handleDeleteCategory = (cat) => {
     const doDelete = async () => {
-      const { error } = await deleteCategoria(cat.id);
-      if (!error) setCategorias(categorias.filter(c => c.id !== cat.id));
+      try {
+        await deleteCatMutation.mutateAsync(cat.id)
+      } catch (err) {
+        console.error('Error deleting category:', err)
+        alert('Error al eliminar la categoría')
+      }
     };
     showConfirm('Eliminar categoría', `¿Eliminar la categoría "${cat.nombre}"? Los movimientos existentes no se verán afectados.`, doDelete);
   };
@@ -219,12 +311,15 @@ export default function Finanzas() {
       alert('Nombre inválido o ya existe');
       return;
     }
-    const { data: updatedCat } = await updateCategoria(cat.id, trimmed);
-    if (updatedCat) {
-      setCategorias(categorias.map(c => c.id === cat.id ? updatedCat : c));
-      await bulkUpdateMovimientosCategoria(cat.nombre, trimmed);
-      const { data: movsData } = await getMovimientos();
-      if (movsData) setMovimientos(movsData.map(mapMov));
+    try {
+      const { data: updatedCat } = await updateCategoria(cat.id, trimmed);
+      if (updatedCat) {
+        await bulkUpdateMovimientosCategoria(cat.nombre, trimmed);
+        invalidateFinanzas()
+      }
+    } catch (err) {
+      console.error('Error renaming category:', err)
+      alert('Error al renombrar la categoría')
     }
   };
 
@@ -244,11 +339,15 @@ export default function Finanzas() {
       const total = movsDelDia.reduce((acc, m) =>
         acc + (m.tipo === 'ingreso' ? Number(m.monto) : -Number(m.monto)), 0
       );
-      const { data } = await upsertRegistroCierre({ fecha: registroFecha, total });
-      if (data) {
-        const { data: regsData } = await getRegistrosCierre();
-        if (regsData) setRegistros(regsData);
-        handleVerRegistros();
+      try {
+        const { data } = await upsertRegistroCierre({ fecha: registroFecha, total });
+        if (data) {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.finanzas.registrosCierre() })
+          handleVerRegistros();
+        }
+      } catch (err) {
+        console.error('Error closing caja:', err)
+        alert('Error al cerrar caja')
       }
     };
     showConfirm('Cerrar caja', `¿Registrar cierre de caja para ${registroFecha}?`, doClose);
