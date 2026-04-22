@@ -3,199 +3,165 @@ import { withAdminAuth } from '../../utils/adminAuth'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '../../utils/catalogUtils'
-import { getAllProductos } from '../../utils/supabaseProducts'
 import { getAllPedidosInternos } from '../../utils/supabasePedidosInternos'
-import { getAllPedidosCatalogo } from '../../utils/supabasePedidos'
 import AnalyticsCard from '../../components/AnalyticsCard'
+import { useQuery } from '@tanstack/react-query'
+import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
+import { getAllProductos } from '../../utils/supabaseProducts'
+import { getAllPedidosCatalogo } from '../../utils/supabasePedidos'
+
+const REFETCH_INTERVAL = 5 * 60 * 1000 // 5 min
 
 function Dashboard() {
-  const [products, setProducts] = useState([])
-  const [orders, setOrders] = useState([])
-  const [catalogOrders, setCatalogOrders] = useState([])
   const [isMounted, setIsMounted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState('')
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    totalDeliveredAmount: 0,
-    pendingOrders: 0,
-    pendingOrdersAmount: 0,
-    deliveredPendingAmount: 0,
-    thisMonthRevenue: 0,
-    thisMonthDelivered: 0,
-    thisMonthOrders: 0,
-    lowStockProducts: 0,
-    completedOrders: 0
-  })
-  const [trends, setTrends] = useState({
-    productsTrend: 0,
-    ordersTrend: 0,
-    revenueTrend: 0,
-    pendingTrend: 0
-  })
 
-  // Cargar datos desde Supabase
   useEffect(() => {
     setIsMounted(true)
-    loadDashboardData()
-    
-    // Recargar cada 5 minutos para mantener datos frescos
-    const interval = setInterval(() => {
-      loadDashboardData()
-    }, 300000)
-    
-    return () => clearInterval(interval)
   }, [])
 
-  const loadDashboardData = async () => {
-    if (typeof window === 'undefined') return
+  // React Query — polling every 5 min, never cached (staleTime: 0 for real-time data)
+  const {
+    data: productosResult,
+    isFetching: fetchingProductos,
+  } = useQuery({
+    queryKey: QUERY_KEYS.productos.list(),
+    queryFn: getAllProductos,
+    staleTime: STALE_TIMES.productos_admin,
+    refetchInterval: REFETCH_INTERVAL,
+  })
 
-    try {
-      setLoading(true)
+  const {
+    data: catalogoResult,
+    isFetching: fetchingCatalogo,
+  } = useQuery({
+    queryKey: QUERY_KEYS.pedidos.catalogo(),
+    queryFn: getAllPedidosCatalogo,
+    staleTime: STALE_TIMES.pedidos,
+    refetchInterval: REFETCH_INTERVAL,
+  })
 
-      // Cargar productos desde Supabase
-      const { data: productosData } = await getAllProductos()
-      const productos = productosData || []
-      setProducts(productos)
+  const {
+    data: pedidosInternosResult,
+    isFetching: fetchingInternos,
+  } = useQuery({
+    queryKey: ['pedidos', 'internos'],
+    queryFn: getAllPedidosInternos,
+    staleTime: STALE_TIMES.pedidos,
+    refetchInterval: REFETCH_INTERVAL,
+  })
 
-      // Cargar pedidos internos desde Supabase
-      const { data: pedidosData } = await getAllPedidosInternos()
-      const pedidosInternos = pedidosData || []
-      setOrders(pedidosInternos)
+  const loading = fetchingProductos || fetchingCatalogo || fetchingInternos
 
-      // Cargar pedidos del catálogo desde Supabase
-      const { data: catalogoData } = await getAllPedidosCatalogo()
-      const pedidosCatalogo = catalogoData || []
-      setCatalogOrders(pedidosCatalogo)
+  // Derive data arrays from query results
+  const productos = productosResult?.data || []
+  const pedidosCatalogo = catalogoResult?.data || []
+  const pedidosInternos = pedidosInternosResult?.data || []
 
-      // Calcular estadísticas
-      const totalProducts = productos.filter(p => p.active !== false && p.publicado).length
-      const totalOrders = pedidosInternos.length + pedidosCatalogo.length
-      
-      // Calcular ingresos totales (históricos)
-      const totalRevenue = pedidosCatalogo.reduce((sum, order) => sum + (order.total || 0), 0)
-      
-      // Calcular monto total entregado (histórico)
-      const deliveredOrders = pedidosCatalogo.filter(order => order.estado === 'entregado')
-      const totalDeliveredAmount = deliveredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
-      
-      // Pedidos pendientes (pedidos por confirmar - sin seña)
-      const pendingOrdersFiltered = pedidosCatalogo.filter(order => order.estado_pago === 'sin_seña')
-      const pendingOrders = pendingOrdersFiltered.length
-      const pendingOrdersAmount = pendingOrdersFiltered.reduce((sum, order) => sum + (order.total || 0), 0)
+  // Calcular estadísticas
+  const totalProducts = productos.filter(p => p.active !== false && p.publicado).length
+  const totalOrders = pedidosInternos.length + pedidosCatalogo.length
 
-      // Pedidos entregados pendientes de pago completo
-      const deliveredPendingPayment = pedidosCatalogo.filter(order => 
-        order.estado === 'entregado' && order.estado_pago !== 'pagado'
-      )
-      const deliveredPendingAmount = deliveredPendingPayment.reduce((sum, order) => sum + (order.total || 0), 0)
+  const totalRevenue = pedidosCatalogo.reduce((sum, order) => sum + (order.total || 0), 0)
 
-      // Pedidos completados
-      const completedOrders = pedidosCatalogo.filter(order => 
-        order.estado_pago === 'pagado' || order.estado === 'entregado'
-      ).length
+  const deliveredOrders = pedidosCatalogo.filter(order => order.estado === 'entregado')
+  const totalDeliveredAmount = deliveredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
 
-      // Productos con stock bajo (< 5)
-      const lowStockProducts = productos.filter(p => 
-        p.tipo === 'Stock' && (p.stock || 0) < 5
-      ).length
+  const pendingOrdersFiltered = pedidosCatalogo.filter(order => order.estado_pago === 'sin_seña')
+  const pendingOrders = pendingOrdersFiltered.length
+  const pendingOrdersAmount = pendingOrdersFiltered.reduce((sum, order) => sum + (order.total || 0), 0)
 
-      // Cálculos del mes actual
-      const now = new Date()
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      
-      const thisMonthOrders = pedidosCatalogo.filter(order => {
-        const orderDate = new Date(order.fecha_creacion || order.created_at)
-        return orderDate >= firstDayOfMonth
-      })
-      
-      // Ingresos del mes: sumar montos efectivamente recibidos cuando existan
-      // - Si `monto_recibido` está presente, usarlo (registro de pago parcial/completo)
-      // - Si estado 'pagado', sumar `total`
-      // - Si estado 'seña_pagada' y no hay `monto_recibido`, sumar 50% como fallback
-      const thisMonthRevenue = thisMonthOrders.reduce((sum, order) => {
-        const montoRecibido = order.monto_recibido != null ? Number(order.monto_recibido) : null
-        if (montoRecibido !== null) return sum + montoRecibido
+  const deliveredPendingPayment = pedidosCatalogo.filter(order =>
+    order.estado === 'entregado' && order.estado_pago !== 'pagado'
+  )
+  const deliveredPendingAmount = deliveredPendingPayment.reduce((sum, order) => sum + (order.total || 0), 0)
 
-        if (order.estado_pago === 'pagado') return sum + Number(order.total || 0)
+  const completedOrders = pedidosCatalogo.filter(order =>
+    order.estado_pago === 'pagado' || order.estado === 'entregado'
+  ).length
 
-        if (order.estado_pago === 'seña_pagada') {
-          // fallback: asumir seña del 50% si no hay registro explícito
-          const fallbackSenia = Number(order.total || 0) * 0.5
-          return sum + fallbackSenia
-        }
+  const lowStockProducts = productos.filter(p =>
+    p.tipo === 'Stock' && (p.stock || 0) < 5
+  ).length
 
-        // si no hay pago ni monto recibido, no sumar
-        return sum
-      }, 0)
-      
-      // Monto entregado este mes
-      const thisMonthDelivered = thisMonthOrders.filter(order => order.estado === 'entregado')
-        .reduce((sum, order) => sum + (order.total || 0), 0)
+  const now = new Date()
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-      // Calcular tendencias (comparación con mes anterior)
-      const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
-      
-      const lastMonthOrders = pedidosCatalogo.filter(order => {
-        const orderDate = new Date(order.fecha_creacion || order.created_at)
-        return orderDate >= firstDayOfLastMonth && orderDate <= lastDayOfLastMonth
-      })
-      
-      const lastMonthRevenue = lastMonthOrders.filter(order => 
-        order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado'
-      ).reduce((sum, order) => sum + (order.total || 0), 0)
-      
-      const ordersTrend = lastMonthOrders.length > 0 
-        ? ((thisMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length * 100)
-        : thisMonthOrders.length > 0 ? 100 : 0
-      
-      const revenueTrend = lastMonthRevenue > 0 
-        ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100)
-        : thisMonthRevenue > 0 ? 100 : 0
+  const thisMonthOrdersList = pedidosCatalogo.filter(order => {
+    const orderDate = new Date(order.fecha_creacion || order.created_at)
+    return orderDate >= firstDayOfMonth
+  })
 
-      setStats({
-        totalProducts,
-        totalOrders,
-        totalRevenue,
-        totalDeliveredAmount,
-        pendingOrders,
-        pendingOrdersAmount,
-        deliveredPendingAmount,
-        thisMonthRevenue,
-        thisMonthDelivered,
-        thisMonthOrders: thisMonthOrders.length,
-        lowStockProducts,
-        completedOrders
-      })
-
-      setTrends({
-        productsTrend: 0, // Mantener en 0 por ahora
-        ordersTrend: Math.round(ordersTrend),
-        revenueTrend: Math.round(revenueTrend),
-        pendingTrend: 0 // Mantener en 0 por ahora
-      })
-
-    } catch (error) {
-      // error silenciado en producción
-    } finally {
-      setLoading(false)
-      setLastUpdate(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }))
+  // Ingresos del mes: sumar montos efectivamente recibidos cuando existan
+  // - Si `monto_recibido` está presente, usarlo (registro de pago parcial/completo)
+  // - Si estado 'pagado', sumar `total`
+  // - Si estado 'seña_pagada' y no hay `monto_recibido`, sumar 50% como fallback
+  const thisMonthRevenue = thisMonthOrdersList.reduce((sum, order) => {
+    const montoRecibido = order.monto_recibido != null ? Number(order.monto_recibido) : null
+    if (montoRecibido !== null) return sum + montoRecibido
+    if (order.estado_pago === 'pagado') return sum + Number(order.total || 0)
+    if (order.estado_pago === 'seña_pagada') {
+      // fallback: asumir seña del 50% si no hay registro explícito
+      return sum + Number(order.total || 0) * 0.5
     }
+    return sum
+  }, 0)
+
+  const thisMonthDelivered = thisMonthOrdersList
+    .filter(order => order.estado === 'entregado')
+    .reduce((sum, order) => sum + (order.total || 0), 0)
+
+  const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+
+  const lastMonthOrders = pedidosCatalogo.filter(order => {
+    const orderDate = new Date(order.fecha_creacion || order.created_at)
+    return orderDate >= firstDayOfLastMonth && orderDate <= lastDayOfLastMonth
+  })
+
+  const lastMonthRevenue = lastMonthOrders
+    .filter(order => order.estado_pago === 'seña_pagada' || order.estado_pago === 'pagado')
+    .reduce((sum, order) => sum + (order.total || 0), 0)
+
+  const ordersTrend = lastMonthOrders.length > 0
+    ? ((thisMonthOrdersList.length - lastMonthOrders.length) / lastMonthOrders.length * 100)
+    : thisMonthOrdersList.length > 0 ? 100 : 0
+
+  const revenueTrend = lastMonthRevenue > 0
+    ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100)
+    : thisMonthRevenue > 0 ? 100 : 0
+
+  const stats = {
+    totalProducts,
+    totalOrders,
+    totalRevenue,
+    totalDeliveredAmount,
+    pendingOrders,
+    pendingOrdersAmount,
+    deliveredPendingAmount,
+    thisMonthRevenue,
+    thisMonthDelivered,
+    thisMonthOrders: thisMonthOrdersList.length,
+    lowStockProducts,
+    completedOrders,
+  }
+
+  const trends = {
+    productsTrend: 0,
+    ordersTrend: Math.round(ordersTrend),
+    revenueTrend: Math.round(revenueTrend),
+    pendingTrend: 0,
   }
 
   // Obtener pedidos recientes (últimos 5)
   const getRecentOrders = () => {
-    return catalogOrders
+    return [...pedidosCatalogo]
       .sort((a, b) => new Date(b.fecha_creacion || b.created_at) - new Date(a.fecha_creacion || a.created_at))
       .slice(0, 5)
   }
 
   // Obtener productos con bajo stock
   const getLowStockProducts = () => {
-    return products
+    return productos
       .filter(p => p.tipo === 'Stock' && (p.stock || 0) < 5)
       .slice(0, 5)
   }
@@ -232,7 +198,7 @@ function Dashboard() {
               📊 Dashboard Administrativo
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Métricas en tiempo real{lastUpdate ? ` • Última actualización: ${lastUpdate}` : ''}
+              Métricas en tiempo real • Actualización automática cada 5 min
             </p>
           </div>
           

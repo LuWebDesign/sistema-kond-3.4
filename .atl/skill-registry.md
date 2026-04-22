@@ -37,6 +37,21 @@ This file contains compact, machine-friendly rules for project skills. The orche
   - Pages to verify visually: /admin/products, /admin/dashboard, /admin/cotizaciones
   - Responsive check: verify grid behavior at common breakpoints (mobile 375–420px, tablet 768px, desktop 1280px)
 
+### react-query-kond (auto-resolved)
+- Skill file: skills/react-query-kond/SKILL.md
+- Query keys: always import from `next-app/lib/queryKeys.js` — NEVER hardcode strings
+- staleTime policy (LOCKED):
+  - productos_admin: 2 min | productos_catalog: 5 min
+  - materiales/tamanos/espesores/proveedores: 15 min | promociones: 5 min
+  - pedidos: 0 (never cache) | stock: 0 (never cache)
+- QueryClient: instantiate with `useState(() => new QueryClient(...))` inside _app.js component — never outside
+- useQuery pattern: `queryKey: QUERY_KEYS.x.y(), queryFn: existingUtil, staleTime: STALE_TIMES.x`
+- useMutation pattern: `onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.x.all })`
+- Dashboard polling: use `refetchInterval` on useQuery, NOT setInterval
+- NEVER add React Query to static HTML files (js/ directory) — Next.js only
+- NEVER call `refetch()` after mutations — always use `invalidateQueries`
+- ReactQueryDevtools: only in development (`process.env.NODE_ENV === 'development'`)
+
 ### skill-creator (auto-resolved)
 - Location (local tool template): file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md
 - When creating new skills, follow the SKILL.md template. Frontmatter MUST include: name, description, license (Apache-2.0), metadata.author, metadata.version.
@@ -47,6 +62,7 @@ This file contains compact, machine-friendly rules for project skills. The orche
 ## User Skills (trigger table)
 | Skill | Trigger keywords | Path |
 |-------|------------------|------|
+| react-query-kond | react query, useQuery, useMutation, tanstack, query keys, staleTime | skills/react-query-kond/SKILL.md |
 | analytics-cards | analytics card, metric card, stats card, tarjeta analitica | skills/analytics-cards/SKILL.md |
 | skill-creator | create skill, skill-creator, new skill | file:///C:/Users/usuario/.config/opencode/skills/skill-creator/SKILL.md |
 

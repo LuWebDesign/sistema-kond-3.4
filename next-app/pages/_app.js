@@ -5,6 +5,8 @@ import { Inter } from 'next/font/google'
 import '../styles/globals.css'
 import '../styles/catalog-next.css'
 import { NotificationsProvider } from '../components/NotificationsProvider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,6 +19,16 @@ export default function MyApp({ Component, pageProps }) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [currentBuyerEmail, setCurrentBuyerEmail] = useState(null)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }))
 
   // Función reutilizable para leer email del comprador
   const refreshBuyerEmail = () => {
@@ -76,5 +88,10 @@ export default function MyApp({ Component, pageProps }) {
     )
   }
 
-  return <div className={inter.className}>{content}</div>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <div className={inter.className}>{content}</div>
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
+  )
 }

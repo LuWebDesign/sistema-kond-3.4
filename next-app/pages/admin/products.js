@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../utils/catalogUtils'
+import { useQueryClient } from '@tanstack/react-query'
+import { useProductos, useMateriales } from '../../hooks/useSupabaseQuery'
+import { QUERY_KEYS } from '../../lib/queryKeys'
 import { 
   getAllProductos, 
   createProducto, 
@@ -34,6 +37,11 @@ const Products = dynamic(() => Promise.resolve(ProductsComponent), {
 
 function ProductsComponent() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  // React Query hooks for data fetching
+  const { data: productosResult, isLoading: productosLoading } = useProductos()
+  const { data: materialesResult } = useMateriales()
 
   // Estados principales
   const [products, setProducts] = useState([])
@@ -287,8 +295,8 @@ function ProductsComponent() {
         if (data && !error) {
 
           
-          // Recargar materiales desde Supabase
-          await loadMaterials()
+          // Invalidar cache de materiales para forzar refetch
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.materiales.all })
           
           // Actualizar el formData del producto si el material editado está seleccionado
           if (formData.materialId === editingMaterial) {
@@ -388,9 +396,68 @@ function ProductsComponent() {
     }
   }
 
+  // (materiales are now loaded via useMateriales() hook above)
+
+  // Wire React Query productos data → local products state (with camelCase mapping)
   useEffect(() => {
-    loadMaterials()
-  }, [])
+    const productList = productosResult?.data || []
+    if (!productList.length) return
+
+    const initializedProducts = productList.map(p => {
+      const unidadesPorPlaca = p.unidades_por_placa || 1
+      const costoPlaca = p.costo_placa || 0
+      const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+
+      return {
+        id: p.id,
+        nombre: p.nombre,
+        categoria: p.categoria,
+        tipo: p.tipo,
+        medidas: p.medidas,
+        tiempoUnitario: p.tiempo_unitario || '00:00:30',
+        active: p.active !== undefined ? p.active : true,
+        publicado: p.publicado !== undefined ? p.publicado : false,
+        hiddenInProductos: p.hidden_in_productos || false,
+        unidadesPorPlaca: unidadesPorPlaca,
+        usoPlacas: p.uso_placas || 0,
+        costoPlaca: costoPlaca,
+        costoMaterial: parseFloat(costoMaterialCalculado.toFixed(2)),
+        materialId: p.material_id || '',
+        material: p.material || '',
+        margenMaterial: p.margen_material || 0,
+        precioUnitario: p.precio_unitario || 0,
+        precioPromos: p.precio_promos || 0,
+        unidades: p.unidades || 1,
+        ensamble: p.ensamble || 'Sin ensamble',
+        imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
+        imagenes: p.imagenes_urls || [],
+        stock: p.stock || 0,
+        description: p.description || '',
+        fechaCreacion: p.created_at || ''
+      }
+    })
+    setProducts(initializedProducts)
+  }, [productosResult])
+
+  // Wire React Query materiales data → local materials state (with camelCase mapping)
+  useEffect(() => {
+    const materialesList = materialesResult?.data || []
+    if (!materialesList.length) return
+
+    const mappedMateriales = materialesList.map(m => ({
+      id: m.id,
+      nombre: m.nombre,
+      tipo: m.tipo,
+      tamano: m.tamano,
+      espesor: m.espesor,
+      unidad: m.unidad,
+      costoUnitario: m.costo_unitario,
+      proveedor: m.proveedor,
+      stock: m.stock,
+      notas: m.notas
+    }))
+    setMaterials(mappedMateriales)
+  }, [materialesResult])
 
   // Guardar productos ya no necesita hacer nada (Supabase guarda automáticamente)
   // Mantenemos la función por compatibilidad pero vacía
@@ -490,9 +557,7 @@ function ProductsComponent() {
   }, [filteredProducts])
 
   // Efectos
-  useEffect(() => {
-    loadProducts()
-  }, [loadProducts])
+  // (productos are now loaded via useProductos() hook above)
 
   // Abrir modo edición automáticamente si la URL contiene ?edit=[id]
   useEffect(() => {
@@ -519,7 +584,7 @@ function ProductsComponent() {
   // Escuchar cambios en productos desde otras páginas (como database)
   useEffect(() => {
     const handleProductosUpdated = () => {
-      loadProducts()
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
     }
 
     window.addEventListener('productos:updated', handleProductosUpdated)
@@ -708,8 +773,8 @@ function ProductsComponent() {
         }
       }
 
-      // Recargar productos desde Supabase
-      await loadProducts()
+      // Invalidar cache de productos para forzar refetch
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
       // Notificar a otras vistas (como /database) que hay nuevos productos
       try {
         if (typeof window !== 'undefined') {
@@ -788,7 +853,7 @@ function ProductsComponent() {
 
       // Caso exitoso: res.deleted === true
       if (res.deleted) {
-        await loadProducts()
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
         try {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('productos:updated'))
@@ -798,8 +863,8 @@ function ProductsComponent() {
         return
       }
 
-      // Fallback: recargar productos por seguridad
-      await loadProducts()
+      // Fallback: invalidar cache por seguridad
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
       try {
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('productos:updated'))
@@ -825,7 +890,7 @@ function ProductsComponent() {
     }
 
     // Recargar productos
-    await loadProducts()
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
   }
 
   // Alternar publicación en catálogo (solicita confirmación)
@@ -850,7 +915,7 @@ function ProductsComponent() {
     }
 
     // Recargar productos
-    await loadProducts()
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
   }
 
   // Alternar expansión de tarjeta
@@ -937,8 +1002,8 @@ function ProductsComponent() {
         setTimeout(() => notification.remove(), 3000)
       }
 
-      // Recargar productos desde Supabase en background (sin bloquear el cierre)
-      loadProducts()
+      // Invalidar cache de productos en background (sin bloquear el cierre)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
     } catch (error) {
       console.error('Error al guardar producto:', error)
       if (typeof window !== 'undefined') {
