@@ -59,7 +59,8 @@ Keep analysis extremely short after that.
   - For DB schema, storage keys, auth, or build/config changes: STOP and coordinate. In the PR description list affected artifacts: `supabase/*.sql`, `supabase/migrate-data.js`, `js/utils.js`, `supabase/client.js`, and any `next-app/` changes. Both frontends must be considered.
 
 - Skills registry:
-  - Available skills for this project: `catalog-user-design` - Defines user profile page design and adaptation for admin area [SKILL.md](next-app/skills/catalog-user-design/SKILL.md)
+  - `catalog-user-mi-cuenta` — Diseño de "Mi Cuenta" y "Editar Perfil" del catálogo público [SKILL.md](next-app/skills/catalog-user-mi-cuenta/SKILL.md)
+  - `admin-mi-cuenta` — Diseño de "Mi Cuenta" del panel de administración [SKILL.md](next-app/skills/admin-mi-cuenta/SKILL.md)
 
 ## Files to open first
 

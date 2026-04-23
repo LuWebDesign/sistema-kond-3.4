@@ -1,25 +1,27 @@
-﻿import Layout from '../../components/Layout'
+import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { formatCurrency } from '../../utils/catalogUtils'
+import { getCurrentSession } from '../../utils/supabaseAuthV2'
 
-function Admin() {
+function AdminPanel() {
   const router = useRouter()
-  const [systemStats, setSystemStats] = useState({
-    totalProductos: 0,
-    totalPedidos: 0,
-    totalClientes: 0,
-    balanceTotal: 0
-  })
+  const [currentUser, setCurrentUser] = useState(null)
+  const [lastAccess, setLastAccess] = useState(null)
 
   useEffect(() => {
-    setSystemStats({
-      totalProductos: 45,
-      totalPedidos: 127,
-      totalClientes: 89,
-      balanceTotal: 245000
-    })
+    const loadUser = async () => {
+      const session = await getCurrentSession()
+      if (session?.user) {
+        setCurrentUser({
+          email: session.user.email,
+          username: session.user.username || session.user.nombre,
+          rol: session.user.rol || 'admin'
+        })
+        setLastAccess(new Date())
+      }
+    }
+    loadUser()
   }, [])
 
   const openMainSystem = () => {
@@ -30,229 +32,339 @@ function Admin() {
     window.open('/home', '_blank', 'noopener,noreferrer')
   }
 
+  const navigateTo = (path) => {
+    router.push(path)
+  }
+
   return (
     <Layout title="Panel Administrativo - Sistema KOND">
-      <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-
+      <div className="admin-panel-container">
         {/* Header */}
-        <div className="admin-header-section" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '32px',
-          gap: '16px'
-        }}>
+        <div className="admin-header">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--person-color)', marginBottom: '8px' }}>
+            <h1 className="admin-title">
               👤 Panel Administrativo
             </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-              Información del usuario y configuraciones del sistema
+            <p className="admin-subtitle">
+              Gestión y configuración del sistema
             </p>
           </div>
-          <div className="admin-header-buttons" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              onClick={openHomePage}
-              style={{
-                background: 'var(--accent-secondary)', color: 'white', border: 'none',
-                borderRadius: '8px', padding: '12px 20px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 600
-              }}
-            >
-              🏠 Home <span style={{ fontSize: '0.7rem' }}>↗</span>
+          <div className="admin-header-buttons">
+            <button onClick={openHomePage} className="btn btn-secondary">
+              🏠 Home <span className="btn-icon">↗</span>
             </button>
-            <button
-              onClick={openMainSystem}
-              style={{
-                background: 'var(--accent-blue)', color: 'white', border: 'none',
-                borderRadius: '8px', padding: '12px 20px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 600
-              }}
-            >
-              🏭 Sistema Principal <span style={{ fontSize: '0.7rem' }}>↗</span>
+            <button onClick={openMainSystem} className="btn btn-primary">
+              🏭 Sistema Principal <span className="btn-icon">↗</span>
             </button>
           </div>
         </div>
 
-        {/* Grid principal */}
-        <div className="admin-grid-main" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-
-          {/* Información del Usuario */}
-          <div className="admin-card" style={{
-            background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-              <div style={{
-                width: '60px', height: '60px',
-                background: 'linear-gradient(135deg, var(--person-color), var(--accent-blue))',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '24px', color: 'white'
-              }}>
-                👤
+        {/* Información del Usuario */}
+        {currentUser && (
+          <div className="admin-card user-card">
+            <div className="user-header">
+              <div className="user-avatar">
+                {getInitials(currentUser.username || currentUser.email)}
               </div>
-              <div>
-                <h3 style={{ color: 'var(--text-primary)', margin: 0, fontSize: '1.2rem' }}>Administrador KOND</h3>
-                <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '0.9rem' }}>admin1</p>
-                <span style={{
-                  background: 'var(--accent-secondary)', color: 'white',
-                  padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600
-                }}>Activo</span>
+              <div className="user-info">
+                <h3 className="user-name">{currentUser.username || 'Administrador'}</h3>
+                <p className="user-email">{currentUser.email}</p>
+                <span className="user-badge">{getRolBadge(currentUser.rol)}</span>
               </div>
             </div>
-            <div className="admin-user-details" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '4px' }}>Último acceso</div>
-                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  {new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                </div>
+            <div className="user-details">
+              <div className="detail-item">
+                <span className="detail-label">Último acceso</span>
+                <span className="detail-value">
+                  {lastAccess ? formatLastAccess(lastAccess) : '—'}
+                </span>
               </div>
-              <div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '4px' }}>Rol</div>
-                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Super Admin</div>
-              </div>
-              <div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '4px' }}>Permisos</div>
-                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Completos</div>
-              </div>
-              <div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '4px' }}>Sesiones</div>
-                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>1 activa</div>
+              <div className="detail-item">
+                <span className="detail-label">Rol</span>
+                <span className="detail-value">{formatRol(currentUser.rol)}</span>
               </div>
             </div>
           </div>
-
-          {/* Estadísticas */}
-          <div className="admin-card" style={{
-            background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)'
-          }}>
-            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 16px 0', fontSize: '1.1rem' }}>📊 Resumen del Sistema</h3>
-            <div className="admin-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--products-color)', fontSize: '1.8rem', fontWeight: 700 }}>{systemStats.totalProductos}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Productos</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--orders-color)', fontSize: '1.8rem', fontWeight: 700 }}>{systemStats.totalPedidos}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Pedidos</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--finances-color)', fontSize: '1.8rem', fontWeight: 700 }}>{systemStats.totalClientes}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Clientes</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--person-color)', fontSize: '1.4rem', fontWeight: 700 }}>{formatCurrency(systemStats.balanceTotal)}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Balance</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Credenciales de Acceso */}
-        <div style={{
-          background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
-          border: '1px solid var(--border-color)', marginBottom: '24px'
-        }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 20px 0', fontSize: '1.1rem' }}>🔐 Credenciales de Acceso</h3>
-          <div style={{ background: 'var(--bg-section)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-            <h4 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '0.95rem' }}>👑 Administrador Principal</h4>
-            <div style={{ fontFamily: 'monospace', background: 'var(--bg-input)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '4px' }}>Usuario:</div>
-              <div style={{ color: 'var(--accent-blue)', fontWeight: 600, marginBottom: '8px', fontSize: '0.9rem' }}>admin@kond.local</div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '4px' }}>Contraseña:</div>
-              <div style={{ color: 'var(--accent-blue)', fontWeight: 600, fontSize: '0.9rem' }}>KondAdmin!2025</div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => navigator.clipboard.writeText('admin@kond.local')}
-                style={{ flex: 1, background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 8px', fontSize: '0.75rem', cursor: 'pointer' }}
-              >📋 Copiar Usuario</button>
-              <button
-                onClick={() => navigator.clipboard.writeText('KondAdmin!2025')}
-                style={{ flex: 1, background: 'var(--accent-secondary)', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 8px', fontSize: '0.75rem', cursor: 'pointer' }}
-              >📋 Copiar Contraseña</button>
-            </div>
-          </div>
-          <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.05))', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '8px', padding: '16px' }}>
-            <div style={{ color: 'var(--accent-blue)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px' }}>🔒 Información de Seguridad</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '12px' }}>
-              Estas credenciales se utilizan para acceder al sistema administrativo desde <code>/home</code>. Se recomienda cambiar la contraseña periódicamente.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              <div><span style={{ color: '#10b981' }}>✓</span> Acceso completo a todas las funciones administrativas</div>
-              <div><span style={{ color: '#10b981' }}>✓</span> Gestión de productos, pedidos y usuarios</div>
-              <div><span style={{ color: '#f59e0b' }}>⚠</span> No compartir estas credenciales</div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Personalizar Catálogo */}
-        <div style={{
-          background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
-          border: '1px solid var(--border-color)', marginBottom: '24px'
-        }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>🎨 Personalizar Catálogo</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+        <div className="admin-card">
+          <h3 className="card-title">🎨 Personalizar Catálogo</h3>
+          <p className="card-description">
             Personalizá los colores, textos y estilos del catálogo público, incluyendo el header, footer y banner.
           </p>
-          <button
-            onClick={() => router.push('/admin/catalog-styles')}
-            style={{
-              padding: '12px 24px', borderRadius: '8px', border: 'none',
-              background: 'var(--accent-blue)', color: 'white',
-              cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600,
-              display: 'inline-flex', alignItems: 'center', gap: '8px'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            🎨 Personalizar Estilos
-          </button>
+          <div className="card-actions">
+            <button onClick={() => router.push('/admin/catalog-styles')} className="btn btn-primary">
+              🎨 Personalizar Estilos
+            </button>
+          </div>
         </div>
 
         {/* Métodos de Pago */}
-        <div style={{
-          background: 'var(--bg-card)', padding: '24px', borderRadius: '12px',
-          border: '1px solid var(--border-color)'
-        }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontSize: '1.1rem' }}>🛒 Configuración de Carrito</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+        <div className="admin-card">
+          <h3 className="card-title">🛒 Configuración de Carrito</h3>
+          <p className="card-description">
             Configurá los métodos de pago, datos de retiro y contacto disponibles en el catálogo público.
           </p>
-          <button
-            onClick={() => router.push('/admin/payment-config')}
-            style={{
-              padding: '12px 24px', borderRadius: '8px', border: 'none',
-              background: 'var(--accent-blue)', color: 'white',
-              cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600,
-              display: 'inline-flex', alignItems: 'center', gap: '8px'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            ⚙️ Ir a Configuración
-          </button>
+          <div className="card-actions">
+            <button onClick={() => router.push('/admin/payment-config')} className="btn btn-primary">
+              ⚙️ Ir a Configuración
+            </button>
+          </div>
         </div>
-
       </div>
 
       <style jsx>{`
-        @media (max-width: 768px) {
-          .admin-container { padding: 12px !important; }
-          .admin-header-section { flex-direction: column; align-items: stretch !important; }
-          .admin-header-section h1 { font-size: 1.5rem !important; }
-          .admin-header-buttons button { flex: 1; padding: 10px 16px !important; font-size: 0.85rem !important; }
-          .admin-grid-main { grid-template-columns: 1fr !important; gap: 16px !important; }
-          .admin-card { padding: 16px !important; }
-          .admin-user-details { grid-template-columns: 1fr !important; gap: 12px !important; }
+        .admin-panel-container {
+          padding: 24px;
+          max-width: 800px;
+          margin: 0 auto;
         }
-        @media (max-width: 480px) {
-          .admin-container { padding: 8px !important; }
-          .admin-header-section h1 { font-size: 1.3rem !important; }
-          .admin-stats-grid { grid-template-columns: 1fr 1fr !important; }
+
+        /* Header */
+        .admin-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 28px;
+          gap: 16px;
+        }
+
+        .admin-title {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: var(--person-color);
+          margin: 0 0 6px 0;
+        }
+
+        .admin-subtitle {
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+          margin: 0;
+        }
+
+        .admin-header-buttons {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .btn {
+          padding: 10px 18px;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+          opacity: 0.85;
+          transform: translateY(-1px);
+        }
+
+        .btn-primary {
+          background: var(--accent-blue);
+          color: white;
+        }
+
+        .btn-secondary {
+          background: var(--accent-secondary);
+          color: white;
+        }
+
+        .btn-icon {
+          font-size: 0.7rem;
+        }
+
+        /* Cards */
+        .admin-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 24px;
+          margin-bottom: 20px;
+        }
+
+        .card-title {
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 8px 0;
+        }
+
+        .card-description {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin: 0 0 16px 0;
+          line-height: 1.5;
+        }
+
+        .card-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        /* User Card */
+        .user-card {
+          padding: 28px;
+        }
+
+        .user-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .user-avatar {
+          width: 64px;
+          height: 64px;
+          background: linear-gradient(135deg, var(--person-color), var(--accent-blue));
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: white;
+        }
+
+        .user-info {
+          flex: 1;
+        }
+
+        .user-name {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 4px 0;
+        }
+
+        .user-email {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin: 0 0 8px 0;
+        }
+
+        .user-badge {
+          background: var(--accent-blue);
+          color: white;
+          padding: 3px 10px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          display: inline-block;
+        }
+
+        .user-details {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          padding-top: 20px;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .detail-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .detail-label {
+          color: var(--text-muted);
+          font-size: 0.8rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        .detail-value {
+          color: var(--text-primary);
+          font-size: 0.95rem;
+          font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .admin-panel-container {
+            padding: 16px;
+          }
+
+          .admin-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .admin-title {
+            font-size: 1.5rem;
+          }
+
+          .admin-header-buttons {
+            justify-content: stretch;
+          }
+
+          .admin-header-buttons .btn {
+            flex: 1;
+            justify-content: center;
+          }
+
+          .user-details {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .user-avatar {
+            width: 56px;
+            height: 56px;
+            font-size: 1.25rem;
+          }
         }
       `}</style>
     </Layout>
   )
 }
 
-export default withAdminAuth(Admin)
+// Helpers
+function getInitials(text) {
+  if (!text) return '?'
+  const parts = text.split(' ')
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return text.slice(0, 2).toUpperCase()
+}
+
+function getRolBadge(rol) {
+  const badges = {
+    admin: 'Administrador',
+    super_admin: 'Super Admin',
+    cliente: 'Cliente'
+  }
+  return badges[rol] || rol
+}
+
+function formatRol(rol) {
+  const roles = {
+    admin: 'Administrador',
+    super_admin: 'Super Administrador',
+    cliente: 'Cliente'
+  }
+  return roles[rol] || rol
+}
+
+function formatLastAccess(date) {
+  return date.toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+export default withAdminAuth(AdminPanel)
