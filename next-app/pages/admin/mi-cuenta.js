@@ -160,6 +160,36 @@ const handleUpdatePassword = async (e) => {
           </p>
         </div>
 
+        {/* Información de cuenta */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: 'white' }}>
+                  A
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
+                  admin
+                </p>
+                <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>
+                  admin@kond.local
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--accent-secondary)', padding: '4px 10px', borderRadius: '999px' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'white', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                admin
+              </span>
+            </div>
+          </div>
+          <div style={{ padding: '0 20px 16px 20px', borderTop: '1px solid var(--border-color)', marginTop: '-1px', paddingTop: '16px' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+            </p>
+          </div>
+        </div>
+
         {/* Información del Perfil (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -177,36 +207,7 @@ const handleUpdatePassword = async (e) => {
           </div>
         </div>
 
-{/* Información de cuenta */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
-          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '1rem', fontWeight: 600, color: 'white' }}>
-                  {currentUser?.nombre?.charAt(0)?.toUpperCase() || currentUser?.username?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
-              </div>
-              <div>
-                <p style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
-                  {currentUser?.nombre || currentUser?.username || 'Usuario'}
-                </p>
-                <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>
-                  {currentUser?.email}
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: currentUser?.rol === 'admin' ? 'var(--accent-secondary)' : 'var(--bg-input)', padding: '4px 10px', borderRadius: '999px' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: currentUser?.rol === 'admin' ? 'white' : 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {currentUser?.rol || 'usuario'}
-              </span>
-            </div>
-          </div>
-          <div style={{ padding: '0 20px 16px 20px', borderTop: '1px solid var(--border-color)', marginTop: '-1px', paddingTop: '16px' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-              
-            </p>
-          </div>
-        </div>
+        
 
         {/* Seguridad y credenciales (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
