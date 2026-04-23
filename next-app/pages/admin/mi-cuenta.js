@@ -160,89 +160,22 @@ const handleUpdatePassword = async (e) => {
           </p>
         </div>
 
-        {/* Tarjeta Colapsable */}
+        {/* Información del Perfil (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
-          {/* Header colapsable */}
-          <div
-            onClick={() => setIsProfileExpanded(!isProfileExpanded)}
-            style={{ padding: '16px 20px', background: 'var(--accent-blue)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'opacity 0.15s ease' }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-          >
-            <div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Información del Perfil</h3>
-              <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', opacity: 0.9 }}>Gestiona tus datos personales</p>
-            </div>
-            <span style={{ fontSize: '0.85rem', transition: 'transform 0.2s ease', transform: isProfileExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-              &#9660;
-            </span>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Información del Perfil</h3>
+            <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Gestiona tus datos personales</p>
           </div>
 
-          {/* Contenido expandido */}
-          {isProfileExpanded && (
-            <div style={{ padding: '20px' }}>
-              <form onSubmit={handleUpdateProfile} style={{ display: 'grid', gap: '20px' }}>
-
-                {/* Datos personales */}
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-                    Datos personales
-                  </h3>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
-                    <Field label="Nombre" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
-                    <Field label="Apellido" name="apellido" value={formData.apellido} onChange={handleInputChange} />
-                    <Field label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required disabled />
-                    <Field label="Teléfono" name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} />
-                  </div>
-                </div>
-
-                {/* Dirección */}
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-                    Dirección
-                  </h3>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <Field label="Dirección" name="direccion" value={formData.direccion} onChange={handleInputChange} />
-                    </div>
-                    <Field label="Localidad" name="localidad" value={formData.localidad} onChange={handleInputChange} />
-                    <Field label="Código Postal" name="cp" value={formData.cp} onChange={handleInputChange} />
-                    <Field label="Provincia" name="provincia" value={formData.provincia} onChange={handleInputChange} />
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
-                        Observaciones
-                      </label>
-                      <textarea
-                        name="observaciones"
-                        value={formData.observaciones}
-                        onChange={handleInputChange}
-                        placeholder="Notas adicionales..."
-                        style={{ ...inputStyle, resize: 'vertical', minHeight: '70px', maxHeight: '100px', fontFamily: 'inherit' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botones */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
-                  <button type="button" onClick={() => setIsProfileExpanded(false)}
-                    style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s ease' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" disabled={isLoading}
-                    style={{ background: isLoading ? 'var(--text-muted)' : 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 28px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: isLoading ? 'not-allowed' : 'pointer', transition: 'background 0.15s ease' }}>
-                    {isLoading ? 'Guardando...' : 'Guardar cambios'}
-                  </button>
-                </div>
-
-              </form>
+          <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <a href="/admin/mi-cuenta/info-perfil" style={{ textDecoration: 'none' }}>
+                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
+                  Abrir Información
+                </button>
+              </a>
             </div>
-          )}
+          </div>
         </div>
 
 {/* Información de cuenta */}
