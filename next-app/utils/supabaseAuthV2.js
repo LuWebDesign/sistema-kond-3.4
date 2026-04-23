@@ -423,7 +423,12 @@ export async function logout() {
     await supabase.auth.signOut();
     
     if (typeof window !== 'undefined') {
+      // Remover TODAS las claves relacionadas con sesiones
       localStorage.removeItem('kond-user');
+      localStorage.removeItem('kond-admin');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('adminSession');
+      localStorage.removeItem('userSession');
     }
     
     return { error: null };
@@ -926,6 +931,8 @@ export async function logoutAdmin() {
       localStorage.removeItem('kond-admin');
       localStorage.removeItem('kond-user');
       localStorage.removeItem('currentUser');
+      localStorage.removeItem('adminSession');
+      localStorage.removeItem('userSession');
     }
 
     return { error: null };
@@ -937,23 +944,22 @@ export async function logoutAdmin() {
 
 /**
  * Actualizar contraseña del usuario autenticado
- * Nota: Supabase no requiere la contraseña actual para cambiarla desde el cliente
- * por razones de seguridad. Solo verifica que haya una sesión activa.
+ * Acepta contraseña actual (para validación UI) y nueva contraseña
+ * Nota: Supabase Auth no requiere la contraseña actual para cambiarla.
+ * Solo verifica que haya una sesión activa.
  */
-export async function updatePassword(newPassword) {
+export async function updatePassword(currentPassword, newPassword) {
   if (!supabase) {
     return { data: null, error: { message: 'Sistema de autenticación no disponible' } };
   }
 
   try {
-    // Verificar que haya sesión activa
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
       return { data: null, error: { message: 'No hay sesión activa' } };
     }
 
-    // Actualizar contraseña
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword
     });

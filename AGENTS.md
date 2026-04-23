@@ -36,6 +36,7 @@ Keep analysis extremely short after that.
 
 - LocalStorage & migration gotchas:
   - Keys to preserve/consider: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `notifications`. Changing shapes or names requires a migration/compat layer.
+  - Keys used for auth/session: `kond-user` (admin/user auth), `kond-admin` (admin profile), `currentUser` (catalog user), `adminSession`, `userSession`. ALL must be cleared on logout to avoid session revival.
   - `js/utils.js` implements `safeLocalStorageSetItem` which may omit `comprobante` on QuotaExceededError — do NOT remove this fallback without planning data handling.
 
 - Static-site entry points:
