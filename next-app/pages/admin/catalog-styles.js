@@ -95,15 +95,28 @@ function CatalogStylesAdmin() {
     }
   }
 
-  const addPresetFromHeader = () => {
-    const bg = styles.headerBg || ''
-    const text = styles.headerTextColor || ''
+  const getSectionColors = (section) => {
+    switch (section) {
+      case 'header':
+        return { bg: styles.headerBg || '', text: styles.headerTextColor || '' }
+      case 'footer':
+        return { bg: styles.footerBg || '', text: styles.footerTextColor || '' }
+      case 'banner':
+        return { bg: styles.bannerBg || '', text: styles.bannerTextColor || '' }
+      default:
+        return { bg: '', text: '' }
+    }
+  }
+
+  const addPresetForSection = () => {
+    const section = activeSection
+    const { bg, text } = getSectionColors(section)
     if (!presetName) {
       setSaveMessage('⚠️ Ingresa un nombre para la paleta')
       setTimeout(() => setSaveMessage(''), 2500)
       return
     }
-    const next = [{ id: Date.now(), name: presetName, bg, text }, ...presets]
+    const next = [{ id: Date.now(), name: presetName, section, bg, text }, ...presets]
     setPresets(next)
     savePresetsToStorage(next)
     setPresetName('')
@@ -113,9 +126,18 @@ function CatalogStylesAdmin() {
 
   const applyPreset = (p) => {
     if (!p) return
-    updateStyle('headerBg', p.bg)
-    updateStyle('headerTextColor', p.text)
-    setSaveMessage(`✅ Paleta "${p.name}" aplicada al Header`)
+    const section = p.section
+    if (section === 'header') {
+      updateStyle('headerBg', p.bg)
+      updateStyle('headerTextColor', p.text)
+    } else if (section === 'footer') {
+      updateStyle('footerBg', p.bg)
+      updateStyle('footerTextColor', p.text)
+    } else if (section === 'banner') {
+      updateStyle('bannerBg', p.bg)
+      updateStyle('bannerTextColor', p.text)
+    }
+    setSaveMessage(`✅ Paleta "${p.name}" aplicada a ${section}`)
     setTimeout(() => setSaveMessage(''), 2000)
   }
 
@@ -214,17 +236,17 @@ function CatalogStylesAdmin() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
           {/* Panel de edición */}
           <div>
-            {/* Paletas / Presets */}
+            {/* Paletas / Presets (por sección) */}
             <div style={{ marginBottom: '18px', display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 280, background: 'var(--bg-card)', padding: 12, borderRadius: 10, border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                   <input placeholder="Nombre de paleta" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={addPresetFromHeader} style={{ padding: '8px 12px', borderRadius: 8, background: previewAccent, color: '#fff', border: 'none', cursor: 'pointer' }}>💾 Guardar</button>
+                  <button onClick={addPresetForSection} style={{ padding: '8px 12px', borderRadius: 8, background: previewAccent, color: '#fff', border: 'none', cursor: 'pointer' }}>💾 Guardar</button>
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 8 }}>Guardar la combinación actual de <strong>Header</strong> (fondo + texto).</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 8 }}>Guardar la combinación actual de <strong>{activeSection}</strong> (fondo + texto).</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {presets.length === 0 && <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No hay paletas guardadas.</div>}
-                  {presets.map(p => (
+                  {presets.filter(p => p.section === activeSection).length === 0 && <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No hay paletas guardadas para esta sección.</div>}
+                  {presets.filter(p => p.section === activeSection).map(p => (
                     <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
                       <div style={{ width: 28, height: 28, borderRadius: 6, background: p.bg, border: '1px solid rgba(0,0,0,0.06)' }} />
                       <div style={{ width: 28, height: 28, borderRadius: 6, background: p.text, border: '1px solid rgba(0,0,0,0.06)' }} />
