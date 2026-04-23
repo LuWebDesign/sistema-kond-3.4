@@ -11,9 +11,13 @@ function CatalogStylesAdmin() {
   const [activeSection, setActiveSection] = useState('header')
   const [activeDevice, setActiveDevice] = useState('desktop')
   const logoInputRef = useRef(null)
+  const PRESETS_KEY = 'catalog_color_presets_v1'
+  const [presets, setPresets] = useState([])
+  const [presetName, setPresetName] = useState('')
 
   useEffect(() => {
     loadStyles()
+    loadPresets()
   }, [])
 
   const loadStyles = async () => {
@@ -71,6 +75,56 @@ function CatalogStylesAdmin() {
       updateStyle('logoUrl', ev.target.result)
     }
     reader.readAsDataURL(file)
+  }
+
+  const loadPresets = () => {
+    try {
+      const raw = localStorage.getItem(PRESETS_KEY)
+      if (raw) setPresets(JSON.parse(raw))
+    } catch (err) {
+      console.error('Error cargando paletas:', err)
+    }
+  }
+
+  const savePresetsToStorage = (list) => {
+    try {
+      localStorage.setItem(PRESETS_KEY, JSON.stringify(list))
+    } catch (err) {
+      console.error('Error guardando paletas:', err)
+      setSaveMessage('❌ No se pudieron guardar las paletas en localStorage')
+    }
+  }
+
+  const addPresetFromHeader = () => {
+    const bg = styles.headerBg || ''
+    const text = styles.headerTextColor || ''
+    if (!presetName) {
+      setSaveMessage('⚠️ Ingresa un nombre para la paleta')
+      setTimeout(() => setSaveMessage(''), 2500)
+      return
+    }
+    const next = [{ id: Date.now(), name: presetName, bg, text }, ...presets]
+    setPresets(next)
+    savePresetsToStorage(next)
+    setPresetName('')
+    setSaveMessage('✅ Paleta guardada')
+    setTimeout(() => setSaveMessage(''), 2000)
+  }
+
+  const applyPreset = (p) => {
+    if (!p) return
+    updateStyle('headerBg', p.bg)
+    updateStyle('headerTextColor', p.text)
+    setSaveMessage(`✅ Paleta "${p.name}" aplicada al Header`)
+    setTimeout(() => setSaveMessage(''), 2000)
+  }
+
+  const deletePreset = (id) => {
+    const next = presets.filter(x => x.id !== id)
+    setPresets(next)
+    savePresetsToStorage(next)
+    setSaveMessage('🗑️ Paleta eliminada')
+    setTimeout(() => setSaveMessage(''), 1500)
   }
 
   if (isLoading) {
@@ -160,6 +214,30 @@ function CatalogStylesAdmin() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
           {/* Panel de edición */}
           <div>
+            {/* Paletas / Presets */}
+            <div style={{ marginBottom: '18px', display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 280, background: 'var(--bg-card)', padding: 12, borderRadius: 10, border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                  <input placeholder="Nombre de paleta" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                  <button onClick={addPresetFromHeader} style={{ padding: '8px 12px', borderRadius: 8, background: previewAccent, color: '#fff', border: 'none', cursor: 'pointer' }}>💾 Guardar</button>
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 8 }}>Guardar la combinación actual de <strong>Header</strong> (fondo + texto).</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {presets.length === 0 && <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No hay paletas guardadas.</div>}
+                  {presets.map(p => (
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 6, background: p.bg, border: '1px solid rgba(0,0,0,0.06)' }} />
+                      <div style={{ width: 28, height: 28, borderRadius: 6, background: p.text, border: '1px solid rgba(0,0,0,0.06)' }} />
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{p.name}</div>
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                        <button onClick={() => applyPreset(p)} style={{ padding: '6px 8px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: previewAccent }}>Aplicar</button>
+                        <button onClick={() => deletePreset(p.id)} style={{ padding: '6px 8px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--accent-red, #ef4444)' }}>Eliminar</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
             {/* Tabs de secciones */}
             <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               {sections.map(s => (
