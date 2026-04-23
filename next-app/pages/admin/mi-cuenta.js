@@ -280,6 +280,7 @@ const handleUpdatePassword = async (e) => {
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
+            <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Administrá credenciales y seguridad de tu cuenta!</p>
           </div>
 
           <div style={{ padding: '20px' }}>
