@@ -78,7 +78,7 @@ function Marketing() {
       setEditingPromo(null);
       setEditingCoupon(null);
     }
-  }, [router.query.modal, router.query.id, promotions, coupons]);
+  }, [router.query.modal, router.query.id]);
 
 
 
@@ -122,7 +122,7 @@ function Marketing() {
 
   // Map query results into local UI state (keeps existing modal/edit flows intact)
   useEffect(() => {
-    const mappedPromos = (promosData || []).map(p => ({
+    const mappedPromos = (Array.isArray(promosData) ? promosData : []).map(p => ({
       id: p.id,
       nombre: p.nombre,
       tipo: p.tipo,
@@ -143,11 +143,13 @@ function Marketing() {
       config: p.config,
       createdAt: p.created_at
     }))
-    setPromotions(mappedPromos)
+    // Evitar setState si no hay cambios reales para prevenir loops
+    const same = promotions.length === mappedPromos.length && promotions.every((old, i) => old.id === mappedPromos[i]?.id)
+    if (!same) setPromotions(mappedPromos)
   }, [promosData])
 
   useEffect(() => {
-    const mappedCups = (cupsData || []).map(c => ({
+    const mappedCups = (Array.isArray(cupsData) ? cupsData : []).map(c => ({
       id: c.id,
       codigo: c.codigo,
       nombre: c.nombre,
@@ -161,12 +163,13 @@ function Marketing() {
       activo: c.activo,
       createdAt: c.created_at
     }))
-    setCoupons(mappedCups)
+    const same = coupons.length === mappedCups.length && coupons.every((old, i) => old.id === mappedCups[i]?.id)
+    if (!same) setCoupons(mappedCups)
   }, [cupsData])
 
   useEffect(() => {
-    const mappedProds = (prodsData || [])
-      .filter(p => p.allow_promotions !== false)
+    const mappedProds = (Array.isArray(prodsData) ? prodsData : [])
+      .filter(p => p && p.allow_promotions !== false)
       .map(p => ({
         id: p.id,
         nombre: p.nombre,
@@ -175,7 +178,8 @@ function Marketing() {
         precioUnitario: p.precio_unitario || 0,
         allowPromotions: p.allow_promotions !== false
       }))
-    setProducts(mappedProds)
+      const same = products.length === mappedProds.length && products.every((old, i) => old.id === mappedProds[i]?.id)
+      if (!same) setProducts(mappedProds)
   }, [prodsData])
 
   const isLoading = loadingPromos || loadingCoupons || loadingProducts
