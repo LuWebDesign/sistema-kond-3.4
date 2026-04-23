@@ -162,15 +162,14 @@ const handleUpdatePassword = async (e) => {
 
         {/* Información del Perfil (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Información del Perfil</h3>
-            <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Gestiona tus datos personales</p>
-          </div>
-
-          <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Información del Perfil</h3>
+              <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Gestiona tus datos personales</p>
+            </div>
+            <div>
               <a href="/admin/mi-cuenta/info-perfil" style={{ textDecoration: 'none' }}>
-                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
+                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
                   Abrir Información
                 </button>
               </a>
@@ -211,15 +210,14 @@ const handleUpdatePassword = async (e) => {
 
         {/* Seguridad y credenciales (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
-            <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Administrá credenciales y seguridad de tu cuenta!</p>
-          </div>
-
-          <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
+              <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0', color: 'var(--text-secondary)' }}>Administrá credenciales y seguridad de tu cuenta!</p>
+            </div>
+            <div>
               <a href="/admin/mi-cuenta/security" style={{ textDecoration: 'none' }}>
-                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
+                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
                   Abrir Seguridad
                 </button>
               </a>
