@@ -59,6 +59,31 @@ function escapeHtml(text) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
+// Normalizar/asegurar que el valor recibido sea un Array.
+// - Si ya es Array -> se devuelve tal cual
+// - Si es null/undefined -> []
+// - Si es string -> intenta parsear JSON y devolver array si corresponde
+// - Si es objeto -> devuelve Object.values(obj)
+function ensureArray(v) {
+  if (Array.isArray(v)) return v;
+  if (v == null) return [];
+  if (typeof v === 'string') {
+    try {
+      const p = JSON.parse(v);
+      if (Array.isArray(p)) return p;
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+  if (typeof v === 'object') {
+    try { return Object.values(v); } catch (e) { return []; }
+  }
+  return [];
+}
+// Exponer globalmente para uso en scripts que cargan después
+window.ensureArray = ensureArray;
+
 // Notificaciones: helper para agregar notificaciones al localStorage
 function addNotification({ title, body, date, read = false, meta = {} } = {}) {
   try {

@@ -21,7 +21,9 @@ function formatDateForInput(v) {
 }
 function getActivePromotionsForProduct(productId) {
   try {
-    const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
+    const raw = localStorage.getItem('marketing_promotions') || '[]';
+    const parsed = JSON.parse(raw);
+    const allPromos = ensureArray(parsed);
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     
@@ -115,10 +117,10 @@ function openPromotionsManager(productId) {
 
 function renderProductPromotions(productId) {
   try {
-    const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
-    const productPromos = allPromos.filter(promo => 
-      promo.productIds && promo.productIds.includes(productId)
-    );
+    const raw = localStorage.getItem('marketing_promotions') || '[]';
+    const parsed = JSON.parse(raw);
+    const allPromos = ensureArray(parsed);
+    const productPromos = allPromos.filter(promo => ensureArray(promo.productIds).includes(productId));
 
     if (productPromos.length === 0) {
       return `
@@ -174,7 +176,9 @@ window.editPromotionFromDb = function(promoId) {
   closeDbPromoModal();
   if (typeof showSection === 'function') showSection('marketing');
   setTimeout(() => {
-    const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
+    const raw = localStorage.getItem('marketing_promotions') || '[]';
+    const parsed = JSON.parse(raw);
+    const allPromos = ensureArray(parsed);
     const promo = allPromos.find(p => p.id == promoId);
     if (promo && window.openCreateModal) {
       window.openCreateModal(promo);
@@ -184,7 +188,9 @@ window.editPromotionFromDb = function(promoId) {
 
 window.togglePromotionFromDb = function(promoId) {
   try {
-    const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
+    const raw = localStorage.getItem('marketing_promotions') || '[]';
+    const parsed = JSON.parse(raw);
+    const allPromos = ensureArray(parsed);
     const idx = allPromos.findIndex(p => p.id == promoId);
     if (idx !== -1) {
       allPromos[idx].active = !allPromos[idx].active;
