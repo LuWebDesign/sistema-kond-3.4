@@ -7,7 +7,8 @@ import { getCurrentSession, updatePassword, updateUserProfile } from '../../util
 const MiCuenta = () => {
   const [currentUser, setCurrentUser] = useState(null)
   const [isProfileExpanded, setIsProfileExpanded] = useState(false)
-  const [passwordData, setPasswordData] = useState({
+const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   })
@@ -54,9 +55,13 @@ setFormData(prev => ({
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handlePasswordInputChange = (e) => {
+const handlePasswordInputChange = (e) => {
     const { name, value } = e.target
     setPasswordData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleClearPassword = () => {
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
   }
 
 const handleUpdateProfile = async (e) => {
@@ -99,16 +104,21 @@ const handleUpdateProfile = async (e) => {
     }
   }
 
-  const handleUpdatePassword = async (e) => {
+const handleUpdatePassword = async (e) => {
     e.preventDefault()
 
+    if (!passwordData.currentPassword) {
+      createToast('Ingresá tu contraseña actual', 'error')
+      return
+    }
+
     if (!passwordData.newPassword || !passwordData.confirmPassword) {
-      createToast('Completá ambos campos de contraseña', 'error')
+      createToast('Completá los campos de nueva contraseña', 'error')
       return
     }
 
     if (passwordData.newPassword.length < 8) {
-      createToast('La contraseña debe tener al menos 8 caracteres', 'error')
+      createToast('La nueva contraseña debe tener al menos 8 caracteres', 'error')
       return
     }
 
@@ -120,14 +130,14 @@ const handleUpdateProfile = async (e) => {
     setIsPasswordLoading(true)
 
     try {
-      const { error } = await updatePassword(passwordData.newPassword)
+      const { error } = await updatePassword(passwordData.currentPassword, passwordData.newPassword)
 
       if (error) {
         createToast(error.message || 'Error al actualizar la contraseña', 'error')
         return
       }
 
-      setPasswordData({ newPassword: '', confirmPassword: '' })
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       createToast('Contraseña actualizada correctamente', 'success')
     } catch (error) {
       createToast('Error al actualizar la contraseña', 'error')
@@ -273,14 +283,25 @@ const handleUpdateProfile = async (e) => {
             <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>Cambiá tu contraseña de acceso</p>
           </div>
 
-          <div style={{ padding: '20px' }}>
+<div style={{ padding: '20px' }}>
             <form onSubmit={handleUpdatePassword} style={{ display: 'grid', gap: '20px' }}>
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
                 <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-                  Contraseña
+                  Cambiar contraseña
                 </h3>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
+                  <Field
+                    label="Contraseña actual"
+                    name="currentPassword"
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordInputChange}
+                    placeholder="Tu contraseña actual"
+                    autoComplete="current-password"
+                    required
+                  />
+                  <div />
                   <Field
                     label="Nueva contraseña"
                     name="newPassword"
@@ -341,7 +362,7 @@ const handleUpdateProfile = async (e) => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
                 <button
                   type="button"
-                  onClick={() => setPasswordData({ newPassword: '', confirmPassword: '' })}
+                  onClick={handleClearPassword}
                   style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s ease' }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
