@@ -423,7 +423,12 @@ export async function logout() {
     await supabase.auth.signOut();
     
     if (typeof window !== 'undefined') {
+      // Remover TODAS las claves relacionadas con sesiones
       localStorage.removeItem('kond-user');
+      localStorage.removeItem('kond-admin');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('adminSession');
+      localStorage.removeItem('userSession');
     }
     
     return { error: null };
@@ -926,6 +931,8 @@ export async function logoutAdmin() {
       localStorage.removeItem('kond-admin');
       localStorage.removeItem('kond-user');
       localStorage.removeItem('currentUser');
+      localStorage.removeItem('adminSession');
+      localStorage.removeItem('userSession');
     }
 
     return { error: null };

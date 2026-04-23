@@ -35,16 +35,18 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
         })
       } else {
         // Fallback: intentar cargar de localStorage (compatibilidad)
-        const sessionData = localStorage.getItem('adminSession')
-        if (sessionData) {
-          const localSession = JSON.parse(sessionData)
-          if (localSession.isLoggedIn || localSession.loggedIn) {
-            setUserInfo({
-              email: localSession.email || localSession.user?.email,
-              username: localSession.user?.username,
-              rol: localSession.user?.rol,
-              loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
-            })
+        if (typeof window !== 'undefined') {
+          const sessionData = localStorage.getItem('adminSession')
+          if (sessionData) {
+            const localSession = JSON.parse(sessionData)
+            if (localSession.isLoggedIn || localSession.loggedIn) {
+              setUserInfo({
+                email: localSession.email || localSession.user?.email,
+                username: localSession.user?.username,
+                rol: localSession.user?.rol,
+                loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
+              })
+            }
           }
         }
       }
@@ -61,17 +63,28 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     try {
       // Cerrar sesión en Supabase
       await supabaseLogout()
-      // Limpiar localStorage
-      localStorage.removeItem('adminSession')
+      
+      // Limpiar localStorage solo si estamos en el browser
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('adminSession')
+      }
       setUserInfo(null)
-      // Redirigir al login admin
-      router.push('/admin/login')
+      
+      // Agregar pequeño delay para asegurar que la sesión se cierra completamente
+      setTimeout(() => {
+        // Redirigir al login admin
+        router.push('/admin/login')
+      }, 500)
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
       // Limpiar de todas formas
-      localStorage.removeItem('adminSession')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('adminSession')
+      }
       setUserInfo(null)
-      router.push('/admin/login')
+      setTimeout(() => {
+        router.push('/admin/login')
+      }, 500)
     }
   }
 
@@ -79,7 +92,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     document.body.setAttribute('data-theme', newTheme)
-    localStorage.setItem('theme', newTheme)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme)
+    }
   }
 
   return (

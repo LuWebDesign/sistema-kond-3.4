@@ -2,11 +2,15 @@ import Layout from '../../components/Layout'
 import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { createToast } from '../../utils/catalogUtils'
-import { getCurrentSession, updateUserProfile } from '../../utils/supabaseAuthV2'
+import { getCurrentSession, updatePassword, updateUserProfile } from '../../utils/supabaseAuthV2'
 
-function MiCuenta() {
+const MiCuenta = () => {
   const [currentUser, setCurrentUser] = useState(null)
   const [isProfileExpanded, setIsProfileExpanded] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  })
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,6 +24,7 @@ function MiCuenta() {
     observaciones: ''
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false)
 
   useEffect(() => {
     const loadUser = async () => {
@@ -48,6 +53,11 @@ function MiCuenta() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target
+    setPasswordData(prev => ({ ...prev, [name]: value }))
+  }
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
     setIsLoading(true)
@@ -74,6 +84,43 @@ function MiCuenta() {
       createToast('Error al actualizar perfil', 'error')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault()
+
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      createToast('Completá ambos campos de contraseña', 'error')
+      return
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      createToast('La contraseña debe tener al menos 8 caracteres', 'error')
+      return
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      createToast('Las contraseñas no coinciden', 'error')
+      return
+    }
+
+    setIsPasswordLoading(true)
+
+    try {
+      const { error } = await updatePassword(passwordData.newPassword)
+
+      if (error) {
+        createToast(error.message || 'Error al actualizar la contraseña', 'error')
+        return
+      }
+
+      setPasswordData({ newPassword: '', confirmPassword: '' })
+      createToast('Contraseña actualizada correctamente', 'success')
+    } catch (error) {
+      createToast('Error al actualizar la contraseña', 'error')
+    } finally {
+      setIsPasswordLoading(false)
     }
   }
 
@@ -175,12 +222,76 @@ function MiCuenta() {
             </div>
           )}
         </div>
+
+        {/* Seguridad y credenciales */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
+            <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>Cambiá tu contraseña de acceso</p>
+          </div>
+
+          <div style={{ padding: '20px' }}>
+            <form onSubmit={handleUpdatePassword} style={{ display: 'grid', gap: '20px' }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
+                <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
+                  Contraseña
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
+                  <Field
+                    label="Nueva contraseña"
+                    name="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordInputChange}
+                    placeholder="Mínimo 8 caracteres"
+                    autoComplete="new-password"
+                    required
+                  />
+                  <Field
+                    label="Confirmar contraseña"
+                    name="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordInputChange}
+                    placeholder="Repetí la nueva contraseña"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+
+                <p style={{ margin: '12px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  La contraseña debe tener al menos 8 caracteres.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPasswordData({ newPassword: '', confirmPassword: '' })}
+                  style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s ease' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
+                >
+                  Limpiar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPasswordLoading}
+                  style={{ background: isPasswordLoading ? 'var(--text-muted)' : 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 28px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: isPasswordLoading ? 'not-allowed' : 'pointer', transition: 'background 0.15s ease' }}
+                >
+                  {isPasswordLoading ? 'Actualizando...' : 'Actualizar contraseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </Layout>
   )
 }
 
-function Field({ label, name, type = 'text', value, onChange, required, disabled = false }) {
+function Field({ label, name, type = 'text', value, onChange, required, disabled = false, placeholder, autoComplete }) {
   return (
     <div>
       <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
@@ -193,6 +304,8 @@ function Field({ label, name, type = 'text', value, onChange, required, disabled
         onChange={onChange}
         required={required}
         disabled={disabled}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
         style={inputStyle}
       />
     </div>
