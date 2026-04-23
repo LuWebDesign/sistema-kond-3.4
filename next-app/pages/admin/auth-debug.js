@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getCurrentSession } from '../../utils/supabaseAuthV2';
+import withAdminAuth from '../../components/withAdminAuth'
 
-export default function AuthDebug() {
+function AuthDebug() {
   const [sessionInfo, setSessionInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,3 +77,5 @@ export default function AuthDebug() {
     </div>
   );
 }
+
+export default withAdminAuth(AuthDebug)
