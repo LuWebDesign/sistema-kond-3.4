@@ -25,24 +25,25 @@ const MiCuenta = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+  const passwordStrength = getPasswordStrength(passwordData.newPassword)
 
   useEffect(() => {
     const loadUser = async () => {
       const session = await getCurrentSession()
       if (session) {
         setCurrentUser(session.user)
-        setFormData(prev => ({
-          ...prev,
-          email: session.user.email || prev.email,
-          nombre: session.user.username || session.user.nombre || prev.nombre,
-          apellido: session.user.apellido || prev.apellido,
-          telefono: session.user.telefono || prev.telefono,
-          direccion: session.user.direccion || prev.direccion,
-          localidad: session.user.localidad || prev.localidad,
-          cp: session.user.cp || prev.cp,
-          provincia: session.user.provincia || prev.provincia,
-          observaciones: session.user.observaciones || prev.observaciones
-        }))
+setFormData(prev => ({
+            ...prev,
+            email: session?.user?.email || prev.email,
+            nombre: session?.user?.username || session?.user?.nombre || prev.nombre,
+            apellido: session?.user?.apellido || prev.apellido,
+            telefono: session?.user?.telefono || prev.telefono,
+            direccion: session?.user?.direccion || prev.direccion,
+            localidad: session?.user?.localidad || prev.localidad,
+            cp: session?.user?.cp || prev.cp,
+            provincia: session?.user?.provincia || prev.provincia,
+            observaciones: session?.user?.observaciones || prev.observaciones
+          }))
       }
     }
     loadUser()
@@ -58,12 +59,23 @@ const MiCuenta = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleUpdateProfile = async (e) => {
+const handleUpdateProfile = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
+    const sanitizedData = {
+      nombre: formData.nombre?.trim().slice(0, 100) || '',
+      apellido: formData.apellido?.trim().slice(0, 100) || '',
+      telefono: formData.telefono?.trim().slice(0, 20) || '',
+      direccion: formData.direccion?.trim().slice(0, 200) || '',
+      localidad: formData.localidad?.trim().slice(0, 100) || '',
+      cp: formData.cp?.trim().slice(0, 10) || '',
+      provincia: formData.provincia?.trim().slice(0, 100) || '',
+      observaciones: formData.observaciones?.trim().slice(0, 500) || ''
+    }
+
     try {
-      const updatedUser = { ...currentUser, ...formData }
+      const updatedUser = { ...currentUser, ...sanitizedData }
 
       if (currentUser?.id) {
         const { error: dbError } = await updateUserProfile(currentUser.id, formData)
@@ -223,6 +235,37 @@ const MiCuenta = () => {
           )}
         </div>
 
+{/* Información de cuenta */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: 'white' }}>
+                  {currentUser?.nombre?.charAt(0)?.toUpperCase() || currentUser?.username?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
+                  {currentUser?.nombre || currentUser?.username || 'Usuario'}
+                </p>
+                <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>
+                  {currentUser?.email}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: currentUser?.rol === 'admin' ? 'var(--accent-secondary)' : 'var(--bg-input)', padding: '4px 10px', borderRadius: '999px' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: currentUser?.rol === 'admin' ? 'white' : 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {currentUser?.rol || 'usuario'}
+              </span>
+            </div>
+          </div>
+          <div style={{ padding: '0 20px 16px 20px', borderTop: '1px solid var(--border-color)', marginTop: '-1px', paddingTop: '16px' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Para cambiar tu contraseña, usá el formulario de abajo. Una vez actualizada, tendrás que iniciar sesión nuevamente.
+            </p>
+          </div>
+        </div>
+
         {/* Seguridad y credenciales */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
@@ -258,6 +301,36 @@ const MiCuenta = () => {
                     autoComplete="new-password"
                     required
                   />
+                </div>
+
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Fortaleza</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: passwordStrength.color }}>
+                      {passwordStrength.label}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                    {[0, 1, 2, 3].map((step) => (
+                      <div
+                        key={step}
+                        style={{
+                          height: '8px',
+                          borderRadius: '999px',
+                          background: step < passwordStrength.score ? passwordStrength.color : 'var(--border-color)',
+                          transition: 'background 0.15s ease'
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'grid', gap: '4px' }}>
+                    <li>{passwordStrength.lengthOk ? 'Longitud mínima cumplida' : 'Usá al menos 8 caracteres'}</li>
+                    <li>{passwordStrength.hasUpper ? 'Incluye mayúsculas' : 'Sumá una mayúscula'}</li>
+                    <li>{passwordStrength.hasNumber ? 'Incluye números' : 'Sumá un número'}</li>
+                    <li>{passwordStrength.hasSymbol ? 'Incluye símbolos' : 'Sumá un símbolo'}</li>
+                  </ul>
                 </div>
 
                 <p style={{ margin: '12px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -323,6 +396,71 @@ const inputStyle = {
   outline: 'none',
   transition: 'border-color 0.15s ease',
   boxSizing: 'border-box'
+}
+
+function getPasswordStrength(password) {
+  const value = password || ''
+  const lengthOk = value.length >= 8
+  const hasUpper = /[A-Z]/.test(value)
+  const hasLower = /[a-z]/.test(value)
+  const hasNumber = /\d/.test(value)
+  const hasSymbol = /[^A-Za-z0-9]/.test(value)
+
+  let score = 0
+  if (lengthOk) score += 1
+  if (hasUpper && hasLower) score += 1
+  if (hasNumber) score += 1
+  if (hasSymbol) score += 1
+
+if (!value) {
+    return {
+      score: 0,
+      label: 'Sin definir',
+      color: 'var(--text-secondary)',
+      lengthOk,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSymbol
+    }
+  }
+
+  if (score <= 1) {
+    return {
+      score,
+      label: 'Débil',
+      color: '#dc2626',
+      lengthOk,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSymbol
+    }
+  }
+
+  if (score === 2 || score === 3) {
+    return {
+      score,
+      label: 'Media',
+      color: '#d97706',
+      lengthOk,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSymbol
+    }
+  }
+
+  return {
+    score: 4,
+    label: 'Fuerte',
+    color: '#16a34a',
+    lengthOk,
+    hasUpper,
+    hasLower,
+    hasNumber,
+    hasSymbol
+  }
 }
 
 export default withAdminAuth(MiCuenta)
