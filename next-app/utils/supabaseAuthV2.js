@@ -934,3 +934,38 @@ export async function logoutAdmin() {
     return { error: error.message };
   }
 }
+
+/**
+ * Actualizar contraseña del usuario autenticado
+ * Nota: Supabase no requiere la contraseña actual para cambiarla desde el cliente
+ * por razones de seguridad. Solo verifica que haya una sesión activa.
+ */
+export async function updatePassword(newPassword) {
+  if (!supabase) {
+    return { data: null, error: { message: 'Sistema de autenticación no disponible' } };
+  }
+
+  try {
+    // Verificar que haya sesión activa
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return { data: null, error: { message: 'No hay sesión activa' } };
+    }
+
+    // Actualizar contraseña
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      console.error('Error actualizando contraseña:', error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error en updatePassword:', error);
+    return { data: null, error: { message: error.message } };
+  }
+}
