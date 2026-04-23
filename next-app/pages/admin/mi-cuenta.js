@@ -276,108 +276,27 @@ const handleUpdatePassword = async (e) => {
           </div>
         </div>
 
-        {/* Seguridad y credenciales */}
+        {/* Seguridad y credenciales (resumen) */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
-            <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>Cambiá tu contraseña de acceso</p>
+            <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>Administrá credenciales y seguridad de tu cuenta</p>
           </div>
 
-<div style={{ padding: '20px' }}>
-            <form onSubmit={handleUpdatePassword} style={{ display: 'grid', gap: '20px' }}>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-                  Cambiar contraseña
-                </h3>
+          <div style={{ padding: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', display: 'grid', gap: '12px' }}>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                Para cambiar tu contraseña, usá el formulario en la página de Seguridad. Una vez actualizada, tendrás que iniciar sesión nuevamente.
+              </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
-                  <Field
-                    label="Contraseña actual"
-                    name="currentPassword"
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordInputChange}
-                    placeholder="Tu contraseña actual"
-                    autoComplete="current-password"
-                    required
-                  />
-                  <div />
-                  <Field
-                    label="Nueva contraseña"
-                    name="newPassword"
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordInputChange}
-                    placeholder="Mínimo 8 caracteres"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <Field
-                    label="Confirmar contraseña"
-                    name="confirmPassword"
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordInputChange}
-                    placeholder="Repetí la nueva contraseña"
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Fortaleza</span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: passwordStrength.color }}>
-                      {passwordStrength.label}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                    {[0, 1, 2, 3].map((step) => (
-                      <div
-                        key={step}
-                        style={{
-                          height: '8px',
-                          borderRadius: '999px',
-                          background: step < passwordStrength.score ? passwordStrength.color : 'var(--border-color)',
-                          transition: 'background 0.15s ease'
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'grid', gap: '4px' }}>
-                    <li>{passwordStrength.lengthOk ? 'Longitud mínima cumplida' : 'Usá al menos 8 caracteres'}</li>
-                    <li>{passwordStrength.hasUpper ? 'Incluye mayúsculas' : 'Sumá una mayúscula'}</li>
-                    <li>{passwordStrength.hasNumber ? 'Incluye números' : 'Sumá un número'}</li>
-                    <li>{passwordStrength.hasSymbol ? 'Incluye símbolos' : 'Sumá un símbolo'}</li>
-                  </ul>
-                </div>
-
-                <p style={{ margin: '12px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  La contraseña debe tener al menos 8 caracteres.
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <a href="/admin/mi-cuenta/security" style={{ textDecoration: 'none' }}>
+                  <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
+                    Abrir Seguridad
+                  </button>
+                </a>
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
-                <button
-                  type="button"
-                  onClick={handleClearPassword}
-                  style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '10px 20px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)' }}
-                >
-                  Limpiar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPasswordLoading}
-                  style={{ background: isPasswordLoading ? 'var(--text-muted)' : 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 28px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, cursor: isPasswordLoading ? 'not-allowed' : 'pointer', transition: 'background 0.15s ease' }}
-                >
-                  {isPasswordLoading ? 'Actualizando...' : 'Actualizar contraseña'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
