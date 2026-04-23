@@ -271,7 +271,7 @@ const handleUpdatePassword = async (e) => {
           </div>
           <div style={{ padding: '0 20px 16px 20px', borderTop: '1px solid var(--border-color)', marginTop: '-1px', paddingTop: '16px' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Para cambiar tu contraseña, usá el formulario de abajo. Una vez actualizada, tendrás que iniciar sesión nuevamente.
+              
             </p>
           </div>
         </div>

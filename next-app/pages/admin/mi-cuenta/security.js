@@ -116,6 +116,7 @@ const SecurityPage = () => {
         <div style={{ marginBottom: '20px' }}>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Seguridad y Credenciales</h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '6px' }}>Cambiá tu contraseña de acceso</p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '6px' }}>Para cambiar tu contraseña, usá el formulario de abajo. Una vez actualizada, tendrás que iniciar sesión nuevamente.</p>
         </div>
 
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
