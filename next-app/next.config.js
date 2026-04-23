@@ -69,6 +69,11 @@ const nextConfig = {
         destination: '/admin/mi-cuenta',
         permanent: false
       },
+      {
+        source: '/admin/mi-cuenta',
+        destination: '/admin/mi-cuenta/security',
+        permanent: false
+      },
       // Redirecciones por reorganización de rutas (catálogo)
       {
         source: '/mis-pedidos',
