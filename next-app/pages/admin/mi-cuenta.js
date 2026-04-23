@@ -280,22 +280,15 @@ const handleUpdatePassword = async (e) => {
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Seguridad y Credenciales</h3>
-            <p style={{ fontSize: '0.8rem', margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>Administrá credenciales y seguridad de tu cuenta</p>
           </div>
 
           <div style={{ padding: '20px' }}>
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', display: 'grid', gap: '12px' }}>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Para cambiar tu contraseña, usá el formulario en la página de Seguridad. Una vez actualizada, tendrás que iniciar sesión nuevamente.
-              </p>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <a href="/admin/mi-cuenta/security" style={{ textDecoration: 'none' }}>
-                  <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
-                    Abrir Seguridad
-                  </button>
-                </a>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <a href="/admin/mi-cuenta/security" style={{ textDecoration: 'none' }}>
+                <button style={{ background: 'var(--accent-blue)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>
+                  Abrir Seguridad
+                </button>
+              </a>
             </div>
           </div>
         </div>
