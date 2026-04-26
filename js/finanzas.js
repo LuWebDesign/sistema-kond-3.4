@@ -1,9 +1,9 @@
 // Finanzas: gestión de movimientos (ingresos / gastos)
 
-let finanzas = JSON.parse(localStorage.getItem('finanzas')) || [];
-let registros = JSON.parse(localStorage.getItem('registros')) || [];
+let finanzas = ensureArray(JSON.parse(localStorage.getItem('finanzas') || '[]'));
+let registros = ensureArray(JSON.parse(localStorage.getItem('registros') || '[]'));
 // categorías persistentes
-let categoriasFin = JSON.parse(localStorage.getItem('categoriasFin')) || ['Ventas', 'Materia Prima', 'Servicios'];
+let categoriasFin = (function(){ const v = ensureArray(JSON.parse(localStorage.getItem('categoriasFin') || '[]')); return v.length ? v : ['Ventas', 'Materia Prima', 'Servicios']; })();
 
 function guardarFinanzas() {
   try {
@@ -22,8 +22,8 @@ function guardarFinanzas() {
 
 // Función de depuración para calcular y retornar valores de caja sin renderizar
 function debugCalcularCaja() {
-  const fin = JSON.parse(localStorage.getItem('finanzas')) || [];
-  const pedidosCatalogo = JSON.parse(localStorage.getItem('pedidosCatalogo')) || [];
+  const fin = ensureArray(JSON.parse(localStorage.getItem('finanzas') || '[]'));
+  const pedidosCatalogo = ensureArray(JSON.parse(localStorage.getItem('pedidosCatalogo') || '[]'));
   const hoy = new Date().toISOString().slice(0,10);
   const ayer = new Date(Date.now() - 86400000).toISOString().slice(0,10);
 
@@ -99,7 +99,7 @@ function getCurrentTimeString() {
 
 function renderFinanzas() {
   // Recargar finanzas desde localStorage
-  finanzas = JSON.parse(localStorage.getItem('finanzas')) || [];
+  finanzas = ensureArray(JSON.parse(localStorage.getItem('finanzas') || '[]'));
   
   const container = document.getElementById('finanzasList');
   const empty = document.getElementById('finanzasEmpty');

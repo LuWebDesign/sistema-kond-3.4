@@ -30,7 +30,9 @@
   // Cargar promociones activas
   function getActivePromotions() {
     try {
-      const allPromos = JSON.parse(localStorage.getItem('marketing_promotions') || '[]');
+      const raw = localStorage.getItem('marketing_promotions') || '[]';
+      const parsed = JSON.parse(raw);
+      const allPromos = ensureArray(parsed);
       const now = new Date();
       const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
       
@@ -52,9 +54,10 @@
   // Aplicar promociones a un producto específico
   function applyPromotionsToProduct(product) {
     const activePromos = getActivePromotions();
-    const applicablePromos = activePromos.filter(promo => 
-      promo.productIds && promo.productIds.includes(product.id)
-    );
+    const applicablePromos = activePromos.filter(promo => {
+      const ids = ensureArray(promo.productIds);
+      return ids.includes(product.id);
+    });
 
     let result = {
       originalPrice: product.precioUnitario || 0,
@@ -199,8 +202,8 @@
     let totalDiscount = 0;
     let appliedPromotions = [];
     let freeShipping = false;
-
-    const processedItems = cartItems.map(item => {
+    const items = ensureArray(cartItems);
+    const processedItems = items.map(item => {
       const product = { id: item.idProducto, precioUnitario: item.price };
       const pricing = calculateDiscountedPrice(product, item.quantity);
       
@@ -209,7 +212,7 @@
       
       if (pricing.hasDiscount && pricing.promotions) {
         // Añadir todas las promociones aplicadas a este item
-        pricing.promotions.forEach(promo => {
+        ensureArray(pricing.promotions).forEach(promo => {
           if (!appliedPromotions.find(p => p.id === promo.id)) {
             appliedPromotions.push(promo);
           }

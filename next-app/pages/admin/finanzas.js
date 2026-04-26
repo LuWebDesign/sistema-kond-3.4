@@ -10,8 +10,9 @@ import {
 import { getPedidosCatalogoParaCalendario } from '../../utils/supabasePedidos';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS, STALE_TIMES } from '../../lib/queryKeys'
+import withAdminAuth from '../../components/withAdminAuth'
 
-export default function Finanzas() {
+function Finanzas() {
   const [mounted, setMounted] = useState(false);
   const queryClient = useQueryClient()
   
@@ -152,7 +153,8 @@ export default function Finanzas() {
     }, 0);
     
     let porCobrar = 0;
-    pedidosCatalogo.forEach(p => {
+    const pedidosList = Array.isArray(pedidosCatalogo) ? pedidosCatalogo : [];
+    pedidosList.forEach(p => {
       const total = Number(p.total || 0);
       const estadoPago = p.estadoPago || '';
       if (estadoPago === 'pagado' || estadoPago === 'pagado_total') return;
@@ -921,3 +923,5 @@ export default function Finanzas() {
     </Layout>
   );
 }
+
+export default withAdminAuth(Finanzas)

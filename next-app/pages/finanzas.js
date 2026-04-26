@@ -112,7 +112,8 @@ export default function Finanzas() {
     }, 0);
     
     let porCobrar = 0;
-    pedidosCatalogo.forEach(p => {
+    const pedidosList = Array.isArray(pedidosCatalogo) ? pedidosCatalogo : [];
+    pedidosList.forEach(p => {
       const total = Number(p.total || 0);
       const estadoPago = p.estadoPago || '';
       if (estadoPago === 'pagado' || estadoPago === 'pagado_total') return;
