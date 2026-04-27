@@ -400,7 +400,8 @@ function ProductsComponent() {
 
   // Wire React Query productos data → local products state (with camelCase mapping)
   useEffect(() => {
-    const productList = productosResult?.data || []
+    // productosResult is now an array directly (after React Query fix)
+    const productList = Array.isArray(productosResult) ? productosResult : (productosResult?.data || [])
     if (!productList.length) return
 
     const initializedProducts = productList.map(p => {
