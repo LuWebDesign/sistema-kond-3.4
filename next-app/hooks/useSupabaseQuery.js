@@ -40,7 +40,7 @@ import {
 export function useProductos() {
   return useQuery({
     queryKey: QUERY_KEYS.productos.list(),
-    queryFn: getAllProductos,
+    queryFn: () => getAllProductos().then(res => res.data || []),
     staleTime: STALE_TIMES.productos_admin,
   })
 }
@@ -52,7 +52,7 @@ export function useProductos() {
 export function useProductosPublicados() {
   return useQuery({
     queryKey: QUERY_KEYS.productos.publicados(),
-    queryFn: getProductosPublicados,
+    queryFn: () => getProductosPublicados().then(res => res.data || []),
     staleTime: STALE_TIMES.productos_catalog,
   })
 }
@@ -82,7 +82,7 @@ export function useProductoById(id) {
 export function useMateriales() {
   return useQuery({
     queryKey: QUERY_KEYS.materiales.list(),
-    queryFn: getAllMateriales,
+    queryFn: () => getAllMateriales().then(res => res.data || []),
     staleTime: STALE_TIMES.materiales,
   })
 }
@@ -94,7 +94,7 @@ export function useMateriales() {
 export function useTamanos() {
   return useQuery({
     queryKey: QUERY_KEYS.materiales.tamanos(),
-    queryFn: getAllTamanos,
+    queryFn: () => getAllTamanos().then(res => res.data || []),
     staleTime: STALE_TIMES.materiales,
   })
 }
@@ -106,7 +106,7 @@ export function useTamanos() {
 export function useEspesores() {
   return useQuery({
     queryKey: QUERY_KEYS.materiales.espesores(),
-    queryFn: getAllEspesores,
+    queryFn: () => getAllEspesores().then(res => res.data || []),
     staleTime: STALE_TIMES.materiales,
   })
 }
@@ -118,7 +118,7 @@ export function useEspesores() {
 export function useProveedores() {
   return useQuery({
     queryKey: QUERY_KEYS.materiales.proveedores(),
-    queryFn: getAllProveedores,
+    queryFn: () => getAllProveedores().then(res => res.data || []),
     staleTime: STALE_TIMES.materiales,
   })
 }
@@ -150,7 +150,7 @@ export function usePromocionesActivas() {
 export function usePedidosCatalogo() {
   return useQuery({
     queryKey: QUERY_KEYS.pedidos.catalogo(),
-    queryFn: getAllPedidosCatalogo,
+    queryFn: () => getAllPedidosCatalogo().then(res => res.data || []),
     staleTime: STALE_TIMES.pedidos,
   })
 }
@@ -163,7 +163,7 @@ export function usePedidosCatalogo() {
 export function usePedidoCatalogoById(id) {
   return useQuery({
     queryKey: QUERY_KEYS.pedidos.byId(id),
-    queryFn: () => getPedidoCatalogoById(id),
+    queryFn: () => getPedidoCatalogoById(id).then(res => res.data),
     staleTime: STALE_TIMES.pedidos,
     enabled: !!id,
   })
