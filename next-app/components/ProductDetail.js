@@ -13,7 +13,6 @@ const SPEC_FIELDS = [
   { key: 'material', label: 'Material' },
   { key: 'tipoMaterial', label: 'Tipo de material' },
   { key: 'tipo', label: 'Tipo' },
-  { key: 'tipo_trabajo', label: 'Tipo de trabajo' },
   { key: 'ensamble', label: 'Ensamble' },
   { key: 'unidades', label: 'Unidades' },
 ]
