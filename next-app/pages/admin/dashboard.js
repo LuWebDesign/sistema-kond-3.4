@@ -353,13 +353,13 @@ function Dashboard() {
                 subtitle="Órdenes internas"
               />
               <QuickActionButton
-                href="/admin/pedidos-catalogo"
+                href="/pedidos-catalogo"
                 icon="🛒"
                 title="Pedidos Catálogo"
                 subtitle="Órdenes públicas"
               />
               <QuickActionButton
-                href="/admin/database"
+                href="/admin/marketing"
                 icon="🎯"
                 title="Marketing"
                 subtitle="Promociones"

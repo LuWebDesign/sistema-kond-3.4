@@ -34,6 +34,7 @@ export function mapProductoToFrontend(p) {
     nombre: p.nombre,
     categoria: p.categoria,
     tipo: p.tipo,
+    tipo_trabajo: p.tipo_trabajo || p.tipo || '',
     medidas: p.medidas,
     tiempoUnitario: p.tiempo_unitario || '00:00:30',
     publicado: p.publicado,
@@ -46,6 +47,7 @@ export function mapProductoToFrontend(p) {
     imagenes: p.imagenes_urls || [],
     materialId: p.material_id,
     material: p.material,
+    tipoMaterial: p.tipo_material || '',
     margenMaterial: p.margen_material || 0,
     precioUnitario: p.precio_unitario || 0,
     precioPromos: p.precio_promos || 0,
@@ -127,6 +129,7 @@ export async function createProducto(producto) {
         nombre: producto.nombre,
         categoria: producto.categoria,
         tipo: producto.tipo,
+        tipo_trabajo: producto.tipo_trabajo || producto.tipo,
         medidas: producto.medidas,
         tiempo_unitario: producto.tiempoUnitario,
         publicado: producto.publicado || false,
@@ -135,6 +138,16 @@ export async function createProducto(producto) {
         uso_placas: producto.usoPlacas,
         costo_placa: producto.costoPlaca,
         costo_material: producto.costoMaterial,
+        material_id: producto.materialId,
+        material: producto.material,
+        tipo_material: producto.tipoMaterial,
+        margen_material: producto.margenMaterial,
+        precio_unitario: producto.precioUnitario,
+        precio_promos: producto.precioPromos,
+        unidades: producto.unidades,
+        stock: producto.stock,
+        ensamble: producto.ensamble,
+        description: producto.description,
         // Usar `imagenes_urls` como campo fuente de verdad.
         imagenes_urls: producto.imagenes || (producto.imagen ? [producto.imagen] : [])
       }])
@@ -161,6 +174,7 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.nombre !== undefined) updateData.nombre = productoUpdate.nombre;
     if (productoUpdate.categoria !== undefined) updateData.categoria = productoUpdate.categoria;
     if (productoUpdate.tipo !== undefined) updateData.tipo = productoUpdate.tipo;
+    if (productoUpdate.tipo_trabajo !== undefined) updateData.tipo_trabajo = productoUpdate.tipo_trabajo;
     if (productoUpdate.medidas !== undefined) updateData.medidas = productoUpdate.medidas;
     if (productoUpdate.tiempoUnitario !== undefined) updateData.tiempo_unitario = productoUpdate.tiempoUnitario;
     if (productoUpdate.publicado !== undefined) updateData.publicado = productoUpdate.publicado;
@@ -170,6 +184,13 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.usoPlacas !== undefined) updateData.uso_placas = productoUpdate.usoPlacas;
     if (productoUpdate.costoPlaca !== undefined) updateData.costo_placa = productoUpdate.costoPlaca;
     if (productoUpdate.costoMaterial !== undefined) updateData.costo_material = productoUpdate.costoMaterial;
+    if (productoUpdate.materialId !== undefined) updateData.material_id = productoUpdate.materialId;
+    if (productoUpdate.material !== undefined) updateData.material = productoUpdate.material;
+    if (productoUpdate.tipoMaterial !== undefined) updateData.tipo_material = productoUpdate.tipoMaterial;
+    if (productoUpdate.margenMaterial !== undefined) updateData.margen_material = productoUpdate.margenMaterial;
+    if (productoUpdate.unidades !== undefined) updateData.unidades = productoUpdate.unidades;
+    if (productoUpdate.stock !== undefined) updateData.stock = productoUpdate.stock;
+    if (productoUpdate.description !== undefined) updateData.description = productoUpdate.description;
     if (productoUpdate.imagen !== undefined) updateData.imagenes_urls = Array.isArray(productoUpdate.imagen) ? productoUpdate.imagen : [productoUpdate.imagen];
     if (productoUpdate.imagenes !== undefined) updateData.imagenes_urls = productoUpdate.imagenes;
 

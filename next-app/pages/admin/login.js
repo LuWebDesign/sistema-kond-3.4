@@ -46,7 +46,7 @@ export default function AdminLogin() {
 
       // Usuario ya verificado en loginAdmin
       setIsLoading(false);
-      setCountdown(3); // Reset countdown
+      setCountdown(3);
       setShowWelcomeModal(true);
 
     } catch (error) {

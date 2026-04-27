@@ -63,7 +63,7 @@ function ProductsComponent() {
     nombre: '',
     categoria: '',
     categoriaPersonalizada: '',
-  tipo: 'Stock',
+  tipo: 'Corte Laser',
     medidas: '',
     tiempoUnitario: '00:00:30',
     unidades: 1,
@@ -400,7 +400,8 @@ function ProductsComponent() {
 
   // Wire React Query productos data → local products state (with camelCase mapping)
   useEffect(() => {
-    const productList = productosResult?.data || []
+    // productosResult is now an array directly (after React Query fix)
+    const productList = Array.isArray(productosResult) ? productosResult : (productosResult?.data || [])
     if (!productList.length) return
 
     const initializedProducts = productList.map(p => {
@@ -441,8 +442,9 @@ function ProductsComponent() {
 
   // Wire React Query materiales data → local materials state (with camelCase mapping)
   useEffect(() => {
-    const materialesList = materialesResult?.data || []
-    if (!materialesList.length) return
+    // Handle both array format (new) and undefined/loading (initial)
+    const materialesList = Array.isArray(materialesResult) ? materialesResult : (materialesResult?.data || [])
+    if (!materialesList || materialesList.length === 0) return
 
     const mappedMateriales = materialesList.map(m => ({
       id: m.id,
@@ -504,13 +506,13 @@ function ProductsComponent() {
         // Búsqueda por stock
         String(p.stock || '').toLowerCase().includes(searchTerm) ||
         // Búsqueda por tipo
-        p.tipo?.toLowerCase().includes(searchTerm)
+        (p.tipo_trabajo || p.tipo)?.toLowerCase().includes(searchTerm)
       )
     }
 
     // Filtro por tipo
     if (filters.type !== 'all') {
-      filtered = filtered.filter(p => p.tipo === filters.type)
+      filtered = filtered.filter(p => (p.tipo_trabajo || p.tipo) === filters.type)
     }
 
     // Solo productos activos
@@ -716,9 +718,11 @@ function ProductsComponent() {
         const selectedMaterial = materials.find(m => String(m.id) === String(finalFormData.materialId))
         if (selectedMaterial) {
           finalFormData.material = selectedMaterial.nombre
+          finalFormData.tipoMaterial = selectedMaterial.tipo || ''
         }
       } else {
         finalFormData.material = ''
+        finalFormData.tipoMaterial = ''
       }
       
       // Preparar datos del nuevo producto
@@ -726,6 +730,7 @@ function ProductsComponent() {
         nombre: finalFormData.nombre,
         categoria: categoriaFinal,
         tipo: finalFormData.tipo,
+        tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
         tiempoUnitario: finalFormData.tiempoUnitario,
         publicado: finalFormData.publicado || false,
@@ -735,6 +740,8 @@ function ProductsComponent() {
         costoPlaca: finalFormData.costoPlaca,
         costoMaterial: finalFormData.costoMaterial,
         materialId: finalFormData.materialId,
+        material: finalFormData.material,
+        tipoMaterial: finalFormData.tipoMaterial,
         margenMaterial: finalFormData.margenMaterial,
         precioUnitario: finalFormData.precioUnitario,
         precioPromos: finalFormData.precioPromos,
@@ -791,7 +798,7 @@ function ProductsComponent() {
         nombre: '',
         categoria: '',
         categoriaPersonalizada: '',
-          tipo: 'Stock',
+          tipo: 'Corte Laser',
         medidas: '',
         tiempoUnitario: '00:00:30',
         unidades: 1,
@@ -1499,9 +1506,10 @@ function ProductsComponent() {
                   }}
                 >
                   <option value="all">Todos los tipos</option>
-                  <option value="Venta">Venta</option>
-                  <option value="Presupuesto">Presupuesto</option>
-                  <option value="Stock">Stock</option>
+                  <option value="Corte Laser">Corte Laser</option>
+                  <option value="Corte + Grabado Laser">Corte + Grabado Laser</option>
+                  <option value="Grabado Laser">Grabado Laser</option>
+                  <option value="Corte CNC">Corte CNC</option>
                 </select>
               </div>
               <small style={{
@@ -1703,9 +1711,10 @@ function ProductsComponent() {
                         cursor: 'pointer'
                       }}
                     >
-                      <option value="Venta">Venta</option>
-                      <option value="Presupuesto">Presupuesto</option>
-                      <option value="Stock">Stock</option>
+                      <option value="Corte Laser">Corte Laser</option>
+                      <option value="Corte + Grabado Laser">Corte + Grabado Laser</option>
+                      <option value="Grabado Laser">Grabado Laser</option>
+                      <option value="Corte CNC">Corte CNC</option>
                     </select>
                   </div>
 
@@ -2703,7 +2712,7 @@ function ProductsComponent() {
                       nombre: '',
                       categoria: '',
                       categoriaPersonalizada: '',
-                      tipo: 'Stock',
+                      tipo: 'Corte Laser',
                       medidas: '',
                       tiempoUnitario: '00:00:30',
                       unidades: 1,
@@ -2874,14 +2883,16 @@ function ProductCard({
     nombre: product.nombre || '',
     categoria: product.categoria || '',
     medidas: product.medidas || '',
-  tipo: product.tipo || 'Stock',
+    tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
+    materialId: product.materialId || '',
+    material: product.material || '',
+    tipoMaterial: product.tipoMaterial || '',
     tiempoUnitario: product.tiempoUnitario || '00:00:30',
     unidades: product.unidades || 1,
     unidadesPorPlaca: product.unidadesPorPlaca || 1,
     usoPlacas: product.usoPlacas || 0,
     costoPlaca: product.costoPlaca || 0,
     costoMaterial: product.costoMaterial || 0,
-    materialId: product.materialId || '',
     margenMaterial: product.margenMaterial || 0,
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
@@ -2902,14 +2913,16 @@ function ProductCard({
       nombre: product.nombre || '',
       categoria: product.categoria || '',
       medidas: product.medidas || '',
-      tipo: product.tipo || 'Stock',
+      tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
+      materialId: product.materialId || '',
+      material: product.material || '',
+      tipoMaterial: product.tipoMaterial || '',
       tiempoUnitario: product.tiempoUnitario || '00:00:30',
       unidades: product.unidades || 1,
       unidadesPorPlaca: product.unidadesPorPlaca || 1,
       usoPlacas: product.usoPlacas || 0,
       costoPlaca: product.costoPlaca || 0,
       costoMaterial: product.costoMaterial || 0,
-      materialId: product.materialId || '',
       margenMaterial: product.margenMaterial || 0,
       precioUnitario: product.precioUnitario || 0,
       ensamble: product.ensamble || 'Sin ensamble',
@@ -2983,16 +2996,18 @@ function ProductCard({
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'Venta': return '#10b981'
-      case 'Presupuesto': return '#f59e0b'  
-      case 'Stock': return '#3b82f6'
+      case 'Corte Laser': return '#10b981'
+      case 'Corte + Grabado Laser': return '#f59e0b'  
+      case 'Grabado Laser': return '#3b82f6'
+      case 'Corte CNC': return '#8b5cf6'
       default: return 'var(--text-secondary)'
     }
   }
 
   // Función para obtener el texto del badge de tipo con información de stock
   const getTypeBadgeText = (product) => {
-    if (product.tipo === 'Stock') {
+    const tipo = product.tipo_trabajo || product.tipo
+    if (tipo === 'Grabado Laser') {
       const stock = product.stock || 0
       if (stock === 0) {
         return 'Sin stock'
@@ -3002,12 +3017,13 @@ function ProductCard({
         return `Stock (${stock})`
       }
     }
-    return product.tipo
+    return tipo
   }
 
   // Función para obtener el color del badge de tipo con información de stock
   const getTypeBadgeColor = (product) => {
-    if (product.tipo === 'Stock') {
+    const tipo = product.tipo_trabajo || product.tipo
+    if (tipo === 'Grabado Laser') {
       const stock = product.stock || 0
       if (stock === 0) {
         return '#ef4444' // Rojo para sin stock
@@ -3017,7 +3033,7 @@ function ProductCard({
         return '#10b981' // Verde para stock disponible
       }
     }
-    return getTypeColor(product.tipo)
+    return getTypeColor(tipo)
   }
 
   // Función para toggle de campos manuales en edición
@@ -3119,9 +3135,11 @@ function ProductCard({
         const selectedMaterial = materials.find(m => String(m.id) === String(finalData.materialId))
         if (selectedMaterial) {
           finalData.material = selectedMaterial.nombre
+          finalData.tipoMaterial = selectedMaterial.tipo || ''
         }
       } else {
         finalData.material = ''
+        finalData.tipoMaterial = ''
       }
       
       // Si hay imágenes nuevas (Files) subir solo esos y mantener el orden elegido por el usuario
@@ -3597,7 +3615,7 @@ function ViewMode({ product }) {
             <span style={{ color: 'var(--text-secondary)' }}>Unidades a producir: </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.unidades || 0}</span>
           </div>
-          {product.tipo === 'Stock' && (
+          {(product.tipo_trabajo || product.tipo) === 'Grabado Laser' && (
             <div>
               <span style={{ color: 'var(--text-secondary)' }}>Stock: </span>
               <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.stock || 0} unidades</span>
@@ -3893,9 +3911,10 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
                 fontSize: '0.9rem'
               }}
             >
-              <option value="Venta">Venta</option>
-              <option value="Presupuesto">Presupuesto</option>
-              <option value="Stock">Stock</option>
+              <option value="Corte Laser">Corte Laser</option>
+              <option value="Corte + Grabado Laser">Corte + Grabado Laser</option>
+              <option value="Grabado Laser">Grabado Laser</option>
+              <option value="Corte CNC">Corte CNC</option>
             </select>
           </div>
           
@@ -4408,9 +4427,10 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           <div>
             <label style={labelStyle}>Tipo</label>
             <select value={editData.tipo} onChange={e => handleInputChange('tipo', e.target.value)} style={inputStyle}>
-              <option value="Venta">Venta</option>
-              <option value="Presupuesto">Presupuesto</option>
-              <option value="Stock">Stock</option>
+              <option value="Corte Laser">Corte Laser</option>
+              <option value="Corte + Grabado Laser">Corte + Grabado Laser</option>
+              <option value="Grabado Laser">Grabado Laser</option>
+              <option value="Corte CNC">Corte CNC</option>
             </select>
           </div>
         </div>
