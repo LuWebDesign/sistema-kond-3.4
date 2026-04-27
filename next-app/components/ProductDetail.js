@@ -10,8 +10,11 @@ import { slugifyPreserveCase } from '../utils/slugify'
 
 const SPEC_FIELDS = [
   { key: 'medidas', label: 'Medidas' },
+  { key: 'material', label: 'Material' },
+  { key: 'tipoMaterial', label: 'Tipo de material' },
   { key: 'tipo', label: 'Tipo' },
   { key: 'ensamble', label: 'Ensamble' },
+  { key: 'unidades', label: 'Unidades' },
 ]
 
 const OMIT_VALUES = new Set(['Sin ensamble', '', null, undefined])
@@ -91,6 +94,10 @@ export default function ProductDetail({ product, categories = [], products = [],
     : null
 
   const specs = SPEC_FIELDS.filter(({ key }) => {
+    // For material fields, get value from productMaterial (joined table)
+    if ((key === 'material' || key === 'tipoMaterial') && productMaterial) {
+      return productMaterial[key] != null && !OMIT_VALUES.has(productMaterial[key])
+    }
     const val = product[key]
     return val != null && !OMIT_VALUES.has(val) && val !== 0
   })
