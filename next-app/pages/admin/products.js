@@ -1711,9 +1711,10 @@ function ProductsComponent() {
                         cursor: 'pointer'
                       }}
                     >
-                      <option value="Venta">Venta</option>
-                      <option value="Presupuesto">Presupuesto</option>
-                      <option value="Stock">Stock</option>
+                      <option value="Corte Laser">Corte Laser</option>
+                      <option value="Corte + Grabado Laser">Corte + Grabado Laser</option>
+                      <option value="Grabado Laser">Grabado Laser</option>
+                      <option value="Corte CNC">Corte CNC</option>
                     </select>
                   </div>
 
