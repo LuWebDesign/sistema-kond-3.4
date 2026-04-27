@@ -40,6 +40,7 @@ function mapProducto(p) {
     nombre: p.nombre,
     categoria: p.categoria,
     tipo: p.tipo,
+    tipo_trabajo: p.tipo_trabajo || p.tipo || '',
     medidas: p.medidas,
     tiempoUnitario: p.tiempo_unitario || '00:00:30',
     active: p.active !== undefined ? p.active : true,
