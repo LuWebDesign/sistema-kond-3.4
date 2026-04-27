@@ -444,11 +444,9 @@ function ProductsComponent() {
   useEffect(() => {
     // Handle both array format (new) and undefined/loading (initial)
     const materialesList = Array.isArray(materialesResult) ? materialesResult : (materialesResult?.data || [])
-    console.log('[products.js] materialesResult:', materialesResult, '→ mapped:', materialesList?.length)
-    if (!materialesList || materialesList.length === 0) {
-      console.log('[products.js] No materiales to map, returning early')
-      return
-    }
+    if (!materialesList || materialesList.length === 0) return
+
+    const mappedMateriales = materialesList.map(m => ({
 
     const mappedMateriales = materialesList.map(m => ({
       id: m.id,

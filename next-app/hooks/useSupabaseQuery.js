@@ -82,11 +82,7 @@ export function useProductoById(id) {
 export function useMateriales() {
   return useQuery({
     queryKey: QUERY_KEYS.materiales.list(),
-    queryFn: async () => {
-      const res = await getAllMateriales()
-      console.log('[useMateriales] getAllMateriales result:', res?.data?.length, 'error:', res?.error)
-      return res.data || []
-    },
+    queryFn: () => getAllMateriales().then(res => res.data || []),
     staleTime: STALE_TIMES.materiales,
   })
 }
