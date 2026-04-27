@@ -447,8 +447,6 @@ function ProductsComponent() {
     if (!materialesList || materialesList.length === 0) return
 
     const mappedMateriales = materialesList.map(m => ({
-
-    const mappedMateriales = materialesList.map(m => ({
       id: m.id,
       nombre: m.nombre,
       tipo: m.tipo,
