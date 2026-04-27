@@ -43,7 +43,7 @@ function getCategoryImage(catName, products) {
   return DEFAULT_CATEGORY_IMAGES[catName] || null
 }
 
-export default function ProductDetail({ product, categories = [], products = [] }) {
+export default function ProductDetail({ product, categories = [], products = [], materials = [] }) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
@@ -88,7 +88,16 @@ export default function ProductDetail({ product, categories = [], products = [] 
   const displayPrice = hasPromo ? product.precioPromocional : product.precioUnitario
   const hasStock = (product.stock || 0) > 0
 
+  // Find material from materials array if materialId is set
+  const productMaterial = materials.length > 0 && product.materialId 
+    ? materials.find(m => String(m.id) === String(product.materialId))
+    : null
+
   const specs = SPEC_FIELDS.filter(({ key }) => {
+    // For material fields, get value from productMaterial (joined table)
+    if ((key === 'material' || key === 'tipoMaterial') && productMaterial) {
+      return productMaterial[key] != null && !OMIT_VALUES.has(productMaterial[key])
+    }
     const val = product[key]
     return val != null && !OMIT_VALUES.has(val) && val !== 0
   })
@@ -449,7 +458,9 @@ export default function ProductDetail({ product, categories = [], products = [] 
                       fontWeight: 600,
                       color: 'var(--text-primary)'
                     }}>
-                      {product[key]}
+                      {(key === 'material' || key === 'tipoMaterial') && productMaterial 
+                        ? productMaterial[key] 
+                        : product[key]}
                     </span>
                   </div>
                 ))}
