@@ -3,14 +3,10 @@ import { useRouter } from 'next/router';
 import { loginAdmin, getCurrentSession } from '../../utils/supabaseAuthV2';
 import ConfirmModal from '../../components/ConfirmModal';
 
-// Dev mode: auto-login para desarrollo local
-const DEV_MODE = process.env.NODE_ENV === 'development';
-const DEV_ADMIN = DEV_MODE ? { id: 'dev-admin', email: 'admin@local', rol: 'admin', username: 'admin' } : null;
-
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
-    email: DEV_MODE ? 'admin@local' : '',
-    password: DEV_MODE ? 'dev' : ''
+    email: '',
+    password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,16 +35,6 @@ export default function AdminLogin() {
     setIsLoading(true);
     setError('');
 
-    // Dev mode bypass
-    if (DEV_MODE && formData.email === 'admin@local' && formData.password === 'dev') {
-      localStorage.setItem('kond-admin', JSON.stringify(DEV_ADMIN));
-      localStorage.setItem('adminSession', JSON.stringify({ loggedIn: true, isLoggedIn: true, user: DEV_ADMIN }));
-      setIsLoading(false);
-      setCountdown(1);
-      setShowWelcomeModal(true);
-      return;
-    }
-
     try {
       const { error, user } = await loginAdmin(formData.email, formData.password);
 
@@ -60,7 +46,7 @@ export default function AdminLogin() {
 
       // Usuario ya verificado en loginAdmin
       setIsLoading(false);
-      setCountdown(3); // Reset countdown
+      setCountdown(3);
       setShowWelcomeModal(true);
 
     } catch (error) {
