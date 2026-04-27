@@ -867,25 +867,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                   </p>
                 )}
 
-                {materialInfo && (
-                  <p style={{
-                    color: secondaryTextColor,
-                    fontSize: '0.9rem',
-                    marginBottom: '8px'
-                  }}>
-                    Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
-                  </p>
-                )}
-                
-                {!materialInfo && product.tipoMaterial && (
-                  <p style={{
-                    color: secondaryTextColor,
-                    fontSize: '0.9rem',
-                    marginBottom: '8px'
-                  }}>
-                    Material: {product.tipoMaterial}
-                  </p>
-                )}
+                {/* Material info removed from general catalog view - only shown on individual product page */}
               </>
             )
           })()}

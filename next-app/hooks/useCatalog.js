@@ -74,10 +74,14 @@ export function useProducts() {
 
   const isLoading = loadingProductos || loadingPromos || loadingMateriales
 
-  const promociones = useMemo(() => (promosRaw?.data || []).map(mapPromo), [promosRaw])
+  const promociones = useMemo(() => {
+    const data = Array.isArray(promosRaw) ? promosRaw : (promosRaw?.data || [])
+    return data.map(mapPromo)
+  }, [promosRaw])
 
-  const materials = useMemo(() =>
-    (materialesRaw?.data || []).map(m => ({
+  const materials = useMemo(() => {
+    const data = Array.isArray(materialesRaw) ? materialesRaw : (materialesRaw?.data || [])
+    return data.map(m => ({
       id: m.id,
       nombre: m.nombre,
       tipo: m.tipo,
@@ -88,12 +92,13 @@ export function useProducts() {
       proveedor: m.proveedor,
       stock: m.stock,
       notas: m.notas
-    })), [materialesRaw])
+    }))
+  }, [materialesRaw])
 
   const { products, categories } = useMemo(() => {
-    const productosBase = productosRaw?.data || []
+    const productosBase = Array.isArray(productosRaw) ? productosRaw : (productosRaw?.data || [])
     const mapped = productosBase.map(mapProducto)
-    const valid = mapped.filter(p => p.active && p.publicado && (p.tipo === 'Venta' || p.tipo === 'Stock'))
+    const valid = mapped.filter(p => p.active && p.publicado && (p.tipo === 'Corte Laser' || p.tipo === 'Grabado Laser' || p.tipo === 'Venta' || p.tipo === 'Stock'))
     const enriched = valid.map(p => {
       try {
         const promo = applyPromotionsToProduct(p, promociones)
