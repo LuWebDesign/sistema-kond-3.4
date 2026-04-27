@@ -448,9 +448,7 @@ export default function ProductDetail({ product, categories = [], products = [] 
                       fontWeight: 600,
                       color: 'var(--text-primary)'
                     }}>
-                      {(key === 'material' || key === 'tipoMaterial') && productMaterial 
-                        ? productMaterial[key] 
-                        : product[key]}
+                      {product[key]}
                     </span>
                   </div>
                 ))}
