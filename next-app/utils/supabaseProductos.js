@@ -129,6 +129,7 @@ export async function createProducto(producto) {
         nombre: producto.nombre,
         categoria: producto.categoria,
         tipo: producto.tipo,
+        tipo_trabajo: producto.tipo_trabajo || producto.tipo,
         medidas: producto.medidas,
         tiempo_unitario: producto.tiempoUnitario,
         publicado: producto.publicado || false,
@@ -137,6 +138,16 @@ export async function createProducto(producto) {
         uso_placas: producto.usoPlacas,
         costo_placa: producto.costoPlaca,
         costo_material: producto.costoMaterial,
+        material_id: producto.materialId,
+        material: producto.material,
+        tipo_material: producto.tipoMaterial,
+        margen_material: producto.margenMaterial,
+        precio_unitario: producto.precioUnitario,
+        precio_promos: producto.precioPromos,
+        unidades: producto.unidades,
+        stock: producto.stock,
+        ensamble: producto.ensamble,
+        description: producto.description,
         // Usar `imagenes_urls` como campo fuente de verdad.
         imagenes_urls: producto.imagenes || (producto.imagen ? [producto.imagen] : [])
       }])

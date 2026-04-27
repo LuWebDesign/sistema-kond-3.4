@@ -718,9 +718,11 @@ function ProductsComponent() {
         const selectedMaterial = materials.find(m => String(m.id) === String(finalFormData.materialId))
         if (selectedMaterial) {
           finalFormData.material = selectedMaterial.nombre
+          finalFormData.tipoMaterial = selectedMaterial.tipo || ''
         }
       } else {
         finalFormData.material = ''
+        finalFormData.tipoMaterial = ''
       }
       
       // Preparar datos del nuevo producto
@@ -728,6 +730,7 @@ function ProductsComponent() {
         nombre: finalFormData.nombre,
         categoria: categoriaFinal,
         tipo: finalFormData.tipo,
+        tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
         tiempoUnitario: finalFormData.tiempoUnitario,
         publicado: finalFormData.publicado || false,
@@ -737,6 +740,8 @@ function ProductsComponent() {
         costoPlaca: finalFormData.costoPlaca,
         costoMaterial: finalFormData.costoMaterial,
         materialId: finalFormData.materialId,
+        material: finalFormData.material,
+        tipoMaterial: finalFormData.tipoMaterial,
         margenMaterial: finalFormData.margenMaterial,
         precioUnitario: finalFormData.precioUnitario,
         precioPromos: finalFormData.precioPromos,
