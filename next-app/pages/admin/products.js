@@ -2877,14 +2877,16 @@ function ProductCard({
     nombre: product.nombre || '',
     categoria: product.categoria || '',
     medidas: product.medidas || '',
-  tipo: product.tipo_trabajo || 'Corte Laser',
+    tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
+    materialId: product.materialId || '',
+    material: product.material || '',
+    tipoMaterial: product.tipoMaterial || '',
     tiempoUnitario: product.tiempoUnitario || '00:00:30',
     unidades: product.unidades || 1,
     unidadesPorPlaca: product.unidadesPorPlaca || 1,
     usoPlacas: product.usoPlacas || 0,
     costoPlaca: product.costoPlaca || 0,
     costoMaterial: product.costoMaterial || 0,
-    materialId: product.materialId || '',
     margenMaterial: product.margenMaterial || 0,
     precioUnitario: product.precioUnitario || 0,
     ensamble: product.ensamble || 'Sin ensamble',
@@ -2905,14 +2907,16 @@ function ProductCard({
       nombre: product.nombre || '',
       categoria: product.categoria || '',
       medidas: product.medidas || '',
-      tipo: product.tipo_trabajo || 'Corte Laser',
+      tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
+      materialId: product.materialId || '',
+      material: product.material || '',
+      tipoMaterial: product.tipoMaterial || '',
       tiempoUnitario: product.tiempoUnitario || '00:00:30',
       unidades: product.unidades || 1,
       unidadesPorPlaca: product.unidadesPorPlaca || 1,
       usoPlacas: product.usoPlacas || 0,
       costoPlaca: product.costoPlaca || 0,
       costoMaterial: product.costoMaterial || 0,
-      materialId: product.materialId || '',
       margenMaterial: product.margenMaterial || 0,
       precioUnitario: product.precioUnitario || 0,
       ensamble: product.ensamble || 'Sin ensamble',
@@ -3125,9 +3129,11 @@ function ProductCard({
         const selectedMaterial = materials.find(m => String(m.id) === String(finalData.materialId))
         if (selectedMaterial) {
           finalData.material = selectedMaterial.nombre
+          finalData.tipoMaterial = selectedMaterial.tipo || ''
         }
       } else {
         finalData.material = ''
+        finalData.tipoMaterial = ''
       }
       
       // Si hay imágenes nuevas (Files) subir solo esos y mantener el orden elegido por el usuario
