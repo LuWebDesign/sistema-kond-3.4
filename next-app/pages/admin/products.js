@@ -442,8 +442,10 @@ function ProductsComponent() {
 
   // Wire React Query materiales data → local materials state (with camelCase mapping)
   useEffect(() => {
-    const materialesList = materialesResult?.data || []
-    if (!materialesList.length) return
+    // Handle both array format (new) and undefined/loading (initial)
+    const materialesList = Array.isArray(materialesResult) ? materialesResult : (materialesResult?.data || [])
+    console.log('[products.js] materialesResult:', materialesResult, '→ mapped:', materialesList?.length)
+    if (!materialesList || materialesList.length === 0) return
 
     const mappedMateriales = materialesList.map(m => ({
       id: m.id,
