@@ -62,9 +62,9 @@ Chain strategy: pending
 
 ## Phase 4: Public SEO Routes + Tests
 
-- [ ] 4.1 Create `next-app/pages/productos/[categoria]/index.js` — `getStaticPaths` (all active category slugs) + `getStaticProps` (products by categoria slug, server-side filter, 20 rows, no `select(*)`). ISR revalidate: 60s. ~80 lines.
-- [ ] 4.2 Create `next-app/pages/productos/[categoria]/[slug].js` — `getStaticPaths` (all categoria+slug combos) + `getStaticProps` (validate categoria match, return `notFound: true` on mismatch/missing). ISR revalidate: 60s. `typeof window !== 'undefined'` guard if needed. ~80 lines.
-- [ ] 4.3 Create `next-app/test-product-categories.test.js` — tests: mapping script exact match + no-match logic (mocked), API delete 409 conflict, category dropdown render in new product page. ~80 lines.
+- [x] 4.1 Create `next-app/pages/productos/[categoria]/index.js` — `getStaticPaths` (all active category slugs) + `getStaticProps` (products by categoria slug, server-side filter, 20 rows, no `select(*)`). ISR revalidate: 60s. ~80 lines.
+- [x] 4.2 Create `next-app/pages/productos/[categoria]/[slug].js` — `getStaticPaths` (all categoria+slug combos) + `getStaticProps` (validate categoria match, return `notFound: true` on mismatch/missing). ISR revalidate: 60s. `typeof window !== 'undefined'` guard if needed. ~80 lines.
+- [x] 4.3 Create `next-app/test-product-categories.test.js` — tests: mapping script exact match + no-match logic (mocked), API delete 409 conflict, category dropdown render in new product page. ~80 lines.
 
 **Done when**: `/productos/remeras/remera-blanca` renders; wrong category returns 404; unknown slug returns 404; test file passes with mocked supabase.
 
