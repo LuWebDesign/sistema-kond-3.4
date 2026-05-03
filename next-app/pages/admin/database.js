@@ -3,6 +3,7 @@ import withAdminAuth from '../../components/withAdminAuth'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency } from '../../utils/catalogUtils'
 import { getAllProductos, updateProducto, deleteProducto } from '../../utils/supabaseProducts'
+import { useCategoriasAdmin } from '../../hooks/useSupabaseQuery'
 import styles from '../../styles/pedidos-catalogo.module.css'
 import dynamic from 'next/dynamic'
 
@@ -35,7 +36,7 @@ function DatabaseComponent() {
   })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [materials, setMaterials] = useState([])
-  const [categorias, setCategorias] = useState([])
+  const { data: categorias = [] } = useCategoriasAdmin()
   const [isLoading, setIsLoading] = useState(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
@@ -153,19 +154,6 @@ function DatabaseComponent() {
       localStorage.setItem('productosBase', JSON.stringify(productList))
     } catch (error) {
       console.error('Error saving products:', error)
-    }
-  }, [])
-
-  // Cargar categorías desde la API
-  const loadCategorias = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/categorias')
-      if (res.ok) {
-        const json = await res.json()
-        setCategorias(json.data || [])
-      }
-    } catch {
-      // silencioso: subcategorías quedan sin resolver
     }
   }, [])
 
@@ -456,8 +444,7 @@ function DatabaseComponent() {
   useEffect(() => {
     loadProducts()
     loadMaterials()
-    loadCategorias()
-  }, [loadProducts, loadMaterials, loadCategorias])
+  }, [loadProducts, loadMaterials])
 
   // Escuchar actualizaciones desde la página de Productos
   useEffect(() => {

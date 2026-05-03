@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../utils/catalogUtils'
 import { useQueryClient } from '@tanstack/react-query'
-import { useProductos, useMateriales } from '../../hooks/useSupabaseQuery'
+import { useProductos, useMateriales, useCategoriasAdmin } from '../../hooks/useSupabaseQuery'
 import { QUERY_KEYS } from '../../lib/queryKeys'
 import { 
   getAllProductos, 
@@ -42,6 +42,7 @@ function ProductsComponent() {
   // React Query hooks for data fetching
   const { data: productosResult, isLoading: productosLoading } = useProductos()
   const { data: materialesResult } = useMateriales()
+  const { data: categoriasFromAPI = [] } = useCategoriasAdmin()
 
   // Estados principales
   const [products, setProducts] = useState([])
@@ -168,15 +169,6 @@ function ProductsComponent() {
   
   // Obtener categorías únicas de los productos existentes
   const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort()
-
-  const [categoriasFromAPI, setCategoriasFromAPI] = useState([])
-
-  useEffect(() => {
-    fetch('/api/admin/categorias')
-      .then(r => r.ok ? r.json() : null)
-      .then(json => { if (json?.data) setCategoriasFromAPI(json.data) })
-      .catch(() => {})
-  }, [])
 
   // (updateCalculatedFields eliminado: lógica inlineada en el useEffect de abajo)
 

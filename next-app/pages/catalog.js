@@ -1,5 +1,6 @@
 import PublicLayout from '../components/PublicLayout'
 import { useProducts, useCart, useCoupons } from '../hooks/useCatalog'
+import { useCategorias } from '../hooks/useSupabaseQuery'
 import { 
   formatCurrency, 
   getCurrentUser,
@@ -28,7 +29,7 @@ export default function Catalog() {
   const ITEMS_PER_PAGE = 12
   const [gridColumnsDesktop, setGridColumnsDesktop] = useState(3)
   const [gridColumnsMobile, setGridColumnsMobile] = useState(2)
-  const [categoriasAPI, setCategoriasAPI] = useState([])
+  const { data: categoriasAPI = [] } = useCategorias()
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
@@ -60,16 +61,6 @@ export default function Catalog() {
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
 
-  useEffect(() => {
-    fetch('/api/categorias')
-      .then(r => r.ok ? r.json() : null)
-      .then(json => {
-        if (json?.data) setCategoriasAPI(json.data)
-      })
-      .catch(() => {})
-  }, [])
-
-  // Debounce para la búsqueda (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
@@ -288,19 +279,6 @@ export default function Catalog() {
 
   // Using shared slugify helper from ../utils/slugify
 
-  const resolveCategoriaDisplay = useCallback((product) => {
-    if (!product.categoriaId || categoriasAPI.length === 0) {
-      return { label: product.categoria, isHierarchy: false }
-    }
-    const sub = categoriasAPI.find(c => c.id === product.categoriaId)
-    if (!sub) return { label: product.categoria, isHierarchy: false }
-    if (sub.parent_id) {
-      const parent = categoriasAPI.find(c => c.id === sub.parent_id)
-      return { label: sub.nombre, parent: parent?.nombre, isHierarchy: true }
-    }
-    return { label: sub.nombre, isHierarchy: false }
-  }, [categoriasAPI])
-
   return (
     <PublicLayout title="Catálogo - KOND">
       <div className="catalog-container" style={{ 
@@ -427,6 +405,7 @@ export default function Catalog() {
               materials={materials}
               showControls={false}
               showActions={false}
+              categoriasAPI={categoriasAPI}
             />
           ))}
         </div>
@@ -588,10 +567,23 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true, categoriasAPI = [] }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
+
+  const resolveCategoriaDisplay = (prod) => {
+    if (!prod.categoriaId || categoriasAPI.length === 0) {
+      return { label: prod.categoria, isHierarchy: false }
+    }
+    const sub = categoriasAPI.find(c => c.id === prod.categoriaId)
+    if (!sub) return { label: prod.categoria, isHierarchy: false }
+    if (sub.parent_id) {
+      const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+      return { label: sub.nombre, parent: parent?.nombre, isHierarchy: true }
+    }
+    return { label: sub.nombre, isHierarchy: false }
+  }
 
   // ProductCard will use the shared slugify helper imported above
 
