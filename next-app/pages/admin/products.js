@@ -39,6 +39,30 @@ function ProductsComponent() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  // Estilos de botones del sistema
+  const btnPrimary = {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    background: '#10b981',
+    color: 'white',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    minWidth: '120px'
+  }
+  const btnSecondary = {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: '1px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    minWidth: '100px'
+  }
+
   // React Query hooks for data fetching
   const { data: productosResult, isLoading: productosLoading } = useProductos()
   const { data: materialesResult } = useMateriales()
@@ -2675,36 +2699,13 @@ function ProductsComponent() {
                   onClick={handleAddProduct}
                   disabled={!formData.nombre || !formData.medidas}
                   style={{
+                    ...btnPrimary,
                     flex: 1,
-                    background: (formData.nombre && formData.medidas) 
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
-                      : 'var(--text-secondary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    cursor: (formData.nombre && formData.medidas) ? 'pointer' : 'not-allowed',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    boxShadow: (formData.nombre && formData.medidas) 
-                      ? '0 2px 8px rgba(16, 185, 129, 0.25)' 
-                      : 'none',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (formData.nombre && formData.medidas) {
-                      e.target.style.transform = 'translateY(-1px)'
-                      e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = 'translateY(0)'
-                    e.target.style.boxShadow = formData.nombre && formData.medidas 
-                      ? '0 2px 8px rgba(16, 185, 129, 0.25)' 
-                      : 'none'
+                    opacity: (!formData.nombre || !formData.medidas) ? 0.5 : 1,
+                    cursor: (!formData.nombre || !formData.medidas) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  ✅ Agregar Producto
+                  💾 Agregar Producto
                 </button>
                 <button
                   onClick={() => {
@@ -2728,7 +2729,7 @@ function ProductsComponent() {
                       precioPromos: 0,
                       ensamble: 'Sin ensamble',
                       imagen: '',
-                      publicado: false
+publicado: true
                     })
                     setCalculatedFields({
                       tiempoTotal: '00:00:00',
@@ -2739,24 +2740,8 @@ function ProductsComponent() {
                     })
                   }}
                   style={{
-                    flex: 0.6,
-                    background: 'transparent',
-                    color: 'var(--text-primary)',
-                    border: '1.5px solid var(--border-color)',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'var(--bg-secondary)'
-                    e.target.style.borderColor = 'var(--text-secondary)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'transparent'
-                    e.target.style.borderColor = 'var(--border-color)'
+                    ...btnSecondary,
+                    flex: 0.6
                   }}
                 >
                   ✕ Cancelar
