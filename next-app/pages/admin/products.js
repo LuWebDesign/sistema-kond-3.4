@@ -3549,7 +3549,7 @@ function ProductCard({
               onSave={handleSave}
               materials={materials}
               categories={categories}
-              categoriasAPI={categoriasFromAPI}
+              categoriasAPI={categoriasAPI}
               currentMaterialId={product.materialId}
               editCalculatedFields={editCalculatedFields}
               toggleEditFieldMode={toggleEditFieldMode}
