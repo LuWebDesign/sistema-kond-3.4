@@ -1457,6 +1457,24 @@ function ProductsComponent() {
                 {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
               </button>
 
+              <Link href="/admin/productos/new" style={{
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                textDecoration: 'none',
+                height: '44px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '0.9rem',
+                boxSizing: 'border-box',
+              }}>
+                🆕 Nuevo producto (form dedicado)
+              </Link>
+
               <Link href="/admin/materiales" style={{
                 background: '#e5e7eb',
                 color: '#374151',

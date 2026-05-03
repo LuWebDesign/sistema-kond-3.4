@@ -51,10 +51,10 @@ Chain strategy: pending
 
 ## Phase 3: Admin UI
 
-- [ ] 3.1 Create `next-app/pages/admin/categorias/index.js` — list view, tree display (parent + subcats), delete button with confirmation, link to nueva/editar. `invalidateQueries(['categorias', 'list'])`. ~100 lines.
-- [ ] 3.2 Create `next-app/pages/admin/categorias/new.js` — create form: `nombre`, `slug` (auto-filled), `parent_id` select (roots only), `orden`. On success: `invalidateQueries` + redirect. ~80 lines.
-- [ ] 3.3 Create `next-app/pages/admin/categorias/[id]/edit.js` — edit form, pre-fill values, re-slug on nombre change. On success: `invalidateQueries` + redirect. ~80 lines.
-- [ ] 3.4 Create `next-app/pages/admin/productos/new.js` — full product form with two-level category selector (parent → subcategory), `categoria_id` + `categoria` (text) populated on submit, validation if no category selected, `escapeHtml()` on all user input rendered. ~120 lines.
+- [x] 3.1 Create `next-app/pages/admin/categorias/index.js` — list view, tree display (parent + subcats), delete button with confirmation, link to nueva/editar. `invalidateQueries(['categorias', 'list'])`. ~100 lines.
+- [x] 3.2 Create `next-app/pages/admin/categorias/nueva.js` — create form: `nombre`, `slug` (auto-filled), `parent_id` select (roots only), `orden`. On success: `invalidateQueries` + redirect. ~80 lines.
+- [x] 3.3 Create `next-app/pages/admin/categorias/[id]/editar.js` — edit form, pre-fill values, re-slug on nombre change. On success: `invalidateQueries` + redirect. ~80 lines.
+- [x] 3.4 Create `next-app/pages/admin/productos/new.js` — full product form with two-level category selector (parent → subcategory), `categoria_id` + `categoria` (text) populated on submit, validation if no category selected, `escapeHtml()` on all user input rendered. ~120 lines.
 
 **Done when**: create subcategory appears nested; edit renames reflected; new product creates with both `categoria_id` and `categoria` set; empty-category submit shows validation error.
 
