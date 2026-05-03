@@ -38,12 +38,15 @@ CREATE TABLE IF NOT EXISTS public.productos (
   static_promo_start DATE,
   static_promo_end DATE,
   tags TEXT[], -- Array de tags
+  -- FK a categorias: puede apuntar a padre O subcategoría (ver tabla categorias)
+  categoria_id BIGINT REFERENCES public.categorias(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Índices para productos
 CREATE INDEX IF NOT EXISTS idx_productos_categoria ON public.productos(categoria);
+CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON public.productos(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_productos_publicado ON public.productos(publicado);
 CREATE INDEX IF NOT EXISTS idx_productos_active ON public.productos(active);
 CREATE INDEX IF NOT EXISTS idx_productos_nombre ON public.productos(nombre);
@@ -197,6 +200,28 @@ CREATE TABLE IF NOT EXISTS public.registros (
 );
 
 -- ============================================
+-- TABLA: categorias
+-- ============================================
+-- NOTA: categoria_id en productos puede apuntar a una categoría raíz
+-- (parent_id IS NULL) o a una subcategoría (parent_id NOT NULL).
+-- La profundidad máxima de la estructura es 1 nivel; el constraint
+-- se aplica en la capa de API (no por CHECK de DB).
+CREATE TABLE IF NOT EXISTS public.categorias (
+  id         BIGSERIAL PRIMARY KEY,
+  nombre     TEXT NOT NULL,
+  slug       TEXT NOT NULL UNIQUE,
+  parent_id  BIGINT REFERENCES public.categorias(id) ON DELETE RESTRICT,
+  activa     BOOLEAN NOT NULL DEFAULT true,
+  orden      INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Índices para categorias
+CREATE INDEX IF NOT EXISTS idx_categorias_slug      ON public.categorias(slug);
+CREATE INDEX IF NOT EXISTS idx_categorias_parent_id ON public.categorias(parent_id);
+
+-- ============================================
 -- FUNCIONES AUXILIARES
 -- ============================================
 
@@ -225,6 +250,9 @@ CREATE TRIGGER update_promociones_updated_at BEFORE UPDATE ON public.promociones
 CREATE TRIGGER update_cupones_updated_at BEFORE UPDATE ON public.cupones
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_categorias_updated_at BEFORE UPDATE ON public.categorias
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 -- POLÍTICAS RLS (Row Level Security)
 -- ============================================
@@ -238,6 +266,7 @@ ALTER TABLE public.promociones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cupones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.finanzas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.registros ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categorias ENABLE ROW LEVEL SECURITY;
 
 -- Políticas básicas (ajustar según roles)
 -- Permitir lectura pública de productos publicados
@@ -257,3 +286,8 @@ CREATE POLICY "Cualquiera puede crear pedidos de catálogo"
 
 -- TODO: Definir políticas más restrictivas para admins
 -- (crear rol 'admin' y dar permisos completos)
+
+-- Categorias: SELECT público (activas); escritura solo via service role (supabaseAdmin)
+CREATE POLICY "Categorias activas son visibles públicamente"
+  ON public.categorias FOR SELECT
+  USING (activa = true);
