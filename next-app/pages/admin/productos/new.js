@@ -58,6 +58,7 @@ function NewProductComponent() {
     categoriaPersonalizada: '',
     categoriaPadreId: '',
     categoriaId: '',
+    nuevaSubcategoriaNombre: '',  // nombre para crear subcategoría inline
     tipo: 'Corte Laser',
     medidas: '',
     tiempoUnitario: '00:00:30',
@@ -367,7 +368,39 @@ function NewProductComponent() {
   // Agregar nuevo producto
   const handleAddProduct = async () => {
     try {
-      const categoriaFinal = formData.categoriaPersonalizada?.trim() || formData.categoria
+      // Si el usuario eligió crear una nueva subcategoría inline
+      let finalCategoriaId = formData.categoriaId && formData.categoriaId !== '__nueva_sub__'
+        ? Number(formData.categoriaId)
+        : null
+
+      if (formData.categoriaId === '__nueva_sub__' && formData.nuevaSubcategoriaNombre?.trim()) {
+        try {
+          const res = await fetch('/api/admin/categorias', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nombre: formData.nuevaSubcategoriaNombre.trim(),
+              parent_id: Number(formData.categoriaPadreId)
+            })
+          })
+          const result = await res.json()
+          if (res.ok && result.data?.id) {
+            finalCategoriaId = result.data.id
+            // Invalidar cache de categorías para que aparezca en futuros loads
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categorias.all })
+          } else {
+            alert('Error al crear la subcategoría: ' + (result.error || 'Error desconocido'))
+            return
+          }
+        } catch (err) {
+          alert('Error de red al crear la subcategoría')
+          return
+        }
+      }
+
+      const categoriaFinal = formData.nuevaSubcategoriaNombre?.trim()
+        || formData.categoriaPersonalizada?.trim()
+        || formData.categoria
 
       let finalFormData = { ...formData }
 
@@ -385,7 +418,7 @@ function NewProductComponent() {
       const newProductData = {
         nombre: finalFormData.nombre,
         categoria: categoriaFinal,
-        categoria_id: formData.categoriaId ? Number(formData.categoriaId) : null,
+        categoria_id: finalCategoriaId,
         tipo: finalFormData.tipo,
         tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
@@ -674,7 +707,6 @@ function NewProductComponent() {
               {/* Subcategoría (solo en modo API) */}
               {usandoAPICategories && formData.categoriaPadreId && (() => {
                 const subs = categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
-                if (subs.length === 0) return null
                 return (
                   <div>
                     <label style={{
@@ -688,16 +720,30 @@ function NewProductComponent() {
                     </label>
                     <select
                       name="categoriaId"
-                      value={formData.categoriaId}
+                      value={formData.categoriaId === '__nueva_sub__' ? '__nueva_sub__' : formData.categoriaId}
                       onChange={(e) => {
-                        const subId = e.target.value
-                        const sub = subs.find(c => String(c.id) === String(subId))
-                        const padre = categoriasFromAPI.find(c => String(c.id) === String(formData.categoriaPadreId))
-                        setFormData(prev => ({
-                          ...prev,
-                          categoriaId: subId || prev.categoriaPadreId,
-                          categoria: sub ? sub.nombre : (padre ? padre.nombre : '')
-                        }))
+                        const val = e.target.value
+                        if (val === '__nueva_sub__') {
+                          setFormData(prev => ({
+                            ...prev,
+                            categoriaId: '__nueva_sub__',
+                            categoria: prev.categoria,
+                            nuevaSubcategoriaNombre: ''
+                          }))
+                          setTimeout(() => {
+                            const input = document.querySelector('[name="nuevaSubcategoriaNombre"]')
+                            if (input) input.focus()
+                          }, 100)
+                        } else {
+                          const sub = subs.find(c => String(c.id) === String(val))
+                          const padre = categoriasFromAPI.find(c => String(c.id) === String(formData.categoriaPadreId))
+                          setFormData(prev => ({
+                            ...prev,
+                            categoriaId: val || prev.categoriaPadreId,
+                            categoria: sub ? sub.nombre : (padre ? padre.nombre : ''),
+                            nuevaSubcategoriaNombre: ''
+                          }))
+                        }
                       }}
                       style={{
                         width: '100%',
@@ -714,7 +760,28 @@ function NewProductComponent() {
                       {subs.map(c => (
                         <option key={c.id} value={c.id}>{c.nombre}</option>
                       ))}
+                      <option value="__nueva_sub__">✏️ Nueva subcategoría...</option>
                     </select>
+                    {formData.categoriaId === '__nueva_sub__' && (
+                      <input
+                        type="text"
+                        name="nuevaSubcategoriaNombre"
+                        value={formData.nuevaSubcategoriaNombre}
+                        onChange={handleInputChange}
+                        placeholder="Nombre de la nueva subcategoría"
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid #3b82f6',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          marginTop: '12px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    )}
                   </div>
                 )
               })()}
