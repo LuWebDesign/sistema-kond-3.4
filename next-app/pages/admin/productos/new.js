@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../../utils/catalogUtils'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
-import { useMateriales } from '../../../hooks/useSupabaseQuery'
+import { useMateriales, useProductos } from '../../../hooks/useSupabaseQuery'
 import { QUERY_KEYS, STALE_TIMES } from '../../../lib/queryKeys'
 import { createProducto, updateProducto, uploadProductoImagen } from '../../../utils/supabaseProducts'
 import dynamic from 'next/dynamic'
@@ -31,7 +31,12 @@ function NewProductComponent() {
 
   const { data: materialesResult } = useMateriales()
 
-  // Cargar categorías desde API
+  // Fuente primaria: categorías derivadas de productos existentes (siempre funciona)
+  const { data: productosData } = useProductos()
+  const products = Array.isArray(productosData) ? productosData : (productosData?.data || [])
+  const categoriesFromProducts = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort()
+
+  // Fuente secundaria: categorías desde API (requiere migración de tabla categorias)
   const { data: categoriasData } = useQuery({
     queryKey: QUERY_KEYS.categorias.list(),
     queryFn: async () => {
@@ -41,7 +46,10 @@ function NewProductComponent() {
     },
     staleTime: STALE_TIMES.categorias
   })
-  const categoriasDisponibles = categoriasData?.data || categoriasData || []
+  const categoriasFromAPI = categoriasData?.data || []
+
+  // Usar API si tiene datos, de lo contrario usar categorías derivadas de productos
+  const usandoAPICategories = categoriasFromAPI.length > 0
 
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -458,9 +466,9 @@ function NewProductComponent() {
     }
   }
 
-  const categoriasRaiz = categoriasDisponibles.filter(c => !c.parent_id)
+  const categoriasRaiz = categoriasFromAPI.filter(c => !c.parent_id)
   const subcategoriasDePadre = formData.categoriaPadreId
-    ? categoriasDisponibles.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
+    ? categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
     : []
 
   return (    <Layout title="Agregar Producto - Sistema KOND">
@@ -561,7 +569,7 @@ function NewProductComponent() {
                 />
               </div>
 
-              {/* Categoría raíz */}
+              {/* Categoría */}
               <div>
                 <label style={{
                   display: 'block',
@@ -572,59 +580,20 @@ function NewProductComponent() {
                 }}>
                   Categoría
                 </label>
-                <select
-                  name="categoriaPadreId"
-                  value={formData.categoriaPadreId}
-                  onChange={(e) => {
-                    const padreId = e.target.value
-                    const padre = categoriasRaiz.find(c => String(c.id) === String(padreId))
-                    setFormData(prev => ({
-                      ...prev,
-                      categoriaPadreId: padreId,
-                      categoriaId: padreId,
-                      categoria: padre ? padre.nombre : ''
-                    }))
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '2px solid var(--border-color)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {categoriasRaiz.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-              </div>
 
-              {/* Subcategoría (condicional) */}
-              {formData.categoriaPadreId && subcategoriasDePadre.length > 0 && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)'
-                  }}>
-                    Subcategoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
-                  </label>
+                {usandoAPICategories ? (
+                  /* Selector estructurado con IDs (requiere migración de categorias) */
                   <select
-                    name="categoriaId"
-                    value={formData.categoriaId}
+                    name="categoriaPadreId"
+                    value={formData.categoriaPadreId}
                     onChange={(e) => {
-                      const subId = e.target.value
-                      const sub = subcategoriasDePadre.find(c => String(c.id) === String(subId))
+                      const padreId = e.target.value
+                      const padre = categoriasFromAPI.filter(c => !c.parent_id).find(c => String(c.id) === String(padreId))
                       setFormData(prev => ({
                         ...prev,
-                        categoriaId: subId || prev.categoriaPadreId,
-                        categoria: sub ? sub.nombre : (categoriasRaiz.find(c => String(c.id) === String(prev.categoriaPadreId))?.nombre || '')
+                        categoriaPadreId: padreId,
+                        categoriaId: padreId,
+                        categoria: padre ? padre.nombre : ''
                       }))
                     }}
                     style={{
@@ -638,13 +607,117 @@ function NewProductComponent() {
                       cursor: 'pointer'
                     }}
                   >
-                    <option value={formData.categoriaPadreId}>-- Sin subcategoría --</option>
-                    {subcategoriasDePadre.map(c => (
+                    <option value="">Seleccionar categoría</option>
+                    {categoriasFromAPI.filter(c => !c.parent_id).map(c => (
                       <option key={c.id} value={c.id}>{c.nombre}</option>
                     ))}
                   </select>
-                </div>
-              )}
+                ) : (
+                  /* Selector de texto (compatibilidad sin migración) */
+                  <select
+                    name="categoria"
+                    value={formData.categoria}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (v === '__nueva__') {
+                        setFormData(prev => ({ ...prev, categoria: '', categoriaPersonalizada: '' }))
+                        setTimeout(() => {
+                          const input = document.querySelector('[name="categoriaPersonalizada"]')
+                          if (input) input.focus()
+                        }, 100)
+                      } else {
+                        setFormData(prev => ({ ...prev, categoria: v, categoriaPersonalizada: '' }))
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '2px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.95rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="">Seleccionar categoría</option>
+                    {categoriesFromProducts.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    <option value="__nueva__">✏️ Crear nueva categoría...</option>
+                  </select>
+                )}
+
+                {/* Input para nueva categoría (modo texto) */}
+                {!usandoAPICategories && formData.categoria === '' && (
+                  <input
+                    type="text"
+                    name="categoriaPersonalizada"
+                    value={formData.categoriaPersonalizada}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, 'tipo')}
+                    placeholder="Ingrese nueva categoría"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '2px solid #3b82f6',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.95rem',
+                      marginTop: '12px'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Subcategoría (solo en modo API) */}
+              {usandoAPICategories && formData.categoriaPadreId && (() => {
+                const subs = categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
+                if (subs.length === 0) return null
+                return (
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)'
+                    }}>
+                      Subcategoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
+                    </label>
+                    <select
+                      name="categoriaId"
+                      value={formData.categoriaId}
+                      onChange={(e) => {
+                        const subId = e.target.value
+                        const sub = subs.find(c => String(c.id) === String(subId))
+                        const padre = categoriasFromAPI.find(c => String(c.id) === String(formData.categoriaPadreId))
+                        setFormData(prev => ({
+                          ...prev,
+                          categoriaId: subId || prev.categoriaPadreId,
+                          categoria: sub ? sub.nombre : (padre ? padre.nombre : '')
+                        }))
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value={formData.categoriaPadreId}>-- Sin subcategoría --</option>
+                      {subs.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })()}
 
               {/* Tipo */}
               <div>
