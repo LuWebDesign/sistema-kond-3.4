@@ -104,6 +104,35 @@ function NewProductComponent() {
     isPrecioUnitarioManual: false
   })
 
+  // Estilos reutilizables
+  const inputBase = {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: '6px',
+    border: '2px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: '0.9rem',
+    boxSizing: 'border-box'
+  }
+  const btnPrimary = {
+    padding: '10px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    background: '#10b981',
+    color: 'white',
+    cursor: 'pointer',
+    fontWeight: 600
+  }
+  const btnSecondary = {
+    padding: '10px 16px',
+    borderRadius: '6px',
+    border: '1px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer'
+  }
+
   // Wire React Query materiales data → local materials state
   useEffect(() => {
     const materialesList = Array.isArray(materialesResult) ? materialesResult : (materialesResult?.data || [])
@@ -1128,49 +1157,48 @@ function NewProductComponent() {
           <div style={{
             background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
             borderRadius: '12px',
-            padding: '24px',
+            padding: '20px',
             marginBottom: '24px',
             border: '1px solid rgba(59, 130, 246, 0.2)',
             boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>🎨</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '18px' }}>🎨</span>
+              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Material y Placas
               </h4>
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '20px'
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '16px'
             }}>
               {/* Unidades por Placa */}
               <div>
                 <label style={{
                   display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
+                  marginBottom: '6px',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: 'var(--text-primary)'
                 }}>
-                  Unidades por Placa
+                  Ud. x Placa
                 </label>
                 <input
                   type="number"
                   name="unidadesPorPlaca"
                   value={formData.unidadesPorPlaca}
                   onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, 'usoPlacas')}
                   min="1"
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    borderRadius: '6px',
                     border: '2px solid var(--border-color)',
                     background: 'var(--bg-secondary)',
                     color: 'var(--text-primary)',
-                    fontSize: '0.95rem'
+                    fontSize: '0.9rem'
                   }}
                 />
               </div>
@@ -1179,65 +1207,64 @@ function NewProductComponent() {
               <div>
                 <label style={{
                   display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
+                  marginBottom: '6px',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: 'var(--text-primary)'
                 }}>
-                  Uso de Placas
+                  Placas usado
                 </label>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="number"
                     name="usoPlacas"
                     value={formData.usoPlacas}
                     onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'materialId')}
                     readOnly={!calculatedFields.isUsoPlacasManual}
                     min="0"
                     style={{
                       flex: 1,
-                      padding: '12px 16px',
-                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '6px',
                       border: '2px solid var(--border-color)',
                       background: calculatedFields.isUsoPlacasManual ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
                       color: 'var(--text-primary)',
-                      fontSize: '0.95rem',
+                      fontSize: '0.9rem',
                       cursor: calculatedFields.isUsoPlacasManual ? 'text' : 'not-allowed'
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => toggleFieldMode('isUsoPlacasManual')}
+                    title={calculatedFields.isUsoPlacasManual ? 'Modo manual' : 'Modo automático'}
                     style={{
-                      padding: '12px 16px',
-                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
                       border: '2px solid var(--border-color)',
                       background: calculatedFields.isUsoPlacasManual ? '#3b82f6' : 'var(--bg-secondary)',
                       color: calculatedFields.isUsoPlacasManual ? 'white' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      minWidth: '80px'
+                      fontSize: '0.75rem',
+                      fontWeight: 600
                     }}
                   >
-                    {calculatedFields.isUsoPlacasManual ? 'Manual' : 'Auto'}
+                    {calculatedFields.isUsoPlacasManual ? 'M' : 'A'}
                   </button>
                 </div>
               </div>
 
               {/* Material */}
-              <div style={{ gridColumn: '1 / -1' }}>
+              <div>
                 <label style={{
                   display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
+                  marginBottom: '6px',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: 'var(--text-primary)'
                 }}>
                   Material
                 </label>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <select
                     name="materialId"
                     value={formData.materialId || ''}
@@ -1250,421 +1277,232 @@ function NewProductComponent() {
                         setFormData(prev => ({ ...prev, materialId: '', costoMaterial: 0, costoPlaca: 0 }))
                       }
                     }}
-                    onKeyDown={(e) => handleKeyDown(e, 'ensamble')}
                     style={{
                       flex: 1,
-                      padding: '12px 16px',
-                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '6px',
                       border: '2px solid var(--border-color)',
                       background: 'var(--bg-secondary)',
                       color: 'var(--text-primary)',
-                      fontSize: '0.95rem',
+                      fontSize: '0.85rem',
                       cursor: 'pointer'
                     }}
                   >
-                    <option value="">-- Seleccionar material --</option>
+                    <option value="">Seleccionar</option>
                     {materials.map(m => (
                       <option key={m.id} value={m.id}>
-                        {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
+                        {m.nombre?.slice(0, 15)}
+                        {m.tipo ? ` (${m.tipo})` : ''}
                       </option>
                     ))}
                   </select>
-
                   {formData.materialId && (
                     <button
                       type="button"
                       onClick={() => startEditingMaterial(formData.materialId)}
+                      title="Editar material"
                       style={{
-                        padding: '12px 16px',
-                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
                         border: 'none',
-                        background: '#3b82f6',
+                        background: '#f59e0b',
                         color: 'white',
                         cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap'
+                        fontSize: '0.75rem',
+                        fontWeight: 600
                       }}
                     >
-                      ✏️ Editar
+                      ⚙️
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
 
-                {/* Formulario de edición de material */}
-                {editingMaterial && (
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '16px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    background: 'var(--bg-tertiary)'
-                  }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
-                      Editar Material
-                    </h4>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Nombre
-                        </label>
-                        <input
-                          type="text"
-                          value={materialForm.nombre}
-                          onChange={(e) => setMaterialForm(prev => ({ ...prev, nombre: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Tipo
-                        </label>
-                        <input
-                          type="text"
-                          value={materialForm.tipo}
-                          onChange={(e) => setMaterialForm(prev => ({ ...prev, tipo: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Espesor
-                        </label>
-                        <input
-                          type="text"
-                          value={materialForm.espesor}
-                          onChange={(e) => setMaterialForm(prev => ({ ...prev, espesor: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Costo Unitario
-                        </label>
-                        <input
-                          type="number"
-                          value={materialForm.costoUnitario}
-                          onChange={(e) => setMaterialForm(prev => ({ ...prev, costoUnitario: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                      </div>
+            {/* Material Edit Modal */}
+            {editingMaterial && (
+              <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  width: '90%',
+                  maxWidth: '400px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                }}>
+                  <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
+                    Editar Material
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Nombre</label>
+                      <input type="text" value={materialForm.nombre} onChange={(e) => setMaterialForm(p => ({ ...p, nombre: e.target.value }))} style={{ ...inputBase }} />
                     </div>
-
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        onClick={cancelEditingMaterial}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={saveMaterialChanges}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          border: 'none',
-                          background: 'var(--accent-blue)',
-                          color: 'white',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Guardar
-                      </button>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tipo</label>
+                      <input type="text" value={materialForm.tipo} onChange={(e) => setMaterialForm(p => ({ ...p, tipo: e.target.value }))} style={{ ...inputBase }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Espesor</label>
+                      <input type="text" value={materialForm.espesor} onChange={(e) => setMaterialForm(p => ({ ...p, espesor: e.target.value }))} style={{ ...inputBase }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Costo</label>
+                      <input type="number" value={materialForm.costoUnitario} onChange={(e) => setMaterialForm(p => ({ ...p, costoUnitario: e.target.value }))} style={{ ...inputBase }} />
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Ensamble */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Ensamble
-                </label>
-                <select
-                  name="ensamble"
-                  value={formData.ensamble}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, 'costoPlaca')}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '2px solid var(--border-color)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="Sin ensamble">Sin ensamble</option>
-                  <option value="Manual">Manual</option>
-                  <option value="Automático">Automático</option>
-                </select>
-              </div>
-
-              {/* Costo Placa */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Costo Placa ($)
-                </label>
-                <input
-                  type="number"
-                  name="costoPlaca"
-                  value={formData.costoPlaca}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, 'margenMaterial')}
-                  min="0"
-                  step="0.01"
-                  readOnly
-                  title="Este valor se extrae del material seleccionado"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '2px solid var(--border-color)',
-                    background: 'var(--bg-tertiary)',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.95rem',
-                    cursor: 'not-allowed'
-                  }}
-                />
-              </div>
-
-              {/* Margen Material */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Margen Material (%)
-                </label>
-                <input
-                  type="number"
-                  name="margenMaterial"
-                  value={formData.margenMaterial}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, 'precioUnitario')}
-                  min="0"
-                  step="0.1"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '2px solid var(--border-color)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem'
-                  }}
-                />
-              </div>
-
-              {/* Precio por Minuto (calculado) */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Precio por Minuto
-                </label>
-                <div style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: '2px solid var(--border-color)',
-                  background: 'var(--bg-tertiary)',
-                  color: '#10b981',
-                  fontSize: '0.95rem',
-                  fontWeight: 600
-                }}>
-                  {formatCurrency(calculatedFields.precioPorMinuto)}
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button type="button" onClick={cancelEditingMaterial} style={{ ...btnSecondary }}>Cancelar</button>
+                    <button type="button" onClick={saveMaterialChanges} style={{ ...btnPrimary }}>Guardar</button>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Ensamble */}
+            <div style={{ marginTop: '16px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)'
+              }}>
+                Ensamble
+              </label>
+              <select
+                name="ensamble"
+                value={formData.ensamble}
+                onChange={handleInputChange}
+                style={{
+                  width: '100%',
+                  maxWidth: '200px',
+                  padding: '10px 12px',
+                  borderRadius: '6px',
+                  border: '2px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="Sin ensamble">Sin ensamble</option>
+                <option value="Manual">Manual</option>
+                <option value="Automático">Automático</option>
+              </select>
             </div>
           </div>
 
-          {/* Sección: Precios */}
+          {/* Nueva sección: Costos y Precios */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
             borderRadius: '12px',
-            padding: '24px',
+            padding: '20px',
             marginBottom: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>💰</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Gestión de Precios
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '18px' }}>💰</span>
+              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Costos y Precios
               </h4>
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '20px'
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px'
             }}>
-              {/* Precio Unitario */}
+              {/* Costo Placa */}
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Precio Unitario <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{
-                    width: '100%',
-                    padding: '16px 20px',
-                    borderRadius: '12px',
-                    border: '3px solid #3b82f6',
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%)',
-                    color: '#2563eb',
-                    fontSize: '1.3rem',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
-                  }}>
-                    {formatCurrency(formData.precioUnitario)}
-                  </div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Costo Placa</label>
+                <div style={{ ...inputBase, background: 'var(--bg-tertiary)', color: 'var(--text-muted)', cursor: 'not-allowed' }} readOnly>
+                  {formatCurrency(formData.costoPlaca)}
+                </div>
+              </div>
 
-                  {calculatedFields.isPrecioUnitarioManual && (
-                    <input
-                      type="number"
-                      name="precioUnitario"
-                      value={formData.precioUnitario}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => handleKeyDown(e, null)}
-                      min="0"
-                      step="0.01"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: '8px',
-                        border: '2px solid #3b82f6',
-                        background: 'var(--bg-secondary)',
-                        color: '#2563eb',
-                        fontSize: '1.05rem',
-                        fontWeight: 700
-                      }}
-                    />
-                  )}
-
+              {/* Margen */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Margen %</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <input
+                    type="number"
+                    name="margenMaterial"
+                    value={formData.margenMaterial}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.1"
+                    style={{ ...inputBase, flex: 1 }}
+                  />
                   <button
                     type="button"
                     onClick={() => toggleFieldMode('isPrecioUnitarioManual')}
+                    title={calculatedFields.isPrecioUnitarioManual ? 'Precio manual' : 'Precio automático'}
                     style={{
-                      padding: '10px 20px',
-                      borderRadius: '8px',
+                      padding: '8px',
+                      borderRadius: '6px',
                       border: '2px solid var(--border-color)',
                       background: calculatedFields.isPrecioUnitarioManual ? '#3b82f6' : 'var(--bg-secondary)',
                       color: calculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      minWidth: '100px'
+                      fontSize: '0.7rem',
+                      fontWeight: 600
                     }}
                   >
-                    {calculatedFields.isPrecioUnitarioManual ? 'Manual' : 'Auto'}
+                    {calculatedFields.isPrecioUnitarioManual ? 'M' : 'A'}
                   </button>
                 </div>
               </div>
 
-              {/* Precio Promos */}
+              {/* Precio Unitario */}
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)'
-                }}>
-                  Precio Promociones
-                </label>
-                <div style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: '2px solid var(--border-color)',
-                  background: 'var(--bg-tertiary)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.95rem',
-                  fontStyle: 'italic'
-                }}>
-                  {formData.precioPromos > 0
-                    ? `${formatCurrency(formData.precioPromos)} (activo desde Marketing)`
-                    : 'Sin promoción activa'
-                  }
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Precio Unit. *</label>
+                <input
+                  type="number"
+                  name="precioUnitario"
+                  value={formData.precioUnitario}
+                  onChange={handleInputChange}
+                  readOnly={!calculatedFields.isPrecioUnitarioManual}
+                  min="0"
+                  step="0.01"
+                  style={{
+                    ...inputBase,
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    borderColor: '#10b981',
+                    background: calculatedFields.isPrecioUnitarioManual ? 'var(--bg-secondary)' : 'rgba(16, 185, 129, 0.1)',
+                    color: calculatedFields.isPrecioUnitarioManual ? 'var(--text-primary)' : '#10b981'
+                  }}
+                />
+              </div>
+
+              {/* Precio x Minuto */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>$/min</label>
+                <div style={{ ...inputBase, background: 'var(--bg-tertiary)', color: '#10b981', fontWeight: 600 }}>
+                  {formatCurrency(calculatedFields.precioPorMinuto)}
                 </div>
-                <small style={{
-                  display: 'block',
-                  marginTop: '6px',
-                  fontSize: '0.8rem',
-                  color: 'var(--text-secondary)'
-                }}>
-                  Los precios promocionales se gestionan desde el módulo de Marketing
-                </small>
+              </div>
+            </div>
+
+            {/* Precio Promos - secundario */}
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Precio Promo
+              </label>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                {formData.precioPromos > 0
+                  ? `${formatCurrency(formData.precioPromos)} (gestionar desde Marketing)`
+                  : 'Sin promoción activa'
+                }
               </div>
             </div>
           </div>
