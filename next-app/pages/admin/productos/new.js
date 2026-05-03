@@ -59,6 +59,7 @@ function NewProductComponent() {
     categoriaPadreId: '',
     categoriaId: '',
     nuevaSubcategoriaNombre: '',  // nombre para crear subcategoría inline
+    subcategoriaNombre: '',       // modo texto: nombre de la subcategoría a crear
     tipo: 'Corte Laser',
     medidas: '',
     tiempoUnitario: '00:00:30',
@@ -398,7 +399,54 @@ function NewProductComponent() {
         }
       }
 
+      // Caso 2: modo texto con subcategoría escrita
+      if (!usandoAPICategories && formData.subcategoriaNombre?.trim() && formData.categoria) {
+        try {
+          // Buscar o crear categoría padre
+          const allCatsRes = await fetch('/api/admin/categorias')
+          let parentId = null
+          if (allCatsRes.ok) {
+            const allCats = await allCatsRes.json()
+            const cats = allCats.data || []
+            const existing = cats.find(c => c.nombre.toLowerCase() === formData.categoria.toLowerCase() && !c.parent_id)
+            if (existing) {
+              parentId = existing.id
+            } else {
+              // Crear la categoría padre
+              const createParentRes = await fetch('/api/admin/categorias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: formData.categoria, parent_id: null })
+              })
+              if (createParentRes.ok) {
+                const created = await createParentRes.json()
+                parentId = created.data?.id
+              }
+            }
+          }
+          if (parentId) {
+            // Crear subcategoría
+            const createSubRes = await fetch('/api/admin/categorias', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nombre: formData.subcategoriaNombre.trim(), parent_id: parentId })
+            })
+            if (createSubRes.ok) {
+              const createdSub = await createSubRes.json()
+              if (createdSub.data?.id) {
+                finalCategoriaId = createdSub.data.id
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categorias.all })
+              }
+            }
+            // Si falla, no bloquear — el producto se guarda sin categoria_id
+          }
+        } catch {
+          // degradación graceful: guardar producto sin categoria_id
+        }
+      }
+
       const categoriaFinal = formData.nuevaSubcategoriaNombre?.trim()
+        || formData.subcategoriaNombre?.trim()
         || formData.categoriaPersonalizada?.trim()
         || formData.categoria
 
@@ -501,6 +549,14 @@ function NewProductComponent() {
 
   const categoriasRaiz = categoriasFromAPI.filter(c => !c.parent_id)
   const subcategoriasDePadre = formData.categoriaPadreId
+    ? categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
+    : []
+
+  // Categoría padre seleccionada (cualquier modo)
+  const hayCategoriaPadre = Boolean(formData.categoriaPadreId || formData.categoria)
+
+  // Subcategorías del padre en modo API
+  const subsDelPadre = formData.categoriaPadreId
     ? categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
     : []
 
@@ -704,47 +760,94 @@ function NewProductComponent() {
                 )}
               </div>
 
-              {/* Subcategoría (solo en modo API) */}
-              {usandoAPICategories && formData.categoriaPadreId && (() => {
-                const subs = categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
-                return (
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)'
-                    }}>
-                      Subcategoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
-                    </label>
-                    <select
-                      name="categoriaId"
-                      value={formData.categoriaId === '__nueva_sub__' ? '__nueva_sub__' : formData.categoriaId}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        if (val === '__nueva_sub__') {
-                          setFormData(prev => ({
-                            ...prev,
-                            categoriaId: '__nueva_sub__',
-                            categoria: prev.categoria,
-                            nuevaSubcategoriaNombre: ''
-                          }))
-                          setTimeout(() => {
-                            const input = document.querySelector('[name="nuevaSubcategoriaNombre"]')
-                            if (input) input.focus()
-                          }, 100)
-                        } else {
-                          const sub = subs.find(c => String(c.id) === String(val))
-                          const padre = categoriasFromAPI.find(c => String(c.id) === String(formData.categoriaPadreId))
-                          setFormData(prev => ({
-                            ...prev,
-                            categoriaId: val || prev.categoriaPadreId,
-                            categoria: sub ? sub.nombre : (padre ? padre.nombre : ''),
-                            nuevaSubcategoriaNombre: ''
-                          }))
-                        }
-                      }}
+              {/* Subcategoría */}
+              {hayCategoriaPadre && (
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)'
+                  }}>
+                    Subcategoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
+                  </label>
+
+                  {usandoAPICategories && formData.categoriaPadreId ? (
+                    /* Modo API: dropdown con subs existentes + opción crear nueva */
+                    <>
+                      <select
+                        name="categoriaId"
+                        value={formData.categoriaId === '__nueva_sub__' ? '__nueva_sub__' : formData.categoriaId}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === '__nueva_sub__') {
+                            setFormData(prev => ({
+                              ...prev,
+                              categoriaId: '__nueva_sub__',
+                              nuevaSubcategoriaNombre: ''
+                            }))
+                            setTimeout(() => {
+                              const input = document.querySelector('[name="nuevaSubcategoriaNombre"]')
+                              if (input) input.focus()
+                            }, 100)
+                          } else {
+                            const sub = subsDelPadre.find(c => String(c.id) === String(val))
+                            const padre = categoriasFromAPI.find(c => String(c.id) === String(formData.categoriaPadreId))
+                            setFormData(prev => ({
+                              ...prev,
+                              categoriaId: val || prev.categoriaPadreId,
+                              categoria: sub ? sub.nombre : (padre ? padre.nombre : ''),
+                              nuevaSubcategoriaNombre: ''
+                            }))
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value={formData.categoriaPadreId}>-- Sin subcategoría --</option>
+                        {subsDelPadre.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                        <option value="__nueva_sub__">✏️ Nueva subcategoría...</option>
+                      </select>
+                      {formData.categoriaId === '__nueva_sub__' && (
+                        <input
+                          type="text"
+                          name="nuevaSubcategoriaNombre"
+                          value={formData.nuevaSubcategoriaNombre}
+                          onChange={handleInputChange}
+                          placeholder="Nombre de la nueva subcategoría"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid #3b82f6',
+                            background: 'var(--bg-secondary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.95rem',
+                            marginTop: '12px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    /* Modo texto o tabla vacía: input libre para subcategoría */
+                    <input
+                      type="text"
+                      name="subcategoriaNombre"
+                      value={formData.subcategoriaNombre || ''}
+                      onChange={handleInputChange}
+                      placeholder="Ej: Corazones (se creará automáticamente)"
                       style={{
                         width: '100%',
                         padding: '12px 16px',
@@ -752,39 +855,12 @@ function NewProductComponent() {
                         border: '2px solid var(--border-color)',
                         background: 'var(--bg-secondary)',
                         color: 'var(--text-primary)',
-                        fontSize: '0.95rem',
-                        cursor: 'pointer'
+                        fontSize: '0.95rem'
                       }}
-                    >
-                      <option value={formData.categoriaPadreId}>-- Sin subcategoría --</option>
-                      {subs.map(c => (
-                        <option key={c.id} value={c.id}>{c.nombre}</option>
-                      ))}
-                      <option value="__nueva_sub__">✏️ Nueva subcategoría...</option>
-                    </select>
-                    {formData.categoriaId === '__nueva_sub__' && (
-                      <input
-                        type="text"
-                        name="nuevaSubcategoriaNombre"
-                        value={formData.nuevaSubcategoriaNombre}
-                        onChange={handleInputChange}
-                        placeholder="Nombre de la nueva subcategoría"
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '8px',
-                          border: '2px solid #3b82f6',
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.95rem',
-                          marginTop: '12px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    )}
-                  </div>
-                )
-              })()}
+                    />
+                  )}
+                </div>
+              )}
 
               {/* Tipo */}
               <div>

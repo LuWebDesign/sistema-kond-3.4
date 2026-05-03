@@ -2882,6 +2882,7 @@ function ProductCard({
   const [editData, setEditData] = useState({
     nombre: product.nombre || '',
     categoria: product.categoria || '',
+    categoria_id: product.categoria_id || null,
     medidas: product.medidas || '',
     tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
     materialId: product.materialId || '',
@@ -2912,6 +2913,7 @@ function ProductCard({
     setEditData({
       nombre: product.nombre || '',
       categoria: product.categoria || '',
+      categoria_id: product.categoria_id || null,
       medidas: product.medidas || '',
       tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
       materialId: product.materialId || '',
