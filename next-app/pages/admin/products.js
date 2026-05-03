@@ -1437,9 +1437,9 @@ function ProductsComponent() {
           }}>
             <div className="buttons-section" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
-                onClick={() => setShowAddForm(!showAddForm)}
+                onClick={() => router.push('/admin/productos/new')}
                 style={{
-                  background: showAddForm ? 'var(--text-secondary)' : 'var(--accent-blue)',
+                  background: 'var(--accent-blue)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -1454,26 +1454,8 @@ function ProductsComponent() {
                   justifyContent: 'center'
                 }}
               >
-                {showAddForm ? '∧ Ocultar Formulario' : '+ Agregar Producto'}
+                + Agregar Producto
               </button>
-
-              <Link href="/admin/productos/new" style={{
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                textDecoration: 'none',
-                height: '44px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                fontSize: '0.9rem',
-                boxSizing: 'border-box',
-              }}>
-                🆕 Nuevo producto (form dedicado)
-              </Link>
 
               <Link href="/admin/materiales" style={{
                 background: '#e5e7eb',
