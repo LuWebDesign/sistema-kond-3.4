@@ -5,6 +5,28 @@
 -- políticas RLS y funciones para el sistema KOND.
 
 -- ============================================
+-- TABLA: categorias
+-- ============================================
+-- NOTA: categoria_id en productos puede apuntar a una categoría raíz
+-- (parent_id IS NULL) o a una subcategoría (parent_id NOT NULL).
+-- La profundidad máxima de la estructura es 1 nivel; el constraint
+-- se aplica en la capa de API (no por CHECK de DB).
+CREATE TABLE IF NOT EXISTS public.categorias (
+  id         BIGSERIAL PRIMARY KEY,
+  nombre     TEXT NOT NULL,
+  slug       TEXT NOT NULL UNIQUE,
+  parent_id  BIGINT REFERENCES public.categorias(id) ON DELETE RESTRICT,
+  activa     BOOLEAN NOT NULL DEFAULT true,
+  orden      INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Índices para categorias
+CREATE INDEX IF NOT EXISTS idx_categorias_slug      ON public.categorias(slug);
+CREATE INDEX IF NOT EXISTS idx_categorias_parent_id ON public.categorias(parent_id);
+
+-- ============================================
 -- TABLA: productos
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.productos (
@@ -200,28 +222,6 @@ CREATE TABLE IF NOT EXISTS public.registros (
 );
 
 -- ============================================
--- TABLA: categorias
--- ============================================
--- NOTA: categoria_id en productos puede apuntar a una categoría raíz
--- (parent_id IS NULL) o a una subcategoría (parent_id NOT NULL).
--- La profundidad máxima de la estructura es 1 nivel; el constraint
--- se aplica en la capa de API (no por CHECK de DB).
-CREATE TABLE IF NOT EXISTS public.categorias (
-  id         BIGSERIAL PRIMARY KEY,
-  nombre     TEXT NOT NULL,
-  slug       TEXT NOT NULL UNIQUE,
-  parent_id  BIGINT REFERENCES public.categorias(id) ON DELETE RESTRICT,
-  activa     BOOLEAN NOT NULL DEFAULT true,
-  orden      INT NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Índices para categorias
-CREATE INDEX IF NOT EXISTS idx_categorias_slug      ON public.categorias(slug);
-CREATE INDEX IF NOT EXISTS idx_categorias_parent_id ON public.categorias(parent_id);
-
--- ============================================
 -- FUNCIONES AUXILIARES
 -- ============================================
 
@@ -250,6 +250,7 @@ CREATE TRIGGER update_promociones_updated_at BEFORE UPDATE ON public.promociones
 CREATE TRIGGER update_cupones_updated_at BEFORE UPDATE ON public.cupones
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_categorias_updated_at ON public.categorias;
 CREATE TRIGGER update_categorias_updated_at BEFORE UPDATE ON public.categorias
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
