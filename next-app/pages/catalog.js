@@ -28,6 +28,7 @@ export default function Catalog() {
   const ITEMS_PER_PAGE = 12
   const [gridColumnsDesktop, setGridColumnsDesktop] = useState(3)
   const [gridColumnsMobile, setGridColumnsMobile] = useState(2)
+  const [categoriasAPI, setCategoriasAPI] = useState([])
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
@@ -57,6 +58,15 @@ export default function Catalog() {
     }
     window.addEventListener('catalogStyles:updated', onStylesUpdate)
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/categorias')
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json?.data) setCategoriasAPI(json.data)
+      })
+      .catch(() => {})
   }, [])
 
   // Debounce para la búsqueda (300ms)
@@ -277,6 +287,19 @@ export default function Catalog() {
   }, [products, addToCart])
 
   // Using shared slugify helper from ../utils/slugify
+
+  const resolveCategoriaDisplay = useCallback((product) => {
+    if (!product.categoriaId || categoriasAPI.length === 0) {
+      return { label: product.categoria, isHierarchy: false }
+    }
+    const sub = categoriasAPI.find(c => c.id === product.categoriaId)
+    if (!sub) return { label: product.categoria, isHierarchy: false }
+    if (sub.parent_id) {
+      const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+      return { label: sub.nombre, parent: parent?.nombre, isHierarchy: true }
+    }
+    return { label: sub.nombre, isHierarchy: false }
+  }, [categoriasAPI])
 
   return (
     <PublicLayout title="Catálogo - KOND">
@@ -853,7 +876,19 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       cursor: 'default'
                     }}
                   >
-                    <span>{product.categoria}</span>
+                    {(() => {
+                      const cat = resolveCategoriaDisplay(product)
+                      if (cat.isHierarchy) {
+                        return (
+                          <>
+                            <span style={{ opacity: 0.65, fontSize: '0.72rem' }}>{cat.parent}</span>
+                            <span style={{ margin: '0 3px', opacity: 0.5 }}>›</span>
+                            <span>{cat.label}</span>
+                          </>
+                        )
+                      }
+                      return <span>{cat.label || product.categoria}</span>
+                    })()}
                   </div>
                 )}
                 

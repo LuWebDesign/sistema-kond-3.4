@@ -169,6 +169,15 @@ function ProductsComponent() {
   // Obtener categorías únicas de los productos existentes
   const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort()
 
+  const [categoriasFromAPI, setCategoriasFromAPI] = useState([])
+
+  useEffect(() => {
+    fetch('/api/admin/categorias')
+      .then(r => r.ok ? r.json() : null)
+      .then(json => { if (json?.data) setCategoriasFromAPI(json.data) })
+      .catch(() => {})
+  }, [])
+
   // (updateCalculatedFields eliminado: lógica inlineada en el useEffect de abajo)
 
   // Efecto para actualizar costos cuando cambian los materiales
@@ -3545,6 +3554,7 @@ function ProductCard({
               onSave={handleSave}
               materials={materials}
               categories={categories}
+              categoriasAPI={categoriasFromAPI}
               currentMaterialId={product.materialId}
               editCalculatedFields={editCalculatedFields}
               toggleEditFieldMode={toggleEditFieldMode}
@@ -4330,7 +4340,7 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
 }
 
 // Componente de formulario de edición mejorado (estilo formulario de agregar)
-function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], categoriasAPI = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -4344,6 +4354,26 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
       setShowCustomCategory(false)
     }
   }, [editData.categoria, categories])
+
+  const usandoAPICategories = categoriasAPI.length > 0
+  const categoriasRaiz = categoriasAPI.filter(c => !c.parent_id)
+
+  const categoriaPadreId = useMemo(() => {
+    if (!editData.categoria_id) return ''
+    const sub = categoriasAPI.find(c => c.id === editData.categoria_id)
+    if (sub?.parent_id) return String(sub.parent_id)
+    return String(editData.categoria_id)
+  }, [editData.categoria_id, categoriasAPI])
+
+  const [selectedPadreId, setSelectedPadreId] = useState('')
+
+  useEffect(() => {
+    setSelectedPadreId(categoriaPadreId)
+  }, [categoriaPadreId])
+
+  const subsDelPadre = selectedPadreId
+    ? categoriasAPI.filter(c => String(c.parent_id) === String(selectedPadreId))
+    : []
 
   const getCurrentMaterialData = () => {
     const materialId = editData.materialId || currentMaterialId
@@ -4397,29 +4427,84 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             <label style={labelStyle}>Nombre</label>
             <input type="text" value={editData.nombre} onChange={e => handleInputChange('nombre', e.target.value)} style={inputStyle} />
           </div>
-          <div>
+          <div style={{ gridColumn: usandoAPICategories ? '1 / -1' : undefined }}>
             <label style={labelStyle}>Categoría</label>
-            <select
-              value={categories.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
-              onChange={e => {
-                const v = e.target.value
-                if (v === '__nueva__') {
-                  handleInputChange('categoria', '')
-                  setShowCustomCategory(true)
-                  setTimeout(() => { const el = document.querySelector('[name="editCatPersonalizada"]'); if (el) el.focus() }, 50)
-                } else {
-                  handleInputChange('categoria', v)
-                  setShowCustomCategory(false)
-                }
-              }}
-              style={inputStyle}
-            >
-              <option value="">Seleccionar categoría</option>
-              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              <option value="__nueva__">✏️ Crear nueva categoría...</option>
-            </select>
-            {showCustomCategory && (
-              <input type="text" name="editCatPersonalizada" value={editData.categoria || ''} onChange={e => handleInputChange('categoria', e.target.value)} placeholder="Nueva categoría" style={{ ...inputStyle, marginTop: '8px', borderColor: '#3b82f6' }} />
+            {usandoAPICategories ? (
+              /* Modo API: selector de dos niveles */
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {/* Nivel 1: Categoría padre */}
+                <select
+                  value={selectedPadreId}
+                  onChange={e => {
+                    const pid = e.target.value
+                    setSelectedPadreId(pid)
+                    if (pid) {
+                      const padre = categoriasRaiz.find(c => String(c.id) === String(pid))
+                      handleInputChange('categoria', padre?.nombre || '')
+                      handleInputChange('categoria_id', Number(pid))
+                    } else {
+                      handleInputChange('categoria', '')
+                      handleInputChange('categoria_id', null)
+                    }
+                  }}
+                  style={inputStyle}
+                >
+                  <option value="">Categoría padre</option>
+                  {categoriasRaiz.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+                {/* Nivel 2: Subcategoría */}
+                <select
+                  value={editData.categoria_id && subsDelPadre.find(c => c.id === editData.categoria_id) ? editData.categoria_id : ''}
+                  onChange={e => {
+                    const sid = e.target.value
+                    if (sid) {
+                      const sub = subsDelPadre.find(c => String(c.id) === String(sid))
+                      handleInputChange('categoria', sub?.nombre || editData.categoria)
+                      handleInputChange('categoria_id', Number(sid))
+                    } else {
+                      // Sin subcategoría: el categoria_id es el padre
+                      handleInputChange('categoria_id', Number(selectedPadreId) || null)
+                    }
+                  }}
+                  style={inputStyle}
+                  disabled={subsDelPadre.length === 0}
+                >
+                  <option value="">{subsDelPadre.length === 0 ? 'Sin subcategorías' : '-- Sin subcategoría --'}</option>
+                  {subsDelPadre.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              /* Modo texto: selector clásico + custom */
+              <>
+                <select
+                  value={categories.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
+                  onChange={e => {
+                    const v = e.target.value
+                    if (v === '__nueva__') {
+                      handleInputChange('categoria', '')
+                      setShowCustomCategory(true)
+                      setTimeout(() => { const el = document.querySelector('[name="editCatPersonalizada"]'); if (el) el.focus() }, 50)
+                    } else {
+                      handleInputChange('categoria', v)
+                      setShowCustomCategory(false)
+                    }
+                  }}
+                  style={inputStyle}
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                  <option value="__nueva__">✏️ Crear nueva categoría...</option>
+                </select>
+                {showCustomCategory && (
+                  <input type="text" name="editCatPersonalizada" value={editData.categoria || ''} onChange={e => handleInputChange('categoria', e.target.value)} placeholder="Nueva categoría" style={{ ...inputStyle, marginTop: '8px', borderColor: '#3b82f6' }} />
+                )}
+              </>
             )}
           </div>
           <div>
