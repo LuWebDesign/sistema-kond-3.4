@@ -1,7 +1,7 @@
 import Layout from '../../../components/Layout'
 import withAdminAuth from '../../../components/withAdminAuth'
 import Link from 'next/link'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS, STALE_TIMES } from '../../../lib/queryKeys'
 
@@ -191,7 +191,7 @@ function CategoriasAdmin() {
               </thead>
               <tbody>
                 {tree.map((padre, idx) => (
-                  <>
+                  <React.Fragment key={padre.id}>
                     <tr
                       key={padre.id}
                       style={{
@@ -259,7 +259,7 @@ function CategoriasAdmin() {
                         </td>
                       </tr>
                     ))}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

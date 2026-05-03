@@ -74,6 +74,7 @@ function NuevoProducto() {
     const errs = {}
     if (!form.nombre.trim()) errs.nombre = 'El nombre es requerido'
     if (!form.precioUnitario || Number(form.precioUnitario) <= 0) errs.precioUnitario = 'El precio debe ser mayor a 0'
+    if (!resolvedCategoriaId) errs.categoria = 'La categoría es requerida'
     return errs
   }
 
@@ -276,6 +277,7 @@ function NuevoProducto() {
                 📌 Se asignará a: <strong>{resolvedCategoriaNombre}</strong>
               </p>
             )}
+            {errors.categoria && <p style={{ color: 'red', fontSize: '0.875rem', margin: '4px 0 0' }}>{errors.categoria}</p>}
           </div>
 
           {/* Descripción */}

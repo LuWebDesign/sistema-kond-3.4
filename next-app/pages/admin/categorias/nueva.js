@@ -21,6 +21,11 @@ async function crearCategoria(body) {
     body: JSON.stringify(body),
   })
   const json = await res.json()
+  if (res.status === 409) {
+    const err = new Error('El slug de esta categoría ya existe. Cambiá el nombre.')
+    err.status = 409
+    throw err
+  }
   if (!res.ok) throw new Error(json.error || 'Error al crear categoría')
   return json.data
 }
