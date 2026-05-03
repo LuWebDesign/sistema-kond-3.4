@@ -58,7 +58,7 @@ export default function ProductCatchAll({ params }) {
     )
   }
 
-  return <ProductDetail product={found} categories={categories} products={products} />
+  return <ProductDetail product={found} categories={categories} products={products} categoriasAPI={categoriasAPI} />
 }
 
 export async function getServerSideProps(context) {

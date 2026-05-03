@@ -42,7 +42,7 @@ function getCategoryImage(catName, products) {
   return DEFAULT_CATEGORY_IMAGES[catName] || null
 }
 
-export default function ProductDetail({ product, categories = [], products = [] }) {
+export default function ProductDetail({ product, categories = [], products = [], categoriasAPI = [] }) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
@@ -106,6 +106,44 @@ export default function ProductDetail({ product, categories = [], products = [] 
     router.push('/mi-carrito')
   }
 
+  // Resolver jerarquía de categoría para breadcrumb
+  const breadcrumbItems = (() => {
+    const items = []
+
+    if (product.categoriaId && categoriasAPI.length > 0) {
+      const sub = categoriasAPI.find(c => c.id === product.categoriaId)
+      if (sub?.parent_id) {
+        const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+        if (parent) {
+          const parentSlug = slugifyPreserveCase(parent.slug || parent.nombre)
+          items.push({
+            label: parent.nombre,
+            href: `/catalog/${parentSlug}`
+          })
+          items.push({
+            label: sub.nombre,
+            href: null  // sin página de listing de subcategoría por ahora
+          })
+          return items
+        }
+      }
+      // categoriaId apunta a raíz (sin parent)
+      if (sub) {
+        const subSlug = slugifyPreserveCase(sub.slug || sub.nombre)
+        items.push({ label: sub.nombre, href: `/catalog/${subSlug}` })
+        return items
+      }
+    }
+
+    // Fallback: usar product.categoria texto
+    if (product.categoria) {
+      const catSlug = slugifyPreserveCase(product.categoria)
+      items.push({ label: product.categoria, href: `/catalog/${catSlug}` })
+    }
+
+    return items
+  })()
+
   return (
     <PublicLayout title={`${product.nombre} - KOND`}>
       <div className="pd-layout">
@@ -115,13 +153,19 @@ export default function ProductDetail({ product, categories = [], products = [] 
           <Link href="/catalog" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>
             Catálogo
           </Link>
-          <span className="pd-sep">›</span>
-          {product.categoria && (
-            <>
-              <span>{product.categoria}</span>
+          {breadcrumbItems.map((item, i) => (
+            <React.Fragment key={i}>
               <span className="pd-sep">›</span>
-            </>
-          )}
+              {item.href ? (
+                <Link href={item.href} style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>
+                  {item.label}
+                </Link>
+              ) : (
+                <span style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+          <span className="pd-sep">›</span>
           <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{product.nombre}</span>
         </nav>
 
