@@ -48,6 +48,8 @@ function NewProductComponent() {
     nombre: '',
     categoria: '',
     categoriaPersonalizada: '',
+    categoriaPadreId: '',
+    categoriaId: '',
     tipo: 'Corte Laser',
     medidas: '',
     tiempoUnitario: '00:00:30',
@@ -375,6 +377,7 @@ function NewProductComponent() {
       const newProductData = {
         nombre: finalFormData.nombre,
         categoria: categoriaFinal,
+        categoria_id: formData.categoriaId ? Number(formData.categoriaId) : null,
         tipo: finalFormData.tipo,
         tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
@@ -455,8 +458,12 @@ function NewProductComponent() {
     }
   }
 
-  return (
-    <Layout title="Agregar Producto - Sistema KOND">
+  const categoriasRaiz = categoriasDisponibles.filter(c => !c.parent_id)
+  const subcategoriasDePadre = formData.categoriaPadreId
+    ? categoriasDisponibles.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
+    : []
+
+  return (    <Layout title="Agregar Producto - Sistema KOND">
       <div style={{ padding: '20px' }}>
         {/* Header de página */}
         <div style={{
@@ -554,7 +561,7 @@ function NewProductComponent() {
                 />
               </div>
 
-              {/* Categoría */}
+              {/* Categoría raíz */}
               <div>
                 <label style={{
                   display: 'block',
@@ -566,19 +573,18 @@ function NewProductComponent() {
                   Categoría
                 </label>
                 <select
-                  name="categoria"
-                  value={formData.categoria}
+                  name="categoriaPadreId"
+                  value={formData.categoriaPadreId}
                   onChange={(e) => {
-                    handleInputChange(e)
-                    if (e.target.value === '__nueva__') {
-                      setFormData(prev => ({ ...prev, categoria: '', categoriaPersonalizada: '' }))
-                      setTimeout(() => {
-                        const input = document.querySelector('[name="categoriaPersonalizada"]')
-                        if (input) input.focus()
-                      }, 100)
-                    }
+                    const padreId = e.target.value
+                    const padre = categoriasRaiz.find(c => String(c.id) === String(padreId))
+                    setFormData(prev => ({
+                      ...prev,
+                      categoriaPadreId: padreId,
+                      categoriaId: padreId,
+                      categoria: padre ? padre.nombre : ''
+                    }))
                   }}
-                  onKeyDown={(e) => handleKeyDown(e, formData.categoria === '' && formData.categoriaPersonalizada === '' ? 'categoriaPersonalizada' : 'tipo')}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -591,33 +597,54 @@ function NewProductComponent() {
                   }}
                 >
                   <option value="">Seleccionar categoría</option>
-                  {categoriasDisponibles.map(c => (
-                    <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                  {categoriasRaiz.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
                   ))}
-                  <option value="__nueva__">✏️ Crear nueva categoría...</option>
                 </select>
+              </div>
 
-                {(formData.categoria === '' && formData.categoriaPersonalizada !== undefined) && (
-                  <input
-                    type="text"
-                    name="categoriaPersonalizada"
-                    value={formData.categoriaPersonalizada}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, 'tipo')}
-                    placeholder="Ingrese nueva categoría"
+              {/* Subcategoría (condicional) */}
+              {formData.categoriaPadreId && subcategoriasDePadre.length > 0 && (
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)'
+                  }}>
+                    Subcategoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
+                  </label>
+                  <select
+                    name="categoriaId"
+                    value={formData.categoriaId}
+                    onChange={(e) => {
+                      const subId = e.target.value
+                      const sub = subcategoriasDePadre.find(c => String(c.id) === String(subId))
+                      setFormData(prev => ({
+                        ...prev,
+                        categoriaId: subId || prev.categoriaPadreId,
+                        categoria: sub ? sub.nombre : (categoriasRaiz.find(c => String(c.id) === String(prev.categoriaPadreId))?.nombre || '')
+                      }))
+                    }}
                     style={{
                       width: '100%',
                       padding: '12px 16px',
                       borderRadius: '8px',
-                      border: '2px solid #3b82f6',
+                      border: '2px solid var(--border-color)',
                       background: 'var(--bg-secondary)',
                       color: 'var(--text-primary)',
                       fontSize: '0.95rem',
-                      marginTop: '12px'
+                      cursor: 'pointer'
                     }}
-                  />
-                )}
-              </div>
+                  >
+                    <option value={formData.categoriaPadreId}>-- Sin subcategoría --</option>
+                    {subcategoriasDePadre.map(c => (
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Tipo */}
               <div>
@@ -984,7 +1011,7 @@ function NewProductComponent() {
               </div>
 
               {/* Material */}
-              <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{
                   display: 'block',
                   marginBottom: '8px',

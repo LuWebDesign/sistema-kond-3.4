@@ -1,7 +1,7 @@
 // API Route: Pública — Categorías
 // GET /api/categorias  → lista categorías activas (sin auth)
 
-import { supabaseAdmin } from '../../../utils/supabaseClient'
+import { supabase } from '../../../utils/supabaseClient'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -9,9 +9,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: `Método ${req.method} no permitido` })
   }
 
-  try {
-    const supabase = supabaseAdmin()
+  if (!supabase) {
+    return res.status(503).json({ error: 'Supabase no configurado' })
+  }
 
+  try {
     const { data, error } = await supabase
       .from('categorias')
       .select('id, nombre, slug, parent_id, activa, orden, created_at')
