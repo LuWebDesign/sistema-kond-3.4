@@ -669,6 +669,21 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
   const navigateToProduct = () => {
     try {
+      // Si el producto tiene subcategoría resuelta → URL de 3 segmentos
+      if (product.categoriaId && categoriasAPI.length > 0) {
+        const sub = categoriasAPI.find(c => c.id === product.categoriaId)
+        if (sub?.parent_id) {
+          const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+          if (parent) {
+            const parentSlug = slugifyPreserveCase(parent.slug || parent.nombre)
+            const subSlug = slugifyPreserveCase(sub.slug || sub.nombre)
+            const prodSlug = slugifyPreserveCase(product.nombre)
+            router.push(`/catalog/${parentSlug}/${subSlug}/${prodSlug}`)
+            return
+          }
+        }
+      }
+      // Fallback: URL de 2 segmentos (productos sin subcategoría o sin API)
       const catSlug = slugifyPreserveCase(product.categoria)
       const prodSlug = slugifyPreserveCase(product.nombre)
       router.push(`/catalog/${catSlug}/${prodSlug}`)
