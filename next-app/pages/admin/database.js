@@ -29,11 +29,13 @@ function DatabaseComponent() {
     search: '',
     visibility: 'visible', // 'visible', 'hidden', 'all'
     category: 'all',
+    subcategory: 'all',
     material: 'all',
     type: 'all'
   })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [materials, setMaterials] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
@@ -82,6 +84,7 @@ function DatabaseComponent() {
           hiddenInProductos: p.hidden_in_productos || false,
           imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
           imagenes: p.imagenes_urls || [],
+          categoriaId: p.categoria_id || null,
           fechaCreacion: p.created_at || new Date().toISOString()
         }
       })
@@ -153,6 +156,19 @@ function DatabaseComponent() {
     }
   }, [])
 
+  // Cargar categorías desde la API
+  const loadCategorias = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/categorias')
+      if (res.ok) {
+        const json = await res.json()
+        setCategorias(json.data || [])
+      }
+    } catch {
+      // silencioso: subcategorías quedan sin resolver
+    }
+  }, [])
+
   // Calcular productos filtrados y ordenados con useMemo (optimización)
   const filteredProducts = useMemo(() => {
     let filtered = [...products]
@@ -180,6 +196,11 @@ function DatabaseComponent() {
     // Filtro por categoría
     if (filters.category !== 'all') {
       filtered = filtered.filter(p => p.categoria === filters.category)
+    }
+
+    // Filtro por subcategoría
+    if (filters.subcategory !== 'all') {
+      filtered = filtered.filter(p => String(p.categoriaId) === String(filters.subcategory))
     }
 
     // Filtro por material
@@ -435,7 +456,8 @@ function DatabaseComponent() {
   useEffect(() => {
     loadProducts()
     loadMaterials()
-  }, [loadProducts, loadMaterials])
+    loadCategorias()
+  }, [loadProducts, loadMaterials, loadCategorias])
 
   // Escuchar actualizaciones desde la página de Productos
   useEffect(() => {
@@ -595,6 +617,31 @@ function DatabaseComponent() {
               </select>
             </div>
 
+            {/* Filtro de subcategoría */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Subcategoría
+              </label>
+              <select
+                value={filters.subcategory}
+                onChange={(e) => setFilters(prev => ({ ...prev, subcategory: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="all">Todas</option>
+                {categorias.filter(c => c.parent_id).map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Filtro de material */}
             <div>
               <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
@@ -739,6 +786,7 @@ function DatabaseComponent() {
                         product={product}
                         isEven={index % 2 === 0}
                         materials={materials}
+                        categorias={categorias}
                         onToggleVisibility={toggleProductVisibility}
                         onTogglePublished={toggleProductPublished}
                         onDelete={handleDeleteProduct}
@@ -759,13 +807,13 @@ function DatabaseComponent() {
             }}>
               <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🗄️</p>
               <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
-                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.material !== 'all' || filters.type !== 'all'
+                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.subcategory !== 'all' || filters.material !== 'all' || filters.type !== 'all'
                   ? 'No se encontraron productos con los filtros aplicados'
                   : 'No hay productos en la base de datos'
                 }
               </p>
               <p style={{ fontSize: '0.9rem' }}>
-                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.material !== 'all' || filters.type !== 'all'
+                {filters.search || filters.visibility !== 'visible' || filters.category !== 'all' || filters.subcategory !== 'all' || filters.material !== 'all' || filters.type !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Agrega productos desde la sección de Productos'
                 }
@@ -789,7 +837,7 @@ const thStyle = {
 }
 
 // Componente de fila de producto
-function ProductRow({ product, isEven, materials, onToggleVisibility, onTogglePublished, onDelete }) {
+function ProductRow({ product, isEven, materials, categorias, onToggleVisibility, onTogglePublished, onDelete }) {
   const [editingStock, setEditingStock] = useState(false)
   const [stockValue, setStockValue] = useState(product.stock || 0)
   const [isSaving, setIsSaving] = useState(false)
@@ -853,7 +901,25 @@ function ProductRow({ product, isEven, materials, onToggleVisibility, onTogglePu
       <td style={{ ...tdStyle, fontWeight: '600', color: 'var(--text-primary)' }}>
         {product.nombre}
       </td>
-      <td style={tdStyle}>{product.categoria || '-'}</td>
+      <td style={tdStyle}>
+        {(() => {
+          if (!product.categoriaId || categorias.length === 0) {
+            return product.categoria || '-'
+          }
+          const sub = categorias.find(c => c.id === product.categoriaId)
+          if (!sub) return product.categoria || '-'
+          if (sub.parent_id) {
+            const parent = categorias.find(c => c.id === sub.parent_id)
+            return (
+              <div style={{ lineHeight: '1.4', fontSize: '0.85rem' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{parent?.nombre}</div>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>↳ {sub.nombre}</div>
+              </div>
+            )
+          }
+          return sub.nombre
+        })()}
+      </td>
       <td style={tdStyle}>
         {materialInfo ? (
           <div style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>
