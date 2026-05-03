@@ -40,10 +40,10 @@ Chain strategy: pending
 
 ## Phase 2: Admin API + Mapping Script
 
-- [ ] 2.1 Create `next-app/pages/api/admin/categorias/index.js` — `GET` list (explicit columns, nested subcats), `POST` create (depth guard: parent must have `parent_id = null`, auto-slug, admin auth). ~80 lines.
-- [ ] 2.2 Create `next-app/pages/api/admin/categorias/[id].js` — `GET`, `PUT` (re-slug on nombre change), `DELETE` (409 if products reference it, admin auth). ~80 lines.
-- [ ] 2.3 Create `next-app/pages/api/categorias/index.js` — public `GET` list (no auth, explicit columns, activa=true only). ~30 lines.
-- [ ] 2.4 Create `next-app/scripts/map-categoria-to-id.js` — reads productos WHERE `categoria_id IS NULL`, exact match vs `categorias.nombre`, `--dry-run`/`--apply` flags, logs MATCH/NO_MATCH/SUMMARY. ~80 lines.
+- [x] 2.1 Create `next-app/pages/api/admin/categorias/index.js` — `GET` list (explicit columns, nested subcats), `POST` create (depth guard: parent must have `parent_id = null`, auto-slug, admin auth). ~80 lines.
+- [x] 2.2 Create `next-app/pages/api/admin/categorias/[id].js` — `GET`, `PUT` (re-slug on nombre change), `DELETE` (409 if products reference it, admin auth). ~80 lines.
+- [x] 2.3 Create `next-app/pages/api/categorias/index.js` — public `GET` list (no auth, explicit columns, activa=true only). ~30 lines.
+- [x] 2.4 Create `next-app/scripts/map-categoria-to-id.js` — reads productos WHERE `categoria_id IS NULL`, exact match vs `categorias.nombre`, `--dry-run`/`--apply` flags, logs MATCH/NO_MATCH/SUMMARY. ~80 lines.
 
 **Done when**: `POST` with `parent_id` pointing to depth-1 returns 400; `DELETE` with products returns 409; unauthenticated returns 401; dry-run writes zero rows.
 
