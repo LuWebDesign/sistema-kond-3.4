@@ -2785,6 +2785,7 @@ function ProductsComponent() {
                   product={product}
                   materials={materials}
                   categories={categories}
+                  categoriasAPI={categoriasFromAPI}
                   isExpanded={expandedCards.has(product.id)}
                   isEditing={editingCards.has(product.id)}
                   onDelete={handleDeleteProduct}
@@ -2871,6 +2872,7 @@ function ProductCard({
   product, 
   materials = [],
   categories = [],
+  categoriasAPI = [],
   isExpanded, 
   isEditing, 
   onDelete, 
