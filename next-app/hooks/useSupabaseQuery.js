@@ -29,6 +29,9 @@ import {
   getPedidoCatalogoById,
 } from '@/utils/supabasePedidos'
 
+// -- Categorías
+import { getCategoriasPublicas, getCategoriasAdmin } from '@/utils/supabaseCategorias'
+
 // ============================================================
 // PRODUCTOS
 // ============================================================
@@ -166,5 +169,41 @@ export function usePedidoCatalogoById(id) {
     queryFn: () => getPedidoCatalogoById(id).then(res => res.data),
     staleTime: STALE_TIMES.pedidos,
     enabled: !!id,
+  })
+}
+
+// ============================================================
+// CATEGORÍAS
+// ============================================================
+
+/**
+ * Categorías activas — catálogo público.
+ * staleTime: 15 min (reference data, changes rarely)
+ */
+export function useCategorias() {
+  return useQuery({
+    queryKey: QUERY_KEYS.categorias.list(),
+    queryFn: async () => {
+      const { data, error } = await getCategoriasPublicas()
+      if (error) throw error
+      return data || []
+    },
+    staleTime: STALE_TIMES.categorias,
+  })
+}
+
+/**
+ * Todas las categorías — admin.
+ * staleTime: 15 min
+ */
+export function useCategoriasAdmin() {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.categorias.list(), 'admin'],
+    queryFn: async () => {
+      const { data, error } = await getCategoriasAdmin()
+      if (error) throw error
+      return data || []
+    },
+    staleTime: STALE_TIMES.categorias,
   })
 }

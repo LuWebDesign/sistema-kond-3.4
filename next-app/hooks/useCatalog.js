@@ -39,6 +39,7 @@ function mapProducto(p) {
     id: p.id,
     nombre: p.nombre,
     categoria: p.categoria,
+    categoriaId: p.categoria_id || null,
     tipo: p.tipo,
     medidas: p.medidas,
     tiempoUnitario: p.tiempo_unitario || '00:00:30',

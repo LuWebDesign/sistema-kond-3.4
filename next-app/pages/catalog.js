@@ -1,5 +1,6 @@
 import PublicLayout from '../components/PublicLayout'
 import { useProducts, useCart, useCoupons } from '../hooks/useCatalog'
+import { useCategorias } from '../hooks/useSupabaseQuery'
 import { 
   formatCurrency, 
   getCurrentUser,
@@ -28,6 +29,7 @@ export default function Catalog() {
   const ITEMS_PER_PAGE = 12
   const [gridColumnsDesktop, setGridColumnsDesktop] = useState(3)
   const [gridColumnsMobile, setGridColumnsMobile] = useState(2)
+  const { data: categoriasAPI = [] } = useCategorias()
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
@@ -59,7 +61,6 @@ export default function Catalog() {
     return () => window.removeEventListener('catalogStyles:updated', onStylesUpdate)
   }, [])
 
-  // Debounce para la búsqueda (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
@@ -404,6 +405,7 @@ export default function Catalog() {
               materials={materials}
               showControls={false}
               showActions={false}
+              categoriasAPI={categoriasAPI}
             />
           ))}
         </div>
@@ -565,10 +567,23 @@ export default function Catalog() {
   )
 }
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true, categoriasAPI = [] }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [isDarkTheme, setIsDarkTheme] = useState(false)
+
+  const resolveCategoriaDisplay = (prod) => {
+    if (!prod.categoriaId || categoriasAPI.length === 0) {
+      return { label: prod.categoria, isHierarchy: false }
+    }
+    const sub = categoriasAPI.find(c => c.id === prod.categoriaId)
+    if (!sub) return { label: prod.categoria, isHierarchy: false }
+    if (sub.parent_id) {
+      const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+      return { label: sub.nombre, parent: parent?.nombre, isHierarchy: true }
+    }
+    return { label: sub.nombre, isHierarchy: false }
+  }
 
   // ProductCard will use the shared slugify helper imported above
 
@@ -654,6 +669,21 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
 
   const navigateToProduct = () => {
     try {
+      // Si el producto tiene subcategoría resuelta → URL de 3 segmentos
+      if (product.categoriaId && categoriasAPI.length > 0) {
+        const sub = categoriasAPI.find(c => c.id === product.categoriaId)
+        if (sub?.parent_id) {
+          const parent = categoriasAPI.find(c => c.id === sub.parent_id)
+          if (parent) {
+            const parentSlug = slugifyPreserveCase(parent.slug || parent.nombre)
+            const subSlug = slugifyPreserveCase(sub.slug || sub.nombre)
+            const prodSlug = slugifyPreserveCase(product.nombre)
+            router.push(`/catalog/${parentSlug}/${subSlug}/${prodSlug}`)
+            return
+          }
+        }
+      }
+      // Fallback: URL de 2 segmentos (productos sin subcategoría o sin API)
       const catSlug = slugifyPreserveCase(product.categoria)
       const prodSlug = slugifyPreserveCase(product.nombre)
       router.push(`/catalog/${catSlug}/${prodSlug}`)
@@ -853,7 +883,19 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       cursor: 'default'
                     }}
                   >
-                    <span>{product.categoria}</span>
+                    {(() => {
+                      const cat = resolveCategoriaDisplay(product)
+                      if (cat.isHierarchy) {
+                        return (
+                          <>
+                            <span style={{ opacity: 0.65, fontSize: '0.72rem' }}>{cat.parent}</span>
+                            <span style={{ margin: '0 3px', opacity: 0.5 }}>›</span>
+                            <span>{cat.label}</span>
+                          </>
+                        )
+                      }
+                      return <span>{cat.label || product.categoria}</span>
+                    })()}
                   </div>
                 )}
                 
