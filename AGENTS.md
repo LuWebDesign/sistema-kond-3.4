@@ -73,3 +73,18 @@ Keep analysis extremely short after that.
 - Next.js dev: `cd next-app && npm run dev`
 - Next.js build: `cd next-app && npm run build`
 - Lint: `cd next-app && npx eslint .`
+
+## Quick Start Local
+
+Run a quick local setup and start both targets:
+
+```
+# Install root deps (if any) and verify setup
+npm install
+node verify-setup.js
+
+# Start Next.js app (migración progresiva)
+cd next-app && npm install && npm run dev
+
+# Static site: open `index.html` or serve with a simple static server
+```
