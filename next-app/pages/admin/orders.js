@@ -1795,15 +1795,32 @@ function PedidosCatalogo() {
                       <span className={styles.estadoIcon}>💳</span>
                       <label className={styles.estadoLabel}>Estado de Pago</label>
                     </div>
-                    <select
-                      value={selectedPedido.estadoPago || 'sin_seña'}
-                      onChange={(e) => handleChangeEstadoPago(e.target.value)}
-                      className={styles.selectInline}
-                    >
-                      <option value="sin_seña">Sin seña</option>
-                      <option value="seña_pagada">Seña pagada</option>
-                      <option value="pagado_total">Pagado total</option>
-                    </select>
+                    {selectedPedido.metodoPago === 'mercadopago' ? (
+                      <span style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: selectedPedido.mpPaymentStatus === 'approved'
+                          ? 'var(--success-color, #22c55e)'
+                          : selectedPedido.mpPaymentStatus === 'rejected'
+                          ? 'var(--danger-color, #ef4444)'
+                          : 'var(--warning-color, #f59e0b)'
+                      }}>
+                        {selectedPedido.mpPaymentStatus === 'approved' ? '✓ Pagado via MP'
+                          : selectedPedido.mpPaymentStatus === 'rejected' ? '✗ Rechazado MP'
+                          : selectedPedido.mpPaymentStatus === 'pending' ? '⏳ Pendiente MP'
+                          : '⏳ Esperando confirmación MP'}
+                      </span>
+                    ) : (
+                      <select
+                        value={selectedPedido.estadoPago || 'sin_seña'}
+                        onChange={(e) => handleChangeEstadoPago(e.target.value)}
+                        className={styles.selectInline}
+                      >
+                        <option value="sin_seña">Sin seña</option>
+                        <option value="seña_pagada">Seña pagada</option>
+                        <option value="pagado_total">Pagado total</option>
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -1927,8 +1944,8 @@ function PedidosCatalogo() {
                         </div>
                       </div>
 
-                      {/* Barra de progreso de pago */}
-                      {total > 0 && (
+                      {/* Barra de progreso de pago — solo para pedidos no-MP */}
+                      {total > 0 && selectedPedido.metodoPago !== 'mercadopago' && (
                         <div className={styles.pagoProgressSection}>
                           <div className={styles.pagoProgressHeader}>
                             <span className={styles.pagoProgressLabel}>
@@ -1950,6 +1967,28 @@ function PedidosCatalogo() {
                               <span className={styles.pagoRestante}>Restante: {formatCurrency(restante)}</span>
                             )}
                           </div>
+                        </div>
+                      )}
+                      {/* Indicador de estado para pedidos MP */}
+                      {total > 0 && selectedPedido.metodoPago === 'mercadopago' && (
+                        <div className={styles.pagoProgressSection}>
+                          <div className={styles.pagoProgressHeader}>
+                            <span className={styles.pagoProgressLabel}>
+                              {selectedPedido.mpPaymentStatus === 'approved'
+                                ? '✓ Pago confirmado por MercadoPago'
+                                : selectedPedido.mpPaymentStatus === 'rejected'
+                                ? '✗ Pago rechazado por MercadoPago'
+                                : '⏳ En proceso de pago via MercadoPago'}
+                            </span>
+                          </div>
+                          {selectedPedido.mpPaymentStatus === 'approved' && (
+                            <div className={styles.pagoProgressBar}>
+                              <div
+                                className={`${styles.pagoProgressFill} ${styles.pagoComplete}`}
+                                style={{ width: '100%' }}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
 
