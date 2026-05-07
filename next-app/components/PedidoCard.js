@@ -42,9 +42,13 @@ function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoj
       case 'pagado_total':
       case 'pagado': return 'pagado-total'
       case 'seña_pagada': return 'seña-pagada'
+      case 'pendiente_mp':
+      case 'rechazado_mp': return 'pendiente-mp'
       default: return 'sin-seña'
     }
   }
+
+  const isMP = pedido.metodoPago === 'mercadopago'
 
   // Función para copiar ID del producto al portapapeles
   const copyProductId = async (productId, event) => {
@@ -298,7 +302,7 @@ function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoj
               <span className={styles.totalLabel}>Total</span>
               <span className={styles.totalAmount}>{formatCurrency(pedido.total)}</span>
             </div>
-            <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>
+            {!isMP && <div className={styles.restanteSmall}><span>Restante: {formatCurrency(restante)}</span></div>}
             
             {/* Fechas de producción y entrega */}
             <div className={styles.headerDates}>
@@ -313,7 +317,7 @@ function PedidoCard({ pedido, onClick, formatCurrency, formatDate, getStatusEmoj
               </div>
             </div>
           </div>
-          <div className={`${styles.señaInfoSmall} ${styles.restanteSmall}`}><span>Seña: {formatCurrency(seña || 0)}</span></div>
+          {!isMP && <div className={`${styles.señaInfoSmall} ${styles.restanteSmall}`}><span>Seña: {formatCurrency(seña || 0)}</span></div>}
         </div>
       </div>
 
