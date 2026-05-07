@@ -1,4 +1,5 @@
 import PublicLayout from '../components/PublicLayout'
+import CategoryDropdown from '../components/CategoryDropdown'
 import { useProducts, useCart, useCoupons } from '../hooks/useCatalog'
 import { useCategorias } from '../hooks/useSupabaseQuery'
 import { 
@@ -7,7 +8,7 @@ import {
   createToast
 } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
-import { useState, useEffect, useMemo, useCallback, memo } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { slugifyPreserveCase } from '../utils/slugify'
 // SectionSelector is rendered by PublicLayout for all /catalog routes.
@@ -22,6 +23,9 @@ export default function Catalog() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(null)
+  // Prevents the URL-sync effect from clearing a subcategory we just set programmatically
+  const subcatProtectedRef = useRef(false)
   const [currentUserState, setCurrentUserState] = useState(null)
   // imageModal: { productId: Number, index: Number } or null
   const [imageModal, setImageModal] = useState(null)
@@ -154,8 +158,10 @@ export default function Catalog() {
                            (product.medidas && product.medidas.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
                            (product.categoria && product.categoria.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
       
-      const matchesCategory = !selectedCategory || 
-        (product.categoria && product.categoria.trim() === selectedCategory.trim())
+      const matchesCategory = !selectedCategory ||
+        (selectedSubcategoryId
+          ? product.categoriaId === selectedSubcategoryId
+          : product.categoria && product.categoria.trim() === selectedCategory.trim())
       
       return matchesSearch && matchesCategory
     }).sort((a, b) => {
@@ -175,7 +181,7 @@ export default function Catalog() {
   // Resetear página al cambiar filtros o categoría
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedSearchTerm, selectedCategory])
+  }, [debouncedSearchTerm, selectedCategory, selectedSubcategoryId])
 
   // Paginar solo cuando "Todas las categorías" está seleccionada
   const showPagination = !selectedCategory
@@ -244,6 +250,8 @@ export default function Catalog() {
       if (!slug) {
         // Si la URL es /catalog o no tiene slug, limpiar la selección
         setSelectedCategory('')
+        setSelectedSubcategoryId(null)
+        subcatProtectedRef.current = false
         return
       }
 
@@ -252,6 +260,13 @@ export default function Catalog() {
         const found = categories.find(c => slugifyPreserveCase(c) === slug)
         if (found) {
           setSelectedCategory(found)
+          if (subcatProtectedRef.current) {
+            // Navigated here via handleSelectSubcategory — keep subcatId
+            subcatProtectedRef.current = false
+          } else {
+            // Direct URL navigation or back/forward — reset subcategory
+            setSelectedSubcategoryId(null)
+          }
         } else {
           // No limpiar la selección si la categoría aún no está cargada;
           // esto evita que la UI vuelva a 'Todas' en transiciones asíncronas.
@@ -264,6 +279,26 @@ export default function Catalog() {
   }, [router.asPath, categories])
 
   // Memoizar handlers para evitar recrear funciones en cada render
+  // Category handlers for CategoryDropdown
+  const handleSelectCategory = useCallback((catName) => {
+    setSelectedCategory(catName)
+    setSelectedSubcategoryId(null)
+    router.push(`/catalog/${slugifyPreserveCase(catName)}`)
+  }, [router])
+
+  const handleSelectSubcategory = useCallback((subcatId, catName) => {
+    subcatProtectedRef.current = true
+    setSelectedCategory(catName)
+    setSelectedSubcategoryId(subcatId)
+    router.push(`/catalog/${slugifyPreserveCase(catName)}`)
+  }, [router])
+
+  const handleClearCategory = useCallback(() => {
+    setSelectedCategory('')
+    setSelectedSubcategoryId(null)
+    router.push('/catalog')
+  }, [router])
+
   // ahora abrimos el modal indicando producto + índice de imagen
   const handleImageClick = useCallback((productId, index = 0) => {
     setImageModal({ productId, index })
@@ -323,67 +358,15 @@ export default function Catalog() {
           <div style={{ position: 'relative' }}>
               {/* SectionSelector: render here in the original catalog header area so it
                   persists across category and product pages when Catalog is mounted. */}
-              <select
-              value={slugifyPreserveCase(selectedCategory)}
-              onChange={(e) => {
-                const v = e.target.value
-                // Actualizar el estado local inmediatamente para que el filtro aplique al instante
-                const found = categories.find(c => slugifyPreserveCase(c) === v)
-                setSelectedCategory(found || '')
-
-                if (!v) {
-                  // volver a listado general (SPA)
-                  router.push('/catalog')
-                } else {
-                  // navegar a la URL de categoría usando slug (SPA)
-                  router.push(`/catalog/${v}`)
-                }
-              }}
-              style={{
-                padding: '12px 16px',
-                border: '2px solid var(--border-color)',
-                borderRadius: '12px',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '1rem',
-                fontWeight: '500',
-                minWidth: '200px',
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns%3d%27http%3a//www.w3.org/2000/svg%27 width%3d%2712%27 height%3d%2712%27 viewBox%3d%270 0 12 12%27%3e%3cpath fill%3d%27%23666%27 d%3d%27M6 8L2 4h8z%27/%3e%3c/svg%3e")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 12px center',
-                backgroundSize: '12px',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-              className="category-select"
-              onMouseEnter={(e) => {
-                e.target.style.borderColor = 'var(--accent-blue)'
-                e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.borderColor = 'var(--border-color)'
-                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                🏷️ Todas las categorías
-              </option>
-              {categories.map(category => {
-                const categoryStyle = getCategoryStyle(category)
-                const slug = slugifyPreserveCase(category)
-                return (
-                  <option 
-                    key={category} 
-                    value={slug}
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
-                  >
-                    {categoryStyle.icon} {category}
-                  </option>
-                )
-              })}
-            </select>
+              <CategoryDropdown
+                categories={categories}
+                categoriasAPI={categoriasAPI}
+                selectedCategory={selectedCategory}
+                selectedSubcategoryId={selectedSubcategoryId}
+                onSelectCategory={handleSelectCategory}
+                onSelectSubcategory={handleSelectSubcategory}
+                onClear={handleClearCategory}
+              />
           </div>
         </div>
 
