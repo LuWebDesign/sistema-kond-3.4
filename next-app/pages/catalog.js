@@ -176,7 +176,7 @@ export default function Catalog() {
       // Si hay categoría seleccionada, mantener orden original
       return 0
     })
-  }, [products, debouncedSearchTerm, selectedCategory])
+  }, [products, debouncedSearchTerm, selectedCategory, selectedSubcategoryId])
 
   // Resetear página al cambiar filtros o categoría
   useEffect(() => {
