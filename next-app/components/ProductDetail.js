@@ -122,7 +122,7 @@ export default function ProductDetail({ product, categories = [], products = [],
           })
           items.push({
             label: sub.nombre,
-            href: null  // sin página de listing de subcategoría por ahora
+            href: `/catalog/${parentSlug}?subcat=${slugifyPreserveCase(sub.slug || sub.nombre)}`
           })
           return items
         }
