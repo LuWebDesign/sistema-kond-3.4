@@ -686,7 +686,7 @@ export default function FinalizarCompraPage() {
                     disabled={isSubmitting || isLoadingMP}
                     style={{ width: '100%', padding: 14, borderRadius: 8, background: (isSubmitting || isLoadingMP) ? 'var(--text-muted)' : '#009EE3', color: 'white', border: 'none', cursor: (isSubmitting || isLoadingMP) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
-                    {isLoadingMP ? 'Redirigiendo a MercadoPago...' : '💳 Pagar con MercadoPago'}
+                    {isLoadingMP ? 'Redirigiendo a MercadoPago...' : 'Pagar con MercadoPago'}
                   </button>
                 )}
 
