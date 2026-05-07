@@ -49,7 +49,9 @@ export default async function handler(req, res) {
     const { external_reference, status, id: mp_payment_id } = payment
     const estado_pago = STATUS_MAP[status] ?? 'pendiente_mp'
 
-    const { error } = await supabaseAdmin
+    console.log('[mp/webhook] payment fetched:', { mp_payment_id, status, external_reference, estado_pago })
+
+    const { data: updated, error } = await supabaseAdmin
       .from('pedidos_catalogo')
       .update({
         mp_payment_id: String(mp_payment_id),
@@ -59,9 +61,7 @@ export default async function handler(req, res) {
       .eq('id', external_reference)
       .select('id')
 
-    if (error) {
-      console.error('[mp/webhook] Supabase update error:', error)
-    }
+    console.log('[mp/webhook] supabase result:', { updated, error, external_reference })
   } catch (err) {
     console.error('[mp/webhook] Unexpected error:', err)
   }
