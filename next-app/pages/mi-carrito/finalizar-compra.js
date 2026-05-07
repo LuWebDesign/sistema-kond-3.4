@@ -228,8 +228,9 @@ export default function FinalizarCompraPage() {
 
       const mpItems = cart.map(item => ({
         title: item.name,
-        quantity: item.quantity,
-        unit_price: item.price
+        quantity: Number(item.quantity),
+        unit_price: Math.round(Number(item.price)),
+        currency_id: 'ARS'
       }))
 
       const origin = typeof window !== 'undefined' ? window.location.origin : ''
