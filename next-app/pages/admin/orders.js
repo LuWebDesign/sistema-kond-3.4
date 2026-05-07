@@ -99,8 +99,13 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
         espesor: producto?.espesor || null
       }
     }),
+    subtotal: pedidoDB.subtotal || (pedidoDB.items || []).reduce((sum, item) => sum + (Number(item.producto_precio || 0) * Number(item.cantidad || 1)), 0),
+    descuento: pedidoDB.descuento || 0,
     metodoPago: pedidoDB.metodo_pago,
     estadoPago: pedidoDB.estado_pago || 'sin_seña',
+    mpPreferenceId: pedidoDB.mp_preference_id || null,
+    mpPaymentId: pedidoDB.mp_payment_id || null,
+    mpPaymentStatus: pedidoDB.mp_payment_status || null,
     comprobante: pedidoDB.comprobante_url,
     _comprobanteOmitted: pedidoDB.comprobante_omitido || false,
     fechaCreacion: pedidoDB.fecha_creacion,
@@ -773,7 +778,10 @@ function PedidosCatalogo() {
 
     const labels = {
       'sin_seña': 'Sin seña',
-      'pagado_total': 'Pagado total'
+      'pagado_total': 'Pagado total',
+      'pendiente_mp': 'Pendiente MP',
+      'pagado': 'Pagado (MP)',
+      'rechazado_mp': 'Rechazado MP'
     }
     return labels[status] || status
   }, [])
@@ -1458,13 +1466,16 @@ function PedidosCatalogo() {
                   
                   <select
                     value={filters.estadoPago}
-                    onChange={(e) => setFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
+                     onChange={(e) => setFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
                     className={styles.select}
-                  >
+                   >
                     <option value="all">Todos los pagos</option>
                     <option value="sin_seña">Sin Seña</option>
                     <option value="seña_pagada">Seña Pagada</option>
                     <option value="pagado_total">Pagado Total</option>
+                    <option value="pendiente_mp">Pendiente MP</option>
+                    <option value="pagado">Pagado (MP)</option>
+                    <option value="rechazado_mp">Rechazado MP</option>
                   </select>
 
                   <select
@@ -1476,6 +1487,7 @@ function PedidosCatalogo() {
                     <option value="transferencia">💳 Transferencia</option>
                     <option value="whatsapp">💬 WhatsApp</option>
                     <option value="retiro">🏪 Retiro</option>
+                    <option value="mercadopago">💳 MercadoPago</option>
                   </select>
 
                   <input
@@ -1596,13 +1608,16 @@ function PedidosCatalogo() {
                   
                   <select
                     value={deliveredFilters.estadoPago}
-                    onChange={(e) => setDeliveredFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
+                     onChange={(e) => setDeliveredFilters(prev => ({ ...prev, estadoPago: e.target.value }))}
                     className={styles.select}
-                  >
+                   >
                     <option value="all">Todos los pagos</option>
                     <option value="sin_seña">Sin Seña</option>
                     <option value="seña_pagada">Seña Pagada</option>
                     <option value="pagado_total">Pagado Total</option>
+                    <option value="pendiente_mp">Pendiente MP</option>
+                    <option value="pagado">Pagado (MP)</option>
+                    <option value="rechazado_mp">Rechazado MP</option>
                   </select>
 
                   <select
@@ -1614,6 +1629,7 @@ function PedidosCatalogo() {
                     <option value="transferencia">💳 Transferencia</option>
                     <option value="whatsapp">💬 WhatsApp</option>
                     <option value="retiro">🏪 Retiro</option>
+                    <option value="mercadopago">💳 MercadoPago</option>
                   </select>
 
                   <input
@@ -1937,7 +1953,35 @@ function PedidosCatalogo() {
                         </div>
                       )}
 
-                      {/* Input para registrar / actualizar monto recibido */}
+                      {/* Input para registrar / actualizar monto recibido — oculto para pagos MP */}
+                      {selectedPedido.metodoPago === 'mercadopago' ? (
+                        <div className={styles.montoInputSection}>
+                          <label className={styles.montoInputLabel}>Información de pago MercadoPago</label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Estado MP</span>
+                              <span style={{
+                                fontWeight: 600,
+                                color: selectedPedido.mpPaymentStatus === 'approved' ? 'var(--success-color, #22c55e)'
+                                  : selectedPedido.mpPaymentStatus === 'rejected' ? 'var(--danger-color, #ef4444)'
+                                  : 'var(--warning-color, #f59e0b)'
+                              }}>
+                                {selectedPedido.mpPaymentStatus === 'approved' ? '✓ Aprobado'
+                                  : selectedPedido.mpPaymentStatus === 'rejected' ? '✗ Rechazado'
+                                  : selectedPedido.mpPaymentStatus === 'pending' ? '⏳ Pendiente'
+                                  : selectedPedido.estadoPago === 'pendiente_mp' ? '⏳ Esperando confirmación'
+                                  : '—'}
+                              </span>
+                            </div>
+                            {selectedPedido.mpPaymentId && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>ID de pago</span>
+                                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{selectedPedido.mpPaymentId}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
                       <div className={styles.montoInputSection}>
                         <label className={styles.montoInputLabel}>
                           {savedMonto > 0 ? 'Actualizar monto recibido' : 'Registrar seña / monto recibido'}
@@ -1959,6 +2003,7 @@ function PedidosCatalogo() {
                           />
                         </div>
                       </div>
+                      )}
                     </div>
                   )
                 })()}
