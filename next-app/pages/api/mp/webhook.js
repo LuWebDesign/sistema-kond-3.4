@@ -22,11 +22,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { topic, id } = req.query
+  // Soporta IPN v1 (?topic=payment&id=...) y Webhooks v2 (body: {type, data.id})
+  const { topic, id: queryId } = req.query
+  const body = req.body || {}
 
-  if (topic !== 'payment') {
+  const isIPN = topic === 'payment' && queryId
+  const isWebhookV2 = body.type === 'payment' && body.data?.id
+
+  if (!isIPN && !isWebhookV2) {
     return res.status(200).end()
   }
+
+  const id = isWebhookV2 ? body.data.id : queryId
 
   try {
     const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${id}`, {
