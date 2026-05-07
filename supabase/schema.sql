@@ -131,6 +131,11 @@ CREATE TABLE IF NOT EXISTS public.pedidos_catalogo (
   cupon_codigo TEXT,
   cupon_descuento NUMERIC DEFAULT 0,
   
+  -- MercadoPago Checkout Pro
+  mp_preference_id TEXT,        -- ID de preferencia generada en /api/mp/create-preference
+  mp_payment_id TEXT,           -- ID del pago recibido vía webhook IPN
+  mp_payment_status TEXT DEFAULT 'none', -- 'none' | 'approved' | 'pending' | 'in_process' | 'rejected' | 'cancelled'
+  
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

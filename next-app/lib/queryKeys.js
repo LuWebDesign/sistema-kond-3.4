@@ -47,6 +47,9 @@ export const QUERY_KEYS = {
     byId:   (id) => ['categorias', id],
     bySlug: (slug) => ['categorias', 'slug', slug],
   },
+  mp: {
+    preference: () => ['mp', 'preference'],
+  },
 }
 
 // staleTime values in milliseconds — DO NOT change without team approval
