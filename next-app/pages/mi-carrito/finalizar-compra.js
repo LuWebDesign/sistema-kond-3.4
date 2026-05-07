@@ -220,7 +220,7 @@ export default function FinalizarCompraPage() {
       const result = await saveOrder(orderData, () => {})
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
-      const pedidoId = result.data?.id || result.id
+      const pedidoId = result.orderId || result.data?.id || result.id
 
       const mpItems = cart.map(item => ({
         title: item.name,
