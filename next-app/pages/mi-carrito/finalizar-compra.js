@@ -72,9 +72,6 @@ export default function FinalizarCompraPage() {
         const config = await getPaymentConfig()
         if (config) {
           setPaymentConfig(config)
-          if (config.transferencia?.enabled) setPaymentMethod('transferencia')
-          else if (config.whatsapp?.enabled) setPaymentMethod('whatsapp')
-          else if (config.retiro?.enabled) setPaymentMethod('retiro')
         }
       } catch {
         try {
@@ -91,10 +88,9 @@ export default function FinalizarCompraPage() {
         if (cfg) {
           setPaymentConfig(cfg)
           setPaymentMethod((prev) => {
+            // Si ya eligió algo y sigue habilitado, mantenerlo
             if (prev && cfg[prev]?.enabled) return prev
-            if (cfg.transferencia?.enabled) return 'transferencia'
-            if (cfg.whatsapp?.enabled) return 'whatsapp'
-            if (cfg.retiro?.enabled) return 'retiro'
+            // Si el método activo fue deshabilitado, limpiar la selección
             return ''
           })
         }
