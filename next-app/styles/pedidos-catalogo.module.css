@@ -407,6 +407,11 @@
   color: white;
 }
 
+.paymentBadge.pendiente-mp {
+  background-color: #f59e0b;
+  color: white;
+}
+
 .methodBadge {
   background-color: var(--bg-tertiary);
   color: var(--text-secondary);

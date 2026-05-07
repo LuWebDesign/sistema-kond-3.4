@@ -117,6 +117,10 @@ export const generateWhatsAppMessage = (cart, total, customerData, formatCurrenc
 export const validateCheckoutForm = (customerData, paymentMethod) => {
   const errors = []
   
+  if (!paymentMethod) {
+    errors.push('Seleccioná un método de pago')
+  }
+
   if (!customerData.name || customerData.name.trim().length < 2) {
     errors.push('El nombre es requerido (mínimo 2 caracteres)')
   }
