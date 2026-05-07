@@ -8,14 +8,36 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 
-// Format date to locale string safely
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  try {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  } catch {
-    return ''
+// Robust date parsing/formatting helpers
+// Accepts Date objects, timestamps (number), 'YYYY-MM-DD' or full ISO strings.
+const safeParseDate = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value
+  if (typeof value === 'number') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? null : d
   }
+  if (typeof value === 'string') {
+    let s = value.trim()
+    // If it's a plain date 'YYYY-MM-DD', treat as start of day
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s = s + 'T00:00:00'
+    const d = new Date(s)
+    if (!isNaN(d.getTime())) return d
+    // Fallback: numeric string as timestamp
+    const n = Number(s)
+    if (!Number.isNaN(n)) {
+      const d2 = new Date(n)
+      if (!isNaN(d2.getTime())) return d2
+    }
+    return null
+  }
+  return null
+}
+
+const formatDate = (value) => {
+  const d = safeParseDate(value)
+  if (!d) return ''
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 // Status label map
@@ -173,7 +195,12 @@ export default function MisPedidos() {
           const pedidosMapped = pedidosDB.map(pedidoDB =>
             mapSupabasePedidoToFrontend(pedidoDB, productosBase)
           )
-          pedidosMapped.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+          // Ordenar por fecha de creación (más recientes primero) usando safeParseDate
+          pedidosMapped.sort((a, b) => {
+            const db = safeParseDate(b.fechaCreacion) || new Date(0)
+            const da = safeParseDate(a.fechaCreacion) || new Date(0)
+            return db - da
+          })
           setUserOrders(pedidosMapped)
         } else {
           setUserOrders([])
@@ -338,7 +365,10 @@ export default function MisPedidos() {
                 const sena = isFullyPaid ? order.total : (Number(order.montoRecibido) || (order.estadoPago === 'seña_pagada' ? order.total * 0.5 : 0))
                 const restante = Math.max(0, order.total - sena)
                 const entregaFecha = order.fechaConfirmadaEntrega || order.fechaSolicitudEntrega || order.fechaEntrega
-                const isDelayed = order.fechaConfirmadaEntrega && order.estado !== 'entregado' && new Date(order.fechaConfirmadaEntrega + 'T00:00:00') < new Date(new Date().toDateString())
+                // isDelayed: entrega confirmada y fecha pasada (usar start-of-day comparison)
+                const fechaConfirmada = safeParseDate(order.fechaConfirmadaEntrega)
+                const todayStart = safeParseDate(new Date().toISOString().slice(0, 10)) // today at 00:00:00
+                const isDelayed = fechaConfirmada && order.estado !== 'entregado' && fechaConfirmada < todayStart
 
                 return (
                   <button
