@@ -29,7 +29,7 @@ export default function FinalizarCompraPage() {
   const discount = calculateDiscount(subtotal)
   const total = Math.max(0, subtotal - discount)
 
-  const [paymentMethod, setPaymentMethod] = useState('transferencia')
+  const [paymentMethod, setPaymentMethod] = useState('')
   const [deliveryMethod, setDeliveryMethod] = useState(() => {
     if (typeof window === 'undefined') return 'retiro'
     try {
@@ -508,7 +508,7 @@ export default function FinalizarCompraPage() {
                 <div>
                   <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>Medios de pago</div>
                   <button
-                    onClick={() => setPaymentMethod(paymentMethod === 'transferencia' ? (paymentConfig?.whatsapp?.enabled ? 'whatsapp' : '') : 'transferencia')}
+                    onClick={() => setPaymentMethod('transferencia')}
                     style={{ padding: '14px 16px', borderRadius: 10, width: '100%', border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative' }}
                   >
                     {paymentMethod === 'transferencia' && <span style={{ position: 'absolute', top: 8, right: 10, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>}
