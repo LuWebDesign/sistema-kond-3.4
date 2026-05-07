@@ -480,6 +480,7 @@ const PEDIDO_SELECT = `
   fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
   total, monto_recibido, envio_gratis,
   asignado_al_calendario,
+  mp_preference_id, mp_payment_id, mp_payment_status,
   created_at, updated_at,
   items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
 `
