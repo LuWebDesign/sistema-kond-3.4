@@ -8,7 +8,7 @@ import {
   createToast
 } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
-import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
 import { slugifyPreserveCase } from '../utils/slugify'
 // SectionSelector is rendered by PublicLayout for all /catalog routes.
@@ -24,8 +24,6 @@ export default function Catalog() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(null)
-  // Prevents the URL-sync effect from clearing a subcategory we just set programmatically
-  const subcatProtectedRef = useRef(false)
   const [currentUserState, setCurrentUserState] = useState(null)
   // imageModal: { productId: Number, index: Number } or null
   const [imageModal, setImageModal] = useState(null)
@@ -236,9 +234,9 @@ export default function Catalog() {
     return categoryStyles[categoria] || categoryStyles.default
   }
 
-  // Sincronizar selectedCategory con la ruta actual para evitar que la selección
-  // se pierda cuando se navega a /catalog/:slug y hay re-mounts o eventos asíncronos.
-  // Esto toma la parte de la URL después de /catalog/ y busca la categoría correspondiente.
+  // Sincronizar selectedCategory (y selectedSubcategoryId) con la ruta actual.
+  // Lee el slug de la URL y el query param ?subcat= para restaurar el estado al montar
+  // o al navegar con back/forward. categoriasAPI se necesita para resolver el subcat slug → ID.
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return
@@ -247,36 +245,41 @@ export default function Catalog() {
       const match = path.match(/^\/catalog\/(?:categoria\/)?([^\/\?]+)/)
       const slug = match && match[1] ? match[1] : ''
 
+      // Extraer query param ?subcat=
+      const qIndex = path.indexOf('?')
+      const subcatSlug = qIndex >= 0
+        ? (new URLSearchParams(path.slice(qIndex + 1)).get('subcat') || '')
+        : ''
+
       if (!slug) {
-        // Si la URL es /catalog o no tiene slug, limpiar la selección
         setSelectedCategory('')
         setSelectedSubcategoryId(null)
-        subcatProtectedRef.current = false
         return
       }
 
-      // Buscar la categoría que corresponda al slug
       if (categories && categories.length) {
         const found = categories.find(c => slugifyPreserveCase(c) === slug)
         if (found) {
           setSelectedCategory(found)
-          if (subcatProtectedRef.current) {
-            // Navigated here via handleSelectSubcategory — keep subcatId
-            subcatProtectedRef.current = false
-          } else {
-            // Direct URL navigation or back/forward — reset subcategory
+
+          if (subcatSlug && categoriasAPI.length > 0) {
+            // Resolver slug → ID de subcategoría
+            const sub = categoriasAPI.find(c =>
+              c.parent_id !== null &&
+              slugifyPreserveCase(c.slug || c.nombre) === subcatSlug
+            )
+            setSelectedSubcategoryId(sub ? sub.id : null)
+          } else if (!subcatSlug) {
             setSelectedSubcategoryId(null)
           }
-        } else {
-          // No limpiar la selección si la categoría aún no está cargada;
-          // esto evita que la UI vuelva a 'Todas' en transiciones asíncronas.
-          // Mantener el estado actual hasta que categories se actualice.
+          // Si subcatSlug existe pero categoriasAPI aún no cargó: no hacer nada;
+          // el efecto se re-ejecuta cuando categoriasAPI llegue.
         }
       }
     } catch (e) {
       // ignore routing sync errors
     }
-  }, [router.asPath, categories])
+  }, [router.asPath, categories, categoriasAPI])
 
   // Memoizar handlers para evitar recrear funciones en cada render
   // Category handlers for CategoryDropdown
@@ -287,11 +290,10 @@ export default function Catalog() {
   }, [router])
 
   const handleSelectSubcategory = useCallback((subcatId, catName) => {
-    subcatProtectedRef.current = true
-    setSelectedCategory(catName)
-    setSelectedSubcategoryId(subcatId)
-    router.push(`/catalog/${slugifyPreserveCase(catName)}`)
-  }, [router])
+    const sub = categoriasAPI.find(c => c.id === subcatId)
+    const subcatSlug = sub ? slugifyPreserveCase(sub.slug || sub.nombre) : String(subcatId)
+    router.push(`/catalog/${slugifyPreserveCase(catName)}?subcat=${subcatSlug}`)
+  }, [router, categoriasAPI])
 
   const handleClearCategory = useCallback(() => {
     setSelectedCategory('')

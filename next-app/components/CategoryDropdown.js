@@ -52,8 +52,17 @@ export default function CategoryDropdown({
     return () => document.removeEventListener('mousedown', handler)
   }, [isOpen])
 
-  // Build category tree from flat list
-  const tree = categories.map(catName => {
+  // Build category tree from flat list.
+  // Filter out any name that categoriasAPI knows as a child (parent_id !== null),
+  // so subcategory names that leaked into p.categoria don't appear as root items.
+  const rootNames = categoriasAPI.length > 0
+    ? categories.filter(catName => {
+        const found = categoriasAPI.find(c => c.nombre === catName)
+        return !found || found.parent_id === null
+      })
+    : categories
+
+  const tree = rootNames.map(catName => {
     const apiObj = categoriasAPI.find(c => c.nombre === catName && c.parent_id === null)
     const children = apiObj
       ? categoriasAPI
