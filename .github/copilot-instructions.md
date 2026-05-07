@@ -38,6 +38,8 @@ react ^19.2.0
 bcryptjs ^3.0.3
 ```
 
+**Nota sobre Node**: En CI se observa uso de Node 20 en `.github/workflows/ci.yml` mientras que `package.json` declara `engines` con Node 22.x. Para evitar discrepancias de build se recomienda añadir un archivo `.nvmrc` (o documentar el uso de `volta`/`nvm`) con la versión objetivo, o actualizar la documentación del repositorio para indicar la versión preferida local/CI.
+
 ---
 
 ## 3. Estructura del Proyecto

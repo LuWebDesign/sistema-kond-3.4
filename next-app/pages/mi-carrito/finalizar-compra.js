@@ -672,6 +672,7 @@ export default function FinalizarCompraPage() {
                   <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem' }}>{formatCurrency(total)}</div>
                 </div>
 
+                {(paymentMethod === 'whatsapp' || paymentMethod === 'transferencia') && (
                 <button
                   onClick={handleSubmitOrder}
                   disabled={isSubmitting || isLoadingMP}
@@ -679,6 +680,7 @@ export default function FinalizarCompraPage() {
                 >
                   {isSubmitting ? 'Procesando...' : paymentMethod === 'whatsapp' ? 'Enviar por WhatsApp' : 'Confirmar pedido'}
                 </button>
+                )}
 
                 {paymentConfig?.mercadopago?.enabled === true && (
                   <button

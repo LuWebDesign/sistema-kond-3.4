@@ -103,7 +103,7 @@ export default function ProductDetail({ product, categories = [], products = [],
   const handleBuyNow = () => {
     addToCart(product, qty)
     // After adding the product, navigate to the standalone cart page
-    router.push('/mi-carrito')
+    router.push('/mi-carrito/finalizar-compra')
   }
 
   // Resolver jerarquía de categoría para breadcrumb
