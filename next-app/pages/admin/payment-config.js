@@ -10,6 +10,7 @@ function PaymentConfigAdmin() {
     transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
     whatsapp: { enabled: true, numero: '', mensaje: '' },
     retiro: { enabled: true, direccion: '', direccionLink: '', horarios: '' },
+    mercadopago: { enabled: false },
     calendario: { enabled: true },
     textos: {
       infoTransferencia: 'Nota: si elegís el método Transferencia y realizas una (seña 50%), podés seleccionar una fecha de entrega disponible en el calendario.',
@@ -76,6 +77,7 @@ function PaymentConfigAdmin() {
           ...prev,
           ...config,
           calendario: { ...prev.calendario, ...config.calendario },
+          mercadopago: { ...prev.mercadopago, ...(config.mercadopago || {}) },
           textos: { ...prev.textos, ...(config.textos || {}) },
         }))
       }
@@ -122,7 +124,7 @@ function PaymentConfigAdmin() {
       'Transferencia Bancaria': 'Los datos de tu cuenta bancaria (alias, CBU/CVU, titular y banco) estarán visibles para que los clientes puedan realizar transferencias. Si lo ocultás, este método de pago no estará disponible en el checkout.',
       'WhatsApp': 'El botón de contacto por WhatsApp estará disponible para que los clientes puedan coordinar su pedido directamente. Si lo ocultás, este método no estará disponible en el checkout.',
       'Retiro en Local': 'La opción de retiro en local con tu dirección y horarios estará disponible para los clientes. Si lo ocultás, este método no estará disponible en el checkout.',
-      'Calendario de Fecha de Entrega': 'Los clientes podrán seleccionar una fecha de entrega disponible cuando elijan transferencia. Si lo desactivás, no verán el calendario de fechas.',
+      'MercadoPago': 'El botón de MercadoPago Checkout Pro estará disponible en el checkout. Los clientes serán redirigidos a MercadoPago para completar el pago. Si lo desactivás, el botón no aparecerá.',
       'Texto Transferencia': 'Este texto informativo aparecerá en el método de transferencia para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.',
       'Texto WhatsApp': 'Este texto informativo aparecerá en el método de WhatsApp para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.',
       'Texto Retiro': 'Este texto informativo aparecerá en el método de retiro para guiar al cliente. Si lo ocultás, no se mostrará ninguna nota adicional.'
@@ -135,6 +137,7 @@ function PaymentConfigAdmin() {
       'Transferencia Bancaria': '🏦',
       'WhatsApp': '💬',
       'Retiro en Local': '📦',
+      'MercadoPago': '💳',
       'Calendario de Fecha de Entrega': '📅',
       'Texto Transferencia': '🏦',
       'Texto WhatsApp': '💬',
@@ -311,6 +314,31 @@ function PaymentConfigAdmin() {
                 <input placeholder="Horarios" value={paymentConfig.retiro.horarios} onChange={(e) => setPaymentConfig(prev => ({ ...prev, retiro: { ...prev.retiro, horarios: e.target.value } }))} style={{ width: '100%', padding: 8, borderRadius: 8, marginTop: 8 }} />
               </div>
             )}
+          </div>
+
+          {/* MercadoPago */}
+          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>💳 MercadoPago</h3>
+                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Checkout Pro — pago online con tarjeta, efectivo y más</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleVisibility('MercadoPago', 'mercadopago.enabled', paymentConfig.mercadopago?.enabled)}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 6,
+                  border: '1px solid var(--border-color)',
+                  background: paymentConfig.mercadopago?.enabled ? 'rgba(16,185,129,0.08)' : 'transparent',
+                  color: paymentConfig.mercadopago?.enabled ? 'var(--color-success)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {paymentConfig.mercadopago?.enabled ? '✅ Activado' : '⛔ Desactivado'}
+              </button>
+            </div>
           </div>
 
           {/* Calendario de Fecha de Entrega */}

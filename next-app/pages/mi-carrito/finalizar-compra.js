@@ -41,6 +41,7 @@ export default function FinalizarCompraPage() {
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
   const [comprobante, setComprobante] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingMP, setIsLoadingMP] = useState(false)
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
 
@@ -180,6 +181,87 @@ export default function FinalizarCompraPage() {
     createToast('Pedido enviado exitosamente', 'success')
     router.push('/catalog')
   }, [clearCart, router])
+
+  const handleMercadoPago = async () => {
+    if (isSubmitting || isLoadingMP) return
+    const validationErrors = validateCheckoutForm(customerData, 'mercadopago')
+    if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
+    if (deliveryMethod === 'envio' && (!customerData.address || !customerData.address.trim())) {
+      return createToast('La dirección es requerida para envío', 'error')
+    }
+
+    setIsLoadingMP(true)
+    try {
+      const orderData = {
+        cliente: {
+          nombre: customerData.name,
+          apellido: customerData.apellido,
+          telefono: customerData.phone,
+          email: customerData.email,
+          direccion: customerData.address
+        },
+        items: cart.map(item => ({
+          idProducto: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          measures: item.measures,
+          tiempoUnitario: item.tiempoUnitario || '00:00:00',
+          precioPorMinuto: item.precioPorMinuto || 0,
+          imagen: item.image || null
+        })),
+        metodoPago: 'mercadopago',
+        metodoEntrega: deliveryMethod,
+        estadoPago: 'pendiente_mp',
+        fechaSolicitudEntrega: selectedDeliveryDate,
+        total,
+        subtotal,
+        descuento: discount,
+        comprobante: null,
+        montoRecibido: 0
+      }
+
+      const result = await saveOrder(orderData, () => {})
+      if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
+
+      const pedidoId = result.data?.id || result.id
+
+      const mpItems = cart.map(item => ({
+        title: item.name,
+        quantity: item.quantity,
+        unit_price: item.price
+      }))
+
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch('/api/mp/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: mpItems,
+          payer: { email: customerData.email },
+          back_urls: {
+            success: `${origin}/mi-carrito/mp-success`,
+            failure: `${origin}/mi-carrito/mp-failure`,
+            pending: `${origin}/mi-carrito/mp-pending`
+          },
+          external_reference: String(pedidoId || '')
+        })
+      })
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData?.error || 'Error al crear preferencia de pago')
+      }
+
+      const { init_point } = await response.json()
+      if (!init_point) throw new Error('No se recibió el link de pago')
+
+      window.location.href = init_point
+    } catch (error) {
+      createToast(error?.message || 'Error al procesar el pago con MercadoPago', 'error')
+      setIsLoadingMP(false)
+    }
+  }
 
   const handleSubmitOrder = async () => {
     if (isSubmitting) return
@@ -595,11 +677,21 @@ export default function FinalizarCompraPage() {
 
                 <button
                   onClick={handleSubmitOrder}
-                  disabled={isSubmitting}
-                  style={{ width: '100%', padding: 14, borderRadius: 8, background: isSubmitting ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10 }}
+                  disabled={isSubmitting || isLoadingMP}
+                  style={{ width: '100%', padding: 14, borderRadius: 8, background: (isSubmitting || isLoadingMP) ? 'var(--text-muted)' : 'var(--accent-secondary)', color: 'white', border: 'none', cursor: (isSubmitting || isLoadingMP) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10 }}
                 >
                   {isSubmitting ? 'Procesando...' : paymentMethod === 'whatsapp' ? 'Enviar por WhatsApp' : 'Confirmar pedido'}
                 </button>
+
+                {paymentConfig?.mercadopago?.enabled === true && (
+                  <button
+                    onClick={handleMercadoPago}
+                    disabled={isSubmitting || isLoadingMP}
+                    style={{ width: '100%', padding: 14, borderRadius: 8, background: (isSubmitting || isLoadingMP) ? 'var(--text-muted)' : '#009EE3', color: 'white', border: 'none', cursor: (isSubmitting || isLoadingMP) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    {isLoadingMP ? 'Redirigiendo a MercadoPago...' : '💳 Pagar con MercadoPago'}
+                  </button>
+                )}
 
                 <button
                   onClick={() => router.push('/mi-carrito')}
