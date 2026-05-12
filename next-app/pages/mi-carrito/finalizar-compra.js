@@ -14,7 +14,7 @@ import {
 } from '../../utils/catalogUtils'
 import { getPaymentConfig } from '../../utils/supabasePaymentConfig'
 import { getPromocionesActivas } from '../../utils/supabaseMarketing'
-import { applyPromotionsToCart } from '../../utils/promoEngine'
+import { applyPromotionsToCart, applyTransferDiscount } from '../../utils/promoEngine'
 import { useNotifications } from '../../components/NotificationsProvider'
 
 export default function FinalizarCompraPage() {
@@ -30,6 +30,7 @@ export default function FinalizarCompraPage() {
   const total = Math.max(0, subtotal - discount)
 
   const [paymentMethod, setPaymentMethod] = useState('')
+  const [activePromos, setActivePromos] = useState([])
   const [deliveryMethod, setDeliveryMethod] = useState(() => {
     if (typeof window === 'undefined') return 'retiro'
     try {
@@ -44,6 +45,10 @@ export default function FinalizarCompraPage() {
   const [isLoadingMP, setIsLoadingMP] = useState(false)
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
+
+  // Descuento de promo transferencia (se recalcula según paymentMethod activo)
+  const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, total) : 0
+  const finalTotal = paymentMethod === 'transferencia' ? Math.max(0, total - transferPromoDiscount) : total
 
   const paymentSectionRef = useRef(null)
 
@@ -145,10 +150,17 @@ export default function FinalizarCompraPage() {
           productoId: p.producto_id,
           activo: p.activo,
           descuentoMonto: p.descuento_monto,
+          descuentoPorcentaje: p.descuento_porcentaje,
+          prioridad: p.prioridad,
+          fechaInicio: p.fecha_inicio,
+          fechaFin: p.fecha_fin,
           config: p.configuracion || p.config
         }))
         const result = applyPromotionsToCart(cart || [], promos)
-        if (mounted) setFreeShippingEligible(!!result.freeShipping)
+        if (mounted) {
+          setFreeShippingEligible(!!result.freeShipping)
+          setActivePromos(promos)
+        }
       } catch { /* optional computation: ignore if promo data unavailable */ }
     }
     compute()
@@ -308,11 +320,12 @@ export default function FinalizarCompraPage() {
         metodoEntrega: deliveryMethod,
         estadoPago: paymentMethod === 'transferencia' ? 'pagado_total' : 'pendiente',
         fechaSolicitudEntrega: selectedDeliveryDate,
-        total,
+        total: finalTotal,
         subtotal,
-        descuento: discount,
+        descuento: discount + transferPromoDiscount,
+        descuentoTransferencia: transferPromoDiscount > 0 ? transferPromoDiscount : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
-        montoRecibido: paymentMethod === 'transferencia' ? Number(total) : 0
+        montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0
       }
 
       const result = await saveOrder(orderData, () => {})
@@ -322,12 +335,12 @@ export default function FinalizarCompraPage() {
 
       const whatsappPhone = paymentConfig?.whatsapp?.numero || '541136231857'
       if (paymentMethod === 'whatsapp') {
-        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'whatsapp' })
+        const message = generateWhatsAppMessage(cart, finalTotal, customerData, formatCurrency, { metodoPago: 'whatsapp' })
         if (typeof window !== 'undefined') window.open(`https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
         createToast('Abriendo WhatsApp...', 'success')
       }
       if (paymentMethod === 'transferencia') {
-        const message = generateWhatsAppMessage(cart, total, customerData, formatCurrency, { metodoPago: 'transferencia', comprobanteUrl })
+        const message = generateWhatsAppMessage(cart, finalTotal, customerData, formatCurrency, { metodoPago: 'transferencia', comprobanteUrl })
         if (typeof window !== 'undefined') window.open(`https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
         createToast('Abriendo WhatsApp con los detalles del pedido...', 'success')
       }
@@ -481,7 +494,7 @@ export default function FinalizarCompraPage() {
                 <div>
                   <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>Realizar pedido mediante</div>
                   <button
-                    onClick={() => setPaymentMethod('whatsapp')}
+                    onClick={() => setPaymentMethod(prev => prev === 'whatsapp' ? '' : 'whatsapp')}
                     style={{ padding: '14px 16px', borderRadius: 10, width: '100%', border: paymentMethod === 'whatsapp' ? '2px solid #25D366' : '1.5px solid var(--border-color)', background: paymentMethod === 'whatsapp' ? '#25D36618' : 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative' }}
                   >
                     {paymentMethod === 'whatsapp' && <span style={{ position: 'absolute', top: 8, right: 10, background: '#25D366', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>}
@@ -504,13 +517,27 @@ export default function FinalizarCompraPage() {
                 <div>
                   <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>Medios de pago</div>
                   <button
-                    onClick={() => setPaymentMethod('transferencia')}
+                    onClick={() => setPaymentMethod(prev => prev === 'transferencia' ? '' : 'transferencia')}
                     style={{ padding: '14px 16px', borderRadius: 10, width: '100%', border: paymentMethod === 'transferencia' ? '2px solid var(--accent-blue)' : '1.5px solid var(--border-color)', background: paymentMethod === 'transferencia' ? 'var(--bg-hover)' : 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', position: 'relative' }}
                   >
                     {paymentMethod === 'transferencia' && <span style={{ position: 'absolute', top: 8, right: 10, background: 'var(--accent-blue)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>}
                     <span style={{ fontSize: '2rem', flexShrink: 0 }}>🏦</span>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.95rem', color: paymentMethod === 'transferencia' ? 'var(--accent-blue)' : 'var(--text-primary)' }}>Transferencia</div>
+                      {(() => {
+                        const td = applyTransferDiscount(activePromos, total)
+                        if (!td) return null
+                        const tp = activePromos.find(p => (p.tipo || p.type) === 'transfer_discount' && p.activo !== false)
+                        const dtype = tp?.config?.transferDiscountType || 'percentage'
+                        const label = dtype === 'percentage' && tp?.descuentoPorcentaje
+                          ? `🎉 ${tp.descuentoPorcentaje}% de descuento — ahorrás ${formatCurrency(td)}`
+                          : `🎉 Ahorrás ${formatCurrency(td)}`
+                        return (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--color-success, #10b981)', fontWeight: 600, marginTop: 2 }}>
+                            {label}
+                          </div>
+                        )
+                      })()}
                     </div>
                   </button>
                   {paymentConfig?.textos?.infoTransferenciaEnabled !== false && paymentMethod === 'transferencia' && (
@@ -518,6 +545,7 @@ export default function FinalizarCompraPage() {
                       <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{paymentConfig?.textos?.infoTransferencia || 'Realizá una seña del 50% por transferencia. Aquí tenés los datos para pagar.'}</div>
                     </div>
                   )}
+
                 </div>
               )}
             </section>
@@ -665,11 +693,18 @@ export default function FinalizarCompraPage() {
                   <div style={{ fontWeight: 700 }}>{deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}</div>
                 </div>
 
+                {transferPromoDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: 'var(--color-success, #10b981)' }}>
+                    <div style={{ fontWeight: 600 }}>🎉 Descuento transferencia</div>
+                    <div style={{ fontWeight: 700 }}>-{formatCurrency(transferPromoDiscount)}</div>
+                  </div>
+                )}
+
                 <div className={stylesResp.summaryDivider} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', marginBottom: 12 }}>
                   <div style={{ color: 'var(--text-primary)' }}>Total</div>
-                  <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem' }}>{formatCurrency(total)}</div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem' }}>{formatCurrency(finalTotal)}</div>
                 </div>
 
                 {(paymentMethod === 'whatsapp' || paymentMethod === 'transferencia') && (

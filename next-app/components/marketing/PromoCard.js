@@ -5,7 +5,8 @@ const PROMO_TYPES = {
   fixed_price: { label: 'Precio Fijo' },
   buy_x_get_y: { label: '2x1 / Lleva X Paga Y' },
   free_shipping: { label: 'Envío Gratis' },
-  badge_only: { label: 'Solo Insignia' }
+  badge_only: { label: 'Solo Insignia' },
+  transfer_discount: { label: '🏦 Desc. Transferencia' }
 };
 
 function getContrastColor(hexColor) {
@@ -42,7 +43,16 @@ export default function PromoCard({ promo, products, onEdit, onToggle, onDelete 
   }
 
   let configDesc = '';
-  if (promo.descuentoPorcentaje) {
+  if (promo.tipo === 'transfer_discount') {
+    const dtype = promo.config?.transferDiscountType || 'percentage'
+    if (dtype === 'percentage' && promo.descuentoPorcentaje) {
+      configDesc = `${promo.descuentoPorcentaje}% de descuento al pagar con transferencia`
+    } else if (promo.descuentoMonto) {
+      configDesc = `$${promo.descuentoMonto.toLocaleString()} de descuento al pagar con transferencia`
+    } else {
+      configDesc = 'Descuento al pagar con transferencia'
+    }
+  } else if (promo.descuentoPorcentaje) {
     configDesc = `${promo.descuentoPorcentaje}% de descuento`;
   } else if (promo.precioEspecial) {
     configDesc = `Precio especial: $${promo.precioEspecial.toLocaleString()}`;

@@ -26,6 +26,11 @@ const PROMO_TYPES = {
     label: 'Solo Insignia',
     fields: [],
     description: 'Solo mostrar badge sin cambio de precio'
+  },
+  transfer_discount: {
+    label: '🏦 Descuento por Transferencia',
+    fields: ['transferDiscountType'],
+    description: 'Descuento en el total del carrito al pagar con transferencia bancaria'
   }
 };
 
@@ -59,7 +64,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     descuentoMonto: promo?.descuentoMonto || promo?.descuento_monto || null,
     precioEspecial: promo?.precioEspecial || promo?.precio_especial || null,
     prioridad: promo?.prioridad || promo?.prioridad || 0,
-    config: promo?.config || promo?.config || {}
+    config: promo?.config || promo?.config || { transferDiscountType: 'percentage' }
   });
   const [errors, setErrors] = useState({})
 
@@ -110,6 +115,17 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
       if (minA && minA < 0) newErrors.descuentoMonto = 'Monto mínimo inválido'
     }
 
+    if (formData.tipo === 'transfer_discount') {
+      const dtype = formData.config?.transferDiscountType || 'percentage'
+      if (dtype === 'percentage') {
+        const pct = Number(formData.descuentoPorcentaje || 0)
+        if (!pct || pct <= 0 || pct >= 100) newErrors.descuentoPorcentaje = 'Ingresa un porcentaje válido (1-99)'
+      } else {
+        const amt = Number(formData.descuentoMonto || 0)
+        if (!amt || amt <= 0) newErrors.descuentoMonto = 'Ingresa un monto fijo válido (>0)'
+      }
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       // scroll to first error field (best-effort)
@@ -135,13 +151,16 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
       badgeTexto: formData.badgeTexto || null,
       badgeColor: formData.badgeColor || '#3b82f6',
       badgeTextColor: formData.badgeTextColor === 'auto' ? getContrastColor(formData.badgeColor) : formData.badgeTextColor,
-      descuentoPorcentaje: formData.tipo === 'percentage_discount' ? parseFloat(formData.descuentoPorcentaje) : null,
-      descuentoMonto: formData.tipo === 'free_shipping' ? parseFloat(formData.descuentoMonto || 0) : null,
+      descuentoPorcentaje: (formData.tipo === 'percentage_discount' || (formData.tipo === 'transfer_discount' && (formData.config?.transferDiscountType || 'percentage') === 'percentage'))
+        ? parseFloat(formData.descuentoPorcentaje) : null,
+      descuentoMonto: (formData.tipo === 'free_shipping' || (formData.tipo === 'transfer_discount' && formData.config?.transferDiscountType === 'fixed'))
+        ? parseFloat(formData.descuentoMonto || 0) : null,
       precioEspecial: formData.tipo === 'fixed_price' ? parseFloat(formData.precioEspecial) : null,
-      config: formData.tipo === 'buy_x_get_y' ? {
-        buyQuantity: parseInt(formData.config.buyQuantity || 0, 10),
-        payQuantity: parseInt(formData.config.payQuantity || 0, 10)
-      } : null,
+      config: formData.tipo === 'buy_x_get_y'
+        ? { buyQuantity: parseInt(formData.config.buyQuantity || 0, 10), payQuantity: parseInt(formData.config.payQuantity || 0, 10) }
+        : formData.tipo === 'transfer_discount'
+          ? { transferDiscountType: formData.config?.transferDiscountType || 'percentage' }
+          : null,
       valor: null // Este campo lo mantenemos por compatibilidad pero no lo usamos
     };
 
@@ -203,6 +222,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 <small className={styles.helpText}>{typeConfig?.description}</small>
               </div>
 
+              {formData.tipo !== 'transfer_discount' && (
               <div className={styles.formField} style={{ gridColumn: '1 / -1' }}>
                 <label className={styles.label}>Aplica a</label>
                 <select
@@ -220,6 +240,12 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                 </select>
                 {errors.aplicaA && <small className={styles.errorText}>{errors.aplicaA}</small>}
               </div>
+              )}
+              {formData.tipo === 'transfer_discount' && (
+              <div className={styles.formField} style={{ gridColumn: '1 / -1', padding: '10px 14px', borderRadius: 8, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.25)' }}>
+                <small style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>🏦 Este descuento se aplica al total del carrito cuando el cliente elige pagar con transferencia bancaria.</small>
+              </div>
+              )}
 
               {formData.aplicaA === 'categoria' && (
                 <div className={styles.formField} style={{ gridColumn: '1 / -1' }}>
@@ -438,6 +464,53 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                     />
                     {errors.descuentoMonto && <small className={styles.errorText}>{errors.descuentoMonto}</small>}
                   </div>
+                )}
+                {typeConfig.fields.includes('transferDiscountType') && (
+                  <>
+                    <div className={styles.formField}>
+                      <label className={styles.label}>Tipo de descuento</label>
+                      <select
+                        className={styles.select}
+                        value={formData.config?.transferDiscountType || 'percentage'}
+                        onChange={(e) => updateConfig('transferDiscountType', e.target.value)}
+                      >
+                        <option value="percentage">Porcentaje (%)</option>
+                        <option value="fixed">Monto fijo ($)</option>
+                      </select>
+                    </div>
+                    {(formData.config?.transferDiscountType || 'percentage') === 'percentage' ? (
+                      <div className={styles.formField}>
+                        <label className={styles.label}>Descuento (%)</label>
+                        <input
+                          type="number"
+                          name="descuentoPorcentaje"
+                          className={styles.input}
+                          value={formData.descuentoPorcentaje || ''}
+                          onChange={(e) => updateField('descuentoPorcentaje', parseFloat(e.target.value) || null)}
+                          min="1"
+                          max="99"
+                          step="0.01"
+                          placeholder="Ej: 10"
+                        />
+                        {errors.descuentoPorcentaje && <small className={styles.errorText}>{errors.descuentoPorcentaje}</small>}
+                      </div>
+                    ) : (
+                      <div className={styles.formField}>
+                        <label className={styles.label}>Descuento fijo ($)</label>
+                        <input
+                          type="number"
+                          name="descuentoMonto"
+                          className={styles.input}
+                          value={formData.descuentoMonto || ''}
+                          onChange={(e) => updateField('descuentoMonto', parseFloat(e.target.value) || null)}
+                          min="1"
+                          step="0.01"
+                          placeholder="Ej: 500"
+                        />
+                        {errors.descuentoMonto && <small className={styles.errorText}>{errors.descuentoMonto}</small>}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
