@@ -323,3 +323,34 @@ const PromoEngine = {
 };
 
 export default PromoEngine;
+
+/**
+ * Calcula el descuento aplicable cuando el cliente elige pagar con transferencia.
+ * Toma la promo transfer_discount de mayor prioridad entre las activas.
+ * @param {Array} promos - Lista de promociones (ya normalizadas con campos camelCase).
+ * @param {number} subtotal - Subtotal sobre el que se aplica el descuento.
+ * @returns {number} Monto de descuento (0 si no hay promo activa).
+ */
+export function applyTransferDiscount(promos = [], subtotal = 0) {
+  if (!subtotal || subtotal <= 0) return 0;
+  const activeTransferPromos = getActivePromotions(promos).filter(
+    p => (p.tipo || p.type) === 'transfer_discount'
+  );
+  if (!activeTransferPromos.length) return 0;
+
+  // Ordenar por prioridad descendente, tomar la de mayor prioridad
+  const sorted = [...activeTransferPromos].sort(
+    (a, b) => (b.prioridad || 0) - (a.prioridad || 0)
+  );
+  const promo = sorted[0];
+  const dtype = promo.config?.transferDiscountType || 'percentage';
+
+  if (dtype === 'percentage') {
+    const pct = promo.descuentoPorcentaje || promo.descuento_porcentaje || 0;
+    if (!pct) return 0;
+    return Math.round(subtotal * (pct / 100));
+  }
+  // fixed
+  const amt = promo.descuentoMonto || promo.descuento_monto || 0;
+  return Math.min(Number(amt), subtotal);
+}
