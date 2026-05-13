@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const admin = supabaseAdmin();
 
     const [featuredResult, categoriesResult, allProductsResult] = await Promise.all([
-      // Query 1: Featured products
+      // Query 1: Featured products (graceful — column may not exist yet)
       admin
         .from('productos')
         .select('id, nombre, imagenes_urls, precio_unitario, static_promo_price, static_promo_start, static_promo_end, allow_promotions, promo_badge, featured, categoria_id')
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
         .eq('featured', true)
         .eq('publicado', true)
         .eq('active', true)
-        .limit(8),
+        .limit(8)
+        .then((r) => (r.error ? { data: [], error: null } : r)),
 
       // Query 2: Top-level categories
       admin
@@ -44,7 +45,6 @@ export default async function handler(req, res) {
         .limit(100),
     ]);
 
-    if (featuredResult.error) throw featuredResult.error;
     if (categoriesResult.error) throw categoriesResult.error;
     if (allProductsResult.error) throw allProductsResult.error;
 
