@@ -17,75 +17,56 @@ export default function Home() {
     queryKey: QUERY_KEYS.home.data(),
     queryFn: () => fetch('/api/home-data').then((r) => r.json()),
     staleTime: STALE_TIMES.HOME_DATA,
+    retry: false,
   })
 
   const featured = data?.featured || []
   const categories = data?.categories || []
   const byCategory = data?.byCategory || {}
 
-  if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: 'var(--bg, #0f0f1a)',
-        color: '#e2e8f0',
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            border: '3px solid #1a6b3c',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px',
-          }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ fontSize: '0.9rem', opacity: 0.6 }}>Cargando...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
       <Head>
-        <meta
-          name="description"
-          content="Productos innovadores en fibrofácil MDF. Exhibidores, souvenirs, decoración y más. Envíos a todo el país."
-        />
+        <meta name="description" content="Productos innovadores en fibrofácil MDF. Exhibidores, souvenirs, decoración y más. Envíos a todo el país." />
         <meta property="og:title" content="Megafibro - Productos en MDF" />
-        <meta
-          property="og:description"
-          content="Exhibidores, souvenirs, decoración y más. Envíos a todo el país."
-        />
+        <meta property="og:description" content="Exhibidores, souvenirs, decoración y más. Envíos a todo el país." />
         <meta property="og:type" content="website" />
       </Head>
 
       <AnnouncementBar />
 
-      <main>
-        {featured.length > 0 && <HeroGrid products={featured} />}
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '36px', height: '36px',
+              border: '3px solid #1a6b3c',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px',
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <p style={{ fontSize: '0.9rem', opacity: 0.6 }}>Cargando...</p>
+          </div>
+        </div>
+      ) : (
+        <main>
+          {featured.length > 0 && <HeroGrid products={featured} />}
 
-        {categories.length > 0 && (
-          <CategoryTiles categories={categories} byCategory={byCategory} />
-        )}
+          {categories.length > 0 && (
+            <CategoryTiles categories={categories} byCategory={byCategory} />
+          )}
 
-        {categories.map((cat) =>
-          (byCategory[cat.id]?.length || 0) > 0 ? (
-            <CategoryCarousel
-              key={cat.id}
-              category={cat}
-              products={byCategory[cat.id]}
-            />
-          ) : null
-        )}
+          {categories.map((cat) =>
+            (byCategory[cat.id]?.length || 0) > 0 ? (
+              <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
+            ) : null
+          )}
 
-        <TrustBar />
-      </main>
+          <TrustBar />
+        </main>
+      )}
     </PublicLayout>
   )
 }

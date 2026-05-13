@@ -16,7 +16,7 @@ const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false,
 const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
-  const [theme, setTheme] = useState('dark')
+  const [theme, setTheme] = useState('light')
   const [currentUser, setCurrentUser] = useState(null)
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
@@ -43,7 +43,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   }, [])
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'light'
     setTheme(savedTheme)
     // set both data-theme attribute and className to be compatible with different CSS selectors
     try {
