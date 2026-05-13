@@ -246,7 +246,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 style={{
                   padding: '7px 14px',
                   borderRadius: '8px',
-                  background: '#1a6b3c',
+                  background: 'var(--accent-blue)',
                   color: '#fff',
                   border: 'none',
                   cursor: 'pointer',

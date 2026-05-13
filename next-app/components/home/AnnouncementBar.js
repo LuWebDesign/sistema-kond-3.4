@@ -14,7 +14,7 @@ export default function AnnouncementBar({ messages = DEFAULT_MESSAGES }) {
 
   return (
     <div style={{
-      background: '#1a6b3c',
+      background: 'var(--accent-blue)',
       color: '#fff',
       overflow: 'hidden',
       whiteSpace: 'nowrap',

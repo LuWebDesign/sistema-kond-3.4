@@ -28,12 +28,13 @@ export default async function handler(req, res) {
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
       // Query 2: All categories (top-level + subcategories) for slug resolution and display
+      // NOTE: column is 'activa' (not 'active') — must match supabaseCategorias.js
       admin
         .from('categorias')
         .select('id, nombre, slug, parent_id')
         .eq('tenant_id', TENANT_ID)
-        .eq('active', true)
-        .order('orden', { ascending: true })
+        .eq('activa', true)
+        .order('nombre', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
       // Query 3: All published products

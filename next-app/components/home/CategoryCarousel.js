@@ -68,7 +68,10 @@ export default function CategoryCarousel({ category, products = [] }) {
       <div className="carousel-track">
         {products.map((product) => (
           <div key={product.id} className="carousel-item">
-            <ProductCard product={product} categorySlug={category.slug || null} />
+            <ProductCard
+              product={product}
+              onClick={() => router.push(`/catalog/${category.slug}`)}
+            />
           </div>
         ))}
       </div>
