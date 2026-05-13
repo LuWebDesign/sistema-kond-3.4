@@ -46,7 +46,7 @@ export default function Home() {
           <div style={{ textAlign: 'center' }}>
             <div style={{
               width: '36px', height: '36px',
-              border: '3px solid #1a6b3c',
+              border: '3px solid #000',
               borderTopColor: 'transparent',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
