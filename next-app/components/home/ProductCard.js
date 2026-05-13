@@ -93,7 +93,7 @@ export default function ProductCard({ product, categorySlug, onClick }) {
         </p>
 
         {price && (
-          <span style={{ marginTop: 'auto', fontSize: '0.95rem', fontWeight: 700, color: '#1a6b3c' }}>
+          <span style={{ marginTop: 'auto', fontSize: '0.95rem', fontWeight: 700, color: '#000' }}>
             {price}
           </span>
         )}

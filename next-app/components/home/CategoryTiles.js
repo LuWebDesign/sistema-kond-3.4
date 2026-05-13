@@ -83,7 +83,7 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
                 className="cat-tile-bg"
                 style={bgImage
                   ? { backgroundImage: `url(${bgImage})` }
-                  : { background: 'linear-gradient(135deg, #1a6b3c 0%, #0d4a28 100%)' }
+                  : { background: 'linear-gradient(135deg, #000000 0%, #111111 100%)' }
                 }
               />
               <div className="cat-tile-overlay" />
