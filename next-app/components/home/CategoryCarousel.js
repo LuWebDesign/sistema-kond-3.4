@@ -28,7 +28,7 @@ export default function CategoryCarousel({ category, products = [] }) {
           {category.nombre}
         </h3>
         <button
-          onClick={() => router.push(`/catalog?categoria=${category.slug}`)}
+          onClick={() => router.push(`/catalog/${category.slug}`)}
           style={{
             background: 'none',
             border: 'none',
