@@ -18,16 +18,7 @@ const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), {
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [theme, setTheme] = useState('light')
   const [currentUser, setCurrentUser] = useState(null)
-  const [catalogStyles, setCatalogStyles] = useState(() => {
-    // Use cached styles from localStorage as initial value to avoid flash
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('catalogStyles')
-        if (cached) return { ...DEFAULT_STYLES, ...JSON.parse(cached) }
-      } catch (e) {}
-    }
-    return DEFAULT_STYLES
-  })
+  const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
   const [isMobileWidth, setIsMobileWidth] = useState(false)
   const [cartCount, setCartCount] = useState(0)
@@ -69,6 +60,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
       // ignore
     }
     // Cargar estilos personalizados del catálogo
+    // First apply cached styles immediately to avoid flash, then refresh from Supabase
+    try {
+      const cached = localStorage.getItem('catalogStyles')
+      if (cached) setCatalogStyles(s => ({ ...s, ...JSON.parse(cached) }))
+    } catch (e) {}
     getCatalogStyles().then(s => {
       if (s) {
         setCatalogStyles(s)
