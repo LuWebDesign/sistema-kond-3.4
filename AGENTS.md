@@ -19,8 +19,9 @@ Keep analysis extremely short after that.
 
 - **Next.js dev** (`next-app/`):
   - Install: `npm ci` (CI) or `npm install` (local)
-  - Env: `cp ../.env.example .env.local` — set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_USE_SUPABASE
-  - Run: `npm run dev` (binds 0.0.0.0:3000). Build: `npm run build`. Start: `npm start`.
+  - Env: copy `.env.example` → `.env.local` — required vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_USE_SUPABASE`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`
+  - Run: `npm run dev` (binds 0.0.0.0:3000). Uses `WATCHPACK_POLLING=true` — required on Windows/WSL; don't remove.
+  - Build: `npm run build`. Start: `npm start`. Prod-test: `npm run test:prod` (build + start on :3001).
   - **Node mismatch**: `package.json` says 22.x, CI uses 20 (via `.github/workflows/ci.yml`). If build fails, check Node version.
 
 - **Pre-check**: Run `node verify-setup.js` from repo root before infra changes — exits non-zero if critical Supabase files missing.
@@ -47,6 +48,18 @@ Keep analysis extremely short after that.
 - **Security**: Always use `escapeHtml()` before `.innerHTML`. Never commit `.env.local` or keys.
 
 - **SSR guard**: Use `typeof window !== 'undefined'` or React `useEffect` for browser-only APIs in Next.js.
+
+- **MercadoPago Checkout Pro** (`next-app/pages/api/mp/`):
+  - `MP_ACCESS_TOKEN` — server-side ONLY. NEVER use `NEXT_PUBLIC_` prefix for this key.
+  - API routes: `create-preference.js` (creates MP preference) and `webhook.js` (receives IPN v1 + Webhooks v2).
+  - `pedidos_catalogo` MP columns: `mp_preference_id`, `mp_payment_id`, `mp_payment_status` (`'none'|'approved'|'pending'|'in_process'|'rejected'|'cancelled'`).
+  - `estado_pago` MP values: `'pendiente_mp'`, `'rechazado_mp'`, `'pagado'`. `metodo_pago: 'mercadopago'` is valid.
+  - When querying `pedidos_catalogo`, always include MP columns — missing them causes "Esperando confirmación MP" to show forever.
+
+- **Categorías/Subcategorías** (2 niveles):
+  - Table `categorias`: self-referencing `parent_id` (NULL = top-level). Has `slug` field with unique index.
+  - `productos.categoria_id` FK → `categorias.id` (ON DELETE SET NULL). A product can point to a parent OR a leaf category.
+  - `categorias` with `active = true` → public SELECT via RLS. Writes require service role.
 
 - **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
 
