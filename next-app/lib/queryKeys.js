@@ -50,6 +50,10 @@ export const QUERY_KEYS = {
   mp: {
     preference: () => ['mp', 'preference'],
   },
+  home: {
+    _base: ['home'],
+    data: () => [...QUERY_KEYS.home._base, 'data'],
+  },
 }
 
 // staleTime values in milliseconds — DO NOT change without team approval
@@ -65,4 +69,5 @@ export const STALE_TIMES = {
   finanzas_cats:     15 * 60 * 1000,  // 15 min — reference data
   finanzas_regs:     5  * 60 * 1000,  // 5 min — close-of-day records
   categorias:        15 * 60 * 1000,  // 15 min — reference data, changes rarely
+  HOME_DATA:         5  * 60 * 1000,  // 5 min — home page aggregated data
 }
