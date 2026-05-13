@@ -9,7 +9,7 @@ import AnnouncementBar from '../components/home/AnnouncementBar'
 import HeroGrid from '../components/home/HeroGrid'
 import CategoryTiles from '../components/home/CategoryTiles'
 import CategoryCarousel from '../components/home/CategoryCarousel'
-import TrustBar from '../components/home/TrustBar'
+
 import { QUERY_KEYS, STALE_TIMES } from '../lib/queryKeys'
 
 export default function Home() {
@@ -69,8 +69,6 @@ export default function Home() {
               <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
             ) : null
           )}
-
-          <TrustBar />
         </main>
       )}
     </PublicLayout>
