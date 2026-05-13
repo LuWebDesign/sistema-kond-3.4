@@ -88,14 +88,22 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
               />
               <div className="cat-tile-overlay" />
               <div className="cat-tile-content">
-                <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', fontWeight: 700 }}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1.15rem', fontWeight: 700 }}>
                   {cat.nombre}
                 </h3>
+                {products.length > 0 && (
+                  <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)' }}>
+                    {products.length} {products.length === 1 ? 'producto' : 'productos'}
+                  </p>
+                )}
                 <span style={{
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: 'rgba(255,255,255,0.85)',
+                  color: 'rgba(255,255,255,0.9)',
                   letterSpacing: '0.3px',
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: '3px 10px',
+                  borderRadius: '100px',
                 }}>
                   Ver más →
                 </span>

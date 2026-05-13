@@ -3,10 +3,9 @@
 // CSS-only animation, no external libraries.
 
 const DEFAULT_MESSAGES = [
-  '🚚 Envíos a todo el país',
-  '💳 10% OFF abonando por transferencia',
-  '✂️ Pedidos personalizados',
-  '📦 Mayor y menor',
+  'Envíos a todo el país',
+  '10% OFF abonando por transferencia',
+  'Pedidos personalizados',
 ]
 
 export default function AnnouncementBar({ messages = DEFAULT_MESSAGES }) {

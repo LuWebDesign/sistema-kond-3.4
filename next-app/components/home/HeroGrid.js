@@ -4,7 +4,7 @@
 
 import ProductCard from './ProductCard'
 
-export default function HeroGrid({ products = [] }) {
+export default function HeroGrid({ products = [], categorySlugMap = {} }) {
   if (!products.length) return null
 
   return (
@@ -12,7 +12,7 @@ export default function HeroGrid({ products = [] }) {
       <h2 style={{
         fontSize: '1.5rem',
         fontWeight: 700,
-        color: 'var(--text-primary, #f1f5f9)',
+        color: 'var(--text-primary, #1e293b)',
         marginBottom: '24px',
         letterSpacing: '-0.3px',
       }}>
@@ -40,7 +40,11 @@ export default function HeroGrid({ products = [] }) {
 
       <div className="hero-grid">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            categorySlug={categorySlugMap[product.categoria_id] || null}
+          />
         ))}
       </div>
     </section>

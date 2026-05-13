@@ -2,20 +2,26 @@
 // Presentational product card for the Megafibro home page.
 
 import { useRouter } from 'next/router'
+import { slugifyPreserveCase } from '../../utils/slugify'
 
 function formatPrice(n) {
   if (!n && n !== 0) return null
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-export default function ProductCard({ product, onClick }) {
+export default function ProductCard({ product, categorySlug, onClick }) {
   const router = useRouter()
   const imageUrl = product.imagenes_urls?.[0] || null
   const price = formatPrice(product.precio_unitario)
 
   const handleClick = () => {
     if (onClick) { onClick(product); return }
-    router.push('/catalog')
+    if (categorySlug) {
+      const productSlug = slugifyPreserveCase(product.nombre).toLowerCase()
+      router.push(`/catalog/${categorySlug}/${productSlug}`)
+    } else {
+      router.push('/catalog')
+    }
   }
 
   return (

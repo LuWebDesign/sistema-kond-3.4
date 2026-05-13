@@ -24,6 +24,9 @@ export default function Home() {
   const categories = data?.categories || []
   const byCategory = data?.byCategory || {}
 
+  // Map categoria_id → slug for product navigation
+  const categorySlugMap = Object.fromEntries(categories.map((c) => [c.id, c.slug]))
+
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
       <Head>
@@ -52,7 +55,7 @@ export default function Home() {
         </div>
       ) : (
         <main>
-          {featured.length > 0 && <HeroGrid products={featured} />}
+          {featured.length > 0 && <HeroGrid products={featured} categorySlugMap={categorySlugMap} />}
 
           {categories.length > 0 && (
             <CategoryTiles categories={categories} byCategory={byCategory} />

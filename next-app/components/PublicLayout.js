@@ -239,6 +239,26 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             alignItems: 'center',
             gap: '12px'
           }}>
+            {/* Login button - only if not logged in */}
+            {isClient && !currentUser && (
+              <button
+                onClick={() => router.push('/catalog')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  background: '#1a6b3c',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Iniciar sesión
+              </button>
+            )}
+
             {/* Cart icon - ALWAYS visible, even before notifications */}
             <button
               onClick={() => router.push('/mi-carrito')}
