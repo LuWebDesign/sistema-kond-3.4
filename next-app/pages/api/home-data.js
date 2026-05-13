@@ -33,7 +33,8 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .is('parent_id', null)
         .eq('active', true)
-        .order('orden', { ascending: true }),
+        .order('orden', { ascending: true })
+        .then((r) => (r.error ? { data: [], error: null } : r)),
 
       // Query 3: All published products with category
       admin
@@ -42,15 +43,13 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
-        .limit(100),
+        .limit(100)
+        .then((r) => (r.error ? { data: [], error: null } : r)),
     ]);
 
-    if (categoriesResult.error) throw categoriesResult.error;
-    if (allProductsResult.error) throw allProductsResult.error;
-
-    let featured = featuredResult.data || [];
     const categories = categoriesResult.data || [];
     const allProducts = allProductsResult.data || [];
+    let featured = featuredResult.data || [];
 
     // Fallback: if featured.length < 4, fill from newest published products
     if (featured.length < 4) {
