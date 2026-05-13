@@ -2,6 +2,7 @@
 // Usa supabaseAdmin para bypass de RLS (los compradores no tienen sesión Supabase Auth)
 
 import { supabaseAdmin } from '../../../utils/supabaseClient'
+import { TENANT_ID } from '../../../lib/tenant'
 
 export default async function handler(req, res) {
   const { email } = req.query
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
       const { data, error } = await client
         .from('notifications')
         .select('*')
+        .eq('tenant_id', TENANT_ID)
         .eq('target_user', 'user')
         .eq('meta->>userId', email)
         .order('created_at', { ascending: false })
@@ -48,6 +50,7 @@ export default async function handler(req, res) {
           .from('notifications')
           .update({ read: true, read_at: new Date().toISOString() })
           .eq('id', id)
+          .eq('tenant_id', TENANT_ID)
           .eq('target_user', 'user')
         if (error) throw error
         return res.status(200).json({ success: true })
@@ -58,6 +61,7 @@ export default async function handler(req, res) {
         const { error } = await client
           .from('notifications')
           .update({ read: true, read_at: new Date().toISOString() })
+          .eq('tenant_id', TENANT_ID)
           .eq('target_user', 'user')
           .eq('meta->>userId', userEmail)
         if (error) throw error
@@ -70,6 +74,7 @@ export default async function handler(req, res) {
           .from('notifications')
           .delete()
           .eq('id', id)
+          .eq('tenant_id', TENANT_ID)
           .eq('target_user', 'user')
         if (error) throw error
         return res.status(200).json({ success: true })
@@ -80,6 +85,7 @@ export default async function handler(req, res) {
         const { error } = await client
           .from('notifications')
           .delete()
+          .eq('tenant_id', TENANT_ID)
           .eq('target_user', 'user')
           .eq('meta->>userId', userEmail)
         if (error) throw error

@@ -3,6 +3,7 @@
 
 import { supabase, supabaseAdmin } from '../../../utils/supabaseClient'
 import { createNotification } from '../../../utils/supabaseNotifications'
+import { TENANT_ID } from '../../../lib/tenant'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -67,6 +68,7 @@ export default async function handler(req, res) {
       .from('notifications')
       .select('*')
       .eq('id', createdNotification.id)
+      .eq('tenant_id', TENANT_ID)
       .single()
 
     if (readError) {
@@ -84,6 +86,7 @@ export default async function handler(req, res) {
       .from('notifications')
       .delete()
       .eq('id', createdNotification.id)
+      .eq('tenant_id', TENANT_ID)
 
     if (deleteError) {
       console.warn('⚠️ Error limpiando notificación de prueba:', deleteError)

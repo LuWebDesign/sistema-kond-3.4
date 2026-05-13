@@ -4,6 +4,7 @@
 
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { slugify } from '../../../../utils/slugify'
+import { TENANT_ID } from '../../../../lib/tenant'
 
 const ADMIN_SECRET = process.env.ADMIN_API_SECRET
 
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('categorias')
       .select('id, nombre, slug, parent_id, activa, orden, created_at')
+      .eq('tenant_id', TENANT_ID)
       .order('parent_id', { ascending: true, nullsFirst: true })
       .order('nombre', { ascending: true })
 
@@ -60,6 +62,7 @@ export default async function handler(req, res) {
         .from('categorias')
         .select('id, parent_id')
         .eq('id', parent_id)
+        .eq('tenant_id', TENANT_ID)
         .single()
 
       if (padreError || !padre) {
@@ -85,6 +88,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .select('id')
       .eq('slug', slug)
+      .eq('tenant_id', TENANT_ID)
       .maybeSingle()
 
     if (existing) {
@@ -94,7 +98,7 @@ export default async function handler(req, res) {
     // Insertar
     const { data, error } = await supabase
       .from('categorias')
-      .insert([{ nombre: nombre.trim(), slug, parent_id: parent_id ?? null, orden }])
+      .insert([{ nombre: nombre.trim(), slug, parent_id: parent_id ?? null, orden, tenant_id: TENANT_ID }])
       .select('id, nombre, slug, parent_id, activa, orden, created_at')
       .single()
 

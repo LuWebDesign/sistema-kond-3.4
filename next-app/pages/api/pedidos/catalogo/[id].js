@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { createNotification } from '../../../../utils/supabaseNotifications'
+import { TENANT_ID } from '../../../../lib/tenant'
 
 export default async function handler(req, res) {
   const { id } = req.query
@@ -13,6 +14,7 @@ export default async function handler(req, res) {
         .from('pedidos_catalogo_items')
         .delete()
         .eq('pedido_catalogo_id', id)
+        .eq('tenant_id', TENANT_ID)
 
       if (itemsError) throw itemsError
 
@@ -21,6 +23,7 @@ export default async function handler(req, res) {
         .from('pedidos_catalogo')
         .delete()
         .eq('id', id)
+        .eq('tenant_id', TENANT_ID)
 
       if (pedidoError) throw pedidoError
 
@@ -76,6 +79,7 @@ export default async function handler(req, res) {
         .from('pedidos_catalogo')
         .update(updateData)
         .eq('id', id)
+        .eq('tenant_id', TENANT_ID)
         .select()
         .single()
 

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../utils/supabaseClient'
+import { TENANT_ID } from '../../../lib/tenant'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
         items:pedidos_catalogo_items(*)
       `)
       .eq('cliente_email', email)
+      .eq('tenant_id', TENANT_ID)
       .order('fecha_creacion', { ascending: false })
 
     if (error) throw error
