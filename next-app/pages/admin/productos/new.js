@@ -1749,7 +1749,6 @@ function NewProductComponent() {
               </span>
             </label>
           </div>
-        </div>
 
           {/* Botones de Acción */}
           <div style={{
