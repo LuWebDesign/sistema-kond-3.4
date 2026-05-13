@@ -69,6 +69,14 @@ Keep analysis extremely short after that.
 
 - **Deep context**: See `.github/copilot-instructions.md` for full technical details (schema, patterns, functions).
 
+- **Multi-tenant foundation** (`NEXT_PUBLIC_TENANT_ID`):
+  - Every Vercel deployment gets its own `NEXT_PUBLIC_TENANT_ID` UUID — this is how tenants are isolated.
+  - `next-app/lib/tenant.js` exports `TENANT_ID` — throws at module load if env var missing.
+  - ALL Supabase queries (utils + API routes) must include `.eq('tenant_id', TENANT_ID)` — service_role bypasses RLS so this is mandatory.
+  - First tenant UUID: `00000000-0000-0000-0000-000000000001` (seed value — replace in Vercel env vars).
+  - To add a second tenant: insert row in `tenants` table + new Vercel deployment with new UUID.
+  - MP webhook resolves tenant via `pedidos_catalogo.mp_preference_id` join (no env var needed there).
+
 ## Files to open first
 
 1. verify-setup.js
