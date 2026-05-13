@@ -14,6 +14,10 @@ export default async function handler(req, res) {
   try {
     const admin = supabaseAdmin();
 
+    // DEBUG: verify connection
+    const pingResult = await admin.from('productos').select('id').eq('tenant_id', TENANT_ID).limit(1);
+    const debugInfo = { tenant: TENANT_ID, pingError: pingResult.error?.message || null, pingCount: pingResult.data?.length ?? null };
+
     const [featuredResult, categoriesResult, allProductsResult] = await Promise.all([
       // Query 1: Featured products (graceful — column may not exist yet)
       admin
@@ -69,8 +73,8 @@ export default async function handler(req, res) {
       byCategory[catId].push(product);
     }
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
-    return res.status(200).json({ featured, categories, byCategory });
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ featured, categories, byCategory, _debug: debugInfo });
   } catch (error) {
     console.error('[home-data] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
