@@ -14,15 +14,11 @@ export default async function handler(req, res) {
   try {
     const admin = supabaseAdmin();
 
-    // DEBUG: verify connection
-    const pingResult = await admin.from('productos').select('id').eq('tenant_id', TENANT_ID).limit(1);
-    const debugInfo = { tenant: TENANT_ID, pingError: pingResult.error?.message || null, pingCount: pingResult.data?.length ?? null };
-
     const [featuredResult, categoriesResult, allProductsResult] = await Promise.all([
-      // Query 1: Featured products (graceful — column may not exist yet)
+      // Query 1: Featured products
       admin
         .from('productos')
-        .select('id, nombre, imagenes_urls, precio_unitario, static_promo_price, static_promo_start, static_promo_end, allow_promotions, promo_badge, featured, categoria_id')
+        .select('id, nombre, imagenes_urls, precio_unitario, featured, categoria_id')
         .eq('tenant_id', TENANT_ID)
         .eq('featured', true)
         .eq('publicado', true)
@@ -40,10 +36,10 @@ export default async function handler(req, res) {
         .order('orden', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
-      // Query 3: All published products with category
+      // Query 3: All published products
       admin
         .from('productos')
-        .select('id, nombre, imagenes_urls, precio_unitario, static_promo_price, static_promo_start, static_promo_end, allow_promotions, promo_badge, categoria_id')
+        .select('id, nombre, imagenes_urls, precio_unitario, categoria_id')
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
@@ -73,8 +69,8 @@ export default async function handler(req, res) {
       byCategory[catId].push(product);
     }
 
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ featured, categories, byCategory, _debug: debugInfo });
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    return res.status(200).json({ featured, categories, byCategory });
   } catch (error) {
     console.error('[home-data] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
