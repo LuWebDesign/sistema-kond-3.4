@@ -424,6 +424,9 @@ function NewProductComponent() {
             finalCategoriaId = result.data.id
             // Invalidar cache de categorías para que aparezca en futuros loads
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categorias.all })
+          } else if (res.status === 409 && result.existing?.id) {
+            // La subcategoría ya existe — reutilizar su id sin bloquear
+            finalCategoriaId = result.existing.id
           } else {
             alert('Error al crear la subcategoría: ' + (result.error || 'Error desconocido'))
             return

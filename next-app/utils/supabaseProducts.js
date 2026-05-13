@@ -4,6 +4,7 @@
 // ============================================
 
 import supabase, { isSupabaseReady } from './supabaseClient';
+import { TENANT_ID } from '../lib/tenant';
 
 /**
  * Obtener todos los productos (solo admins)
@@ -169,7 +170,8 @@ export async function createProducto(producto) {
       active: producto.active !== undefined ? producto.active : true,
       description: producto.description || '',
       // Asignación a categoría estructurada (PR3 — categories feature)
-      ...(producto.categoria_id != null ? { categoria_id: Number(producto.categoria_id) } : {})
+      ...(producto.categoria_id != null ? { categoria_id: Number(producto.categoria_id) } : {}),
+      tenant_id: TENANT_ID
     };
 
     // console.log('📝 Datos del producto a crear:', productData);
