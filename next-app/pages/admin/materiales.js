@@ -161,9 +161,20 @@ function Materiales() {
       if (editingId) {
         const { data, error } = await updateMaterial(editingId, form)
         if (data && !error) {
+          // Recalcular costos de productos que usan este material
+          try {
+            await fetch('/api/admin/materiales/recalculate-productos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ materialId: editingId, nuevoCosto: Number(form.costoUnitario) || 0 })
+            })
+          } catch (recalcError) {
+            console.warn('⚠️ No se pudo recalcular productos del material:', recalcError.message)
+          }
           invalidateAll()
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
           resetForm(false)
-          createToast('✅ Material actualizado correctamente', 'success')
+          createToast('✅ Material actualizado y costos de productos recalculados', 'success')
         } else {
           throw new Error(error || 'Update failed')
         }
