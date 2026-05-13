@@ -3,6 +3,19 @@
 -- ============================================
 -- Este archivo contiene las definiciones de tablas, índices,
 -- políticas RLS y funciones para el sistema KOND.
+--
+-- NOTE: See sql-migrations/ for migration files to apply to existing DBs.
+--       New installations can run this schema directly.
+
+-- ============================================
+-- TABLA: tenants
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.tenants (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT        NOT NULL,
+  domain     TEXT        UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- ============================================
 -- TABLA: categorias
@@ -14,12 +27,14 @@
 CREATE TABLE IF NOT EXISTS public.categorias (
   id         BIGSERIAL PRIMARY KEY,
   nombre     TEXT NOT NULL,
-  slug       TEXT NOT NULL UNIQUE,
+  slug       TEXT NOT NULL,
   parent_id  BIGINT REFERENCES public.categorias(id) ON DELETE RESTRICT,
   activa     BOOLEAN NOT NULL DEFAULT true,
   orden      INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT,
+  UNIQUE(tenant_id, slug)
 );
 
 -- Índices para categorias
@@ -63,7 +78,8 @@ CREATE TABLE IF NOT EXISTS public.productos (
   -- FK a categorias: puede apuntar a padre O subcategoría (ver tabla categorias)
   categoria_id BIGINT REFERENCES public.categorias(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT
 );
 
 -- Índices para productos
@@ -85,7 +101,8 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
   observaciones TEXT,
   estado TEXT DEFAULT 'pendiente', -- pendiente, en_proceso, completado, entregado
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT
 );
 
 -- Índices para pedidos
@@ -137,7 +154,8 @@ CREATE TABLE IF NOT EXISTS public.pedidos_catalogo (
   mp_payment_status TEXT DEFAULT 'none', -- 'none' | 'approved' | 'pending' | 'in_process' | 'rejected' | 'cancelled'
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT
 );
 
 -- Índices para pedidos_catalogo
@@ -164,7 +182,8 @@ CREATE TABLE IF NOT EXISTS public.promociones (
   product_ids BIGINT[], -- Array de IDs de productos
   config JSONB, -- Configuración específica por tipo de promo
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT
 );
 
 -- Índices para promociones
@@ -186,7 +205,8 @@ CREATE TABLE IF NOT EXISTS public.cupones (
   end_date DATE,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tenant_id  UUID NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT
 );
 
 -- Índices para cupones
@@ -265,6 +285,7 @@ CREATE TRIGGER update_categorias_updated_at BEFORE UPDATE ON public.categorias
 -- IMPORTANTE: Habilitar RLS y definir políticas según necesidades de seguridad
 
 -- Habilitar RLS en todas las tablas
+ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.productos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pedidos_catalogo ENABLE ROW LEVEL SECURITY;
@@ -297,3 +318,53 @@ CREATE POLICY "Cualquiera puede crear pedidos de catálogo"
 CREATE POLICY "Categorias activas son visibles públicamente"
   ON public.categorias FOR SELECT
   USING (activa = true);
+
+-- ============================================
+-- RLS TENANT GUARDS (secondary guards — multi-tenant isolation)
+-- ============================================
+-- These are secondary guards; primary access control is above.
+-- current_setting('app.tenant_id', true) returns NULL when the GUC is not set,
+-- making the check a no-op for service-role / anon sessions.
+-- App sessions MUST set app.tenant_id before querying.
+
+CREATE POLICY "tenant_guard_productos"
+  ON public.productos FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
+
+CREATE POLICY "tenant_guard_pedidos_catalogo"
+  ON public.pedidos_catalogo FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
+
+CREATE POLICY "tenant_guard_pedidos"
+  ON public.pedidos FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
+
+CREATE POLICY "tenant_guard_promociones"
+  ON public.promociones FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
+
+CREATE POLICY "tenant_guard_cupones"
+  ON public.cupones FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
+
+CREATE POLICY "tenant_guard_categorias"
+  ON public.categorias FOR ALL
+  USING (
+    current_setting('app.tenant_id', true) IS NULL
+    OR tenant_id = current_setting('app.tenant_id', true)::uuid
+  );
