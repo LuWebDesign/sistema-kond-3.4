@@ -71,7 +71,7 @@ export default async function handler(req, res) {
       byCategory[catId].push(product);
     }
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({ featured, categories, byCategory });
   } catch (error) {
     console.error('[home-data] Error:', error);
