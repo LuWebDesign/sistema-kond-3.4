@@ -205,10 +205,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               alignItems: 'center',
               gap: '8px'
             }}>
-              {catalogStyles.logoUrl && (
-                <img src={catalogStyles.logoUrl} alt="Logo" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-              )}
-              {catalogStyles.logoText || 'KOND'}
+              {catalogStyles.logoUrl
+                ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
+                : (catalogStyles.logoText || 'KOND')
+              }
             </Link>
           </div>
 
@@ -319,7 +319,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                     fontSize: '1.1rem',
                     fontWeight: 600
                   }}>
-                    {catalogStyles.logoText || 'KOND'}
+                    {catalogStyles.logoText || catalogStyles.logoUrl ? (catalogStyles.logoText || '') : 'KOND'}
                   </h3>
                   <p style={{
                     fontSize: '0.9rem',
