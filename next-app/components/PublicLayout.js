@@ -198,7 +198,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           alignItems: 'center',
           position: 'sticky',
           top: 0,
-          zIndex: 100
+          zIndex: 100,
+          minHeight: '64px',
         }}>
           {/* Left: logo */}
           <div style={{
