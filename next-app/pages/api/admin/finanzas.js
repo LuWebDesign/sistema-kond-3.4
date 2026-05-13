@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../utils/supabaseClient'
+import { TENANT_ID } from '../../../lib/tenant'
 
 export default async function handler(req, res) {
   try {
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
         let query = supabase
           .from('movimientos_financieros')
           .select('*')
+          .eq('tenant_id', TENANT_ID)
           .order('fecha', { ascending: false })
           .order('hora', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
@@ -30,6 +32,7 @@ export default async function handler(req, res) {
         const { data, error } = await supabase
           .from('categorias_financieras')
           .select('*')
+          .eq('tenant_id', TENANT_ID)
           .order('nombre', { ascending: true })
         if (error) throw error
         return res.status(200).json({ data })
@@ -39,6 +42,7 @@ export default async function handler(req, res) {
         const { data, error } = await supabase
           .from('registros_cierre')
           .select('*')
+          .eq('tenant_id', TENANT_ID)
           .order('fecha', { ascending: false })
         if (error) throw error
         return res.status(200).json({ data })
@@ -46,9 +50,9 @@ export default async function handler(req, res) {
 
       if (type === 'all') {
         const [movs, cats, regs] = await Promise.all([
-          supabase.from('movimientos_financieros').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false }),
-          supabase.from('categorias_financieras').select('*').order('nombre', { ascending: true }),
-          supabase.from('registros_cierre').select('*').order('fecha', { ascending: false })
+          supabase.from('movimientos_financieros').select('*').eq('tenant_id', TENANT_ID).order('fecha', { ascending: false }).order('created_at', { ascending: false }),
+          supabase.from('categorias_financieras').select('*').eq('tenant_id', TENANT_ID).order('nombre', { ascending: true }),
+          supabase.from('registros_cierre').select('*').eq('tenant_id', TENANT_ID).order('fecha', { ascending: false })
         ])
         if (movs.error) throw movs.error
         if (cats.error) throw cats.error
@@ -75,7 +79,8 @@ export default async function handler(req, res) {
           categoria: movimiento.categoria || null,
           descripcion: movimiento.descripcion || null,
           metodo_pago: movimiento.metodoPago || movimiento.metodo_pago || 'efectivo',
-          pedido_catalogo_id: movimiento.pedidoCatalogoId || movimiento.pedido_catalogo_id || null
+          pedido_catalogo_id: movimiento.pedidoCatalogoId || movimiento.pedido_catalogo_id || null,
+          tenant_id: TENANT_ID
         }
         const { data, error } = await supabase.from('movimientos_financieros').insert([movimientoData]).select().single()
         // Retry sin pedido_catalogo_id si la columna no existe
@@ -91,7 +96,7 @@ export default async function handler(req, res) {
 
       if (action === 'createCategoria') {
         const { nombre } = req.body
-        const { data, error } = await supabase.from('categorias_financieras').insert([{ nombre }]).select().single()
+        const { data, error } = await supabase.from('categorias_financieras').insert([{ nombre, tenant_id: TENANT_ID }]).select().single()
         if (error) throw error
         return res.status(200).json({ data })
       }
@@ -104,7 +109,8 @@ export default async function handler(req, res) {
           transferencia: parseFloat(registro.transferencia || 0),
           tarjeta: parseFloat(registro.tarjeta || 0),
           total: parseFloat(registro.total || 0),
-          observaciones: registro.observaciones || null
+          observaciones: registro.observaciones || null,
+          tenant_id: TENANT_ID
         }
         const { data, error } = await supabase.from('registros_cierre').upsert([registroData], { onConflict: 'fecha' }).select().single()
         if (error) throw error
@@ -128,21 +134,21 @@ export default async function handler(req, res) {
         if (movimiento.metodoPago !== undefined) updateData.metodo_pago = movimiento.metodoPago
         if (movimiento.metodo_pago !== undefined) updateData.metodo_pago = movimiento.metodo_pago
 
-        const { data, error } = await supabase.from('movimientos_financieros').update(updateData).eq('id', id).select().single()
+        const { data, error } = await supabase.from('movimientos_financieros').update(updateData).eq('id', id).eq('tenant_id', TENANT_ID).select().single()
         if (error) throw error
         return res.status(200).json({ data })
       }
 
       if (action === 'updateCategoria') {
         const { id, nombre } = req.body
-        const { data, error } = await supabase.from('categorias_financieras').update({ nombre }).eq('id', id).select().single()
+        const { data, error } = await supabase.from('categorias_financieras').update({ nombre }).eq('id', id).eq('tenant_id', TENANT_ID).select().single()
         if (error) throw error
         return res.status(200).json({ data })
       }
 
       if (action === 'bulkUpdateCategoria') {
         const { oldName, newName } = req.body
-        const { data, error } = await supabase.from('movimientos_financieros').update({ categoria: newName }).eq('categoria', oldName).select()
+        const { data, error } = await supabase.from('movimientos_financieros').update({ categoria: newName }).eq('categoria', oldName).eq('tenant_id', TENANT_ID).select()
         if (error) throw error
         return res.status(200).json({ data })
       }
@@ -155,19 +161,19 @@ export default async function handler(req, res) {
       const { id, type } = req.body
 
       if (type === 'movimiento') {
-        const { error } = await supabase.from('movimientos_financieros').delete().eq('id', id)
+        const { error } = await supabase.from('movimientos_financieros').delete().eq('id', id).eq('tenant_id', TENANT_ID)
         if (error) throw error
         return res.status(200).json({ success: true })
       }
 
       if (type === 'categoria') {
-        const { error } = await supabase.from('categorias_financieras').delete().eq('id', id)
+        const { error } = await supabase.from('categorias_financieras').delete().eq('id', id).eq('tenant_id', TENANT_ID)
         if (error) throw error
         return res.status(200).json({ success: true })
       }
 
       if (type === 'registroCierre') {
-        const { error } = await supabase.from('registros_cierre').delete().eq('id', id)
+        const { error } = await supabase.from('registros_cierre').delete().eq('id', id).eq('tenant_id', TENANT_ID)
         if (error) throw error
         return res.status(200).json({ success: true })
       }

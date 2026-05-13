@@ -5,6 +5,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+// Webhook has no TENANT_ID env context — tenant is resolved from DB via mp_preference_id
+
 const STATUS_MAP = {
   approved: 'pagado',
   pending: 'pendiente_mp',
@@ -51,6 +53,20 @@ export default async function handler(req, res) {
 
     console.log('[mp/webhook] payment fetched:', { mp_payment_id, status, external_reference, estado_pago })
 
+    // Resolve tenant from DB using mp_preference_id (external_reference)
+    const { data: pedido, error: lookupError } = await supabaseAdmin
+      .from('pedidos_catalogo')
+      .select('id, tenant_id, estado_pago, mp_payment_status')
+      .eq('mp_preference_id', external_reference)
+      .single()
+
+    if (lookupError || !pedido) {
+      console.error('[mp/webhook] Could not resolve pedido for external_reference:', external_reference, lookupError)
+      return res.status(200).end()
+    }
+
+    const resolvedTenantId = pedido.tenant_id
+
     const { data: updated, error } = await supabaseAdmin
       .from('pedidos_catalogo')
       .update({
@@ -58,7 +74,8 @@ export default async function handler(req, res) {
         mp_payment_status: status,
         estado_pago,
       })
-      .eq('id', external_reference)
+      .eq('id', pedido.id)
+      .eq('tenant_id', resolvedTenantId)
       .select('id')
 
     console.log('[mp/webhook] supabase result:', { updated, error, external_reference })

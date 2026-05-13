@@ -2,6 +2,7 @@
 // GET /api/pedidos/catalogo
 
 import { supabaseAdmin } from '../../../utils/supabaseClient';
+import { TENANT_ID } from '../../../lib/tenant';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
         *,
         pedidos_catalogo_items (*)
       `)
+      .eq('tenant_id', TENANT_ID)
       .order('created_at', { ascending: false });
 
     if (error) {

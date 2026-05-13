@@ -2,6 +2,7 @@
 // POST /api/send-order-email
 
 import { supabaseAdmin } from '../../utils/supabaseClient'
+import { TENANT_ID } from '../../lib/tenant'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
       .from('pedidos_catalogo')
       .select('*, pedidos_catalogo_items(*)')
       .eq('id', pedidoId)
+      .eq('tenant_id', TENANT_ID)
       .single()
 
     if (pedidoError || !pedido) {

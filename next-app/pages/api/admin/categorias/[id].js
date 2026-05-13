@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { slugify } from '../../../../utils/slugify'
+import { TENANT_ID } from '../../../../lib/tenant'
 
 const ADMIN_SECRET = process.env.ADMIN_API_SECRET
 
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .select('id, nombre, slug, parent_id, activa, orden, created_at')
       .eq('id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
       .single()
 
     if (error) {
@@ -56,6 +58,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .select('id, nombre, slug, parent_id')
       .eq('id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
       .single()
 
     if (fetchError) {
@@ -83,6 +86,7 @@ export default async function handler(req, res) {
           .from('categorias')
           .select('id')
           .eq('slug', newSlug)
+          .eq('tenant_id', TENANT_ID)
           .neq('id', categoriaId)
           .maybeSingle()
 
@@ -105,6 +109,7 @@ export default async function handler(req, res) {
           .from('categorias')
           .select('id, parent_id')
           .eq('id', parent_id)
+          .eq('tenant_id', TENANT_ID)
           .single()
 
         if (padreError || !padre) {
@@ -129,6 +134,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .update(updateData)
       .eq('id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
       .select('id, nombre, slug, parent_id, activa, orden, created_at')
       .single()
 
@@ -150,6 +156,7 @@ export default async function handler(req, res) {
       .from('productos')
       .select('id', { count: 'exact', head: true })
       .eq('categoria_id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
 
     if (prodError) {
       console.error(`DELETE /api/admin/categorias/${id} — check productos error:`, prodError)
@@ -167,6 +174,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .select('id', { count: 'exact', head: true })
       .eq('parent_id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
 
     if (subError) {
       console.error(`DELETE /api/admin/categorias/${id} — check subcategorias error:`, subError)
@@ -184,6 +192,7 @@ export default async function handler(req, res) {
       .from('categorias')
       .delete()
       .eq('id', categoriaId)
+      .eq('tenant_id', TENANT_ID)
 
     if (error) {
       console.error(`DELETE /api/admin/categorias/${id} error:`, error)

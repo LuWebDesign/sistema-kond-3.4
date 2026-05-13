@@ -2,6 +2,7 @@
 // POST /api/productos/create
 
 import { supabaseAdmin } from '../../../utils/supabaseClient';
+import { TENANT_ID } from '../../../lib/tenant';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('productos')
-      .insert([producto])
+      .insert([{ ...producto, tenant_id: TENANT_ID }])
       .select()
       .single();
 

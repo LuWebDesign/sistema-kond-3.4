@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../utils/supabaseClient'
+import { TENANT_ID } from '../../../lib/tenant'
 
 const DEFAULT_CONFIG = {
   transferencia: { enabled: true, alias: '', cbu: '', titular: '', banco: '' },
@@ -11,7 +12,7 @@ export default async function handler(req, res) {
     const supabase = supabaseAdmin()
 
     if (req.method === 'GET') {
-      const { data, error } = await supabase.from('payment_config').select('config').single()
+      const { data, error } = await supabase.from('payment_config').select('config').eq('tenant_id', TENANT_ID).single()
       if (error) {
         // Si no existe, devolver default
         return res.status(200).json({ config: DEFAULT_CONFIG })
@@ -25,18 +26,18 @@ export default async function handler(req, res) {
       if (!config) return res.status(400).json({ success: false, error: 'Missing config in body' })
 
       // Verificar si existe registro
-      const { data: existing, error: fetchError } = await supabase.from('payment_config').select('id').single()
+      const { data: existing, error: fetchError } = await supabase.from('payment_config').select('id').eq('tenant_id', TENANT_ID).single()
       if (fetchError && fetchError.code !== 'PGRST116') {
         return res.status(500).json({ success: false, error: fetchError.message || String(fetchError) })
       }
 
       if (existing) {
-        const { error } = await supabase.from('payment_config').update({ config, updated_at: new Date().toISOString() }).eq('id', existing.id)
+        const { error } = await supabase.from('payment_config').update({ config, updated_at: new Date().toISOString() }).eq('id', existing.id).eq('tenant_id', TENANT_ID)
         if (error) return res.status(500).json({ success: false, error: error.message || String(error) })
         return res.status(200).json({ success: true })
       }
 
-      const { error } = await supabase.from('payment_config').insert([{ config, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+      const { error } = await supabase.from('payment_config').insert([{ config, tenant_id: TENANT_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
       if (error) return res.status(500).json({ success: false, error: error.message || String(error) })
       return res.status(200).json({ success: true })
     }
