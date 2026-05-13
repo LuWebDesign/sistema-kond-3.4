@@ -205,9 +205,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               alignItems: 'center',
               gap: '8px'
             }}>
-              {catalogStyles.logoUrl
-                ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
-                : (catalogStyles.logoText || 'KOND')
+              {!isClient
+                ? <span style={{ display: 'inline-block', width: 120, height: 24, borderRadius: 4, background: 'var(--border-color, #e2e8f0)' }} />
+                : catalogStyles.logoUrl
+                  ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
+                  : (catalogStyles.logoText || 'KOND')
               }
             </Link>
           </div>
