@@ -28,6 +28,10 @@ jobs:
 
       - name: Build (next-app)
         working-directory: ./next-app
+        env:
+          NEXT_PUBLIC_TENANT_ID: 00000000-0000-0000-0000-000000000000
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
         run: npm run build
 
       - name: Run ESLint (next-app)
