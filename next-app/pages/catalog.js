@@ -323,14 +323,7 @@ export default function Catalog() {
         margin: '0 auto',
         padding: '20px' 
       }}>
-        {/* Header del catálogo */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>🛒 Nuestros Productos</h1>
-
-            {/* Section selector removed from here — PublicLayout renders it centered below the header for /catalog routes */}
-          </div>
-        </div>
+        {/* Section selector is rendered centered in the PublicLayout header for /catalog routes */}
 
         {/* Filtros */}
         <div className="filters-row" style={{
