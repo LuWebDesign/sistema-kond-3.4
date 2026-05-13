@@ -526,7 +526,8 @@ function NewProductComponent() {
         stock: finalFormData.stock,
         ensamble: finalFormData.ensamble,
         imagenes: [],
-        description: finalFormData.description || ''
+        description: finalFormData.description || '',
+        precioManual: calculatedFields.isPrecioUnitarioManual || false
       }
 
       const { data: createdProduct, error } = await createProducto(newProductData)

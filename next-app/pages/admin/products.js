@@ -263,6 +263,7 @@ function ProductsComponent() {
           imagenes: p.imagenes_urls || [],
           stock: p.stock || 0,
           description: p.description || '',
+          precio_manual: p.precio_manual || false,
           fechaCreacion: p.created_at || (typeof window !== 'undefined' ? new Date().toISOString() : '')
         }
       })
@@ -2927,9 +2928,10 @@ function ProductCard({
   }, [product, isEditing])
 
   // Estados para controlar modos manuales en edición
+  // Inicializar isPrecioUnitarioManual desde el campo persistido en BD
   const [editCalculatedFields, setEditCalculatedFields] = useState({
     isCostoMaterialManual: false,
-    isPrecioUnitarioManual: false
+    isPrecioUnitarioManual: product.precio_manual || false
   })
 
   // Actualizar costo material cuando el usuario CAMBIA el material
@@ -2975,15 +2977,15 @@ function ProductCard({
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
   // Resetear modos manuales cuando sale de edición
-  // (La sincronización de editData/imagePreviews/imageFiles ya se maneja en el useEffect anterior)
+  // isPrecioUnitarioManual se restaura desde product.precio_manual (persistido en BD)
   useEffect(() => {
     if (!isEditing) {
       setEditCalculatedFields({
         isCostoMaterialManual: false,
-        isPrecioUnitarioManual: false
+        isPrecioUnitarioManual: product.precio_manual || false
       })
     }
-  }, [isEditing])
+  }, [isEditing, product.precio_manual])
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -3119,7 +3121,7 @@ function ProductCard({
   // Guardar cambios
   const handleSave = async () => {
     try {
-      let finalData = { ...editData }
+      let finalData = { ...editData, precioManual: editCalculatedFields.isPrecioUnitarioManual }
       
       // Si hay materialId, buscar el nombre del material y guardarlo
       if (finalData.materialId && materials.length > 0) {

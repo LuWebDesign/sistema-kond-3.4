@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   // 1. Buscar todos los productos activos que usen este material
   const { data: productos, error: fetchError } = await supabase
     .from('productos')
-    .select('id, unidades_por_placa, margen_material')
+    .select('id, unidades_por_placa, margen_material, precio_unitario, precio_manual')
     .eq('material_id', materialId)
     .eq('tenant_id', TENANT_ID)
     .eq('active', true)
@@ -52,13 +52,26 @@ export default async function handler(req, res) {
   const results = await Promise.allSettled(
     productos.map(p => {
       const unidadesPorPlaca = Number(p.unidades_por_placa) || 1
-      const margen = Number(p.margen_material) || 0
       const costoMaterial = costo / unidadesPorPlaca
-      const precioUnitario = parseFloat((costoMaterial * (1 + margen / 100)).toFixed(2))
+
+      let updatePayload
+      if (p.precio_manual) {
+        // Modo manual: el precio no cambia — se recalcula el margen
+        const precioActual = Number(p.precio_unitario) || 0
+        const nuevoMargen = costoMaterial > 0
+          ? parseFloat(((precioActual / costoMaterial - 1) * 100).toFixed(1))
+          : Number(p.margen_material) || 0
+        updatePayload = { costo_placa: costo, margen_material: nuevoMargen }
+      } else {
+        // Modo auto: el precio se recalcula con el margen existente
+        const margen = Number(p.margen_material) || 0
+        const precioUnitario = parseFloat((costoMaterial * (1 + margen / 100)).toFixed(2))
+        updatePayload = { costo_placa: costo, precio_unitario: precioUnitario }
+      }
 
       return supabase
         .from('productos')
-        .update({ costo_placa: costo, precio_unitario: precioUnitario })
+        .update(updatePayload)
         .eq('id', p.id)
         .eq('tenant_id', TENANT_ID)
     })

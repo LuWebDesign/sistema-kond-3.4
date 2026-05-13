@@ -169,6 +169,7 @@ export async function createProducto(producto) {
       ensamble: producto.ensamble || 'Sin ensamble',
       active: producto.active !== undefined ? producto.active : true,
       description: producto.description || '',
+      precio_manual: producto.precioManual || producto.precio_manual || false,
       // Asignación a categoría estructurada (PR3 — categories feature)
       ...(producto.categoria_id != null ? { categoria_id: Number(producto.categoria_id) } : {}),
       tenant_id: TENANT_ID
@@ -253,6 +254,8 @@ export async function updateProducto(id, producto) {
     if (producto.description !== undefined) updateData.description = producto.description;
     // Asignación a categoría estructurada (PR3 — categories feature)
     if (producto.categoria_id !== undefined) updateData.categoria_id = producto.categoria_id != null ? Number(producto.categoria_id) : null;
+    if (producto.precioManual !== undefined) updateData.precio_manual = producto.precioManual;
+    if (producto.precio_manual !== undefined) updateData.precio_manual = producto.precio_manual;
 
     // console.log('📝 Datos del producto a actualizar:', updateData);
 
