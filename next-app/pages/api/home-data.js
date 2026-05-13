@@ -23,6 +23,7 @@ export default async function handler(req, res) {
         .eq('featured', true)
         .eq('publicado', true)
         .eq('active', true)
+        .eq('hidden_in_productos', false)
         .limit(8)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
+        .eq('hidden_in_productos', false)
         .limit(100)
         .then((r) => (r.error ? { data: [], error: null } : r)),
     ]);
