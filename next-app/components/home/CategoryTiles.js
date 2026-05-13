@@ -77,7 +77,7 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
             <div
               key={cat.id}
               className="cat-tile"
-              onClick={() => router.push(`/catalog?categoria=${cat.slug}`)}
+              onClick={() => router.push(`/catalog/${cat.slug}`)}
             >
               <div
                 className="cat-tile-bg"
