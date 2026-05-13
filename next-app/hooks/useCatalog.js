@@ -585,6 +585,7 @@ export function useOrders() {
       if (orderData.metodoPago !== 'whatsapp') {
         try {
           const supabase = (await import('../utils/supabaseClient')).default
+          const { TENANT_ID } = await import('../lib/tenant')
 
           // NOTE (T2.2 — N+1 stock update): This loop issues one SELECT + one UPDATE per cart item.
           // Batching is not attempted here because Supabase does not support a single atomic
@@ -598,6 +599,7 @@ export function useOrders() {
               .from('productos')
               .select('stock')
               .eq('id', item.idProducto)
+              .eq('tenant_id', TENANT_ID)
               .single()
 
             if (fetchError) {
@@ -610,6 +612,7 @@ export function useOrders() {
               .from('productos')
               .update({ stock: nuevoStock })
               .eq('id', item.idProducto)
+              .eq('tenant_id', TENANT_ID)
 
             if (updateError) {
             }

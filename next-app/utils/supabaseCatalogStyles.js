@@ -1,4 +1,5 @@
 import supabase from './supabaseClient'
+import { TENANT_ID } from '../lib/tenant'
 
 const DEFAULT_STYLES = {
   // Header
@@ -71,7 +72,7 @@ export async function getCatalogStyles() {
       return DEFAULT_STYLES
     }
 
-    const { data, error } = await supabase.from('catalog_styles').select('*').single()
+    const { data, error } = await supabase.from('catalog_styles').select('*').eq('tenant_id', TENANT_ID).single()
     if (error) {
       if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
         return DEFAULT_STYLES
@@ -115,12 +116,12 @@ export async function saveCatalogStyles(styles) {
     }
 
     if (supabase) {
-      const { data: existing } = await supabase.from('catalog_styles').select('id').single()
+      const { data: existing } = await supabase.from('catalog_styles').select('id').eq('tenant_id', TENANT_ID).single()
       if (existing) {
-        const { error } = await supabase.from('catalog_styles').update({ styles, updated_at: new Date().toISOString() }).eq('id', existing.id)
+        const { error } = await supabase.from('catalog_styles').update({ styles, updated_at: new Date().toISOString() }).eq('id', existing.id).eq('tenant_id', TENANT_ID)
         if (error) return { success: false, error: error.message }
       } else {
-        const { error } = await supabase.from('catalog_styles').insert([{ styles, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+        const { error } = await supabase.from('catalog_styles').insert([{ styles, tenant_id: TENANT_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
         if (error) return { success: false, error: error.message }
       }
       localStorage.setItem('catalogStyles', JSON.stringify(styles))

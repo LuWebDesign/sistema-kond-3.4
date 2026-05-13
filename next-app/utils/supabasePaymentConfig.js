@@ -1,4 +1,5 @@
 import supabase from './supabaseClient'
+import { TENANT_ID } from '../lib/tenant'
 
 /**
  * Obtener la configuración de métodos de pago
@@ -33,7 +34,7 @@ export async function getPaymentConfig() {
       }
     }
 
-    const { data, error } = await supabase.from('payment_config').select('*').single()
+    const { data, error } = await supabase.from('payment_config').select('*').eq('tenant_id', TENANT_ID).single()
     if (error) {
       if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
         return {
@@ -82,7 +83,7 @@ export async function savePaymentConfig(config) {
         // Intentar fallback a Supabase directo
         if (supabase) {
           try {
-            const payload = { config }
+            const payload = { config, tenant_id: TENANT_ID }
             const { data, error } = await supabase.from('payment_config').upsert(payload, { returning: 'representation' })
             if (error) {
               console.error('Error fallback supabase upsert:', error)
@@ -127,7 +128,7 @@ export async function savePaymentConfig(config) {
       return { success: false, error: { message: 'No supabase client available' } }
     }
 
-    const payload = { config }
+    const payload = { config, tenant_id: TENANT_ID }
     const { data, error } = await supabase.from('payment_config').upsert(payload, { returning: 'representation' })
 
     if (error) {
