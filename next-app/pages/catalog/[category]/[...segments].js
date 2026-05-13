@@ -7,10 +7,11 @@ import { slugifyPreserveCase } from '../../../utils/slugify'
 
 export default function ProductCatchAll({ params }) {
   const { products, categories, isLoading } = useProducts()
-  const { data: categoriasAPI = [] } = useCategorias()
+  const { data: categoriasAPI = [], isLoading: catLoading } = useCategorias()
   const { category, segments = [] } = params || {}
 
-  const isReady = !isLoading
+  // Wait for both products and categories before resolving
+  const isReady = !isLoading && !catLoading
 
   let found = null
 
@@ -18,9 +19,21 @@ export default function ProductCatchAll({ params }) {
     // /catalog/[category]/[productSlug]
     const [productSlug] = segments
     found = (products || []).find(p => {
-      const catSlug = slugifyPreserveCase(p.categoria).toLowerCase()
       const prodSlug = slugifyPreserveCase(p.nombre).toLowerCase()
-      return catSlug === String(category || '').toLowerCase() && prodSlug === String(productSlug || '').toLowerCase()
+      if (prodSlug !== String(productSlug || '').toLowerCase()) return false
+      // New model: match via categoriaId + categoriasAPI slug
+      if (p.categoriaId && categoriasAPI.length > 0) {
+        const cat = categoriasAPI.find(c => c.id === p.categoriaId)
+        if (cat) {
+          const catSlug = (cat.slug || slugifyPreserveCase(cat.nombre)).toLowerCase()
+          return catSlug === String(category || '').toLowerCase()
+        }
+      }
+      // Legacy fallback: old text field
+      if (p.categoria) {
+        return slugifyPreserveCase(p.categoria).toLowerCase() === String(category || '').toLowerCase()
+      }
+      return false
     })
   } else if (isReady && segments.length === 2 && categoriasAPI.length > 0) {
     // /catalog/[parentSlug]/[subSlug]/[productSlug]
@@ -44,7 +57,7 @@ export default function ProductCatchAll({ params }) {
     })
   }
 
-  if (!isReady || (segments.length === 2 && categoriasAPI.length === 0)) return null
+  if (!isReady) return null
 
   if (!found) {
     return (

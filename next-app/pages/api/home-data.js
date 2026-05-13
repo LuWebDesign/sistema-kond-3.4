@@ -27,12 +27,11 @@ export default async function handler(req, res) {
         .limit(8)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
-      // Query 2: Top-level categories
+      // Query 2: All categories (top-level + subcategories) for slug resolution and display
       admin
         .from('categorias')
         .select('id, nombre, slug, parent_id')
         .eq('tenant_id', TENANT_ID)
-        .is('parent_id', null)
         .eq('active', true)
         .order('orden', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),

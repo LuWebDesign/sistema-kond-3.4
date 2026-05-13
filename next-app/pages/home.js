@@ -21,11 +21,14 @@ export default function Home() {
   })
 
   const featured = data?.featured || []
-  const categories = data?.categories || []
+  // All categories (top-level + subcategories) for slug resolution
+  const allCategories = data?.categories || []
+  // Top-level only for display sections
+  const categories = allCategories.filter((c) => !c.parent_id)
   const byCategory = data?.byCategory || {}
 
-  // Map categoria_id → slug for product navigation
-  const categorySlugMap = Object.fromEntries(categories.map((c) => [c.id, c.slug]))
+  // Map categoria_id → slug for product navigation (includes all levels)
+  const categorySlugMap = Object.fromEntries(allCategories.map((c) => [c.id, c.slug]))
 
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
