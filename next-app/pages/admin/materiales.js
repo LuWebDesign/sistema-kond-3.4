@@ -163,18 +163,24 @@ function Materiales() {
         if (data && !error) {
           // Recalcular costos de productos que usan este material
           try {
-            await fetch('/api/admin/materiales/recalculate-productos', {
+            const recalcRes = await fetch('/api/admin/materiales/recalculate-productos', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ materialId: editingId, nuevoCosto: Number(form.costoUnitario) || 0 })
             })
+            const recalcData = await recalcRes.json()
+            if (recalcRes.ok && recalcData.updated > 0) {
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
+              createToast(`✅ Material actualizado · ${recalcData.updated} producto(s) recalculados`, 'success')
+            } else {
+              createToast('✅ Material actualizado correctamente', 'success')
+            }
           } catch (recalcError) {
             console.warn('⚠️ No se pudo recalcular productos del material:', recalcError.message)
+            createToast('✅ Material actualizado correctamente', 'success')
           }
           invalidateAll()
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.all })
           resetForm(false)
-          createToast('✅ Material actualizado y costos de productos recalculados', 'success')
         } else {
           throw new Error(error || 'Update failed')
         }

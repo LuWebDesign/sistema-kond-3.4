@@ -47,25 +47,28 @@ export default async function handler(req, res) {
     return res.status(200).json({ updated: 0, message: 'No hay productos con ese material' })
   }
 
-  // 2. Calcular nuevos valores para cada producto y actualizar en batch
-  const updates = productos.map(p => {
-    const unidadesPorPlaca = Number(p.unidades_por_placa) || 1
-    const margen = Number(p.margen_material) || 0
-    const costoMaterial = costo / unidadesPorPlaca
-    const precioUnitario = parseFloat((costoMaterial * (1 + margen / 100)).toFixed(2))
-    return { id: p.id, costo_placa: costo, precio_unitario: precioUnitario }
-  })
+  // 2. Calcular nuevos valores y actualizar cada producto individualmente
+  //    (update en lugar de upsert para no requerir campos NOT NULL como tenant_id)
+  const results = await Promise.allSettled(
+    productos.map(p => {
+      const unidadesPorPlaca = Number(p.unidades_por_placa) || 1
+      const margen = Number(p.margen_material) || 0
+      const costoMaterial = costo / unidadesPorPlaca
+      const precioUnitario = parseFloat((costoMaterial * (1 + margen / 100)).toFixed(2))
 
-  // Supabase no soporta bulk update con valores diferentes por fila vía cliente JS,
-  // por lo que ejecutamos upsert aprovechando que id es PK
-  const { error: upsertError } = await supabase
-    .from('productos')
-    .upsert(updates, { onConflict: 'id' })
+      return supabase
+        .from('productos')
+        .update({ costo_placa: costo, precio_unitario: precioUnitario })
+        .eq('id', p.id)
+        .eq('tenant_id', TENANT_ID)
+    })
+  )
 
-  if (upsertError) {
-    console.error('recalculate-productos upsert error:', upsertError)
-    return res.status(500).json({ error: upsertError.message })
+  const failed = results.filter(r => r.status === 'rejected' || r.value?.error)
+  if (failed.length > 0) {
+    console.error('recalculate-productos: algunos updates fallaron:', failed)
   }
 
-  return res.status(200).json({ updated: updates.length })
+  const updated = results.length - failed.length
+  return res.status(200).json({ updated, total: productos.length })
 }
