@@ -496,7 +496,11 @@ function WebsitePage() {
         setCategories(cats)
         setProducts(prods)
       })
-      .catch((e) => showToast(e.message, 'error'))
+      .catch((e) => {
+        showToast(e.message || 'Error al cargar configuración', 'error')
+        // Ensure config is never null so tab components don't crash
+        setConfig({ bannerMessages: [], categoryOrder: [], hiddenCategories: [], sections: [] })
+      })
       .finally(() => setLoading(false))
   }, [])
 
