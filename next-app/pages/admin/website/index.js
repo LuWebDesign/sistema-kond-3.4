@@ -8,11 +8,17 @@ import withAdminAuth from '../../../components/withAdminAuth'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const EMPTY_CONFIG = { bannerMessages: [], categoryOrder: [], hiddenCategories: [], sections: [] }
+
 async function fetchConfig() {
-  const res = await fetch('/api/admin/home-config')
-  if (!res.ok) throw new Error('Error al cargar configuración')
-  const { config } = await res.json()
-  return config
+  try {
+    const res = await fetch('/api/admin/home-config')
+    if (!res.ok) return EMPTY_CONFIG
+    const { config } = await res.json()
+    return config || EMPTY_CONFIG
+  } catch {
+    return EMPTY_CONFIG
+  }
 }
 
 async function saveConfig(config) {
@@ -28,10 +34,16 @@ async function saveConfig(config) {
 }
 
 async function fetchCategories() {
-  const res = await fetch('/api/categorias')
-  if (!res.ok) return []
-  const json = await res.json()
-  return (json.categorias || json || []).filter((c) => !c.parent_id) // top-level only
+  try {
+    const res = await fetch('/api/categorias')
+    if (!res.ok) return []
+    const json = await res.json()
+    // API returns { data: [...] }
+    const list = json.data || json.categorias || (Array.isArray(json) ? json : [])
+    return list.filter((c) => !c.parent_id) // top-level only
+  } catch {
+    return []
+  }
 }
 
 async function fetchPublishedProducts() {
@@ -497,9 +509,9 @@ function WebsitePage() {
         setProducts(prods)
       })
       .catch((e) => {
-        showToast(e.message || 'Error al cargar configuración', 'error')
+        showToast(e.message || 'Error al cargar datos', 'error')
         // Ensure config is never null so tab components don't crash
-        setConfig({ bannerMessages: [], categoryOrder: [], hiddenCategories: [], sections: [] })
+        setConfig(EMPTY_CONFIG)
       })
       .finally(() => setLoading(false))
   }, [])
