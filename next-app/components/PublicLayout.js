@@ -225,9 +225,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </Link>
           </div>
 
-          {/* Center: SectionSelector (shown on /catalog and /mi-carrito routes). */}
+          {/* Center: SectionSelector (shown on /home, /catalog and /mi-carrito routes). */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito')) && (
+            {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito') || router.asPath === '/home' || router.asPath.startsWith('/home?') || router.asPath.startsWith('/home#')) && (
               <div className="header-section-selector" style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center', minWidth: 0 }}>
                 <SectionSelector />
               </div>
@@ -240,25 +240,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             alignItems: 'center',
             gap: '12px'
           }}>
-            {/* Login button - only if not logged in */}
-            {isClient && !currentUser && (
-              <button
-                onClick={() => router.push('/catalog')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  background: 'var(--accent-blue)',
-                  color: '#fff',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Iniciar sesión
-              </button>
-            )}
 
             {/* Cart icon - ALWAYS visible, even before notifications */}
             <button

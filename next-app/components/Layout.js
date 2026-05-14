@@ -138,91 +138,111 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           }}
         >
           <div style={{
-            fontSize: '1.5rem',
+            fontSize: '1.1rem',
             fontWeight: 700,
             color: 'var(--person-color)',
             marginBottom: '24px',
-            textAlign: 'center'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
           }}>
-            🏭 Sistema KOND
+            <span style={{ fontSize: '1.5rem' }}>🏭</span>
+            <div>
+              <div style={{ fontSize: '1rem', lineHeight: 1.2 }}>Sistema KOND</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '2px' }}>Panel de Administración</div>
+            </div>
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onClick={() => setSidebarOpen(false)}>
-            {/* Dashboard - Panel administrativo principal */}
+            {/* Dashboard */}
             <Link href="/admin/dashboard" style={linkStyle}>
-              Dashboard
+              🏠 Dashboard
             </Link>
-            
-            {/* Sección: Gestión Interna */}
-            <div style={sectionDividerStyle}>
-              Gestión Interna
-            </div>
-            
+
+            {/* ── GESTIÓN INTERNA ── */}
+            <div style={sectionDividerStyle}>Gestión Interna</div>
+
             <Link href="/admin/products" style={linkStyle}>
-              Productos
+              📦 Productos
             </Link>
-
             <Link href="/admin/cotizaciones" style={linkStyle}>
-              Cotizaciones Corte
+              📋 Cotizaciones Corte
             </Link>
-            
             <Link href="/admin/calendar" style={linkStyle}>
-              Calendario
+              📅 Calendario
             </Link>
-            
             <Link href="/admin/database" style={linkStyle}>
-              Base de Datos
-            </Link>
-            
-            {/* Sección: Catálogo y Ventas */}
-            <div style={sectionDividerStyle}>
-              Catálogo y Ventas
-            </div>
-            
-            <a 
-              href="/catalog" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{...linkStyle, display: 'flex', alignItems: 'center', gap: '8px'}}
-            >
-              Catálogo Público
-              <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
-            </a>
-            
-            <Link href="/admin/pedidos" style={linkStyle}>
-              Pedidos Internos
-            </Link>
-            
-            <Link href="/admin/orders" style={linkStyle}>
-              Pedidos Catálogo
-            </Link>
-            
-            <Link href="/admin/metricas" style={linkStyle}>
-              Métricas
-            </Link>
-            
-            <Link href="/admin/marketing" style={linkStyle}>
-              Marketing
+              🗄️ Base de Datos
             </Link>
 
-            {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
-            
+            {/* ── TIENDA ONLINE ── */}
+            <div style={sectionDividerStyle}>Tienda Online</div>
+
+            <Link href="/admin/website" style={{ ...linkStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                🖥️ Website
+              </span>
+              <span style={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: 'var(--accent-green)',
+                color: '#fff',
+                letterSpacing: '0.03em'
+              }}>
+                Nuevo
+              </span>
+            </Link>
+
+            <a
+              href="/catalog"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...linkStyle, display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              🛍️ Catálogo Público
+              <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>↗</span>
+            </a>
+
+            <Link href="/admin/orders" style={linkStyle}>
+              🛒 Pedidos Catálogo
+            </Link>
+
+            <Link href="/admin/marketing" style={linkStyle}>
+              📣 Marketing
+            </Link>
+
+            <Link href="/admin/metricas" style={linkStyle}>
+              📊 Analytics
+            </Link>
+
+            {/* ── OPERACIONES ── */}
+            <div style={sectionDividerStyle}>Operaciones</div>
+
+            <Link href="/admin/pedidos" style={linkStyle}>
+              📝 Pedidos Internos
+            </Link>
             <Link href="/admin/finanzas" style={linkStyle}>
-              Finanzas
+              💰 Finanzas
             </Link>
-            
-            {/* Sección: Administración */}
-            <div style={sectionDividerStyle}>
-              Administración
-            </div>
-            
+            <Link href="/admin/materiales" style={linkStyle}>
+              🧱 Materiales
+            </Link>
+
+            {/* ── SISTEMA ── */}
+            <div style={sectionDividerStyle}>Sistema</div>
+
             <Link href="/admin/panel" style={linkStyle}>
-              Panel Admin
+              👥 Usuarios
             </Link>
-            
+            <Link href="/admin/payment-config" style={linkStyle}>
+              ⚙️ Configuración
+            </Link>
             <Link href="/admin/mi-cuenta" style={linkStyle}>
-              Mi Cuenta
+              👤 Mi Cuenta
             </Link>
+
             <div style={{ marginTop: 8 }}>
               {userInfo && (
                 <button

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { useCart } from '../hooks/useCatalog'
 
 export default function SectionSelector({ className, style }) {
   // Lightweight selector that derives the "active" state from the router path
   const router = useRouter()
-  const { totalItems } = useCart()
   const [currentUser, setCurrentUser] = useState(null)
   const [mounted, setMounted] = useState(false)
 
@@ -17,8 +15,6 @@ export default function SectionSelector({ className, style }) {
     } catch (e) {
       setCurrentUser(null)
     } finally {
-      // mark mounted after attempting to read browser-only APIs so the
-      // initial server/client render stays stable (avoids hydration mismatch)
       setMounted(true)
     }
   }, [])
@@ -27,9 +23,9 @@ export default function SectionSelector({ className, style }) {
   const path = (router?.asPath ?? '').split(/[?#]/)[0] || '/'
 
   // Determine which button should be active.
+  const isHome = path === '/home'
   const isMisPedidos = path === '/catalog/mis-pedidos' || path.startsWith('/catalog/mis-pedidos/')
   const isUser = path === '/catalog/user' || path.startsWith('/catalog/user/')
-  const isCarrito = path === '/mi-carrito' || path.startsWith('/mi-carrito/')
   const isCatalog = (path === '/catalog' || (path.startsWith('/catalog/') && !isMisPedidos && !isUser))
 
   const baseBtn = { border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
@@ -38,6 +34,14 @@ export default function SectionSelector({ className, style }) {
 
   return (
     <div className={className} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, ...style }}>
+      <button
+        onClick={() => router.push('/home')}
+        aria-current={isHome ? 'page' : undefined}
+        style={{ ...baseBtn, ...(isHome ? activeStyle : inactiveStyle) }}
+      >
+        Home
+      </button>
+
       <button
         onClick={() => router.push('/catalog')}
         aria-current={isCatalog ? 'page' : undefined}
@@ -61,18 +65,7 @@ export default function SectionSelector({ className, style }) {
         aria-current={isUser ? 'page' : undefined}
         style={{ ...baseBtn, ...(isUser ? activeStyle : inactiveStyle) }}
       >
-        {mounted ? (currentUser ? 'Mi Cuenta' : 'Iniciar sesión') : 'Iniciar sesión'}
-      </button>
-
-      <button
-        onClick={() => router.push('/mi-carrito')}
-        aria-current={isCarrito ? 'page' : undefined}
-        style={{ ...baseBtn, ...(isCarrito ? activeStyle : inactiveStyle), position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}
-      >
-        🛒 Carrito
-        {totalItems > 0 && (
-          <span id="cart-badge" style={{ background: '#ef4444', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', marginLeft: 6 }}>{totalItems}</span>
-        )}
+        {mounted ? (currentUser ? 'Mi Cuenta' : 'Mi Perfil') : 'Mi Perfil'}
       </button>
     </div>
   )

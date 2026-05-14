@@ -20,6 +20,13 @@ export default function Home() {
     retry: false,
   })
 
+  const { data: homeConfig } = useQuery({
+    queryKey: QUERY_KEYS.home.config(),
+    queryFn: () => fetch('/api/admin/home-config').then((r) => r.json()),
+    staleTime: STALE_TIMES.HOME_CONFIG,
+    retry: false,
+  })
+
   const featured = data?.featured || []
   // All categories (top-level + subcategories) for slug resolution
   const allCategories = data?.categories || []
@@ -30,6 +37,8 @@ export default function Home() {
   // Map categoria_id → slug for product navigation (includes all levels)
   const categorySlugMap = Object.fromEntries(allCategories.map((c) => [c.id, c.slug]))
 
+  const bannerMessages = homeConfig?.config?.bannerMessages
+
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
       <Head>
@@ -39,7 +48,7 @@ export default function Home() {
         <meta property="og:type" content="website" />
       </Head>
 
-      <AnnouncementBar />
+      <AnnouncementBar messages={bannerMessages} />
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
