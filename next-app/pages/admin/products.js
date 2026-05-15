@@ -3783,65 +3783,6 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
     }
   }
 
-  // Handlers de guardado por sección: validan mínimamente y delegan en onSave
-  const saveBasicInfo = async () => {
-    if (!editData.nombre || String(editData.nombre).trim() === '') {
-      alert('Por favor completá el nombre del producto antes de guardar.')
-      return false
-    }
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return true
-    } catch (err) {
-      console.error('saveBasicInfo error', err)
-      return false
-    }
-  }
-
-  const saveMaterialInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return true
-    } catch (err) {
-      console.error('saveMaterialInfo error', err)
-      return false
-    }
-  }
-
-  const saveProductionInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return true
-    } catch (err) {
-      console.error('saveProductionInfo error', err)
-      return false
-    }
-  }
-
-  const savePricingInfo = async () => {
-    if (editData.precioUnitario == null || Number(editData.precioUnitario) <= 0) {
-      const ok = confirm('El precio unitario parece vacío o cero. ¿Deseás guardarlo de todos modos?')
-      if (!ok) return false
-    }
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return true
-    } catch (err) {
-      console.error('savePricingInfo error', err)
-      return false
-    }
-  }
-
-  const saveImagesInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return true
-    } catch (err) {
-      console.error('saveImagesInfo error', err)
-      return false
-    }
-  }
-
   useEffect(() => {
     // Si la categoría actual no está entre las categorías predefinidas, mostrar el campo personalizado
     if (editData.categoria && !categories.includes(editData.categoria)) {
