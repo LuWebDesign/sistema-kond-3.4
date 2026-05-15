@@ -1,13 +1,14 @@
 import Layout from '../../../components/Layout'
 import withAdminAuth from '../../../components/withAdminAuth'
 import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { formatCurrency, timeToSeconds, secondsToTime, compressImage } from '../../../utils/catalogUtils'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useMateriales, useProductos } from '../../../hooks/useSupabaseQuery'
 import { QUERY_KEYS, STALE_TIMES } from '../../../lib/queryKeys'
 import { createProducto, updateProducto, uploadProductoImagen } from '../../../utils/supabaseProducts'
 import dynamic from 'next/dynamic'
+import CollapsibleSection from '../../../components/CollapsibleSection'
 
 const NewProduct = dynamic(() => Promise.resolve(NewProductComponent), {
   ssr: false,
@@ -24,6 +25,9 @@ const NewProduct = dynamic(() => Promise.resolve(NewProductComponent), {
     </div>
   )
 })
+
+// Componente reutilizable: Sección colapsable con menú de opciones (ej: "Modificar")
+
 
 function NewProductComponent() {
   const router = useRouter()
@@ -587,6 +591,72 @@ function NewProductComponent() {
     }
   }
 
+  // Guardar información básica de la sección: valida campos mínimos y devuelve false si falla
+  const saveBasicInfo = () => {
+    if (!formData.nombre || !formData.medidas) {
+      alert('Por favor completá Nombre y Medidas antes de guardar la sección.')
+      const el = document.querySelector('[name="nombre"]')
+      if (el) el.focus()
+      return false
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        const notification = document.createElement('div')
+        notification.textContent = 'Sección guardada'
+        notification.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`
+        document.body.appendChild(notification)
+        setTimeout(() => notification.remove(), 1600)
+      }
+    } catch (e) {
+      // ignore
+    }
+    return true
+  }
+
+  // Save handlers for other sections
+  const saveDescription = () => {
+    // No mandatory fields for description; just show confirmation
+    try {
+      if (typeof window !== 'undefined') {
+        const note = document.createElement('div')
+        note.textContent = 'Descripción guardada'
+        note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`
+        document.body.appendChild(note)
+        setTimeout(() => note.remove(), 1400)
+      }
+    } catch (e) {}
+    return true
+  }
+
+  const saveProductionInfo = () => {
+    if (!formData.tiempoUnitario || !formData.unidades || Number(formData.unidades) <= 0) {
+      alert('Completá Tiempo Unitario y Unidades (mayor a 0) antes de guardar Producción y Tiempos.')
+      return false
+    }
+    try { if (typeof window !== 'undefined') { const note = document.createElement('div'); note.textContent = 'Producción guardada'; note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`; document.body.appendChild(note); setTimeout(() => note.remove(), 1400) } } catch (e) {}
+    return true
+  }
+
+  const saveMaterialInfo = () => {
+    // No strict validation; ensure numeric fields are numbers
+    try { if (typeof window !== 'undefined') { const note = document.createElement('div'); note.textContent = 'Material guardado'; note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`; document.body.appendChild(note); setTimeout(() => note.remove(), 1400) } } catch (e) {}
+    return true
+  }
+
+  const savePricingInfo = () => {
+    if (formData.precioUnitario === '' || formData.precioUnitario === null) {
+      alert('Completá el Precio Unitario antes de guardar Costos y Precios.')
+      return false
+    }
+    try { if (typeof window !== 'undefined') { const note = document.createElement('div'); note.textContent = 'Costos guardados'; note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`; document.body.appendChild(note); setTimeout(() => note.remove(), 1400) } } catch (e) {}
+    return true
+  }
+
+  const saveImagesInfo = () => {
+    try { if (typeof window !== 'undefined') { const note = document.createElement('div'); note.textContent = 'Imágenes guardadas'; note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`; document.body.appendChild(note); setTimeout(() => note.remove(), 1400) } } catch (e) {}
+    return true
+  }
+
   const categoriasRaiz = categoriasFromAPI.filter(c => !c.parent_id)
   const subcategoriasDePadre = formData.categoriaPadreId
     ? categoriasFromAPI.filter(c => String(c.parent_id) === String(formData.categoriaPadreId))
@@ -643,22 +713,14 @@ function NewProductComponent() {
             </div>
           </div>
 
-          {/* Sección: Información Básica */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>📋</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Información Básica
-              </h4>
-            </div>
-
+          {/* Sección: Información Básica (colapsable) */}
+          <CollapsibleSection
+            icon="📋"
+            title="Información Básica"
+            defaultCollapsed={true}
+            summary={formData.nombre ? `${formData.nombre}${formData.categoria ? ` — ${formData.categoria}` : ''}` : undefined}
+            onSave={saveBasicInfo}
+          >
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -970,23 +1032,16 @@ function NewProductComponent() {
                 />
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Descripción */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>📝</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Descripción
-              </h4>
-            </div>
+          <CollapsibleSection
+            icon="📝"
+            title="Descripción"
+            defaultCollapsed={true}
+            summary={formData.description ? (formData.description.length > 80 ? formData.description.slice(0,80) + '…' : formData.description) : undefined}
+            onSave={saveDescription}
+          >
             <textarea
               name="description"
               value={formData.description}
@@ -1010,24 +1065,16 @@ function NewProductComponent() {
               onFocus={(e) => e.target.style.borderColor = '#10b981'}
               onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
             />
-          </div>
+          </CollapsibleSection>
 
           {/* Sección: Producción y Tiempos */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>⏱️</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Producción y Tiempos
-              </h4>
-            </div>
-
+          <CollapsibleSection
+            icon="⏱️"
+            title="Producción y Tiempos"
+            defaultCollapsed={true}
+            summary={formData.unidades ? `Tiempo: ${calculatedFields.tiempoTotal} • Unidades: ${formData.unidades}` : undefined}
+            onSave={saveProductionInfo}
+          >
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -1162,24 +1209,16 @@ function NewProductComponent() {
                 </div>
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Sección: Material y Placas */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '18px' }}>🎨</span>
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Material y Placas
-              </h4>
-            </div>
-
+          <CollapsibleSection
+            icon="🎨"
+            title="Material y Placas"
+            defaultCollapsed={true}
+            summary={formData.material ? (formData.material.length > 30 ? formData.material.slice(0,30) + '…' : formData.material) : undefined}
+            onSave={saveMaterialInfo}
+          >
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
@@ -1409,24 +1448,16 @@ function NewProductComponent() {
                 <option value="Automático">Automático</option>
               </select>
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Nueva sección: Costos y Precios */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '24px',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '18px' }}>💰</span>
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Costos y Precios
-              </h4>
-            </div>
-
+          <CollapsibleSection
+            icon="💰"
+            title="Costos y Precios"
+            defaultCollapsed={true}
+            summary={formData.precioUnitario ? formatCurrency(formData.precioUnitario) : undefined}
+            onSave={savePricingInfo}
+          >
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
@@ -1516,24 +1547,16 @@ function NewProductComponent() {
                 }
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Sección: Imágenes */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '20px' }}>📸</span>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Imágenes del Producto
-              </h4>
-            </div>
-
+          <CollapsibleSection
+            icon="📸"
+            title="Imágenes del Producto"
+            defaultCollapsed={true}
+            summary={imagePreviews.length ? `${imagePreviews.length} imagen(es)` : undefined}
+            onSave={saveImagesInfo}
+          >
             <div>
               <label style={{
                 display: 'block',
@@ -1604,7 +1627,7 @@ function NewProductComponent() {
                 </div>
               )}
             </div>
-          </div>
+          </CollapsibleSection>
 
           {/* Sección: Visibilidad */}
           <div style={{
