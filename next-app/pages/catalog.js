@@ -35,6 +35,23 @@ export default function Catalog({ seoConfig }) {
   const [gridColumnsMobile, setGridColumnsMobile] = useState(2)
   const { data: categoriasAPI = [] } = useCategorias()
 
+  // Construir lista de categorías para el dropdown: unir nombres legacy (desde productos)
+  // con las categorías raíz provenientes de la API (para mostrar padres sin productos directos).
+  const categoriesForDropdown = useMemo(() => {
+    try {
+      const prodNames = Array.isArray(categories) ? categories.filter(Boolean) : []
+      const apiRootNames = Array.isArray(categoriasAPI)
+        ? categoriasAPI.filter(c => c.parent_id === null || c.parent_id === undefined).map(c => c.nombre).filter(Boolean)
+        : []
+      // union preservando order: primero los nombres de productos, luego los padres faltantes
+      const set = new Set(prodNames)
+      for (const n of apiRootNames) set.add(n)
+      return Array.from(set)
+    } catch (e) {
+      return Array.isArray(categories) ? categories : []
+    }
+  }, [categories, categoriasAPI])
+
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
     // 1. Leer localStorage de forma sincrónica para evitar el flash visual
@@ -103,21 +120,21 @@ export default function Catalog({ seoConfig }) {
       setSelectedCategory('')
       return
     }
-    
-    // Buscar la categoría si ya está cargada, sino el useEffect lo hará
-    if (categories && categories.length > 0) {
-      const foundCategory = categories.find(category => {
+
+    // Buscar la categoría en la lista combinada (productos + categorías raíz API)
+    if (categoriesForDropdown && categoriesForDropdown.length > 0) {
+      const foundCategory = categoriesForDropdown.find(category => {
         if (!category) return false
         const categorySlug = slugifyPreserveCase(category)
         return categorySlug === slug
       })
-      
+
       if (foundCategory) {
         setSelectedCategory(foundCategory)
       }
     }
-    // Si categories no está listo, el useEffect de sincronización con router.asPath lo manejará
-  }, [categories])
+    // Si la lista aún no está lista, el useEffect de sincronización con router.asPath lo manejará
+  }, [categoriesForDropdown])
 
   // Cerrar lightbox con Esc
   useEffect(() => {
@@ -157,12 +174,41 @@ export default function Catalog({ seoConfig }) {
       const matchesSearch = product.nombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
                            (product.medidas && product.medidas.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
                            (product.categoria && product.categoria.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
-      
+
+      // Cuando hay categoría seleccionada, incluir también productos que pertenezcan a
+      // subcategorías de la categoría padre (usando `categoriasAPI` para resolver jerarquía).
       const matchesCategory = !selectedCategory ||
         (selectedSubcategoryId
           ? product.categoriaId === selectedSubcategoryId
-          : product.categoria && product.categoria.trim() === selectedCategory.trim())
-      
+          : (() => {
+              // Igualdad por texto (compatibilidad con datos legacy)
+              if (product.categoria && product.categoria.trim() === String(selectedCategory).trim()) return true
+
+              // Si no hay datos de categorias API, degradar a comparación por texto solamente
+              if (!categoriasAPI || categoriasAPI.length === 0) return false
+
+              // Resolver la categoría padre por nombre/slug
+              const parent = categoriasAPI.find(c => (c.parent_id === null || c.parent_id === undefined) && (
+                (c.nombre && c.nombre.trim() === String(selectedCategory).trim()) ||
+                slugifyPreserveCase(c.nombre || '') === slugifyPreserveCase(String(selectedCategory)) ||
+                c.slug === selectedCategory ||
+                slugifyPreserveCase(c.slug || '') === slugifyPreserveCase(String(selectedCategory))
+              ))
+
+              if (!parent) return false
+
+              // Producto asignado directamente al padre mediante categoriaId
+              if (product.categoriaId === parent.id) return true
+
+              // Producto asignado a una subcategoría: verificar si el parent_id del child coincide
+              if (product.categoriaId) {
+                const child = categoriasAPI.find(c => c.id === product.categoriaId)
+                if (child && child.parent_id === parent.id) return true
+              }
+
+              return false
+            })())
+
       return matchesSearch && matchesCategory
     }).sort((a, b) => {
       // Si estamos en "Todas las categorías" (sin categoría seleccionada),
@@ -176,7 +222,7 @@ export default function Catalog({ seoConfig }) {
       // Si hay categoría seleccionada, mantener orden original
       return 0
     })
-  }, [products, debouncedSearchTerm, selectedCategory, selectedSubcategoryId])
+  }, [products, debouncedSearchTerm, selectedCategory, selectedSubcategoryId, categoriasAPI])
 
   // Resetear página al cambiar filtros o categoría
   useEffect(() => {
@@ -259,8 +305,8 @@ export default function Catalog({ seoConfig }) {
         return
       }
 
-      if (categories && categories.length) {
-        const found = categories.find(c => slugifyPreserveCase(c) === slug)
+      if (categoriesForDropdown && categoriesForDropdown.length > 0) {
+        const found = categoriesForDropdown.find(c => slugifyPreserveCase(c) === slug)
         if (found) {
           setSelectedCategory(found)
 
@@ -281,7 +327,7 @@ export default function Catalog({ seoConfig }) {
     } catch (e) {
       // ignore routing sync errors
     }
-  }, [router.asPath, categories, categoriasAPI])
+  }, [router.asPath, categoriesForDropdown, categoriasAPI])
 
   // Memoizar handlers para evitar recrear funciones en cada render
   // Category handlers for CategoryDropdown
@@ -361,7 +407,7 @@ export default function Catalog({ seoConfig }) {
               {/* SectionSelector: render here in the original catalog header area so it
                   persists across category and product pages when Catalog is mounted. */}
               <CategoryDropdown
-                categories={categories}
+                categories={categoriesForDropdown}
                 categoriasAPI={categoriasAPI}
                 selectedCategory={selectedCategory}
                 selectedSubcategoryId={selectedSubcategoryId}

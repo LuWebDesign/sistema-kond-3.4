@@ -4329,13 +4329,28 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
 
   const [showCustomCategory, setShowCustomCategory] = useState(false)
 
+  // Construir lista combinada para el selector de texto: nombres from productos + categorías raíz desde la API
+  const categoriesForSelect = useMemo(() => {
+    try {
+      const prodNames = Array.isArray(categories) ? categories.filter(Boolean) : []
+      const apiRootNames = Array.isArray(categoriasAPI)
+        ? categoriasAPI.filter(c => !c.parent_id).map(c => c.nombre).filter(Boolean)
+        : []
+      const set = new Set(prodNames)
+      for (const n of apiRootNames) set.add(n)
+      return Array.from(set)
+    } catch (e) {
+      return Array.isArray(categories) ? categories : []
+    }
+  }, [categories, categoriasAPI])
+
   useEffect(() => {
-    if (editData.categoria && !categories.includes(editData.categoria)) {
+    if (editData.categoria && !categoriesForSelect.includes(editData.categoria)) {
       setShowCustomCategory(true)
     } else {
       setShowCustomCategory(false)
     }
-  }, [editData.categoria, categories])
+  }, [editData.categoria, categoriesForSelect])
 
   const usandoAPICategories = categoriasAPI.length > 0
   const categoriasRaiz = categoriasAPI.filter(c => !c.parent_id)
@@ -4343,8 +4358,13 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
   const categoriaPadreId = useMemo(() => {
     if (!editData.categoria_id) return ''
     const sub = categoriasAPI.find(c => c.id === editData.categoria_id)
-    if (sub?.parent_id) return String(sub.parent_id)
-    return String(editData.categoria_id)
+    if (sub) {
+      // Si es subcategoría devolver su parent_id; si es root devolver su propio id
+      return String(sub.parent_id ?? sub.id)
+    }
+    // Si la API de categorías aún no respondió o el id no existe, no asumir el id
+    // como padre: esperar a que `categoriasAPI` se cargue y recompute el memo.
+    return ''
   }, [editData.categoria_id, categoriasAPI])
 
   const [selectedPadreId, setSelectedPadreId] = useState('')
@@ -4463,7 +4483,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
               /* Modo texto: selector clásico + custom */
               <>
                 <select
-                  value={categories.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
+                  value={categoriesForSelect.includes(editData.categoria) ? editData.categoria : (showCustomCategory ? '__nueva__' : '')}
                   onChange={e => {
                     const v = e.target.value
                     if (v === '__nueva__') {
@@ -4478,7 +4498,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
                   style={inputStyle}
                 >
                   <option value="">Seleccionar categoría</option>
-                  {categories.map(cat => (
+                  {categoriesForSelect.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                   <option value="__nueva__">✏️ Crear nueva categoría...</option>
