@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       .maybeSingle()
 
     if (existing) {
-      return res.status(409).json({ error: `Ya existe una categoría con el slug "${slug}"` })
+      return res.status(409).json({ error: `Ya existe una categoría con el slug "${slug}"`, existing })
     }
 
     // Insertar

@@ -30,14 +30,14 @@ export default function CategoryCarousel({ category, products = [] }) {
         <button
           onClick={() => router.push(`/catalog/${category.slug}`)}
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            color: '#1a6b3c',
-            padding: 0,
-          }}
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: '#000',
+              padding: 0,
+            }}
         >
           Ver todo →
         </button>
