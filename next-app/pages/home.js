@@ -39,6 +39,30 @@ export default function Home() {
 
   const bannerMessages = homeConfig?.config?.bannerMessages
 
+  // Apply home-config: category order, visibility, and section gating
+  const homeConfigData = homeConfig?.config || {}
+  const categoryOrder = homeConfigData.categoryOrder || []
+  const hiddenCategoryIds = new Set(homeConfigData.hiddenCategories || [])
+  const sections = homeConfigData.sections || []
+
+  // Helper: is section enabled?
+  const isSectionEnabled = (id) => {
+    const s = sections.find((x) => x.id === id)
+    return s ? s.enabled : true // default to true if not configured
+  }
+
+  // Apply order and visibility to top-level categories
+  const sortedCategories = [...categories]
+    .filter((c) => !hiddenCategoryIds.has(c.id))
+    .sort((a, b) => {
+      const ai = categoryOrder.indexOf(a.id)
+      const bi = categoryOrder.indexOf(b.id)
+      if (ai === -1 && bi === -1) return 0
+      if (ai === -1) return 1
+      if (bi === -1) return -1
+      return ai - bi
+    })
+
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
       <Head>
@@ -67,13 +91,13 @@ export default function Home() {
         </div>
       ) : (
         <main>
-          {featured.length > 0 && <HeroGrid products={featured} categorySlugMap={categorySlugMap} />}
+          {isSectionEnabled('featured') && featured.length > 0 && <HeroGrid products={featured} categorySlugMap={categorySlugMap} />}
 
-          {categories.length > 0 && (
-            <CategoryTiles categories={categories} byCategory={byCategory} />
+          {isSectionEnabled('categories') && sortedCategories.length > 0 && (
+            <CategoryTiles categories={sortedCategories} byCategory={byCategory} />
           )}
 
-          {categories.map((cat) =>
+          {isSectionEnabled('categories') && sortedCategories.map((cat) =>
             (byCategory[cat.id]?.length || 0) > 0 ? (
               <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
             ) : null

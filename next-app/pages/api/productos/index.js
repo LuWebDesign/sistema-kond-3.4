@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     // egress: optimized - only fetch needed columns
     const { data: productos, error } = await supabase
       .from('productos')
-      .select('id, nombre, categoria, tipo, medidas, precio_unitario, precio_promos, publicado, active, hidden_in_productos, stock, imagenes_urls, description, allow_promotions, tags, created_at, updated_at')
+      .select('id, nombre, categoria, categoria_id, tipo, medidas, precio_unitario, precio_promos, publicado, active, hidden_in_productos, stock, imagenes_urls, description, allow_promotions, tags, featured, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {

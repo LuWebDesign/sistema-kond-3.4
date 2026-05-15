@@ -2,9 +2,10 @@
 // Website → Home admin page.
 // Controls: category order, featured products, announcement bar, sections.
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Layout from '../../../components/Layout'
 import withAdminAuth from '../../../components/withAdminAuth'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ async function fetchPublishedProducts() {
 }
 
 async function toggleFeatured(productId, featured) {
-  const res = await fetch(`/api/productos/${productId}`, {
+  const res = await fetch(`/api/admin/productos/${productId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ featured }),
@@ -124,6 +125,7 @@ const badge = (active) => ({
 function CategoryOrderTab({ config, categories, onSave, saving }) {
   const [order, setOrder] = useState([])
   const [hidden, setHidden] = useState(new Set())
+  const dragIndex = useRef(null)
 
   useEffect(() => {
     const savedOrder = config.categoryOrder || []
@@ -164,6 +166,28 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
     })
   }
 
+  // Drag & drop handlers
+  const handleDragStart = (i) => {
+    dragIndex.current = i
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (i) => {
+    if (dragIndex.current === null || dragIndex.current === i) return
+    const next = [...order]
+    const [removed] = next.splice(dragIndex.current, 1)
+    next.splice(i, 0, removed)
+    setOrder(next)
+    dragIndex.current = null
+  }
+
+  const handleDragEnd = () => {
+    dragIndex.current = null
+  }
+
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]))
 
   return (
@@ -184,6 +208,11 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
           return (
             <div
               key={id}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(i)}
+              onDragEnd={handleDragEnd}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -192,10 +221,14 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
                 borderRadius: '8px',
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
-                opacity: isHidden ? 0.5 : 1,
+                opacity: dragIndex.current === i ? 0.4 : isHidden ? 0.5 : 1,
                 transition: 'opacity 0.2s',
+                cursor: 'grab',
               }}
             >
+              {/* Drag handle indicator */}
+              <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
+
               {/* Position number */}
               <span style={{ minWidth: 24, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 {isHidden ? '—' : `#${order.filter((oid) => !hidden.has(oid)).indexOf(id) + 1}`}
@@ -400,6 +433,7 @@ function BannerTab({ config, onSave, saving }) {
 // Tab 4: Sections
 function SectionsTab({ config, onSave, saving }) {
   const [sections, setSections] = useState([])
+  const dragIndex = useRef(null)
 
   useEffect(() => {
     const defaults = [
@@ -430,6 +464,28 @@ function SectionsTab({ config, onSave, saving }) {
     setSections(next.map((s, i) => ({ ...s, order: i + 1 })))
   }
 
+  // Drag & drop handlers
+  const handleDragStart = (i) => {
+    dragIndex.current = i
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (i) => {
+    if (dragIndex.current === null || dragIndex.current === i) return
+    const next = [...sections]
+    const [removed] = next.splice(dragIndex.current, 1)
+    next.splice(i, 0, removed)
+    setSections(next.map((s, idx) => ({ ...s, order: idx + 1 })))
+    dragIndex.current = null
+  }
+
+  const handleDragEnd = () => {
+    dragIndex.current = null
+  }
+
   const handleSave = () => {
     onSave({ ...config, sections })
   }
@@ -444,6 +500,11 @@ function SectionsTab({ config, onSave, saving }) {
         {sections.map((s, i) => (
           <div
             key={s.id}
+            draggable
+            onDragStart={() => handleDragStart(i)}
+            onDragOver={handleDragOver}
+            onDrop={() => handleDrop(i)}
+            onDragEnd={handleDragEnd}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -453,8 +514,11 @@ function SectionsTab({ config, onSave, saving }) {
               background: s.enabled ? 'var(--accent-green)08' : 'var(--bg-secondary)',
               border: `1px solid ${s.enabled ? 'var(--accent-green)33' : 'var(--border-color)'}`,
               transition: 'all 0.15s',
+              opacity: dragIndex.current === i ? 0.4 : 1,
+              cursor: 'grab',
             }}
           >
+            <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
             <span style={{ minWidth: 20, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>#{i + 1}</span>
             <span style={{ flex: 1, fontWeight: 600 }}>{s.label}</span>
             <span style={badge(s.enabled)}>{s.enabled ? 'Activa' : 'Inactiva'}</span>
@@ -495,6 +559,7 @@ function WebsitePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
+  const [confirm, setConfirm] = useState(null)
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -528,6 +593,18 @@ function WebsitePage() {
       setSaving(false)
     }
   }, [])
+
+  // Wrapped version that shows confirm dialog before saving
+  const handleSaveConfigWithConfirm = useCallback((next) => {
+    setConfirm({
+      title: 'Guardar cambios',
+      message: '¿Confirmar los cambios?',
+      onConfirm: () => {
+        setConfirm(null)
+        handleSaveConfig(next)
+      },
+    })
+  }, [handleSaveConfig])
 
   const handleToggleFeatured = useCallback(async (id, featured) => {
     setSaving(true)
@@ -624,7 +701,7 @@ function WebsitePage() {
                 <CategoryOrderTab
                   config={config}
                   categories={categories}
-                  onSave={handleSaveConfig}
+                  onSave={handleSaveConfigWithConfirm}
                   saving={saving}
                 />
               )}
@@ -640,7 +717,7 @@ function WebsitePage() {
               {activeTab === 'banner' && (
                 <BannerTab
                   config={config}
-                  onSave={handleSaveConfig}
+                  onSave={handleSaveConfigWithConfirm}
                   saving={saving}
                 />
               )}
@@ -648,7 +725,7 @@ function WebsitePage() {
               {activeTab === 'sections' && (
                 <SectionsTab
                   config={config}
-                  onSave={handleSaveConfig}
+                  onSave={handleSaveConfigWithConfirm}
                   saving={saving}
                 />
               )}
@@ -656,6 +733,17 @@ function WebsitePage() {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        onConfirm={confirm?.onConfirm}
+        title={confirm?.title}
+        message={confirm?.message}
+        confirmText="Guardar"
+        cancelText="Cancelar"
+        type="info"
+      />
     </Layout>
   )
 }
