@@ -20,7 +20,7 @@ function NavIcon({ d, size = 20 }) {
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ flexShrink: 0, minWidth: size }}
+      style={{ flexShrink: 0 }}
     >
       {paths.map((path, i) => <path key={i} d={path} />)}
     </svg>
@@ -35,10 +35,11 @@ function NavLink({ href, icon, label, badge, external, router }) {
 
   const content = (
     <>
-      <NavIcon d={icon} />
+      {/* Icon always centered in the 64px collapsed strip */}
+      <span className="nav-icon-wrap"><NavIcon d={icon} /></span>
       <span className="nav-label">{label}</span>
       {badge && <span className="nav-badge">{badge}</span>}
-      {external && <span style={{ marginLeft: 'auto', opacity: 0.6, fontSize: '0.7rem' }}>↗</span>}
+      {external && <span className="nav-ext">↗</span>}
     </>
   )
 
@@ -62,6 +63,7 @@ function NavLink({ href, icon, label, badge, external, router }) {
 function SectionDivider({ label }) {
   return (
     <div className="nav-section">
+      <span className="nav-section-line" />
       <span className="nav-section-label">{label}</span>
     </div>
   )
@@ -156,10 +158,12 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         {/* Logo */}
         <div className="sidebar-logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
+          <span className="nav-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </span>
           <div className="sidebar-logo-text">
             <div className="sidebar-logo-title">Sistema KOND</div>
             <div className="sidebar-logo-sub">Panel de Administración</div>
@@ -223,15 +227,19 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
         <div className="sidebar-bottom">
           {userInfo && (
             <button className="sidebar-btn sidebar-btn-danger" onClick={handleLogout}>
-              <NavIcon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <span className="nav-icon-wrap">
+                <NavIcon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </span>
               <span className="nav-label">Cerrar Sesión</span>
             </button>
           )}
           <button className="sidebar-btn" onClick={toggleTheme}>
-            <NavIcon d={theme === 'dark'
-              ? 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z'
-              : 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z'
-            } />
+            <span className="nav-icon-wrap">
+              <NavIcon d={theme === 'dark'
+                ? 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z'
+                : 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z'
+              } />
+            </span>
             <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
           </button>
         </div>
@@ -375,27 +383,59 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           .sidebar:hover {
             width: var(--sidebar-expanded-w);
           }
+
+          /* Collapsed: ocultar todos los textos */
+          .sidebar .nav-label,
+          .sidebar .nav-badge,
+          .sidebar .nav-ext,
+          .sidebar .nav-section-label,
+          .sidebar .sidebar-logo-text {
+            max-width: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-width 0.25s ease, opacity 0.15s ease;
+          }
+          /* Expanded: revelar textos */
+          .sidebar:hover .nav-label,
+          .sidebar:hover .nav-badge,
+          .sidebar:hover .nav-ext,
+          .sidebar:hover .nav-section-label,
+          .sidebar:hover .sidebar-logo-text {
+            max-width: 200px;
+            opacity: 1;
+          }
+        }
+
+        /* ── Icon wrapper — always centered in 64px ── */
+        .nav-icon-wrap {
+          width: var(--sidebar-w);       /* 64px — same as collapsed sidebar */
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         /* ── Logo area ─────────────────────────────── */
         .sidebar-logo {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 18px 18px;
           min-width: var(--sidebar-expanded-w);
           border-bottom: 1px solid var(--border-color);
+          padding: 4px 0;
           margin-bottom: 8px;
         }
-        .sidebar-logo-text { white-space: nowrap; }
+        .sidebar-logo-text {
+          white-space: nowrap;
+          padding-right: 12px;
+        }
         .sidebar-logo-title {
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: 700;
           color: var(--person-color);
           line-height: 1.2;
         }
         .sidebar-logo-sub {
-          font-size: 0.65rem;
+          font-size: 0.62rem;
           font-weight: 400;
           color: var(--text-muted);
           margin-top: 2px;
@@ -406,36 +446,72 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 2px;
-          padding: 0 8px;
+          gap: 1px;
+          padding: 0 0 8px;
         }
 
         .nav-link {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 10px 10px;
-          border-radius: 8px;
+          gap: 0;
+          padding: 3px 0;
+          border-radius: 0;
           text-decoration: none;
           color: var(--text-secondary);
-          min-width: calc(var(--sidebar-expanded-w) - 16px);
+          min-width: var(--sidebar-expanded-w);
           white-space: nowrap;
           font-size: 0.9rem;
           font-weight: 500;
+          position: relative;
         }
-        .nav-link:hover {
+
+        /* Highlight pill — only on the icon+label area */
+        .nav-link::before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          bottom: 2px;
+          left: 8px;
+          right: 8px;
+          border-radius: 8px;
+          background: transparent;
+          transition: background 0.15s;
+        }
+        .nav-link:hover::before {
           background: var(--bg-hover);
+        }
+        .nav-link.active::before {
+          background: rgba(59, 130, 246, 0.15);
+        }
+        .nav-link:hover,
+        .nav-link.active {
           color: var(--text-primary);
         }
         .nav-link.active {
-          background: rgba(59, 130, 246, 0.15);
           color: var(--accent-blue);
         }
 
+        /* Make icon and label sit above the ::before pill */
+        .nav-link .nav-icon-wrap,
+        .nav-link .nav-label,
+        .nav-link .nav-badge,
+        .nav-link .nav-ext {
+          position: relative;
+          z-index: 1;
+        }
+
         .nav-label {
+          flex: 1;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          padding-right: 12px;
+        }
+
+        .nav-ext {
+          font-size: 0.7rem;
+          opacity: 0.6;
+          padding-right: 12px;
         }
 
         .nav-badge {
@@ -447,62 +523,94 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           color: #fff;
           letter-spacing: 0.03em;
           white-space: nowrap;
-          margin-left: auto;
+          margin-right: 12px;
         }
 
         /* ── Section dividers ──────────────────────── */
         .nav-section {
-          min-width: calc(var(--sidebar-expanded-w) - 16px);
-          padding: 16px 10px 4px;
+          display: flex;
+          align-items: center;
+          min-width: var(--sidebar-expanded-w);
+          padding: 16px 0 2px;
           overflow: hidden;
         }
+
+        /* The short horizontal tick visible when collapsed */
+        .nav-section-line {
+          width: var(--sidebar-w);
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .nav-section-line::after {
+          content: '';
+          display: block;
+          width: 24px;
+          height: 1px;
+          background: var(--border-color);
+        }
+
         .nav-section-label {
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 600;
           color: var(--text-muted);
           text-transform: uppercase;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           white-space: nowrap;
-          display: block;
-          padding-bottom: 4px;
-          border-bottom: 1px solid var(--border-color);
+          padding-right: 12px;
         }
 
         /* ── Bottom buttons ────────────────────────── */
         .sidebar-bottom {
-          padding: 12px 8px;
           border-top: 1px solid var(--border-color);
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 2px;
           min-width: var(--sidebar-expanded-w);
+          padding: 8px 0;
         }
+
         .sidebar-btn {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 10px 10px;
-          border-radius: 8px;
+          gap: 0;
+          padding: 3px 0;
           background: transparent;
-          border: 1px solid var(--border-color);
+          border: none;
           color: var(--text-secondary);
           cursor: pointer;
           font-size: 0.9rem;
           font-weight: 500;
           width: 100%;
           white-space: nowrap;
+          text-align: left;
+          position: relative;
         }
-        .sidebar-btn:hover {
+        .sidebar-btn::before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          bottom: 2px;
+          left: 8px;
+          right: 8px;
+          border-radius: 8px;
+          background: transparent;
+          transition: background 0.15s;
+        }
+        .sidebar-btn:hover::before {
           background: var(--bg-hover);
-          color: var(--text-primary);
         }
-        .sidebar-btn-danger {
-          color: var(--accent-red);
-          border-color: var(--accent-red);
-        }
-        .sidebar-btn-danger:hover {
+        .sidebar-btn:hover { color: var(--text-primary); }
+        .sidebar-btn-danger { color: var(--accent-red); }
+        .sidebar-btn-danger:hover { color: var(--accent-red); }
+        .sidebar-btn-danger:hover::before {
           background: rgba(239, 68, 68, 0.1);
-          color: var(--accent-red);
+        }
+        .sidebar-btn .nav-icon-wrap,
+        .sidebar-btn .nav-label {
+          position: relative;
+          z-index: 1;
         }
 
         /* ── Main content ──────────────────────────── */
