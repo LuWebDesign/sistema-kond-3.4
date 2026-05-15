@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { applyPromotionsToProduct } from '../utils/promoEngine'
 import { useProductosPublicados, useMateriales, usePromocionesActivas } from './useSupabaseQuery'
+import { validateCupon, incrementarUsoCupon } from '../utils/supabaseMarketing'
 
 // ---------------------------------------------------------------------------
 // Helpers de mapeo (snake_case → camelCase) — usados por múltiples hooks
@@ -292,38 +293,48 @@ export function useCart() {
 export function useCoupons() {
   const [activeCoupon, setActiveCoupon] = useState(null)
 
-  const coupons = {
-    'LASER10': { type: 'percentage', value: 10, minAmount: 10000 },
-    '5X1LLAVEROS': { type: 'fixed', value: 0, minQuantity: 5 }
-  }
+  const applyCoupon = async (couponCode, cart, subtotal) => {
+    try {
+      const code = couponCode.toUpperCase()
+      const { data, error } = await validateCupon(code)
 
-  const applyCoupon = (couponCode, cart, subtotal) => {
-    const coupon = coupons[couponCode.toUpperCase()]
-    if (!coupon) {
-      return { success: false, message: 'Cupón inválido' }
-    }
-
-    if (coupon.minAmount && subtotal < coupon.minAmount) {
-      return { 
-        success: false, 
-        message: `Compra mínima de $${coupon.minAmount.toLocaleString()} para este cupón` 
+      if (error || !data) {
+        return { success: false, message: 'Cupón inválido o inexistente' }
       }
-    }
 
-    if (couponCode === '5X1LLAVEROS') {
-      const llaverosQty = cart.reduce((sum, item) => 
-        sum + (item.name.toLowerCase().includes('llavero') ? item.quantity : 0), 0)
-      
-      if (llaverosQty < 5) {
-        return { 
-          success: false, 
-          message: 'Necesitas al menos 5 llaveros para este cupón' 
+      if (data.usos_maximos !== null && data.usos_actuales >= data.usos_maximos) {
+        return { success: false, message: 'Este cupón alcanzó su límite de usos' }
+      }
+
+      if (data.fecha_expiracion) {
+        const expiration = new Date(data.fecha_expiracion)
+        if (expiration < new Date()) {
+          return { success: false, message: 'Este cupón está vencido' }
         }
       }
-    }
 
-    setActiveCoupon({ code: couponCode.toUpperCase(), ...coupon })
-    return { success: true, message: `Cupón ${couponCode.toUpperCase()} aplicado` }
+      const montoMinimo = data.monto_minimo || 0
+      if (montoMinimo > 0 && subtotal < montoMinimo) {
+        return {
+          success: false,
+          message: `Compra mínima de $${montoMinimo.toLocaleString()} para este cupón`
+        }
+      }
+
+      setActiveCoupon({
+        id: data.id,
+        code: data.codigo,
+        tipo: data.tipo,
+        valor: data.valor
+      })
+
+      // Incrementar uso (non-blocking)
+      incrementarUsoCupon(data.id)
+
+      return { success: true, message: `Cupón ${code} aplicado` }
+    } catch (e) {
+      return { success: false, message: 'Error al validar el cupón' }
+    }
   }
 
   const removeCoupon = () => {
@@ -332,11 +343,12 @@ export function useCoupons() {
 
   const calculateDiscount = (subtotal) => {
     if (!activeCoupon) return 0
-    
-    if (activeCoupon.type === 'percentage') {
-      return subtotal * (activeCoupon.value / 100)
+
+    if (activeCoupon.tipo === 'porcentaje') {
+      return subtotal * (activeCoupon.valor / 100)
     }
-    return activeCoupon.value
+    // monto_fijo
+    return activeCoupon.valor
   }
 
   return {

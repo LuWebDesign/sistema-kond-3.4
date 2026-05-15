@@ -39,14 +39,15 @@ export default function CouponModal({ coupon, onSubmit, onClose }) {
     }
 
     onSubmit({
-      ...formData,
-      code,
-      value,
-      minAmount: formData.minAmount > 0 ? parseFloat(formData.minAmount) : undefined,
-      minQuantity: formData.minQuantity > 0 ? parseInt(formData.minQuantity) : undefined,
-      start: formData.start || undefined,
-      end: formData.end || undefined,
-      updatedAt: new Date().toISOString()
+      codigo: code,
+      nombre: formData.description || code,
+      tipo: formData.type,
+      valor: value,
+      montoMinimo: formData.minAmount ? parseFloat(formData.minAmount) : null,
+      usosMaximos: formData.minQuantity ? parseInt(formData.minQuantity) : null,
+      fechaInicio: formData.start || null,
+      fechaExpiracion: formData.end || null,
+      activo: formData.active !== false
     });
   };
 

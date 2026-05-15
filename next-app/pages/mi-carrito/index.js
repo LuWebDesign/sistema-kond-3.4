@@ -60,10 +60,10 @@ export default function CartPage({ seoConfig }) {
     return () => { mounted = false }
   }, [cart])
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponInput) return
     try {
-      const result = applyCoupon(couponInput, cart, subtotal)
+      const result = await applyCoupon(couponInput, cart, subtotal)
       createToast(result.message, result.success ? 'success' : 'error')
       if (result.success) setCouponInput('')
     } catch (e) {

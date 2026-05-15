@@ -318,30 +318,31 @@ export async function updateCupon(id, cupon) {
  */
 export async function incrementarUsoCupon(id) {
   try {
-    // Obtener el cupón actual
-    const { data: cupon, error: getError } = await supabase
+    // Intentar atomic increment via RPC
+    const { error: rpcError } = await supabase.rpc('increment_coupon_usage', { coupon_id: id })
+    if (!rpcError) return { error: null }
+
+    // Si el RPC no existe (PGRST202), hacer update directo como fallback
+    const { data, error: getError } = await supabase
       .from('cupones')
       .select('usos_actuales')
       .eq('id', id)
       .eq('tenant_id', TENANT_ID)
-      .single();
+      .single()
+    if (getError) throw getError
 
-    if (getError) throw getError;
-
-    // Incrementar el contador
-    const { data, error } = await supabase
+    const { error: updateError } = await supabase
       .from('cupones')
-      .update({ usos_actuales: (cupon.usos_actuales || 0) + 1 })
+      .update({ usos_actuales: (data.usos_actuales || 0) + 1 })
       .eq('id', id)
       .eq('tenant_id', TENANT_ID)
-      .select()
-      .single();
+    if (updateError) throw updateError
 
-    if (error) throw error;
-    return { data, error: null };
+    return { error: null }
   } catch (error) {
-    console.error('Error al incrementar uso de cupón:', error);
-    return { data: null, error: error.message };
+    // No bloquear el checkout por un error de incremento
+    console.error('Error al incrementar uso de cupón (non-blocking):', error)
+    return { error: error.message }
   }
 }
 
