@@ -78,6 +78,7 @@ Keep analysis extremely short after that.
 - **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
 
 - **Skills**: Project-specific skills live in `skills/` at repo root. Registry: `.atl/skill-registry.md`. Key ones:
+  - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome
   - `react-query-kond` — staleTime policies, queryKeys from `next-app/lib/queryKeys.js`
   - `supabase-egress-best-practices` — no `select(*)`, server-side filters, pagination
   - `analytics-cards` — card components patterns
