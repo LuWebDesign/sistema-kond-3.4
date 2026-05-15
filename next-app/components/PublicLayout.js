@@ -16,7 +16,6 @@ const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false,
 const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), { ssr: false, loading: () => null })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
-  const [theme, setTheme] = useState('light')
   const [currentUser, setCurrentUser] = useState(null)
   const [catalogStyles, setCatalogStyles] = useState(DEFAULT_STYLES)
   const [isClient, setIsClient] = useState(false)
@@ -43,12 +42,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   }, [])
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    setTheme(savedTheme)
-    // set both data-theme attribute and className to be compatible with different CSS selectors
+    // Forzar siempre tema light en el catálogo público
     try {
-      document.body.setAttribute('data-theme', savedTheme)
-      document.body.className = savedTheme
+      localStorage.setItem('theme', 'light')
+      document.body.setAttribute('data-theme', 'light')
+      document.body.className = 'light'
     } catch (e) {
       // ignore if document.body is not available yet
     }
@@ -149,19 +147,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
   }, [])
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-    localStorage.setItem('theme', newTheme)
-    // keep both attribute and class in sync for CSS compatibility
-    try {
-      document.body.setAttribute('data-theme', newTheme)
-      document.body.className = newTheme
-    } catch (e) {
-      // ignore
-    }
-  }
 
   return (
     <>
