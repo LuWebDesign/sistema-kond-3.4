@@ -30,18 +30,12 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
   const doSave = async () => {
     if (typeof onSave === 'function') {
       try {
-        const res = onSave()
-        if (res && typeof res.then === 'function') {
-          const val = await res
-          if (val === false) return
-        } else if (res === false) return
+        await onSave()
       } catch (err) {
         console.error('CollapsibleSection onSave error:', err)
-        return
       }
     }
-    setCollapsed(true)
-    setMenuOpen(false)
+    // No colapsar: el botón Guardar de sección solo persiste datos, el usuario sigue editando
   }
 
   const handleKeyDown = (e) => {
