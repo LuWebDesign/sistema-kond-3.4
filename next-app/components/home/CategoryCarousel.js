@@ -57,8 +57,11 @@ export default function CategoryCarousel({ category, products = [] }) {
         .carousel-track { -ms-overflow-style: none; scrollbar-width: none; }
         .carousel-item {
           scroll-snap-align: start;
-          flex: 0 0 220px;
+          flex: 0 0 calc((100% - 3 * 14px) / 4);
           min-width: 0;
+        }
+        @media (max-width: 768px) {
+          .carousel-item { flex: 0 0 calc((100% - 14px) / 2); }
         }
         @media (max-width: 480px) {
           .carousel-item { flex: 0 0 160px; }

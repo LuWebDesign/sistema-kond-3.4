@@ -78,8 +78,16 @@ const nextConfig = {
     ]
   },
   async rewrites() {
-    // Sin backend Express: no reescrituras a /api
-    return []
+    return [
+      {
+        source: '/robots.txt',
+        destination: '/api/robots-txt',
+      },
+      {
+        source: '/sitemap.xml',
+        destination: '/api/sitemap-xml',
+      },
+    ]
   }
 }
 

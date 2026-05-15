@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   try {
     const admin = supabaseAdmin();
 
-    const [featuredResult, categoriesResult, allProductsResult] = await Promise.all([
+    const [featuredResult, categoriesResult, allProductsResult, promosResult] = await Promise.all([
       // Query 1: Featured products
       admin
         .from('productos')
@@ -47,10 +47,23 @@ export default async function handler(req, res) {
         .eq('hidden_in_productos', false)
         .limit(100)
         .then((r) => (r.error ? { data: [], error: null } : r)),
+
+      // Query 4: Promo products — products with an active promotion OR static_promo_price
+      admin
+        .from('productos')
+        .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, static_promo_price, promo_badge')
+        .eq('tenant_id', TENANT_ID)
+        .eq('publicado', true)
+        .eq('active', true)
+        .eq('hidden_in_productos', false)
+        .not('static_promo_price', 'is', null)
+        .limit(20)
+        .then((r) => (r.error ? { data: [], error: null } : r)),
     ]);
 
     const categories = categoriesResult.data || [];
     const allProducts = allProductsResult.data || [];
+    const promos = promosResult.data || [];
     let featured = featuredResult.data || [];
 
     // Fallback: if featured.length < 4, fill from newest published products
@@ -72,7 +85,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ featured, categories, byCategory });
+    return res.status(200).json({ featured, categories, byCategory, promos });
   } catch (error) {
     console.error('[home-data] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });

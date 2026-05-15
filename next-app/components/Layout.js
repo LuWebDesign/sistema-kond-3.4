@@ -6,6 +6,70 @@ import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import ConfirmDialog from './ConfirmDialog'
 import { getCurrentSession, logout as supabaseLogout } from '../utils/supabaseAuthV2'
 
+// ── SVG icon helper ────────────────────────────────────────────────────────
+function NavIcon({ d, size = 20 }) {
+  const paths = Array.isArray(d) ? d : [d]
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0 }}
+    >
+      {paths.map((path, i) => <path key={i} d={path} />)}
+    </svg>
+  )
+}
+
+// ── Nav link ──────────────────────────────────────────────────────────────
+function NavLink({ href, icon, label, badge, external, router }) {
+  const isActive = href === '/admin/dashboard'
+    ? router.pathname === href
+    : router.pathname.startsWith(href)
+
+  const content = (
+    <>
+      {/* Icon always centered in the 64px collapsed strip */}
+      <span className="nav-icon-wrap"><NavIcon d={icon} /></span>
+      <span className="nav-label">{label}</span>
+      {badge && <span className="nav-badge">{badge}</span>}
+      {external && <span className="nav-ext">↗</span>}
+    </>
+  )
+
+  const cls = `nav-link${isActive ? ' active' : ''}`
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+        {content}
+      </a>
+    )
+  }
+  return (
+    <Link href={href} className={cls}>
+      {content}
+    </Link>
+  )
+}
+
+// ── Section divider ────────────────────────────────────────────────────────
+function SectionDivider({ label }) {
+  return (
+    <div className="nav-section">
+      <span className="nav-section-line" />
+      <span className="nav-section-label">{label}</span>
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
 export default function Layout({ children, title = 'Sistema KOND' }) {
   const [theme, setTheme] = useState('dark')
   const [userInfo, setUserInfo] = useState(null)
@@ -14,12 +78,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
     document.body.setAttribute('data-theme', savedTheme)
-
-    // Cargar información del usuario logueado desde Supabase
     loadUserInfo()
   }, [])
 
@@ -34,7 +95,6 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           loginTime: new Date().toLocaleString('es-AR')
         })
       } else {
-        // Fallback: intentar cargar de localStorage (compatibilidad)
         if (typeof window !== 'undefined') {
           const sessionData = localStorage.getItem('adminSession')
           if (sessionData) {
@@ -55,36 +115,19 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     }
   }
 
-  const handleLogout = () => {
-    setShowLogoutConfirm(true)
-  }
+  const handleLogout = () => setShowLogoutConfirm(true)
 
   const confirmLogout = async () => {
     try {
-      // Cerrar sesión en Supabase
       await supabaseLogout()
-      
-      // Limpiar localStorage solo si estamos en el browser
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('adminSession')
-      }
+      if (typeof window !== 'undefined') localStorage.removeItem('adminSession')
       setUserInfo(null)
-      
-      // Agregar pequeño delay para asegurar que la sesión se cierra completamente
-      setTimeout(() => {
-        // Redirigir al login admin
-        router.push('/admin/login')
-      }, 500)
+      setTimeout(() => router.push('/admin/login'), 500)
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
-      // Limpiar de todas formas
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('adminSession')
-      }
+      if (typeof window !== 'undefined') localStorage.removeItem('adminSession')
       setUserInfo(null)
-      setTimeout(() => {
-        router.push('/admin/login')
-      }, 500)
+      setTimeout(() => router.push('/admin/login'), 500)
     }
   }
 
@@ -92,9 +135,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     document.body.setAttribute('data-theme', newTheme)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme)
-    }
+    if (typeof window !== 'undefined') localStorage.setItem('theme', newTheme)
   }
 
   return (
@@ -105,293 +146,159 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
         <meta charSet="utf-8" />
       </Head>
 
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Overlay para cerrar sidebar en mobile */}
-        {sidebarOpen && (
-          <div 
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 998,
-              display: 'none'
-            }}
-            className="mobile-overlay"
-          />
-        )}
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        {/* Sidebar */}
-        <aside 
-          className={`sidebar ${sidebarOpen ? 'open' : ''}`}
-          style={{
-            width: 260,
-            background: 'var(--bg-secondary)',
-            borderRight: '1px solid var(--border-color)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            overflowY: 'auto',
-            transition: 'transform 0.3s ease',
-            zIndex: 999
-          }}
-        >
-          <div style={{
-            fontSize: '1.5rem',
-            fontWeight: 700,
-            color: 'var(--person-color)',
-            marginBottom: '24px',
-            textAlign: 'center'
-          }}>
-            🏭 Sistema KOND
+      {/* Sidebar */}
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
+        {/* Logo */}
+        <div className="sidebar-logo">
+          <span className="nav-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </span>
+          <div className="sidebar-logo-text">
+            <div className="sidebar-logo-title">Sistema KOND</div>
+            <div className="sidebar-logo-sub">Panel de Administración</div>
           </div>
+        </div>
 
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onClick={() => setSidebarOpen(false)}>
-            {/* Dashboard - Panel administrativo principal */}
-            <Link href="/admin/dashboard" style={linkStyle}>
-              Dashboard
-            </Link>
-            
-            {/* Sección: Gestión Interna */}
-            <div style={sectionDividerStyle}>
-              Gestión Interna
-            </div>
-            
-            <Link href="/admin/products" style={linkStyle}>
-              Productos
-            </Link>
+        {/* Nav */}
+        <nav onClick={() => setSidebarOpen(false)}>
+          <NavLink
+            href="/admin/dashboard"
+            icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            label="Dashboard"
+            router={router}
+          />
 
-            <Link href="/admin/cotizaciones" style={linkStyle}>
-              Cotizaciones Corte
-            </Link>
-            
-            <Link href="/admin/calendar" style={linkStyle}>
-              Calendario
-            </Link>
-            
-            <Link href="/admin/database" style={linkStyle}>
-              Base de Datos
-            </Link>
-            
-            {/* Sección: Catálogo y Ventas */}
-            <div style={sectionDividerStyle}>
-              Catálogo y Ventas
-            </div>
-            
-            <a 
-              href="/catalog" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{...linkStyle, display: 'flex', alignItems: 'center', gap: '8px'}}
-            >
-              Catálogo Público
-              <span style={{fontSize: '0.7rem', opacity: 0.7}}>↗</span>
-            </a>
-            
-            <Link href="/admin/pedidos" style={linkStyle}>
-              Pedidos Internos
-            </Link>
-            
-            <Link href="/admin/orders" style={linkStyle}>
-              Pedidos Catálogo
-            </Link>
-            
-            <Link href="/admin/metricas" style={linkStyle}>
-              Métricas
-            </Link>
-            
-            <Link href="/admin/marketing" style={linkStyle}>
-              Marketing
-            </Link>
+          {/* ── Gestión Interna ── */}
+          <SectionDivider label="Gestión Interna" />
+          <NavLink href="/admin/products" icon="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" label="Productos" router={router} />
+          <NavLink href="/admin/cotizaciones" icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" label="Cotizaciones Corte" router={router} />
+          <NavLink href="/admin/calendar" icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" label="Calendario" router={router} />
+          <NavLink href="/admin/database" icon="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" label="Base de Datos" router={router} />
 
-            {/* 'Finalizar Compra' moved to admin pages; removed from sidebar per request */}
-            
-            <Link href="/admin/finanzas" style={linkStyle}>
-              Finanzas
-            </Link>
-            
-            {/* Sección: Administración */}
-            <div style={sectionDividerStyle}>
-              Administración
-            </div>
-            
-            <Link href="/admin/panel" style={linkStyle}>
-              Panel Admin
-            </Link>
-            
-            <Link href="/admin/mi-cuenta" style={linkStyle}>
-              Mi Cuenta
-            </Link>
-            <div style={{ marginTop: 8 }}>
-              {userInfo && (
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: 'transparent',
-                    color: 'var(--accent-red)',
-                    border: '1.5px solid var(--accent-red)',
-                    borderRadius: '8px',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    justifyContent: 'center',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-red)11' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                >
-                  Cerrar Sesión
-                </button>
-              )}
+          {/* ── Tienda Online ── */}
+          <SectionDivider label="Tienda Online" />
+          <NavLink href="/admin/website" icon="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" label="Website" badge="Nuevo" router={router} />
+          <NavLink href="/catalog" icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" label="Catálogo Público" external router={router} />
+          <NavLink href="/admin/orders" icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" label="Pedidos" router={router} />
+          <NavLink href="/admin/clientes" icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" label="Clientes" router={router} />
+          <NavLink href="/admin/marketing" icon="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" label="Marketing" router={router} />
+          <NavLink href="/admin/metricas" icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" label="Analytics" router={router} />
 
-              {/* Theme Toggle moved here so it appears immediately under the "Cerrar Sesión" button */}
-              <div style={{ marginTop: 8 }}>
-                <button
-                  onClick={toggleTheme}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    background: 'var(--bg-card)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    fontWeight: '500',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-card)' }}
-                >
-                  {theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
-                </button>
-              </div>
-            </div>
-          </nav>
-        </aside>
+          {/* ── Operaciones ── */}
+          <SectionDivider label="Operaciones" />
+          <NavLink href="/admin/pedidos" icon="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" label="Pedidos Internos" router={router} />
+          <NavLink href="/admin/finanzas" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" label="Finanzas" router={router} />
+          <NavLink href="/admin/materiales" icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" label="Materiales" router={router} />
+          <NavLink href="/admin/logistica" icon="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" label="Logística" router={router} />
 
-        {/* Main Content */}
-        <main style={{
-          flex: 1,
-          background: 'var(--bg-primary)',
-          overflow: 'auto',
-          minHeight: '100vh',
-          position: 'relative'
-        }}>
-          {/* Header con notificaciones y usuario */}
-          <div 
-            className="admin-header"
-            style={{
-              position: 'sticky',
-              top: 0,
-              right: 0,
-              zIndex: 100,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 20px',
-              background: 'var(--bg-primary)',
-              borderBottom: '1px solid var(--border-color)',
-              gap: '12px',
-              flexWrap: 'wrap'
-            }}>
-            {/* Botón hamburguesa para mobile */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{
-                display: 'none',
-                background: 'transparent',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                padding: '8px',
-                color: 'var(--text-primary)'
-              }}
-              className="hamburger-btn"
-              aria-label="Toggle menu"
-            >
-              ☰
+          {/* ── Crecimiento ── */}
+          <SectionDivider label="Crecimiento" />
+          <NavLink href="/admin/seo" icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" label="SEO" router={router} />
+
+          {/* ── Sistema ── */}
+          <SectionDivider label="Sistema" />
+          <NavLink href="/admin/panel" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" label="Usuarios" router={router} />
+          <NavLink href="/admin/roles" icon="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" label="Roles y Permisos" router={router} />
+          <NavLink href="/admin/pagos" icon="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" label="Pagos" router={router} />
+          <NavLink
+            href="/admin/payment-config"
+            icon={[
+              'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+              'M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+            ]}
+            label="Configuración"
+            router={router}
+          />
+          <NavLink href="/admin/mi-cuenta" icon="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" label="Mi Cuenta" router={router} />
+        </nav>
+
+        {/* Bottom buttons */}
+        <div className="sidebar-bottom">
+          {userInfo && (
+            <button className="sidebar-btn sidebar-btn-danger" onClick={handleLogout}>
+              <span className="nav-icon-wrap">
+                <NavIcon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </span>
+              <span className="nav-label">Cerrar Sesión</span>
             </button>
+          )}
+          <button className="sidebar-btn" onClick={toggleTheme}>
+            <span className="nav-icon-wrap">
+              <NavIcon d={theme === 'dark'
+                ? 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z'
+                : 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z'
+              } />
+            </span>
+            <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+          </button>
+        </div>
+      </aside>
 
-            {/* Información del usuario */}
-            <div 
-              className="user-info"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                fontSize: '0.9rem'
-              }}
-            >
-              {userInfo ? (
-                <>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <span style={{ color: 'var(--accent-green)' }}>🟢</span>
-                    <span>Logueado como:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>
-                      {userInfo.email || 'admin1'}
-                    </strong>
-                  </div>
-                  <div style={{
-                    color: 'var(--text-tertiary)',
-                    fontSize: '0.8rem'
-                  }}>
-                    Desde: {userInfo.loginTime}
-                    {userInfo.rememberSession && (
-                      <span style={{ color: 'var(--accent-blue)', marginLeft: '8px' }}>
-                        (7 días)
-                      </span>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div style={{
-                  color: 'var(--text-tertiary)',
-                  fontSize: '0.9rem'
-                }}>
-                  No logueado
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Header */}
+        <div className="admin-header">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="hamburger-btn"
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
+
+          <div className="user-info">
+            {userInfo ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
+                  <span style={{ color: 'var(--accent-green)' }}>🟢</span>
+                  <span>Logueado como:</span>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {userInfo.email || 'admin1'}
+                  </strong>
                 </div>
-              )}
-            </div>
-
-            {/* Notificaciones */}
-            <NotificationsButton target="admin" />
+                <div style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
+                  Desde: {userInfo.loginTime}
+                  {userInfo.rememberSession && (
+                    <span style={{ color: 'var(--accent-blue)', marginLeft: '8px' }}>(7 días)</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>No logueado</div>
+            )}
           </div>
-          
-          {children}
-          <NotificationsPanel target="admin" />
 
-          {/* Modal de confirmación para logout */}
-          <ConfirmDialog
-            open={showLogoutConfirm}
-            onClose={() => setShowLogoutConfirm(false)}
-            onConfirm={confirmLogout}
-            title="Cerrar sesión"
-            message="¿Estás seguro de que quieres cerrar sesión?"
-            confirmText="Cerrar sesión"
-            cancelText="Cancelar"
-            type="warning"
-          />
-        </main>
-      </div>
-      
-      {/* Variables CSS */}
+          <NotificationsButton target="admin" />
+        </div>
+
+        {children}
+        <NotificationsPanel target="admin" />
+
+        <ConfirmDialog
+          open={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={confirmLogout}
+          title="Cerrar sesión"
+          message="¿Estás seguro de que quieres cerrar sesión?"
+          confirmText="Cerrar sesión"
+          cancelText="Cancelar"
+          type="warning"
+        />
+      </main>
+
       <style jsx global>{`
+        /* ── CSS Variables ─────────────────────────── */
         :root {
           --bg-primary: #0f172a;
           --bg-secondary: #1e293b;
@@ -409,6 +316,8 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           --accent-red: #ef4444;
           --person-color: #60a5fa;
           --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+          --sidebar-w: 64px;
+          --sidebar-expanded-w: 260px;
         }
 
         [data-theme="light"] {
@@ -430,6 +339,9 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        /* ── Base ──────────────────────────────────── */
+        * { box-sizing: border-box; }
+
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
           margin: 0;
@@ -439,148 +351,355 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        * {
-          box-sizing: border-box;
-        }
+        a, button { transition: all 0.2s ease; }
 
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar {
-          width: 6px;
-        }
+        /* ── Scrollbar ─────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-        ::-webkit-scrollbar-track {
+        /* ── Sidebar base ──────────────────────────── */
+        .sidebar {
           background: var(--bg-secondary);
+          border-right: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          overflow-x: hidden;
+          overflow-y: auto;
+          z-index: 999;
         }
 
-        ::-webkit-scrollbar-thumb {
-          background: var(--border-color);
-          border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: var(--text-tertiary);
-        }
-
-        /* Animaciones suaves */
-        a, button {
-          transition: all 0.2s ease;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
+        /* Desktop: fixed, collapsed → expand on hover */
+        @media (min-width: 601px) {
           .sidebar {
-            width: 240px !important;
-            padding: 16px !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w);
+            transition: width 0.25s ease;
+          }
+          .sidebar:hover {
+            width: var(--sidebar-expanded-w);
           }
 
-          .admin-header {
-            padding: 10px 12px !important;
-            gap: 8px !important;
+          /* Collapsed: ocultar todos los textos */
+          .sidebar .nav-label,
+          .sidebar .nav-badge,
+          .sidebar .nav-ext,
+          .sidebar .nav-section-label,
+          .sidebar .sidebar-logo-text {
+            max-width: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-width 0.25s ease, opacity 0.15s ease;
           }
+          /* Expanded: revelar textos */
+          .sidebar:hover .nav-label,
+          .sidebar:hover .nav-badge,
+          .sidebar:hover .nav-ext,
+          .sidebar:hover .nav-section-label,
+          .sidebar:hover .sidebar-logo-text {
+            max-width: 200px;
+            opacity: 1;
+          }
+        }
 
-          .user-info div:last-child {
-            display: none !important;
-          }
+        /* ── Icon wrapper — always centered in 64px ── */
+        .nav-icon-wrap {
+          width: var(--sidebar-w);       /* 64px — same as collapsed sidebar */
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* ── Logo area ─────────────────────────────── */
+        .sidebar-logo {
+          display: flex;
+          align-items: center;
+          min-width: var(--sidebar-expanded-w);
+          border-bottom: 1px solid var(--border-color);
+          padding: 4px 0;
+          margin-bottom: 8px;
+        }
+        .sidebar-logo-text {
+          white-space: nowrap;
+          padding-right: 12px;
+        }
+        .sidebar-logo-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--person-color);
+          line-height: 1.2;
+        }
+        .sidebar-logo-sub {
+          font-size: 0.62rem;
+          font-weight: 400;
+          color: var(--text-muted);
+          margin-top: 2px;
+        }
+
+        /* ── Nav ───────────────────────────────────── */
+        .sidebar nav {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+          padding: 0 0 8px;
+        }
+
+        .nav-link {
+          display: flex;
+          align-items: center;
+          gap: 0;
+          padding: 3px 0;
+          border-radius: 0;
+          text-decoration: none;
+          color: var(--text-secondary);
+          min-width: var(--sidebar-expanded-w);
+          white-space: nowrap;
+          font-size: 0.9rem;
+          font-weight: 500;
+          position: relative;
+        }
+
+        /* Highlight pill — only on the icon+label area */
+        .nav-link::before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          bottom: 2px;
+          left: 8px;
+          right: 8px;
+          border-radius: 8px;
+          background: transparent;
+          transition: background 0.15s;
+        }
+        .nav-link:hover::before {
+          background: var(--bg-hover);
+        }
+        .nav-link.active::before {
+          background: rgba(59, 130, 246, 0.15);
+        }
+        .nav-link:hover,
+        .nav-link.active {
+          color: var(--text-primary);
+        }
+        .nav-link.active {
+          color: var(--accent-blue);
+        }
+
+        /* Make icon and label sit above the ::before pill */
+        .nav-link .nav-icon-wrap,
+        .nav-link .nav-label,
+        .nav-link .nav-badge,
+        .nav-link .nav-ext {
+          position: relative;
+          z-index: 1;
+        }
+
+        .nav-label {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding-right: 12px;
+        }
+
+        .nav-ext {
+          font-size: 0.7rem;
+          opacity: 0.6;
+          padding-right: 12px;
+        }
+
+        .nav-badge {
+          font-size: 0.6rem;
+          font-weight: 700;
+          padding: 2px 5px;
+          border-radius: 4px;
+          background: var(--accent-green);
+          color: #fff;
+          letter-spacing: 0.03em;
+          white-space: nowrap;
+          margin-right: 12px;
+        }
+
+        /* ── Section dividers ──────────────────────── */
+        .nav-section {
+          display: flex;
+          align-items: center;
+          min-width: var(--sidebar-expanded-w);
+          padding: 16px 0 2px;
+          overflow: hidden;
+        }
+
+        /* The short horizontal tick visible when collapsed */
+        .nav-section-line {
+          width: var(--sidebar-w);
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .nav-section-line::after {
+          content: '';
+          display: block;
+          width: 24px;
+          height: 1px;
+          background: var(--border-color);
+        }
+
+        .nav-section-label {
+          font-size: 0.68rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.07em;
+          white-space: nowrap;
+          padding-right: 12px;
+        }
+
+        /* ── Bottom buttons ────────────────────────── */
+        .sidebar-bottom {
+          border-top: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: var(--sidebar-expanded-w);
+          padding: 8px 0;
+        }
+
+        .sidebar-btn {
+          display: flex;
+          align-items: center;
+          gap: 0;
+          padding: 3px 0;
+          background: transparent;
+          border: none;
+          color: var(--text-secondary);
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: 500;
+          width: 100%;
+          white-space: nowrap;
+          text-align: left;
+          position: relative;
+        }
+        .sidebar-btn::before {
+          content: '';
+          position: absolute;
+          top: 2px;
+          bottom: 2px;
+          left: 8px;
+          right: 8px;
+          border-radius: 8px;
+          background: transparent;
+          transition: background 0.15s;
+        }
+        .sidebar-btn:hover::before {
+          background: var(--bg-hover);
+        }
+        .sidebar-btn:hover { color: var(--text-primary); }
+        .sidebar-btn-danger { color: var(--accent-red); }
+        .sidebar-btn-danger:hover { color: var(--accent-red); }
+        .sidebar-btn-danger:hover::before {
+          background: rgba(239, 68, 68, 0.1);
+        }
+        .sidebar-btn .nav-icon-wrap,
+        .sidebar-btn .nav-label {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* ── Main content ──────────────────────────── */
+        .main-content {
+          background: var(--bg-primary);
+          overflow: auto;
+          min-height: 100vh;
+          position: relative;
+        }
+        @media (min-width: 601px) {
+          .main-content { margin-left: var(--sidebar-w); }
+        }
+
+        /* ── Header ────────────────────────────────── */
+        .admin-header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 20px;
+          background: var(--bg-primary);
+          border-bottom: 1px solid var(--border-color);
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .hamburger-btn {
+          display: none;
+          background: transparent;
+          border: none;
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 8px;
+          color: var(--text-primary);
+          margin-right: auto;
+        }
+
+        .user-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 0.9rem;
+        }
+
+        /* ── Mobile overlay ────────────────────────── */
+        .mobile-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 998;
+        }
+
+        /* ── Responsive ────────────────────────────── */
+        @media (max-width: 768px) {
+          .admin-header { padding: 10px 12px; gap: 8px; }
+          .user-info div:last-child { display: none; }
         }
 
         @media (max-width: 600px) {
-          /* Mostrar botón hamburguesa en mobile */
-          .hamburger-btn {
-            display: block !important;
-            margin-right: auto;
-          }
-
-          /* Sidebar como overlay deslizable */
+          .hamburger-btn { display: block; }
           .sidebar {
-            position: fixed !important;
+            position: fixed;
             top: 0;
             left: 0;
-            width: 280px !important;
+            width: 280px;
             height: 100vh;
-            z-index: 999;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
           }
-
-          /* Sidebar abierto */
-          .sidebar.open {
-            transform: translateX(0);
-          }
-
-          /* Overlay visible en mobile */
-          .mobile-overlay {
-            display: block !important;
-          }
-
-          /* Ajustar main content en mobile */
-          main {
-            width: 100%;
-          }
-
-          /* Header más compacto */
-          .admin-header {
-            padding: 8px !important;
-          }
-
-          /* Ocultar información de usuario en mobile */
-          .user-info {
-            font-size: 0.75rem !important;
-          }
-
-          .user-info > div:first-child > span:not(:first-child):not(:last-child) {
-            display: none !important;
-          }
+          .sidebar.open { transform: translateX(0); }
+          .admin-header { padding: 8px; }
+          .user-info { font-size: 0.75rem; }
+          .user-info > div:first-child > span:not(:first-child):not(:last-child) { display: none; }
         }
 
         @media (max-width: 400px) {
-          .user-info {
-            display: none !important;
-          }
+          .user-info { display: none; }
         }
 
-        /* Sidebar link colors: default and hover (both themes use CSS variables) */
+        /* ── Link visited state ────────────────────── */
         .sidebar a,
         .sidebar a:visited {
-          color: var(--text-primary);
+          color: var(--text-secondary);
           text-decoration: none;
-        }
-
-        .sidebar a:hover,
-        .sidebar a:focus {
-          color: var(--accent-blue);
-          text-decoration: none;
-          outline: none;
         }
       `}</style>
     </>
   )
-}
-
-// Estilos para enlaces del sidebar
-const linkStyle = {
-  padding: '10px 16px',
-  borderRadius: '8px',
-  background: 'transparent',
-  textDecoration: 'none',
-  transition: 'all 0.2s ease',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  fontSize: '0.95rem',
-  fontWeight: '500'
-}
-
-// Estilo para divisores de sección
-const sectionDividerStyle = {
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  color: 'var(--text-muted)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  marginTop: '20px',
-  marginBottom: '8px',
-  paddingLeft: '16px',
-  paddingBottom: '4px',
-  borderBottom: '1px solid var(--border-color)'
 }

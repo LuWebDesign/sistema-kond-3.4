@@ -19,14 +19,28 @@ Keep analysis extremely short after that.
 
 - **Next.js dev** (`next-app/`):
   - Install: `npm ci` (CI) or `npm install` (local)
-  - Env: copy `.env.example` → `.env.local` — required vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_USE_SUPABASE`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`
-  - Run: `npm run dev` (binds 0.0.0.0:3000). Uses `WATCHPACK_POLLING=true` — required on Windows/WSL; don't remove.
+  - Env: copy `.env.example` → `.env.local` — required vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_USE_SUPABASE`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`, `NEXT_PUBLIC_TENANT_ID`
+  - `NEXT_PUBLIC_TENANT_ID` must be set or `next-app/lib/tenant.js` throws at module load (fail-fast). Use seed UUID `00000000-0000-0000-0000-000000000001` for local dev.
+  - Run: `npm run dev` (binds 0.0.0.0:3000). Uses `WATCHPACK_POLLING=true` via `cross-env` — required on Windows/WSL; don't remove.
   - Build: `npm run build`. Start: `npm start`. Prod-test: `npm run test:prod` (build + start on :3001).
   - **Node mismatch**: `package.json` says 22.x, CI uses 20 (via `.github/workflows/ci.yml`). If build fails, check Node version.
+  - **Pages Router** (not App Router). All pages live in `next-app/pages/`. Admin pages are under `pages/admin/`; old top-level paths (`/products`, `/dashboard`, etc.) redirect there via `next.config.js`.
 
 - **Pre-check**: Run `node verify-setup.js` from repo root before infra changes — exits non-zero if critical Supabase files missing.
 
-- **Supabase setup** (must read `supabase/README.md`):
+- **Two Supabase clients** (don't confuse them):
+  - `supabase/client.js` — used by static HTML via `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js`.
+  - `next-app/supabase/client.js` — thin re-export from `next-app/utils/supabaseClient.js` (single `createClient()` instance). Always import from here inside `next-app/`.
+
+- **Admin route layout** (`next-app/pages/admin/`):
+  - All admin pages live under `/admin/`. Old top-level paths (`/products`, `/dashboard`, `/pedidos`, `/marketing`, `/finanzas`, `/materiales`, `/mi-cuenta`, `/pedidos-catalogo`, `/database`) redirect via `next.config.js` — never create new pages at those old paths.
+  - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD for categorías), `metricas.js`, `cotizaciones.js`.
+
+- **MercadoPago return flow** (`next-app/pages/mi-carrito/`):
+  - `mp-success.js`, `mp-failure.js`, `mp-pending.js` — MP redirects land here after payment.
+  - These pages must match the `back_urls` configured in `create-preference.js`.
+
+- **Supabase setup**:
   - SQL order: `supabase/schema.sql` → `supabase/storage-buckets.sql`
   - Buckets: `comprobantes` (private), `productos` (public)
   - Client: `supabase/client.js`. Static HTML uses `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js`.
@@ -63,9 +77,12 @@ Keep analysis extremely short after that.
 
 - **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
 
-- **Skills**: See `.atl/skill-registry.md` for project-specific skills. Key ones:
+- **Skills**: Project-specific skills live in `skills/` at repo root. Registry: `.atl/skill-registry.md`. Key ones:
+  - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome
   - `react-query-kond` — staleTime policies, queryKeys from `next-app/lib/queryKeys.js`
   - `supabase-egress-best-practices` — no `select(*)`, server-side filters, pagination
+  - `analytics-cards` — card components patterns
+  - `mi-carrito-summary` — cart/checkout flow context
 
 - **Deep context**: See `.github/copilot-instructions.md` for full technical details (schema, patterns, functions).
 

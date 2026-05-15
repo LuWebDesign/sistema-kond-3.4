@@ -2,45 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/router'
 import styles from '../styles/catalog-responsive.module.css'
-import { useCart } from '../hooks/useCatalog'
 
 export default function MobileSectionSelector() {
   const router = useRouter()
-  const { totalItems } = useCart()
   const [open, setOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
-  const [theme, setTheme] = useState('dark')
   const drawerRef = useRef(null)
   const [mounted, setMounted] = useState(false)
-
-  // Cargar tema desde localStorage (solo si no hay uno global ya configurado)
-  useEffect(() => {
-    try {
-      // Primero verificar si ya hay un tema configurado globalmente
-      const htmlTheme = document.documentElement.getAttribute('data-theme')
-      if (htmlTheme) {
-        setTheme(htmlTheme)
-      } else {
-        const saved = localStorage.getItem('theme')
-        if (saved) {
-          setTheme(saved)
-          document.documentElement.setAttribute('data-theme', saved)
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }, [])
-
-  const toggleTheme = () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme') || theme
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-    try {
-      localStorage.setItem('theme', newTheme)
-      document.documentElement.setAttribute('data-theme', newTheme)
-      document.body.setAttribute('data-theme', newTheme)
-      document.body.className = newTheme
-    } catch (e) { /* ignore */ }
-  }
 
   useEffect(() => {
     try {
@@ -108,18 +76,12 @@ export default function MobileSectionSelector() {
             </div>
 
             <nav className={styles.mobileSelectorMenu}>
+              <button className={styles.mobileSelectorItem} onClick={() => navigate('/home')}>Home</button>
               <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog')}>Catálogo</button>
-              <button className={styles.mobileSelectorItem} onClick={() => navigate('/mi-carrito')}>
-                <span>🛒 Mi carrito</span>
-                {totalItems > 0 && <span className={styles.mobileSelectorCartBadge}>{totalItems}</span>}
-              </button>
               {currentUser && (
                 <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog/mis-pedidos')}>Mis Pedidos</button>
               )}
-              <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog/user')}>{currentUser ? 'Mi cuenta' : 'Iniciar sesión'}</button>
-              <button className={styles.mobileSelectorItem} onClick={toggleTheme}>
-                {theme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro'}
-              </button>
+              <button className={styles.mobileSelectorItem} onClick={() => navigate('/catalog/user')}>{currentUser ? 'Mi cuenta' : 'Mi Perfil'}</button>
             </nav>
           </aside>
         </>,

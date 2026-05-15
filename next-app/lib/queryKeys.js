@@ -52,7 +52,13 @@ export const QUERY_KEYS = {
   },
   home: {
     _base: ['home'],
-    data: () => [...QUERY_KEYS.home._base, 'data'],
+    data:   () => [...QUERY_KEYS.home._base, 'data'],
+    config: () => [...QUERY_KEYS.home._base, 'config'],
+  },
+  seo: {
+    _base: ['seo'],
+    config:       () => [...QUERY_KEYS.seo._base, 'config'],
+    redirections: () => [...QUERY_KEYS.seo._base, 'redirections'],
   },
 }
 
@@ -70,4 +76,7 @@ export const STALE_TIMES = {
   finanzas_regs:     5  * 60 * 1000,  // 5 min — close-of-day records
   categorias:        15 * 60 * 1000,  // 15 min — reference data, changes rarely
   HOME_DATA:         5  * 60 * 1000,  // 5 min — home page aggregated data
+  HOME_CONFIG:       10 * 60 * 1000,  // 10 min — home config changes rarely
+  SEO_CONFIG:       10 * 60 * 1000,  // 10 min — rarely changes
+  SEO_REDIRECTIONS:  2 * 60 * 1000,  // 2 min
 }

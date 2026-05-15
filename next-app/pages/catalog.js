@@ -1,4 +1,5 @@
 import PublicLayout from '../components/PublicLayout'
+import SeoHead from '../components/SeoHead'
 import CategoryDropdown from '../components/CategoryDropdown'
 import { useProducts, useCart, useCoupons } from '../hooks/useCatalog'
 import { useCategorias } from '../hooks/useSupabaseQuery'
@@ -8,13 +9,14 @@ import {
   createToast
 } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
+import { getSeoConfigServer } from '../lib/getSeoConfigServer'
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
 import { slugifyPreserveCase } from '../utils/slugify'
 // SectionSelector is rendered by PublicLayout for all /catalog routes.
 // Remove local import to avoid duplicate selectors.
 
-export default function Catalog() {
+export default function Catalog({ seoConfig }) {
   const router = useRouter()
   const { products, categories, materials, isLoading } = useProducts()
   const { addToCart, subtotal } = useCart()
@@ -318,6 +320,11 @@ export default function Catalog() {
 
   return (
     <PublicLayout title="Catálogo - KOND">
+      <SeoHead
+        config={seoConfig || {}}
+        pageTitle={seoConfig?.pagesSeo?.catalogo?.title || undefined}
+        pageDescription={seoConfig?.pagesSeo?.catalogo?.description || undefined}
+      />
       <div className="catalog-container" style={{ 
         maxWidth: '1200px', 
         margin: '0 auto',
@@ -1040,4 +1047,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     </div>
   )
 })
+
+export async function getServerSideProps() {
+  try {
+    const seoConfig = await getSeoConfigServer()
+    return { props: { seoConfig } }
+  } catch {
+    return { props: { seoConfig: null } }
+  }
+}
 
