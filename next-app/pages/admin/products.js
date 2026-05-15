@@ -17,6 +17,7 @@ import {
   uploadProductoImagen 
 } from '../../utils/supabaseProducts'
 import dynamic from 'next/dynamic'
+import CollapsibleSection from '../../components/CollapsibleSection'
 
 // Componente sin SSR para evitar hydration mismatches
 const Products = dynamic(() => Promise.resolve(ProductsComponent), {
@@ -3723,6 +3724,65 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
 
   const [showCustomCategory, setShowCustomCategory] = useState(false)
 
+  // Handlers de guardado por sección: validan mínimamente y delegan en onSave
+  const saveBasicInfo = async () => {
+    if (!editData.nombre || String(editData.nombre).trim() === '') {
+      alert('Por favor completá el nombre del producto antes de guardar.')
+      return false
+    }
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      console.error('saveBasicInfo error', err)
+      return false
+    }
+  }
+
+  const saveMaterialInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      console.error('saveMaterialInfo error', err)
+      return false
+    }
+  }
+
+  const saveProductionInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      console.error('saveProductionInfo error', err)
+      return false
+    }
+  }
+
+  const savePricingInfo = async () => {
+    if (editData.precioUnitario == null || Number(editData.precioUnitario) <= 0) {
+      const ok = confirm('El precio unitario parece vacío o cero. ¿Deseás guardarlo de todos modos?')
+      if (!ok) return false
+    }
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      console.error('savePricingInfo error', err)
+      return false
+    }
+  }
+
+  const saveImagesInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      console.error('saveImagesInfo error', err)
+      return false
+    }
+  }
+
   useEffect(() => {
     // Si la categoría actual no está entre las categorías predefinidas, mostrar el campo personalizado
     if (editData.categoria && !categories.includes(editData.categoria)) {
@@ -4419,11 +4479,13 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     <div style={{ marginTop: '8px' }}>
 
       {/* Información Básica */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>📋</span>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Información Básica</h4>
-        </div>
+      <CollapsibleSection
+        icon="📋"
+        title="Información Básica"
+        defaultCollapsed={true}
+        summary={editData.nombre ? `${editData.nombre}${editData.categoria ? ` — ${editData.categoria}` : ''}` : undefined}
+        onSave={saveBasicInfo}
+      >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
           <div>
             <label style={labelStyle}>Nombre</label>
@@ -4533,14 +4595,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
           />
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* Material */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>🧱</span>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Material</h4>
-        </div>
+      <CollapsibleSection
+        icon="🧱"
+        title="Material"
+        defaultCollapsed={true}
+        summary={currentMaterialData ? `${currentMaterialData.nombre}${currentMaterialData.tipo ? ` — ${currentMaterialData.tipo}` : ''}` : (editData.materialId ? `Material id: ${editData.materialId}` : undefined)}
+        onSave={saveMaterialInfo}
+      >
         {currentMaterialData && (
           <div style={{ padding: '10px 14px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
             <span style={{ fontWeight: 600 }}>{currentMaterialData.nombre}</span>
@@ -4570,14 +4634,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             <option key={m.id} value={m.id}>{m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}</option>
           ))}
         </select>
-      </div>
+      </CollapsibleSection>
 
       {/* Producción y Tiempos */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>⏱️</span>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Producción y Tiempos</h4>
-        </div>
+      <CollapsibleSection
+        icon="⏱️"
+        title="Producción y Tiempos"
+        defaultCollapsed={true}
+        summary={`${editData.unidades || 0} uds — ${editData.tiempoUnitario || ''}`}
+        onSave={saveProductionInfo}
+      >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
           <div>
             <label style={labelStyle}>Unidades a producir</label>
@@ -4592,14 +4658,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             <input type="text" value={editData.tiempoUnitario} onChange={e => handleInputChange('tiempoUnitario', e.target.value)} placeholder="00:13:00" style={inputStyle} />
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* Costos y Precios */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>💰</span>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Costos y Precios</h4>
-        </div>
+      <CollapsibleSection
+        icon="💰"
+        title="Costos y Precios"
+        defaultCollapsed={true}
+        summary={editData.precioUnitario ? formatCurrency(editData.precioUnitario) : undefined}
+        onSave={savePricingInfo}
+      >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
           <div>
             <label style={labelStyle}>Costo Material</label>
@@ -4636,14 +4704,16 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             <input type="number" value={editData.usoPlacas} onChange={e => handleInputChange('usoPlacas', Number(e.target.value))} min="0" style={inputStyle} />
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* Imágenes */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>🖼️</span>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Imágenes (hasta 5)</h4>
-        </div>
+      <CollapsibleSection
+        icon="🖼️"
+        title="Imágenes (hasta 5)"
+        defaultCollapsed={true}
+        summary={imagePreviews.length ? `${imagePreviews.length} imagen(es)` : undefined}
+        onSave={saveImagesInfo}
+      >
         <input type="file" accept="image/*" multiple onChange={onImageChange} style={{ ...inputStyle, marginBottom: imagePreviews.length > 0 ? '12px' : '0' }} />
         {imagePreviews.length > 0 && (
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
@@ -4659,7 +4729,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Visibilidad */}
       <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
