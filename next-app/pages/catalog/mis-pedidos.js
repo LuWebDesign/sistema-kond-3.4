@@ -1,4 +1,5 @@
 import PublicLayout from '../../components/PublicLayout'
+import SeoHead from '../../components/SeoHead'
 import UserOrderCard from '../../components/UserOrderCard'
 import { useOrders } from '../../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../../utils/catalogUtils'
@@ -7,6 +8,7 @@ import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProd
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { getSeoConfigServer } from '../../lib/getSeoConfigServer'
 
 // Robust date parsing/formatting helpers
 // Accepts Date objects, timestamps (number), 'YYYY-MM-DD' or full ISO strings.
@@ -145,7 +147,7 @@ const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   }
 }
 
-export default function MisPedidos() {
+export default function MisPedidos({ seoConfig }) {
   const router = useRouter()
   const { saveOrder } = useOrders()
   const [userOrders, setUserOrders] = useState([])
@@ -295,6 +297,11 @@ export default function MisPedidos() {
 
   return (
     <PublicLayout title="Mis Pedidos - KOND">
+      <SeoHead
+        config={seoConfig || {}}
+        pageTitle={seoConfig?.pagesSeo?.pedidos?.title || undefined}
+        pageDescription={seoConfig?.pagesSeo?.pedidos?.description || undefined}
+      />
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '24px 20px' }}>
 
         {/* Header */}
@@ -599,4 +606,13 @@ export default function MisPedidos() {
       `}</style>
     </PublicLayout>
   )
+}
+
+export async function getServerSideProps() {
+  try {
+    const seoConfig = await getSeoConfigServer()
+    return { props: { seoConfig } }
+  } catch {
+    return { props: { seoConfig: null } }
+  }
 }

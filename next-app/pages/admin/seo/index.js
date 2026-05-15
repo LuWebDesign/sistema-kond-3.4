@@ -19,6 +19,37 @@ const btnPrimary = { padding: '9px 20px', borderRadius: '8px', background: 'var(
 const btnSecondary = { padding: '9px 20px', borderRadius: '8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }
 const btnDanger = { padding: '7px 14px', borderRadius: '6px', background: 'transparent', color: 'var(--accent-red, #ef4444)', border: '1px solid var(--accent-red, #ef4444)44', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }
 
+// ─── InfoTooltip ─────────────────────────────────────────────────────────────
+
+function InfoTooltip({ text }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: '6px', verticalAlign: 'middle' }}>
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        aria-label="Más información"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', lineHeight: 1, color: 'var(--text-muted)', fontSize: '0.95rem' }}
+      >
+        ℹ️
+      </button>
+      {visible && (
+        <span style={{
+          position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px',
+          padding: '10px 14px', fontSize: '0.8rem', color: 'var(--text-secondary)',
+          width: '260px', zIndex: 100, boxShadow: '0 4px 16px #0003',
+          lineHeight: 1.5, whiteSpace: 'normal', pointerEvents: 'none',
+        }}>
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
 // ─── Shared helper components ─────────────────────────────────────────────────
 
 function CircularScore({ score }) {
@@ -219,7 +250,10 @@ function HomeTab({ config, setField, saving, onSave }) {
       {/* Left — form */}
       <div style={{ flex: 3, minWidth: '280px' }}>
         <div style={card}>
-          <h2 style={sectionTitle}>SEO de la página principal</h2>
+          <h2 style={sectionTitle}>
+            SEO de la página principal
+            <InfoTooltip text="Estos valores se aplican en la página /home. Anulan los valores generales solo para la portada de la tienda. Si dejás vacío, se usa el título/descripción del tab General." />
+          </h2>
           <p style={sectionSubtitle}>
             Configuración específica para la home. Dejá los campos vacíos para heredar los valores del tab General.
           </p>
@@ -350,7 +384,10 @@ function ProductosTab({ config, setField, saving, onSave }) {
       {/* Left — form */}
       <div style={{ flex: 3, minWidth: '280px' }}>
         <div style={card}>
-          <h2 style={sectionTitle}>SEO de páginas de producto</h2>
+          <h2 style={sectionTitle}>
+            SEO de páginas de producto
+            <InfoTooltip text="Estas plantillas se aplican automáticamente a cada producto del catálogo. Usá {{nombre}}, {{categoria}}, {{precio}}, {{sitio}} y {{descripcion}} para personalizar el resultado en Google." />
+          </h2>
           <p style={sectionSubtitle}>
             Plantillas aplicadas automáticamente a todas las páginas de producto. Usá las variables de abajo para personalizar cada resultado.
           </p>
@@ -439,7 +476,10 @@ function CategoriasTab({ config, setField, saving, onSave }) {
       {/* Left — form */}
       <div style={{ flex: 3, minWidth: '280px' }}>
         <div style={card}>
-          <h2 style={sectionTitle}>SEO de páginas de categoría</h2>
+          <h2 style={sectionTitle}>
+            SEO de páginas de categoría
+            <InfoTooltip text="Estas plantillas se aplican a cada página de categoría y subcategoría del catálogo (/catalog/[categoria]). Usá {{categoria}}, {{subcategoria}}, {{cantidad}} y {{sitio}} para personalizar." />
+          </h2>
           <p style={sectionSubtitle}>
             Plantillas aplicadas a todas las páginas de categoría y subcategoría del catálogo.
           </p>
@@ -534,7 +574,10 @@ function PaginasTab({ config, setField, saving, onSave }) {
       {/* Left — form */}
       <div style={{ flex: 3, minWidth: '280px' }}>
         <div style={card}>
-          <h2 style={sectionTitle}>SEO de páginas estáticas</h2>
+          <h2 style={sectionTitle}>
+            SEO de páginas estáticas
+            <InfoTooltip text="Configurá título y descripción para páginas fijas como Carrito, Catálogo, Mis pedidos, etc. Si dejás vacío, cada página usa los valores generales del sitio." />
+          </h2>
           <p style={sectionSubtitle}>
             Configurá título y descripción para páginas específicas del sitio. Dejá vacío para que hereden los valores generales del sitio.
           </p>

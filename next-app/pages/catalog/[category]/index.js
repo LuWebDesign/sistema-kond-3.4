@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import Catalog from '../../catalog'
+import SeoHead from '../../../components/SeoHead'
 import { useProducts } from '../../../hooks/useCatalog'
 import { slugifyPreserveCase } from '../../../utils/slugify'
+import { getSeoConfigServer } from '../../../lib/getSeoConfigServer'
 
-export default function CategoryPage({ params }) {
+export default function CategoryPage({ params, seoConfig, categoryName }) {
   const { categories } = useProducts()
 
   useEffect(() => {
@@ -34,9 +36,40 @@ export default function CategoryPage({ params }) {
     }
   }, [params, categories])
 
-  return <Catalog />
+  return (
+    <>
+      <SeoHead
+        config={seoConfig || {}}
+        pageTitle={categoryName && seoConfig?.categoryTitleTemplate
+          ? seoConfig.categoryTitleTemplate
+              .replaceAll('{{categoria}}', categoryName)
+              .replaceAll('{{subcategoria}}', categoryName)
+              .replaceAll('{{sitio}}', seoConfig?.siteTitle || '')
+              .replaceAll('{{cantidad}}', '')
+          : undefined}
+        pageDescription={categoryName && seoConfig?.categoryDescriptionTemplate
+          ? seoConfig.categoryDescriptionTemplate
+              .replaceAll('{{categoria}}', categoryName)
+              .replaceAll('{{subcategoria}}', categoryName)
+              .replaceAll('{{sitio}}', seoConfig?.siteTitle || '')
+              .replaceAll('{{cantidad}}', '')
+          : undefined}
+      />
+      <Catalog seoConfig={seoConfig} />
+    </>
+  )
 }
 
 export async function getServerSideProps(context) {
-  return { props: { params: context.params } }
+  const { category: categorySlug } = context.params
+  // Decode slug to a readable name as fallback (e.g. "remeras-basicas" → "Remeras Basicas")
+  const categoryName = categorySlug
+    ? categorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : ''
+  try {
+    const seoConfig = await getSeoConfigServer()
+    return { props: { params: context.params, seoConfig, categoryName } }
+  } catch {
+    return { props: { params: context.params, seoConfig: null, categoryName } }
+  }
 }

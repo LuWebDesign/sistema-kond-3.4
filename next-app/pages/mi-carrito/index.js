@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import PublicLayout from '../../components/PublicLayout'
+import SeoHead from '../../components/SeoHead'
 import stylesResp from '../../styles/catalog-responsive.module.css'
 import { useCart, useProducts, useCoupons } from '../../hooks/useCatalog'
 import { formatCurrency, getCurrentUser, createToast } from '../../utils/catalogUtils'
 import { getPromocionesActivas } from '../../utils/supabaseMarketing'
 import { applyPromotionsToCart } from '../../utils/promoEngine'
+import { getSeoConfigServer } from '../../lib/getSeoConfigServer'
 
-export default function CartPage() {
+export default function CartPage({ seoConfig }) {
   const router = useRouter()
   const { cart, updateQuantity, removeItem, clearCart, totalItems, subtotal } = useCart()
   const { products } = useProducts()
@@ -86,6 +88,11 @@ export default function CartPage() {
 
   return (
     <PublicLayout title="Mi Carrito - KOND">
+      <SeoHead
+        config={seoConfig || {}}
+        pageTitle={seoConfig?.pagesSeo?.carrito?.title || undefined}
+        pageDescription={seoConfig?.pagesSeo?.carrito?.description || undefined}
+      />
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
         {/* Breadcrumb */}
         <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -395,4 +402,13 @@ export default function CartPage() {
       </div>
     </PublicLayout>
   )
+}
+
+export async function getServerSideProps() {
+  try {
+    const seoConfig = await getSeoConfigServer()
+    return { props: { seoConfig } }
+  } catch {
+    return { props: { seoConfig: null } }
+  }
 }

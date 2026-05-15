@@ -6,6 +6,8 @@ import React from 'react'
 import Head from 'next/head'
 import { useQuery } from '@tanstack/react-query'
 import PublicLayout from '../components/PublicLayout'
+import SeoHead from '../components/SeoHead'
+import { getSeoConfigServer } from '../lib/getSeoConfigServer'
 import AnnouncementBar from '../components/home/AnnouncementBar'
 import HeroGrid from '../components/home/HeroGrid'
 import CategoryTiles from '../components/home/CategoryTiles'
@@ -14,7 +16,7 @@ import PromoCarousel from '../components/home/PromoCarousel'
 
 import { QUERY_KEYS, STALE_TIMES } from '../lib/queryKeys'
 
-export default function Home() {
+export default function Home({ seoConfig }) {
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.home.data(),
     queryFn: () => fetch('/api/home-data').then((r) => r.json()),
@@ -72,12 +74,13 @@ export default function Home() {
 
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
-      <Head>
-        <meta name="description" content="Productos innovadores en fibrofácil MDF. Exhibidores, souvenirs, decoración y más. Envíos a todo el país." />
-        <meta property="og:title" content="Megafibro - Productos en MDF" />
-        <meta property="og:description" content="Exhibidores, souvenirs, decoración y más. Envíos a todo el país." />
-        <meta property="og:type" content="website" />
-      </Head>
+      <SeoHead
+        config={seoConfig || {}}
+        pageTitle={seoConfig?.homeSeoTitle || undefined}
+        pageDescription={seoConfig?.homeSeoDescription || undefined}
+        pageCanonical={seoConfig?.canonicalUrl || seoConfig?.siteUrl}
+        ogImage={seoConfig?.homeOgImage || undefined}
+      />
 
       <AnnouncementBar messages={bannerMessages} />
 
@@ -137,4 +140,13 @@ export default function Home() {
       )}
     </PublicLayout>
   )
+}
+
+export async function getServerSideProps() {
+  try {
+    const seoConfig = await getSeoConfigServer()
+    return { props: { seoConfig } }
+  } catch {
+    return { props: { seoConfig: null } }
+  }
 }
