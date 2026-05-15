@@ -119,6 +119,15 @@ const badge = (active) => ({
   border: `1px solid ${active ? 'var(--accent-green)44' : 'var(--border-color)'}`,
 })
 
+// ─── Section type constants ───────────────────────────────────────────────────
+
+const SECTION_TYPES = [
+  { value: 'featured',           label: 'Productos Destacados' },
+  { value: 'categories',         label: 'Categorías' },
+  { value: 'promos',             label: 'En Promoción' },
+  { value: 'categoria_carousel', label: 'Carrusel por Categoría' },
+]
+
 // ─── Drop indicator line ──────────────────────────────────────────────────────
 function DropLine() {
   return (
@@ -133,6 +142,65 @@ function DropLine() {
 }
 
 // ─── Tab components ───────────────────────────────────────────────────────────
+
+// Inline form for creating/editing a section
+function SectionForm({ initial, categories, onSave, onCancel }) {
+  const [label, setLabel] = useState(initial?.label || '')
+  const [type, setType] = useState(initial?.type || 'featured')
+  const [categoryId, setCategoryId] = useState(initial?.config?.categoryId || '')
+
+  const inputStyle = {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: '0.9rem',
+    width: '100%',
+    boxSizing: 'border-box',
+  }
+  const labelStyle = { fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }
+
+  const handleSubmit = () => {
+    if (!label.trim()) return
+    const config = type === 'categoria_carousel' && categoryId ? { categoryId: Number(categoryId) } : {}
+    onSave({ label: label.trim(), type, config })
+  }
+
+  return (
+    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--accent-blue)66', borderRadius: '8px', padding: '16px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 2, minWidth: '180px' }}>
+          <label style={labelStyle}>Nombre</label>
+          <input style={inputStyle} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej: Novedades" />
+        </div>
+        <div style={{ flex: 1, minWidth: '160px' }}>
+          <label style={labelStyle}>Tipo</label>
+          <select style={inputStyle} value={type} onChange={(e) => setType(e.target.value)}>
+            {SECTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        {type === 'categoria_carousel' && (
+          <div style={{ flex: 1, minWidth: '160px' }}>
+            <label style={labelStyle}>Categoría</label>
+            <select style={inputStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <option value="">— elegir —</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <button onClick={handleSubmit} style={{ ...btnPrimary, padding: '7px 16px', fontSize: '0.85rem' }}>
+          Guardar
+        </button>
+        <button onClick={onCancel} style={{ ...btnSecondary, padding: '7px 16px', fontSize: '0.85rem' }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // Tab 1: Category order + visibility
 function CategoryOrderTab({ config, categories, onSave, saving }) {
@@ -480,17 +548,19 @@ function BannerTab({ config, onSave, saving }) {
 }
 
 // Tab 4: Sections
-function SectionsTab({ config, onSave, saving }) {
+function SectionsTab({ config, categories, onSave, saving }) {
   const [sections, setSections] = useState([])
   const [dropTarget, setDropTarget] = useState(null)
   const [pendingToggle, setPendingToggle] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [pendingDelete, setPendingDelete] = useState(null)
   const dragIndex = useRef(null)
 
   useEffect(() => {
     const defaults = [
-      { id: 'featured',   label: 'Productos Destacados', enabled: true,  order: 1 },
-      { id: 'categories', label: 'Categorías',           enabled: true,  order: 2 },
-      { id: 'promo',      label: 'En Promoción',         enabled: false, order: 3 },
+      { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
+      { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
+      { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
     ]
     const saved = config.sections || []
     // Merge defaults with saved, preserving any extra sections
@@ -500,7 +570,11 @@ function SectionsTab({ config, onSave, saving }) {
     })
     // Append any custom sections that aren't in defaults
     const extraSections = saved.filter((s) => !defaults.find((d) => d.id === s.id))
-    setSections([...merged, ...extraSections].sort((a, b) => a.order - b.order))
+    const LEGACY_TYPE_MAP = { featured: 'featured', categories: 'categories', promo: 'promos' }
+    const normalized = [...merged, ...extraSections]
+      .map((s) => ({ ...s, type: s.type || LEGACY_TYPE_MAP[s.id] || 'featured' }))
+      .sort((a, b) => a.order - b.order)
+    setSections(normalized)
   }, [config])
 
   const applyToggle = (id) => {
@@ -549,6 +623,43 @@ function SectionsTab({ config, onSave, saving }) {
     onSave({ ...config, sections })
   }
 
+  const handleAddSection = (formVals) => {
+    const id = `custom_${Date.now()}`
+    const newSection = {
+      id,
+      label: formVals.label,
+      type: formVals.type,
+      enabled: true,
+      order: sections.length + 1,
+      ...(formVals.config && Object.keys(formVals.config).length ? { config: formVals.config } : {}),
+    }
+    setSections((prev) => [...prev, newSection].map((s, i) => ({ ...s, order: i + 1 })))
+    setEditingId(null)
+  }
+
+  const handleEditSection = (id, formVals) => {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              label: formVals.label,
+              type: formVals.type,
+              ...(formVals.config && Object.keys(formVals.config).length
+                ? { config: formVals.config }
+                : { config: undefined }),
+            }
+          : s
+      )
+    )
+    setEditingId(null)
+  }
+
+  const handleDeleteSection = (id) => {
+    setSections((prev) => prev.filter((s) => s.id !== id).map((s, i) => ({ ...s, order: i + 1 })))
+    setPendingDelete(null)
+  }
+
   const isDraggingId = dragIndex.current !== null ? sections[dragIndex.current]?.id : null
 
   return (
@@ -561,6 +672,20 @@ function SectionsTab({ config, onSave, saving }) {
         {sections.map((s, i) => {
           const isDragging = isDraggingId === s.id
           const isDropTarget = dropTarget === i && !isDragging
+
+          if (editingId === s.id) {
+            return (
+              <div key={s.id}>
+                {isDropTarget && <DropLine />}
+                <SectionForm
+                  initial={s}
+                  categories={categories || []}
+                  onSave={(formVals) => handleEditSection(s.id, formVals)}
+                  onCancel={() => setEditingId(null)}
+                />
+              </div>
+            )
+          }
 
           return (
             <div key={s.id}>
@@ -604,11 +729,44 @@ function SectionsTab({ config, onSave, saving }) {
                 </button>
                 <button onClick={() => move(i, -1)} disabled={i === 0} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
                 <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === sections.length - 1 ? 0.3 : 1 }}>↓</button>
+                <button
+                  onClick={() => setEditingId(s.id)}
+                  title="Editar"
+                  style={{ ...btnSecondary, padding: '6px 10px', fontSize: '0.85rem' }}
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => setPendingDelete(s.id)}
+                  title="Eliminar"
+                  style={{ ...btnSecondary, padding: '6px 10px', fontSize: '0.85rem', color: 'var(--accent-red, #ef4444)' }}
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           )
         })}
       </div>
+
+      {editingId === 'new'
+        ? (
+          <SectionForm
+            initial={null}
+            categories={categories || []}
+            onSave={handleAddSection}
+            onCancel={() => setEditingId(null)}
+          />
+        )
+        : (
+          <button
+            onClick={() => setEditingId('new')}
+            style={{ ...btnSecondary, marginBottom: '16px' }}
+          >
+            + Nueva sección
+          </button>
+        )
+      }
 
       <button onClick={handleSave} disabled={saving} style={btnPrimary}>
         {saving ? 'Guardando...' : '💾 Guardar secciones'}
@@ -630,6 +788,23 @@ function SectionsTab({ config, onSave, saving }) {
             confirmText="Confirmar"
             cancelText="Cancelar"
             type="info"
+          />
+        )
+      })()}
+
+      {/* Confirm section delete */}
+      {pendingDelete && (() => {
+        const sec = sections.find((s) => s.id === pendingDelete)
+        return (
+          <ConfirmDialog
+            open={true}
+            onClose={() => setPendingDelete(null)}
+            onConfirm={() => handleDeleteSection(pendingDelete)}
+            title="Eliminar sección"
+            message={`¿Eliminar la sección "${sec?.label}"? Esta acción no se puede deshacer.`}
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            type="danger"
           />
         )
       })()}
@@ -820,6 +995,7 @@ function WebsitePage() {
               {activeTab === 'sections' && (
                 <SectionsTab
                   config={config}
+                  categories={categories}
                   onSave={handleSaveConfigWithConfirm}
                   saving={saving}
                 />

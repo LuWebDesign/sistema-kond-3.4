@@ -20,9 +20,9 @@ export const DEFAULT_HOME_CONFIG = {
   hiddenCategories: [],
   // Home sections: defines which dynamic sections are active and their order.
   sections: [
-    { id: 'featured',    label: 'Productos Destacados', enabled: true,  order: 1 },
-    { id: 'categories',  label: 'Categorías',           enabled: true,  order: 2 },
-    { id: 'promo',       label: 'En Promoción',         enabled: false, order: 3 },
+    { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
+    { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
+    { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
   ],
 }
 

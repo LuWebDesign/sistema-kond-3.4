@@ -2,6 +2,7 @@
 // Megafibro storefront home page.
 // KOND landing page is preserved at /home-kond (home-kond.js).
 
+import React from 'react'
 import Head from 'next/head'
 import { useQuery } from '@tanstack/react-query'
 import PublicLayout from '../components/PublicLayout'
@@ -9,6 +10,7 @@ import AnnouncementBar from '../components/home/AnnouncementBar'
 import HeroGrid from '../components/home/HeroGrid'
 import CategoryTiles from '../components/home/CategoryTiles'
 import CategoryCarousel from '../components/home/CategoryCarousel'
+import PromoCarousel from '../components/home/PromoCarousel'
 
 import { QUERY_KEYS, STALE_TIMES } from '../lib/queryKeys'
 
@@ -28,6 +30,7 @@ export default function Home() {
   })
 
   const featured = data?.featured || []
+  const promos = data?.promos || []
   // All categories (top-level + subcategories) for slug resolution
   const allCategories = data?.categories || []
   // Top-level only for display sections
@@ -45,11 +48,15 @@ export default function Home() {
   const hiddenCategoryIds = new Set(homeConfigData.hiddenCategories || [])
   const sections = homeConfigData.sections || []
 
-  // Helper: is section enabled?
-  const isSectionEnabled = (id) => {
-    const s = sections.find((x) => x.id === id)
-    return s ? s.enabled : true // default to true if not configured
-  }
+  // Backward compat type normalization
+  const LEGACY_TYPE_MAP = { featured: 'featured', categories: 'categories', promo: 'promos' }
+  const getType = (s) => s.type || LEGACY_TYPE_MAP[s.id] || s.id
+
+  // Build sorted+filtered active sections
+  const activeSections = [...sections]
+    .map((s) => ({ ...s, type: getType(s) }))
+    .filter((s) => s.enabled)
+    .sort((a, b) => a.order - b.order)
 
   // Apply order and visibility to top-level categories
   const sortedCategories = [...categories]
@@ -91,17 +98,41 @@ export default function Home() {
         </div>
       ) : (
         <main>
-          {isSectionEnabled('featured') && featured.length > 0 && <HeroGrid products={featured} categorySlugMap={categorySlugMap} />}
-
-          {isSectionEnabled('categories') && sortedCategories.length > 0 && (
-            <CategoryTiles categories={sortedCategories} byCategory={byCategory} />
-          )}
-
-          {isSectionEnabled('categories') && sortedCategories.map((cat) =>
-            (byCategory[cat.id]?.length || 0) > 0 ? (
-              <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
-            ) : null
-          )}
+          {activeSections.map((s) => {
+            switch (s.type) {
+              case 'featured':
+                return featured.length > 0
+                  ? <HeroGrid key={s.id} products={featured} categorySlugMap={categorySlugMap} />
+                  : null
+              case 'categories':
+                return sortedCategories.length > 0
+                  ? (
+                    <React.Fragment key={s.id}>
+                      <CategoryTiles categories={sortedCategories} byCategory={byCategory} />
+                      {sortedCategories.map((cat) =>
+                        (byCategory[cat.id]?.length || 0) > 0
+                          ? <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
+                          : null
+                      )}
+                    </React.Fragment>
+                  )
+                  : null
+              case 'promos':
+                return promos.length > 0
+                  ? <PromoCarousel key={s.id} products={promos} label={s.label} categorySlugMap={categorySlugMap} />
+                  : null
+              case 'categoria_carousel': {
+                const catId = s.config?.categoryId
+                const cat = allCategories.find((c) => c.id === catId)
+                const prods = byCategory[catId] || []
+                return cat && prods.length > 0
+                  ? <CategoryCarousel key={s.id} category={cat} products={prods} />
+                  : null
+              }
+              default:
+                return null
+            }
+          })}
         </main>
       )}
     </PublicLayout>
