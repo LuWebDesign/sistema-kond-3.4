@@ -4475,6 +4475,60 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     color: 'var(--text-primary)'
   }
 
+  // Handlers de guardado por sección (para CollapsibleSection)
+  const saveBasicInfo = async () => {
+    if (!editData.nombre || String(editData.nombre).trim() === '') {
+      alert('Por favor completá el nombre del producto antes de guardar.')
+      return false
+    }
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  const saveMaterialInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  const saveProductionInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  const savePricingInfo = async () => {
+    if (editData.precioUnitario == null || Number(editData.precioUnitario) <= 0) {
+      const ok = confirm('El precio unitario parece vacío o cero. ¿Deseás guardarlo de todos modos?')
+      if (!ok) return false
+    }
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  const saveImagesInfo = async () => {
+    try {
+      if (typeof onSave === 'function') await onSave()
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
   return (
     <div style={{ marginTop: '8px' }}>
 
