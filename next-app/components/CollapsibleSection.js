@@ -33,9 +33,12 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
         await onSave()
       } catch (err) {
         console.error('CollapsibleSection onSave error:', err)
+        return
       }
     }
-    // No colapsar: el botón Guardar de sección solo persiste datos, el usuario sigue editando
+    // Colapsar la sección (no el formulario general del producto)
+    setCollapsed(true)
+    setMenuOpen(false)
   }
 
   const handleKeyDown = (e) => {
