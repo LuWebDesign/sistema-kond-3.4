@@ -119,12 +119,27 @@ const badge = (active) => ({
   border: `1px solid ${active ? 'var(--accent-green)44' : 'var(--border-color)'}`,
 })
 
+// ─── Drop indicator line ──────────────────────────────────────────────────────
+function DropLine() {
+  return (
+    <div style={{
+      height: '2px',
+      background: 'var(--accent-blue)',
+      borderRadius: '2px',
+      margin: '0 4px 4px',
+      boxShadow: '0 0 8px var(--accent-blue)',
+    }} />
+  )
+}
+
 // ─── Tab components ───────────────────────────────────────────────────────────
 
 // Tab 1: Category order + visibility
 function CategoryOrderTab({ config, categories, onSave, saving }) {
   const [order, setOrder] = useState([])
   const [hidden, setHidden] = useState(new Set())
+  const [dropTarget, setDropTarget] = useState(null)
+  const [pendingToggle, setPendingToggle] = useState(null)
   const dragIndex = useRef(null)
 
   useEffect(() => {
@@ -158,6 +173,8 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
     })
   }
 
+  const requestToggleHidden = (id) => setPendingToggle(id)
+
   const handleSave = () => {
     onSave({
       ...config,
@@ -171,12 +188,17 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
     dragIndex.current = i
   }
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, i) => {
     e.preventDefault()
+    if (dropTarget !== i) setDropTarget(i)
   }
 
   const handleDrop = (i) => {
-    if (dragIndex.current === null || dragIndex.current === i) return
+    setDropTarget(null)
+    if (dragIndex.current === null || dragIndex.current === i) {
+      dragIndex.current = null
+      return
+    }
     const next = [...order]
     const [removed] = next.splice(dragIndex.current, 1)
     next.splice(i, 0, removed)
@@ -186,9 +208,11 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
 
   const handleDragEnd = () => {
     dragIndex.current = null
+    setDropTarget(null)
   }
 
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]))
+  const isDraggingId = dragIndex.current !== null ? order[dragIndex.current] : null
 
   return (
     <div>
@@ -200,75 +224,83 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay categorías publicadas.</p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '24px' }}>
         {order.map((id, i) => {
           const cat = catById[id]
           if (!cat) return null
           const isHidden = hidden.has(id)
+          const isDragging = isDraggingId === id
+          const isDropTarget = dropTarget === i && !isDragging
+
           return (
-            <div
-              key={id}
-              draggable
-              onDragStart={() => handleDragStart(i)}
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(i)}
-              onDragEnd={handleDragEnd}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                opacity: dragIndex.current === i ? 0.4 : isHidden ? 0.5 : 1,
-                transition: 'opacity 0.2s',
-                cursor: 'grab',
-              }}
-            >
-              {/* Drag handle indicator */}
-              <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
+            <div key={id}>
+              {/* Blue insert line above target row */}
+              {isDropTarget && <DropLine />}
 
-              {/* Position number */}
-              <span style={{ minWidth: 24, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                {isHidden ? '—' : `#${order.filter((oid) => !hidden.has(oid)).indexOf(id) + 1}`}
-              </span>
-
-              {/* Category name */}
-              <span style={{ flex: 1, fontWeight: 500 }}>{cat.nombre}</span>
-
-              {/* Visibility toggle */}
-              <button
-                onClick={() => toggleHidden(id)}
-                title={isHidden ? 'Mostrar en home' : 'Ocultar de home'}
+              <div
+                draggable
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  padding: '4px',
-                  color: isHidden ? 'var(--text-muted)' : 'var(--accent-green)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  background: isDragging ? 'var(--accent-blue)11' : 'var(--bg-secondary)',
+                  border: `1px solid ${isDragging ? 'var(--accent-blue)66' : 'var(--border-color)'}`,
+                  opacity: isDragging ? 0.5 : isHidden ? 0.55 : 1,
+                  transition: 'opacity 0.15s, border 0.15s, background 0.15s',
+                  cursor: 'grab',
+                  marginBottom: '8px',
                 }}
               >
-                {isHidden ? '👁‍🗨' : '👁'}
-              </button>
+                {/* Drag handle indicator */}
+                <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
 
-              {/* Move up */}
-              <button
-                onClick={() => move(i, -1)}
-                disabled={i === 0}
-                style={{ ...btnSecondary, padding: '4px 10px', opacity: i === 0 ? 0.3 : 1 }}
-              >
-                ↑
-              </button>
-              {/* Move down */}
-              <button
-                onClick={() => move(i, 1)}
-                disabled={i === order.length - 1}
-                style={{ ...btnSecondary, padding: '4px 10px', opacity: i === order.length - 1 ? 0.3 : 1 }}
-              >
-                ↓
-              </button>
+                {/* Position number */}
+                <span style={{ minWidth: 24, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  {isHidden ? '—' : `#${order.filter((oid) => !hidden.has(oid)).indexOf(id) + 1}`}
+                </span>
+
+                {/* Category name */}
+                <span style={{ flex: 1, fontWeight: 500 }}>{cat.nombre}</span>
+
+                {/* Visibility toggle */}
+                <button
+                  onClick={() => requestToggleHidden(id)}
+                  title={isHidden ? 'Mostrar en home' : 'Ocultar de home'}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    padding: '4px',
+                    color: isHidden ? 'var(--text-muted)' : 'var(--accent-green)',
+                  }}
+                >
+                  {isHidden ? '👁‍🗨' : '👁'}
+                </button>
+
+                {/* Move up */}
+                <button
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  style={{ ...btnSecondary, padding: '4px 10px', opacity: i === 0 ? 0.3 : 1 }}
+                >
+                  ↑
+                </button>
+                {/* Move down */}
+                <button
+                  onClick={() => move(i, 1)}
+                  disabled={i === order.length - 1}
+                  style={{ ...btnSecondary, padding: '4px 10px', opacity: i === order.length - 1 ? 0.3 : 1 }}
+                >
+                  ↓
+                </button>
+              </div>
             </div>
           )
         })}
@@ -277,6 +309,23 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
       <button onClick={handleSave} disabled={saving} style={btnPrimary}>
         {saving ? 'Guardando...' : '💾 Guardar orden'}
       </button>
+
+      {/* Confirm visibility toggle */}
+      <ConfirmDialog
+        open={!!pendingToggle}
+        onClose={() => setPendingToggle(null)}
+        onConfirm={() => {
+          if (pendingToggle) toggleHidden(pendingToggle)
+          setPendingToggle(null)
+        }}
+        title={pendingToggle && hidden.has(pendingToggle) ? 'Mostrar categoría' : 'Ocultar categoría'}
+        message={pendingToggle
+          ? `¿Confirmar cambio de visibilidad para "${catById[pendingToggle]?.nombre}"?`
+          : ''}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        type="info"
+      />
     </div>
   )
 }
@@ -433,6 +482,8 @@ function BannerTab({ config, onSave, saving }) {
 // Tab 4: Sections
 function SectionsTab({ config, onSave, saving }) {
   const [sections, setSections] = useState([])
+  const [dropTarget, setDropTarget] = useState(null)
+  const [pendingToggle, setPendingToggle] = useState(null)
   const dragIndex = useRef(null)
 
   useEffect(() => {
@@ -452,9 +503,11 @@ function SectionsTab({ config, onSave, saving }) {
     setSections([...merged, ...extraSections].sort((a, b) => a.order - b.order))
   }, [config])
 
-  const toggle = (id) => {
+  const applyToggle = (id) => {
     setSections((prev) => prev.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s))
   }
+
+  const requestToggle = (id) => setPendingToggle(id)
 
   const move = (index, dir) => {
     const next = [...sections]
@@ -469,12 +522,17 @@ function SectionsTab({ config, onSave, saving }) {
     dragIndex.current = i
   }
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, i) => {
     e.preventDefault()
+    if (dropTarget !== i) setDropTarget(i)
   }
 
   const handleDrop = (i) => {
-    if (dragIndex.current === null || dragIndex.current === i) return
+    setDropTarget(null)
+    if (dragIndex.current === null || dragIndex.current === i) {
+      dragIndex.current = null
+      return
+    }
     const next = [...sections]
     const [removed] = next.splice(dragIndex.current, 1)
     next.splice(i, 0, removed)
@@ -484,11 +542,14 @@ function SectionsTab({ config, onSave, saving }) {
 
   const handleDragEnd = () => {
     dragIndex.current = null
+    setDropTarget(null)
   }
 
   const handleSave = () => {
     onSave({ ...config, sections })
   }
+
+  const isDraggingId = dragIndex.current !== null ? sections[dragIndex.current]?.id : null
 
   return (
     <div>
@@ -496,48 +557,82 @@ function SectionsTab({ config, onSave, saving }) {
         Activá, desactivá y reordenará las secciones de la home.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-        {sections.map((s, i) => (
-          <div
-            key={s.id}
-            draggable
-            onDragStart={() => handleDragStart(i)}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(i)}
-            onDragEnd={handleDragEnd}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '14px 16px',
-              borderRadius: '8px',
-              background: s.enabled ? 'var(--accent-green)08' : 'var(--bg-secondary)',
-              border: `1px solid ${s.enabled ? 'var(--accent-green)33' : 'var(--border-color)'}`,
-              transition: 'all 0.15s',
-              opacity: dragIndex.current === i ? 0.4 : 1,
-              cursor: 'grab',
-            }}
-          >
-            <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
-            <span style={{ minWidth: 20, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>#{i + 1}</span>
-            <span style={{ flex: 1, fontWeight: 600 }}>{s.label}</span>
-            <span style={badge(s.enabled)}>{s.enabled ? 'Activa' : 'Inactiva'}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '24px' }}>
+        {sections.map((s, i) => {
+          const isDragging = isDraggingId === s.id
+          const isDropTarget = dropTarget === i && !isDragging
 
-            <button
-              onClick={() => toggle(s.id)}
-              style={{ ...btnSecondary, padding: '6px 14px', fontSize: '0.85rem' }}
-            >
-              {s.enabled ? 'Desactivar' : 'Activar'}
-            </button>
-            <button onClick={() => move(i, -1)} disabled={i === 0} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
-            <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === sections.length - 1 ? 0.3 : 1 }}>↓</button>
-          </div>
-        ))}
+          return (
+            <div key={s.id}>
+              {/* Blue insert line above target row */}
+              {isDropTarget && <DropLine />}
+
+              <div
+                draggable
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '14px 16px',
+                  borderRadius: '8px',
+                  background: isDragging
+                    ? 'var(--accent-blue)11'
+                    : s.enabled ? 'var(--accent-green)08' : 'var(--bg-secondary)',
+                  border: `1px solid ${isDragging
+                    ? 'var(--accent-blue)66'
+                    : s.enabled ? 'var(--accent-green)33' : 'var(--border-color)'}`,
+                  transition: 'all 0.15s',
+                  opacity: isDragging ? 0.5 : 1,
+                  cursor: 'grab',
+                  marginBottom: '8px',
+                }}
+              >
+                <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
+                <span style={{ minWidth: 20, fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>#{i + 1}</span>
+                <span style={{ flex: 1, fontWeight: 600 }}>{s.label}</span>
+                <span style={badge(s.enabled)}>{s.enabled ? 'Activa' : 'Inactiva'}</span>
+
+                <button
+                  onClick={() => requestToggle(s.id)}
+                  style={{ ...btnSecondary, padding: '6px 14px', fontSize: '0.85rem' }}
+                >
+                  {s.enabled ? 'Desactivar' : 'Activar'}
+                </button>
+                <button onClick={() => move(i, -1)} disabled={i === 0} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
+                <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} style={{ ...btnSecondary, padding: '6px 10px', opacity: i === sections.length - 1 ? 0.3 : 1 }}>↓</button>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       <button onClick={handleSave} disabled={saving} style={btnPrimary}>
         {saving ? 'Guardando...' : '💾 Guardar secciones'}
       </button>
+
+      {/* Confirm section toggle */}
+      {pendingToggle && (() => {
+        const sec = sections.find((s) => s.id === pendingToggle)
+        return (
+          <ConfirmDialog
+            open={true}
+            onClose={() => setPendingToggle(null)}
+            onConfirm={() => {
+              applyToggle(pendingToggle)
+              setPendingToggle(null)
+            }}
+            title={sec?.enabled ? 'Desactivar sección' : 'Activar sección'}
+            message={`¿Confirmar cambio para la sección "${sec?.label}"?`}
+            confirmText="Confirmar"
+            cancelText="Cancelar"
+            type="info"
+          />
+        )
+      })()}
     </div>
   )
 }

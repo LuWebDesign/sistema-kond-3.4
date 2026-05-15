@@ -4,6 +4,7 @@
 // ============================================
 
 import supabase from './supabaseClient';
+import { TENANT_ID } from '../lib/tenant';
 
 // ============================================
 // PROMOCIONES
@@ -11,6 +12,8 @@ import supabase from './supabaseClient';
 
 // Shared column projection for promociones reads
 const PROMO_SELECT = 'id, nombre, tipo, valor, aplica_a, categoria, producto_id, fecha_inicio, fecha_fin, activo, prioridad, badge_texto, badge_color, badge_text_color, descuento_porcentaje, descuento_monto, precio_especial, config, created_at, updated_at'
+
+const CUPON_SELECT = 'id, codigo, nombre, tipo, valor, monto_minimo, usos_maximos, usos_actuales, fecha_inicio, fecha_expiracion, activo, created_at'
 
 /**
  * Obtener todas las promociones
@@ -21,6 +24,7 @@ export async function getPromociones() {
     const { data, error } = await supabase
       .from('promociones')
       .select(PROMO_SELECT)
+      .eq('tenant_id', TENANT_ID)
       .order('prioridad', { ascending: false })
       .order('created_at', { ascending: false });
 
@@ -41,6 +45,7 @@ export async function getPromocionesActivas() {
     const { data, error } = await supabase
       .from('promociones')
       .select(PROMO_SELECT)
+      .eq('tenant_id', TENANT_ID)
       .eq('activo', true)
       .order('prioridad', { ascending: false })
       .order('created_at', { ascending: false });
@@ -77,7 +82,8 @@ export async function createPromocion(promocion) {
       descuento_porcentaje: promocion.descuentoPorcentaje || promocion.descuento_porcentaje ? parseFloat(promocion.descuentoPorcentaje || promocion.descuento_porcentaje) : null,
       descuento_monto: promocion.descuentoMonto || promocion.descuento_monto ? parseFloat(promocion.descuentoMonto || promocion.descuento_monto) : null,
       precio_especial: promocion.precioEspecial || promocion.precio_especial ? parseFloat(promocion.precioEspecial || promocion.precio_especial) : null,
-      config: promocion.config || null
+      config: promocion.config || null,
+      tenant_id: TENANT_ID,
     };
 
     // console.log('💾 Datos a insertar en Supabase:', promoData);
@@ -140,6 +146,7 @@ export async function updatePromocion(id, promocion) {
       .from('promociones')
       .update(updateData)
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .select()
       .single();
 
@@ -159,7 +166,8 @@ export async function deletePromocion(id) {
     const { error } = await supabase
       .from('promociones')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('tenant_id', TENANT_ID);
 
     if (error) throw error;
     return { error: null };
@@ -180,7 +188,8 @@ export async function getCupones() {
   try {
     const { data, error } = await supabase
       .from('cupones')
-      .select('*')
+      .select(CUPON_SELECT)
+      .eq('tenant_id', TENANT_ID)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -198,7 +207,8 @@ export async function getCuponesActivos() {
   try {
     const { data, error } = await supabase
       .from('cupones')
-      .select('*')
+      .select(CUPON_SELECT)
+      .eq('tenant_id', TENANT_ID)
       .eq('activo', true)
       .order('created_at', { ascending: false});
 
@@ -217,8 +227,9 @@ export async function validateCupon(codigo) {
   try {
     const { data, error } = await supabase
       .from('cupones')
-      .select('*')
+      .select(CUPON_SELECT)
       .eq('codigo', codigo.toUpperCase())
+      .eq('tenant_id', TENANT_ID)
       .eq('activo', true)
       .single();
 
@@ -245,7 +256,8 @@ export async function createCupon(cupon) {
       usos_actuales: 0,
       fecha_inicio: cupon.fechaInicio || cupon.fecha_inicio || null,
       fecha_expiracion: cupon.fechaExpiracion || cupon.fecha_expiracion || null,
-      activo: cupon.activo !== undefined ? cupon.activo : true
+      activo: cupon.activo !== undefined ? cupon.activo : true,
+      tenant_id: TENANT_ID,
     };
 
     const { data, error } = await supabase
@@ -289,6 +301,7 @@ export async function updateCupon(id, cupon) {
       .from('cupones')
       .update(updateData)
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .select()
       .single();
 
@@ -310,6 +323,7 @@ export async function incrementarUsoCupon(id) {
       .from('cupones')
       .select('usos_actuales')
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .single();
 
     if (getError) throw getError;
@@ -319,6 +333,7 @@ export async function incrementarUsoCupon(id) {
       .from('cupones')
       .update({ usos_actuales: (cupon.usos_actuales || 0) + 1 })
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .select()
       .single();
 
@@ -338,7 +353,8 @@ export async function deleteCupon(id) {
     const { error } = await supabase
       .from('cupones')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('tenant_id', TENANT_ID);
 
     if (error) throw error;
     return { error: null };
