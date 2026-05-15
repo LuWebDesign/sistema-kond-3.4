@@ -557,24 +557,23 @@ function SectionsTab({ config, categories, onSave, saving }) {
   const dragIndex = useRef(null)
 
   useEffect(() => {
-    const defaults = [
-      { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
-      { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
-      { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
-    ]
-    const saved = config.sections || []
-    // Merge defaults with saved, preserving any extra sections
-    const merged = defaults.map((d) => {
-      const s = saved.find((x) => x.id === d.id)
-      return s ? { ...d, ...s } : d
-    })
-    // Append any custom sections that aren't in defaults
-    const extraSections = saved.filter((s) => !defaults.find((d) => d.id === s.id))
     const LEGACY_TYPE_MAP = { featured: 'featured', categories: 'categories', promo: 'promos' }
-    const normalized = [...merged, ...extraSections]
-      .map((s) => ({ ...s, type: s.type || LEGACY_TYPE_MAP[s.id] || 'featured' }))
-      .sort((a, b) => a.order - b.order)
-    setSections(normalized)
+    const saved = config.sections || []
+
+    if (saved.length > 0) {
+      // Trust saved config as-is — only normalize missing type fields
+      const normalized = saved
+        .map((s) => ({ ...s, type: s.type || LEGACY_TYPE_MAP[s.id] || 'featured' }))
+        .sort((a, b) => a.order - b.order)
+      setSections(normalized)
+    } else {
+      // No saved config yet — seed with defaults
+      setSections([
+        { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
+        { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
+        { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
+      ])
+    }
   }, [config])
 
   const applyToggle = (id) => {
