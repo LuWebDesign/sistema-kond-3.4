@@ -41,7 +41,7 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
   if (!categories.length) return null
 
   return (
-    <section style={{ padding: '32px 0', maxWidth: '100%', position: 'relative' }}>
+    <section style={{ padding: '32px 0', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
       <h2 style={{
         fontSize: '1.4rem',
         fontWeight: 700,
@@ -71,21 +71,24 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
         }
         .cat-card {
           position: relative;
-          flex-shrink: 0;
-          /* 2 visible on mobile: (100vw - 2*24px padding - 14px gap) / 2 */
-          width: calc((100vw - 62px) / 2);
-          height: 210px;
+          flex: 0 0 calc((100% - 3 * 14px) / 4);
+          height: 240px;
           border-radius: 14px;
           overflow: hidden;
           cursor: pointer;
           scroll-snap-align: start;
           transition: transform 0.2s, box-shadow 0.2s;
         }
-        @media (min-width: 640px) {
+        @media (max-width: 768px) {
           .cat-card {
-            /* 6 visible on desktop: (100vw - 2*24px padding - 5*14px gaps) / 6 */
-            width: calc((100vw - 118px) / 6);
-            height: 240px;
+            flex: 0 0 calc((100% - 14px) / 2);
+            height: 210px;
+          }
+        }
+        @media (max-width: 480px) {
+          .cat-card {
+            flex: 0 0 150px;
+            height: 210px;
           }
         }
         .cat-card:hover {
