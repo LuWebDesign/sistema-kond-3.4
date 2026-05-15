@@ -3120,84 +3120,85 @@ function ProductCard({
   }
 
   // Guardar cambios
+  // Prepara los datos finales (material + imágenes) sin persistir ni cerrar el form
+  const buildFinalData = async () => {
+    let finalData = { ...editData, precioManual: editCalculatedFields.isPrecioUnitarioManual }
+
+    // Si hay materialId, buscar el nombre del material y guardarlo
+    if (finalData.materialId && materials.length > 0) {
+      const selectedMaterial = materials.find(m => String(m.id) === String(finalData.materialId))
+      if (selectedMaterial) {
+        finalData.material = selectedMaterial.nombre
+        finalData.tipoMaterial = selectedMaterial.tipo || ''
+      }
+    } else {
+      finalData.material = ''
+      finalData.tipoMaterial = ''
+    }
+
+    // Si hay imágenes nuevas (Files) subir solo esos y mantener el orden elegido por el usuario
+    try {
+      const uploadPromises = imageFiles.map((file, idx) => {
+        if (file instanceof File) {
+          return uploadProductoImagen(file, product.id)
+            .then(res => ({ idx, res }))
+            .catch(err => ({ idx, res: { error: err } }))
+        }
+        return Promise.resolve({ idx, res: null })
+      })
+
+      const uploadResults = await Promise.all(uploadPromises)
+
+      const failedUploads = uploadResults.filter(r => r.res && r.res.error)
+      if (failedUploads.length > 0) {
+        console.error('Errores al subir imágenes:', failedUploads.map(f => f.res.error))
+      }
+
+      const finalUrls = []
+      for (let i = 0; i < imagePreviews.length; i++) {
+        const fileEntry = imageFiles[i]
+        if (fileEntry instanceof File) {
+          const result = uploadResults.find(r => r.idx === i)
+          if (result && result.res && !result.res.error && result.res.data && result.res.data.url) {
+            finalUrls.push(result.res.data.url)
+          } else {
+            try {
+              const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => resolve(reader.result)
+                reader.onerror = reject
+                reader.readAsDataURL(fileEntry)
+              })
+              if (base64) finalUrls.push(base64)
+            } catch (b64Err) {
+              console.warn('No se pudo convertir imagen a base64:', b64Err)
+            }
+          }
+        } else {
+          const preview = imagePreviews[i]
+          if (typeof preview === 'string' && (preview.startsWith('http') || preview.startsWith('data:'))) {
+            finalUrls.push(preview)
+          }
+        }
+      }
+
+      finalData.imagenes = finalUrls.slice(0, 5)
+
+      if (failedUploads.length > 0) {
+        alert(`⚠️ ${failedUploads.length} imagen(es) no se pudieron subir al almacenamiento. Se guardaron como respaldo local.`)
+      }
+    } catch (uploadErr) {
+      console.error('Error general al procesar imágenes:', uploadErr)
+      alert('⚠️ Hubo un error al subir las imágenes. Los demás cambios se guardarán.')
+    }
+
+    return finalData
+  }
+
+  // Guardar y CERRAR el formulario (botón general del producto)
   const handleSave = async () => {
     try {
-      let finalData = { ...editData, precioManual: editCalculatedFields.isPrecioUnitarioManual }
-      
-      // Si hay materialId, buscar el nombre del material y guardarlo
-      if (finalData.materialId && materials.length > 0) {
-        const selectedMaterial = materials.find(m => String(m.id) === String(finalData.materialId))
-        if (selectedMaterial) {
-          finalData.material = selectedMaterial.nombre
-          finalData.tipoMaterial = selectedMaterial.tipo || ''
-        }
-      } else {
-        finalData.material = ''
-        finalData.tipoMaterial = ''
-      }
-      
-      // Si hay imágenes nuevas (Files) subir solo esos y mantener el orden elegido por el usuario
-      try {
-        // Preparar promesas de subida para las posiciones que tengan File
-        const uploadPromises = imageFiles.map((file, idx) => {
-          if (file instanceof File) {
-            return uploadProductoImagen(file, product.id)
-              .then(res => ({ idx, res }))
-              .catch(err => ({ idx, res: { error: err } }))
-          }
-          return Promise.resolve({ idx, res: null })
-        })
-
-        const uploadResults = await Promise.all(uploadPromises)
-
-        // Verificar si hubo errores en las subidas
-        const failedUploads = uploadResults.filter(r => r.res && r.res.error)
-        if (failedUploads.length > 0) {
-          console.error('Errores al subir imágenes:', failedUploads.map(f => f.res.error))
-        }
-
-        // Construir arreglo final de URLs según el orden actual en imagePreviews
-        const finalUrls = []
-        for (let i = 0; i < imagePreviews.length; i++) {
-          const fileEntry = imageFiles[i]
-          if (fileEntry instanceof File) {
-            const result = uploadResults.find(r => r.idx === i)
-            if (result && result.res && !result.res.error && result.res.data && result.res.data.url) {
-              finalUrls.push(result.res.data.url)
-            } else {
-              // Si falló la subida, intentar guardar como base64 como fallback
-              try {
-                const base64 = await new Promise((resolve, reject) => {
-                  const reader = new FileReader()
-                  reader.onload = () => resolve(reader.result)
-                  reader.onerror = reject
-                  reader.readAsDataURL(fileEntry)
-                })
-                if (base64) finalUrls.push(base64)
-              } catch (b64Err) {
-                console.warn('No se pudo convertir imagen a base64:', b64Err)
-              }
-            }
-          } else {
-            // mantener la URL existente (asegurarse que sea URL pública o base64)
-            const preview = imagePreviews[i]
-            if (typeof preview === 'string' && (preview.startsWith('http') || preview.startsWith('data:'))) {
-              finalUrls.push(preview)
-            }
-          }
-        }
-
-        // Siempre asignar (incluso si está vacío, para permitir eliminar todas las imágenes)
-        finalData.imagenes = finalUrls.slice(0, 5)
-
-        // Avisar al usuario si algunas imágenes no se pudieron subir al storage
-        if (failedUploads.length > 0) {
-          alert(`⚠️ ${failedUploads.length} imagen(es) no se pudieron subir al almacenamiento. Se guardaron como respaldo local.`)
-        }
-      } catch (uploadErr) {
-        console.error('Error general al procesar imágenes:', uploadErr)
-        alert('⚠️ Hubo un error al subir las imágenes. Los demás cambios se guardarán.')
-      }
+      const finalData = await buildFinalData()
 
       // Validaciones básicas
       if (!finalData.nombre.trim()) {
@@ -3220,6 +3221,35 @@ function ProductCard({
       await onSaveChanges(product.id, finalData)
     } catch (error) {
       console.error('Error al guardar:', error)
+      alert('Error al guardar los cambios')
+    }
+  }
+
+  // Guardar SIN cerrar el formulario (botón "Guardar" de cada sección)
+  const handleSaveSilent = async () => {
+    try {
+      const finalData = await buildFinalData()
+      const { error } = await updateProducto(product.id, finalData)
+      if (error) {
+        console.error('Error al guardar sección:', error)
+        alert('Error al guardar los cambios')
+        return
+      }
+      // Feedback visual leve sin cerrar el form
+      if (typeof window !== 'undefined') {
+        const toast = document.createElement('div')
+        toast.textContent = '✅ Guardado'
+        Object.assign(toast.style, {
+          position: 'fixed', bottom: '24px', right: '24px', zIndex: '9999',
+          background: '#10b981', color: 'white', padding: '10px 18px',
+          borderRadius: '8px', fontWeight: '600', fontSize: '0.9rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', pointerEvents: 'none'
+        })
+        document.body.appendChild(toast)
+        setTimeout(() => toast.remove(), 2000)
+      }
+    } catch (error) {
+      console.error('Error al guardar sección:', error)
       alert('Error al guardar los cambios')
     }
   }
@@ -3535,6 +3565,7 @@ function ProductCard({
               onReorderImage={moveImage}
               onRemoveImage={removeImage}
               onSave={handleSave}
+              onSaveSilent={handleSaveSilent}
               materials={materials}
               categories={categories}
               categoriasAPI={categoriasAPI}
@@ -4382,7 +4413,7 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
 }
 
 // Componente de formulario de edición mejorado (estilo formulario de agregar)
-function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], categoriasAPI = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
+function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, onSaveSilent, materials = [], categories = [], categoriasAPI = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }
@@ -4475,58 +4506,33 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     color: 'var(--text-primary)'
   }
 
-  // Handlers de guardado por sección (para CollapsibleSection)
+  // Handlers de guardado por sección (para CollapsibleSection) — usan onSaveSilent para no cerrar el form
   const saveBasicInfo = async () => {
     if (!editData.nombre || String(editData.nombre).trim() === '') {
       alert('Por favor completá el nombre del producto antes de guardar.')
-      return false
+      return
     }
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return false
-    } catch (err) {
-      return false
-    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
   const saveMaterialInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return false
-    } catch (err) {
-      return false
-    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
   const saveProductionInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return false
-    } catch (err) {
-      return false
-    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
   const savePricingInfo = async () => {
     if (editData.precioUnitario == null || Number(editData.precioUnitario) <= 0) {
       const ok = confirm('El precio unitario parece vacío o cero. ¿Deseás guardarlo de todos modos?')
-      if (!ok) return false
+      if (!ok) return
     }
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return false
-    } catch (err) {
-      return false
-    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
   const saveImagesInfo = async () => {
-    try {
-      if (typeof onSave === 'function') await onSave()
-      return false
-    } catch (err) {
-      return false
-    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
   return (
