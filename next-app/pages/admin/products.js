@@ -4483,7 +4483,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     }
     try {
       if (typeof onSave === 'function') await onSave()
-      return true
+      return false
     } catch (err) {
       return false
     }
@@ -4492,7 +4492,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
   const saveMaterialInfo = async () => {
     try {
       if (typeof onSave === 'function') await onSave()
-      return true
+      return false
     } catch (err) {
       return false
     }
@@ -4501,7 +4501,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
   const saveProductionInfo = async () => {
     try {
       if (typeof onSave === 'function') await onSave()
-      return true
+      return false
     } catch (err) {
       return false
     }
@@ -4514,7 +4514,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     }
     try {
       if (typeof onSave === 'function') await onSave()
-      return true
+      return false
     } catch (err) {
       return false
     }
@@ -4523,7 +4523,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
   const saveImagesInfo = async () => {
     try {
       if (typeof onSave === 'function') await onSave()
-      return true
+      return false
     } catch (err) {
       return false
     }
