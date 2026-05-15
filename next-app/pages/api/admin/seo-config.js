@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../../utils/supabaseClient'
 import { TENANT_ID } from '../../../lib/tenant'
 
 export const DEFAULT_SEO_CONFIG = {
+  // ── General ──────────────────────────────────────────────────────────────────
   siteTitle: '',
   siteDescription: '',
   keywords: '',
@@ -25,6 +26,32 @@ export const DEFAULT_SEO_CONFIG = {
   sitemapIncludeBlogs: false,
   sitemapLastGenerated: null,
   sitemapUrlCount: null,
+  // ── Home ─────────────────────────────────────────────────────────────────────
+  homeSeoTitle: '',
+  homeSeoDescription: '',
+  homeOgImage: '',
+  homeOgImageAlt: '',
+  homeSchemaEnabled: true,
+  // ── Productos ────────────────────────────────────────────────────────────────
+  productTitleTemplate: '{{nombre}} | {{sitio}}',
+  productDescriptionTemplate: 'Comprá {{nombre}} al mejor precio. Envíos disponibles.',
+  productSchemaEnabled: true,
+  // ── Categorías ───────────────────────────────────────────────────────────────
+  categoryTitleTemplate: '{{categoria}} — {{sitio}}',
+  categoryDescriptionTemplate: 'Explorá todos los productos de {{categoria}} en {{sitio}}.',
+  categorySchemaEnabled: true,
+  // ── Páginas estáticas ────────────────────────────────────────────────────────
+  pagesSeo: {},
+  // ── Técnico ──────────────────────────────────────────────────────────────────
+  ogEnabled: true,
+  twitterCardEnabled: true,
+  twitterCardType: 'summary_large_image',
+  twitterHandle: '',
+  schemaOrganizationEnabled: true,
+  schemaBreadcrumbEnabled: true,
+  canonicalStrategy: 'auto',
+  hreflangEnabled: false,
+  noindexPaths: '/admin/\n/api/\n/carrito/\n/checkout/',
 }
 
 export default async function handler(req, res) {

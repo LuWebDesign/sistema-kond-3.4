@@ -1,5 +1,6 @@
 // next-app/pages/admin/seo/index.js
-// SEO admin page — General tab with score, preview, robots, sitemap, and redirections.
+// SEO admin page — General, Home, Productos, Categorías, Páginas tabs implemented.
+// Técnico and Auditoría are stubbed for next iteration.
 
 import { useState, useEffect, useCallback } from 'react'
 import Layout from '../../../components/Layout'
@@ -18,7 +19,7 @@ const btnPrimary = { padding: '9px 20px', borderRadius: '8px', background: 'var(
 const btnSecondary = { padding: '9px 20px', borderRadius: '8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }
 const btnDanger = { padding: '7px 14px', borderRadius: '6px', background: 'transparent', color: 'var(--accent-red, #ef4444)', border: '1px solid var(--accent-red, #ef4444)44', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }
 
-// ─── Helper components ────────────────────────────────────────────────────────
+// ─── Shared helper components ─────────────────────────────────────────────────
 
 function CircularScore({ score }) {
   const r = 48
@@ -155,6 +156,496 @@ function RedirectionModal({ onSave, onClose, saving }) {
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={btnSecondary}>Cancelar</button>
           <button onClick={handleSubmit} disabled={saving} style={btnPrimary}>{saving ? 'Guardando...' : 'Guardar'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Template editor (Productos / Categorías) ─────────────────────────────────
+
+function applyTemplate(template, sampleData) {
+  if (!template) return ''
+  return Object.entries(sampleData).reduce((str, [k, v]) => str.replaceAll(k, v), template)
+}
+
+function TemplateEditor({ label, value, onChange, placeholder, maxLen, hint, sampleData }) {
+  const preview = applyTemplate(value, sampleData)
+  const len = value?.length || 0
+  const overLen = maxLen && len > maxLen
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <label style={labelStyle}>{label}</label>
+      <input style={inputStyle} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+      {maxLen && (
+        <div style={{ fontSize: '0.75rem', color: overLen ? 'var(--accent-red, #ef4444)' : 'var(--text-muted)', marginTop: '4px' }}>
+          {len}/{maxLen} caracteres recomendados
+        </div>
+      )}
+      {hint && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>{hint}</div>}
+      {preview && (
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '8px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+          <span style={{ color: 'var(--text-muted)', marginRight: '6px' }}>Preview:</span>{preview}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PlaceholderChips({ placeholders }) {
+  return (
+    <div style={{ marginBottom: '20px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>Variables disponibles</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {placeholders.map(p => (
+          <span key={p.key} title={p.desc}
+            style={{ fontSize: '0.78rem', padding: '3px 8px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--accent-blue)', cursor: 'default' }}>
+            {p.key}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Home ────────────────────────────────────────────────────────────────
+
+function HomeTab({ config, setField, saving, onSave }) {
+  const previewTitle = config.homeSeoTitle?.trim() || config.siteTitle || 'Título de la tienda'
+  const previewDesc = config.homeSeoDescription?.trim() || config.siteDescription || 'Descripción de la tienda...'
+
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      {/* Left — form */}
+      <div style={{ flex: 3, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>SEO de la página principal</h2>
+          <p style={sectionSubtitle}>
+            Configuración específica para la home. Dejá los campos vacíos para heredar los valores del tab General.
+          </p>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Título (vacío = hereda de General)</label>
+            <input
+              style={inputStyle}
+              value={config.homeSeoTitle || ''}
+              onChange={e => setField('homeSeoTitle', e.target.value)}
+              placeholder={config.siteTitle || 'Heredado del General'}
+            />
+            <div style={{ fontSize: '0.75rem', color: (config.homeSeoTitle?.length || 0) > 60 ? 'var(--accent-red, #ef4444)' : 'var(--text-muted)', marginTop: '4px' }}>
+              {config.homeSeoTitle?.length || 0}/60 caracteres recomendados
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Descripción (vacío = hereda de General)</label>
+            <textarea
+              style={{ ...inputStyle, resize: 'vertical' }}
+              rows={4}
+              value={config.homeSeoDescription || ''}
+              onChange={e => setField('homeSeoDescription', e.target.value)}
+              placeholder={config.siteDescription || 'Heredado del General'}
+            />
+            <div style={{ fontSize: '0.75rem', color: (config.homeSeoDescription?.length || 0) > 160 ? 'var(--accent-red, #ef4444)' : 'var(--text-muted)', marginTop: '4px' }}>
+              {config.homeSeoDescription?.length || 0}/160 caracteres recomendados
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>URL de imagen Open Graph</label>
+            <input
+              style={inputStyle}
+              value={config.homeOgImage || ''}
+              onChange={e => setField('homeOgImage', e.target.value)}
+              placeholder="https://tu-sitio.com/og-home.jpg"
+            />
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Recomendado: 1200×630 px. Se muestra al compartir en redes sociales.
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Alt text de la imagen OG</label>
+            <input
+              style={inputStyle}
+              value={config.homeOgImageAlt || ''}
+              onChange={e => setField('homeOgImageAlt', e.target.value)}
+              placeholder="Descripción de la imagen para accesibilidad"
+            />
+          </div>
+
+          <Toggle
+            checked={config.homeSchemaEnabled !== false}
+            onChange={v => setField('homeSchemaEnabled', v)}
+            label="Datos estructurados WebSite"
+            description="Habilita JSON-LD schema.org/WebSite para mejorar resultados de búsqueda"
+          />
+
+          <button onClick={onSave} disabled={saving} style={btnPrimary}>
+            {saving ? 'Guardando...' : '💾 Guardar configuración Home'}
+          </button>
+        </div>
+      </div>
+
+      {/* Right — previews */}
+      <div style={{ flex: 2, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>Vista previa en Google</h2>
+          <p style={sectionSubtitle}>Cómo aparecerá la home en resultados de búsqueda</p>
+          <GooglePreview title={previewTitle} description={previewDesc} url={config.siteUrl} />
+        </div>
+
+        {config.homeOgImage ? (
+          <div style={card}>
+            <h2 style={sectionTitle}>Vista previa Open Graph</h2>
+            <p style={sectionSubtitle}>Cómo se ve al compartir en redes sociales</p>
+            <img
+              src={config.homeOgImage}
+              alt={config.homeOgImageAlt || 'OG preview'}
+              style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)', objectFit: 'cover', maxHeight: '200px' }}
+              onError={e => { e.target.style.display = 'none' }}
+            />
+            {config.homeOgImageAlt && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '8px' }}>Alt: {config.homeOgImageAlt}</div>
+            )}
+          </div>
+        ) : (
+          <div style={{ ...card, textAlign: 'center', padding: '32px 24px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🖼️</div>
+            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem' }}>
+              Agregá una URL de imagen OG para ver la vista previa al compartir en redes sociales.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Productos ───────────────────────────────────────────────────────────
+
+const PRODUCT_PLACEHOLDERS = [
+  { key: '{{nombre}}',      desc: 'Nombre del producto' },
+  { key: '{{categoria}}',   desc: 'Categoría del producto' },
+  { key: '{{precio}}',      desc: 'Precio del producto' },
+  { key: '{{sitio}}',       desc: 'Nombre del sitio' },
+  { key: '{{descripcion}}', desc: 'Descripción del producto' },
+]
+
+function ProductosTab({ config, setField, saving, onSave }) {
+  const sampleData = {
+    '{{nombre}}':      'Remera Basic Fit',
+    '{{categoria}}':   'Remeras',
+    '{{precio}}':      '$15.990',
+    '{{sitio}}':       config.siteTitle || 'Mi Tienda',
+    '{{descripcion}}': 'Remera de algodón premium, talle regular.',
+  }
+
+  const previewTitle = applyTemplate(config.productTitleTemplate, sampleData) || 'Remera Basic Fit | Mi Tienda'
+  const previewDesc  = applyTemplate(config.productDescriptionTemplate, sampleData) || 'Comprá Remera Basic Fit al mejor precio. Envíos disponibles.'
+  const previewUrl   = config.siteUrl ? `${config.siteUrl}/catalogo/remeras` : 'https://tu-sitio.com/catalogo/remeras'
+
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      {/* Left — form */}
+      <div style={{ flex: 3, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>SEO de páginas de producto</h2>
+          <p style={sectionSubtitle}>
+            Plantillas aplicadas automáticamente a todas las páginas de producto. Usá las variables de abajo para personalizar cada resultado.
+          </p>
+
+          <PlaceholderChips placeholders={PRODUCT_PLACEHOLDERS} />
+
+          <TemplateEditor
+            label="Plantilla de título"
+            value={config.productTitleTemplate}
+            onChange={v => setField('productTitleTemplate', v)}
+            placeholder="{{nombre}} | {{sitio}}"
+            maxLen={60}
+            sampleData={sampleData}
+          />
+
+          <TemplateEditor
+            label="Plantilla de descripción"
+            value={config.productDescriptionTemplate}
+            onChange={v => setField('productDescriptionTemplate', v)}
+            placeholder="Comprá {{nombre}} al mejor precio. Envíos disponibles."
+            maxLen={160}
+            sampleData={sampleData}
+          />
+
+          <Toggle
+            checked={config.productSchemaEnabled !== false}
+            onChange={v => setField('productSchemaEnabled', v)}
+            label="Datos estructurados de producto (JSON-LD)"
+            description="Habilita schema.org/Product con precio, disponibilidad y organización vendedora"
+          />
+
+          <button onClick={onSave} disabled={saving} style={btnPrimary}>
+            {saving ? 'Guardando...' : '💾 Guardar configuración Productos'}
+          </button>
+        </div>
+      </div>
+
+      {/* Right — preview */}
+      <div style={{ flex: 2, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>Vista previa de producto</h2>
+          <p style={sectionSubtitle}>Ejemplo con datos de muestra</p>
+          <GooglePreview title={previewTitle} description={previewDesc} url={previewUrl} />
+        </div>
+
+        <div style={{ ...card, background: 'var(--bg-secondary)' }}>
+          <h2 style={sectionTitle}>Datos de muestra</h2>
+          <p style={{ ...sectionSubtitle, marginBottom: '12px' }}>El preview usa estos valores de ejemplo</p>
+          <div style={{ display: 'grid', gap: '6px' }}>
+            {Object.entries(sampleData).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', gap: '8px', fontSize: '0.82rem' }}>
+                <span style={{ fontFamily: 'monospace', color: 'var(--accent-blue)', minWidth: '120px' }}>{k}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Categorías ──────────────────────────────────────────────────────────
+
+const CATEGORY_PLACEHOLDERS = [
+  { key: '{{categoria}}',      desc: 'Nombre de la categoría' },
+  { key: '{{subcategoria}}',   desc: 'Nombre de la subcategoría (si aplica)' },
+  { key: '{{cantidad}}',       desc: 'Cantidad de productos en la categoría' },
+  { key: '{{sitio}}',          desc: 'Nombre del sitio' },
+]
+
+function CategoriasTab({ config, setField, saving, onSave }) {
+  const sampleData = {
+    '{{categoria}}':    'Remeras',
+    '{{subcategoria}}': 'Básicas',
+    '{{cantidad}}':     '48',
+    '{{sitio}}':        config.siteTitle || 'Mi Tienda',
+  }
+
+  const previewTitle = applyTemplate(config.categoryTitleTemplate, sampleData) || 'Remeras — Mi Tienda'
+  const previewDesc  = applyTemplate(config.categoryDescriptionTemplate, sampleData) || 'Explorá todos los productos de Remeras en Mi Tienda.'
+  const previewUrl   = config.siteUrl ? `${config.siteUrl}/catalogo/remeras` : 'https://tu-sitio.com/catalogo/remeras'
+
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      {/* Left — form */}
+      <div style={{ flex: 3, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>SEO de páginas de categoría</h2>
+          <p style={sectionSubtitle}>
+            Plantillas aplicadas a todas las páginas de categoría y subcategoría del catálogo.
+          </p>
+
+          <PlaceholderChips placeholders={CATEGORY_PLACEHOLDERS} />
+
+          <TemplateEditor
+            label="Plantilla de título"
+            value={config.categoryTitleTemplate}
+            onChange={v => setField('categoryTitleTemplate', v)}
+            placeholder="{{categoria}} — {{sitio}}"
+            maxLen={60}
+            sampleData={sampleData}
+          />
+
+          <TemplateEditor
+            label="Plantilla de descripción"
+            value={config.categoryDescriptionTemplate}
+            onChange={v => setField('categoryDescriptionTemplate', v)}
+            placeholder="Explorá todos los productos de {{categoria}} en {{sitio}}."
+            maxLen={160}
+            sampleData={sampleData}
+          />
+
+          <Toggle
+            checked={config.categorySchemaEnabled !== false}
+            onChange={v => setField('categorySchemaEnabled', v)}
+            label="Datos estructurados de breadcrumb (JSON-LD)"
+            description="Habilita schema.org/BreadcrumbList para mostrar la ruta de navegación en Google"
+          />
+
+          <button onClick={onSave} disabled={saving} style={btnPrimary}>
+            {saving ? 'Guardando...' : '💾 Guardar configuración Categorías'}
+          </button>
+        </div>
+      </div>
+
+      {/* Right — preview */}
+      <div style={{ flex: 2, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>Vista previa de categoría</h2>
+          <p style={sectionSubtitle}>Ejemplo con datos de muestra</p>
+          <GooglePreview title={previewTitle} description={previewDesc} url={previewUrl} />
+        </div>
+
+        <div style={{ ...card, background: 'var(--bg-secondary)' }}>
+          <h2 style={sectionTitle}>Datos de muestra</h2>
+          <p style={{ ...sectionSubtitle, marginBottom: '12px' }}>El preview usa estos valores de ejemplo</p>
+          <div style={{ display: 'grid', gap: '6px' }}>
+            {Object.entries(sampleData).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', gap: '8px', fontSize: '0.82rem' }}>
+                <span style={{ fontFamily: 'monospace', color: 'var(--accent-blue)', minWidth: '140px' }}>{k}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Páginas estáticas ───────────────────────────────────────────────────
+
+const STATIC_PAGES = [
+  { key: 'carrito',   label: 'Carrito',       icon: '🛒', path: '/mi-carrito' },
+  { key: 'catalogo',  label: 'Catálogo',      icon: '🛍️', path: '/catalogo' },
+  { key: 'pedidos',   label: 'Mis pedidos',   icon: '📦', path: '/mis-pedidos' },
+  { key: 'contacto',  label: 'Contacto',      icon: '✉️',  path: '/contacto' },
+  { key: 'nosotros',  label: 'Nosotros',      icon: 'ℹ️',  path: '/nosotros' },
+  { key: 'login',     label: 'Iniciar sesión', icon: '🔐', path: '/login' },
+]
+
+function PaginasTab({ config, setField, saving, onSave }) {
+  const pages = config.pagesSeo || {}
+  const [activePreview, setActivePreview] = useState('carrito')
+
+  const updatePage = (pageKey, field, value) => {
+    setField('pagesSeo', {
+      ...pages,
+      [pageKey]: { ...(pages[pageKey] || {}), [field]: value },
+    })
+  }
+
+  const activePage = STATIC_PAGES.find(p => p.key === activePreview)
+  const previewTitle = pages[activePreview]?.title?.trim() || `${activePage?.label} | ${config.siteTitle || 'Mi Tienda'}`
+  const previewDesc  = pages[activePreview]?.description?.trim() || 'Descripción de la página...'
+  const previewUrl   = config.siteUrl ? `${config.siteUrl}${activePage?.path || ''}` : `https://tu-sitio.com${activePage?.path || ''}`
+
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      {/* Left — form */}
+      <div style={{ flex: 3, minWidth: '280px' }}>
+        <div style={card}>
+          <h2 style={sectionTitle}>SEO de páginas estáticas</h2>
+          <p style={sectionSubtitle}>
+            Configurá título y descripción para páginas específicas del sitio. Dejá vacío para que hereden los valores generales del sitio.
+          </p>
+
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {STATIC_PAGES.map(page => {
+              const titleVal = pages[page.key]?.title || ''
+              const descVal  = pages[page.key]?.description || ''
+              const hasOverride = titleVal || descVal
+              return (
+                <div
+                  key={page.key}
+                  style={{
+                    padding: '16px',
+                    border: `1px solid ${hasOverride ? 'var(--accent-blue)44' : 'var(--border-color)'}`,
+                    borderRadius: '10px',
+                    background: hasOverride ? 'var(--accent-blue)08' : 'transparent',
+                  }}
+                >
+                  {/* Page header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{page.icon}</span>
+                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{page.label}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+                      {page.path}
+                    </span>
+                    {hasOverride && (
+                      <span style={{ marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-blue)', background: 'var(--accent-blue)18', padding: '2px 8px', borderRadius: '10px', border: '1px solid var(--accent-blue)44' }}>
+                        Personalizado
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Fields */}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '180px' }}>
+                      <label style={labelStyle}>Título</label>
+                      <input
+                        style={inputStyle}
+                        value={titleVal}
+                        onChange={e => {
+                          updatePage(page.key, 'title', e.target.value)
+                          setActivePreview(page.key)
+                        }}
+                        onFocus={() => setActivePreview(page.key)}
+                        placeholder={`${page.label} | ${config.siteTitle || 'Mi Tienda'}`}
+                      />
+                    </div>
+                    <div style={{ flex: 2, minWidth: '220px' }}>
+                      <label style={labelStyle}>Descripción</label>
+                      <input
+                        style={inputStyle}
+                        value={descVal}
+                        onChange={e => {
+                          updatePage(page.key, 'description', e.target.value)
+                          setActivePreview(page.key)
+                        }}
+                        onFocus={() => setActivePreview(page.key)}
+                        placeholder="Descripción para esta página..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div style={{ marginTop: '24px' }}>
+            <button onClick={onSave} disabled={saving} style={btnPrimary}>
+              {saving ? 'Guardando...' : '💾 Guardar páginas'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Right — live preview */}
+      <div style={{ flex: 2, minWidth: '280px' }}>
+        <div style={{ position: 'sticky', top: '24px' }}>
+          <div style={card}>
+            <h2 style={sectionTitle}>Vista previa</h2>
+            <p style={sectionSubtitle}>
+              Hacé click en cualquier campo para previsualizar esa página
+            </p>
+
+            {/* Page selector */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+              {STATIC_PAGES.map(p => (
+                <button
+                  key={p.key}
+                  onClick={() => setActivePreview(p.key)}
+                  style={{
+                    padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none',
+                    background: activePreview === p.key ? 'var(--accent-blue)' : 'var(--bg-secondary)',
+                    color: activePreview === p.key ? '#fff' : 'var(--text-secondary)',
+                  }}
+                >
+                  {p.icon} {p.label}
+                </button>
+              ))}
+            </div>
+
+            <GooglePreview title={previewTitle} description={previewDesc} url={previewUrl} />
+
+            {/* Status */}
+            <div style={{ marginTop: '16px', padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              {pages[activePreview]?.title || pages[activePreview]?.description
+                ? <span style={{ color: 'var(--accent-green)' }}>✓ Esta página tiene SEO personalizado</span>
+                : <span style={{ color: 'var(--text-muted)' }}>Usando valores generales del sitio</span>
+              }
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -304,9 +795,9 @@ function SeoPage() {
           </div>
         ) : (
           <>
+            {/* ── General ── */}
             {activeTab === 'general' && config && (
               <>
-                {/* Section 1 — two-column: config form + preview/score */}
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '0' }}>
                   {/* Left column */}
                   <div style={{ flex: 3, minWidth: '280px' }}>
@@ -403,7 +894,7 @@ function SeoPage() {
                   </div>
                 </div>
 
-                {/* Section 2 — Verificaciones */}
+                {/* Verificaciones */}
                 <div style={card}>
                   <h2 style={sectionTitle}>Verificaciones para herramientas</h2>
                   <p style={sectionSubtitle}>Conectá y verificá tu sitio con las principales herramientas de webmasters</p>
@@ -420,9 +911,8 @@ function SeoPage() {
                   </div>
                 </div>
 
-                {/* Section 3 — two-column: Robots.txt + Sitemap */}
+                {/* Robots + Sitemap */}
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                  {/* Robots.txt */}
                   <div style={{ flex: 1, minWidth: '280px' }}>
                     <div style={card}>
                       <h2 style={sectionTitle}>Robots.txt</h2>
@@ -434,10 +924,7 @@ function SeoPage() {
                         onChange={e => setField('robotsTxt', e.target.value)}
                       />
                       <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => setField('robotsTxt', DEFAULT_SEO_CONFIG.robotsTxt)}
-                          style={btnSecondary}
-                        >
+                        <button onClick={() => setField('robotsTxt', DEFAULT_SEO_CONFIG.robotsTxt)} style={btnSecondary}>
                           Restaurar por defecto
                         </button>
                         <button onClick={handleSaveRobots} disabled={savingRobots} style={btnPrimary}>
@@ -447,26 +934,19 @@ function SeoPage() {
                     </div>
                   </div>
 
-                  {/* Sitemap.xml */}
                   <div style={{ flex: 1, minWidth: '280px' }}>
                     <div style={card}>
                       <h2 style={sectionTitle}>Sitemap.xml</h2>
                       <p style={sectionSubtitle}>Generá y configurá el mapa de tu sitio para los buscadores</p>
 
-                      {/* Status row */}
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '20px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                         <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-green)', background: 'var(--accent-green)22', padding: '3px 10px', borderRadius: '20px', border: '1px solid var(--accent-green)44' }}>✅ Correcto</span>
                         <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                           <span style={{ fontWeight: 600 }}>Última generación: </span>
-                          {config.sitemapLastGenerated
-                            ? new Date(config.sitemapLastGenerated).toLocaleString('es-AR')
-                            : 'Nunca'}
+                          {config.sitemapLastGenerated ? new Date(config.sitemapLastGenerated).toLocaleString('es-AR') : 'Nunca'}
                         </div>
                         <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                           <span style={{ fontWeight: 600 }}>URLs: </span>{config.sitemapUrlCount ?? '—'}
-                        </div>
-                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                          <span style={{ fontWeight: 600 }}>Tipo: </span>Índice de sitemap
                         </div>
                       </div>
 
@@ -479,12 +959,7 @@ function SeoPage() {
                         { key: 'sitemapIncludeBlogs',      label: 'Incluir blogs' },
                       ].map(({ key, label }) => (
                         <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                          <input
-                            type="checkbox"
-                            checked={!!config[key]}
-                            onChange={e => setField(key, e.target.checked)}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                          />
+                          <input type="checkbox" checked={!!config[key]} onChange={e => setField(key, e.target.checked)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
                           {label}
                         </label>
                       ))}
@@ -506,7 +981,7 @@ function SeoPage() {
                   </div>
                 </div>
 
-                {/* Section 4 — Redirections */}
+                {/* Redirections */}
                 <div style={card}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
                     <div>
@@ -514,7 +989,6 @@ function SeoPage() {
                       <p style={{ ...sectionSubtitle, marginBottom: 0 }}>Gestioná redirecciones 301/302 para URLs antiguas o movidas</p>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <a href="#" style={{ fontSize: '0.85rem', color: 'var(--accent-blue)', textDecoration: 'none' }}>Ver todas</a>
                       <button onClick={() => setShowRedirectModal(true)} style={{ ...btnPrimary, padding: '7px 16px', fontSize: '0.85rem' }}>
                         + Nueva redirección
                       </button>
@@ -530,7 +1004,7 @@ function SeoPage() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                         <thead>
                           <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            {['Tipo', 'URL origen', 'URL destino', 'Tipo de redirección', 'Creada', 'Acciones'].map(h => (
+                            {['', 'URL origen', 'URL destino', 'Tipo', 'Creada', 'Acciones'].map(h => (
                               <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{h}</th>
                             ))}
                           </tr>
@@ -538,18 +1012,14 @@ function SeoPage() {
                         <tbody>
                           {redirections.map(r => (
                             <tr key={r.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                              <td style={{ padding: '10px 12px' }}>
-                                <span style={{ fontSize: '1rem' }}>↗</span>
-                              </td>
+                              <td style={{ padding: '10px 12px' }}><span style={{ fontSize: '1rem' }}>↗</span></td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: '0.82rem' }}>{r.from_path}</td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.82rem' }}>{r.to_path}</td>
                               <td style={{ padding: '10px 12px' }}>
-                                <span style={{
-                                  fontSize: '0.75rem', fontWeight: 700, padding: '3px 8px', borderRadius: '4px',
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 8px', borderRadius: '4px',
                                   background: r.type === '301' ? 'var(--accent-green)22' : '#f59e0b22',
                                   color: r.type === '301' ? 'var(--accent-green)' : '#f59e0b',
-                                  border: `1px solid ${r.type === '301' ? 'var(--accent-green)44' : '#f59e0b44'}`,
-                                }}>
+                                  border: `1px solid ${r.type === '301' ? 'var(--accent-green)44' : '#f59e0b44'}` }}>
                                   {r.type}
                                 </span>
                               </td>
@@ -557,9 +1027,7 @@ function SeoPage() {
                                 {r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR') : '—'}
                               </td>
                               <td style={{ padding: '10px 12px' }}>
-                                <button onClick={() => handleDeleteRedirection(r.id)} style={btnDanger} title="Eliminar redirección">
-                                  🗑️
-                                </button>
+                                <button onClick={() => handleDeleteRedirection(r.id)} style={btnDanger} title="Eliminar">🗑️</button>
                               </td>
                             </tr>
                           ))}
@@ -567,17 +1035,32 @@ function SeoPage() {
                       </table>
                     </div>
                   )}
-
-                  <div style={{ marginTop: '16px' }}>
-                    <a href="#" style={{ fontSize: '0.85rem', color: 'var(--accent-blue)', textDecoration: 'none' }}>
-                      Ver todas las redirecciones →
-                    </a>
-                  </div>
                 </div>
               </>
             )}
 
-            {activeTab !== 'general' && (
+            {/* ── Home ── */}
+            {activeTab === 'home' && config && (
+              <HomeTab config={config} setField={setField} saving={saving} onSave={handleSaveConfig} />
+            )}
+
+            {/* ── Productos ── */}
+            {activeTab === 'productos' && config && (
+              <ProductosTab config={config} setField={setField} saving={saving} onSave={handleSaveConfig} />
+            )}
+
+            {/* ── Categorías ── */}
+            {activeTab === 'categorias' && config && (
+              <CategoriasTab config={config} setField={setField} saving={saving} onSave={handleSaveConfig} />
+            )}
+
+            {/* ── Páginas ── */}
+            {activeTab === 'paginas' && config && (
+              <PaginasTab config={config} setField={setField} saving={saving} onSave={handleSaveConfig} />
+            )}
+
+            {/* ── Técnico / Auditoría — próximamente ── */}
+            {(activeTab === 'tecnico' || activeTab === 'auditoria') && (
               <div style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🚧</div>
                 <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Próximamente</h3>
