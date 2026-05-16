@@ -21,6 +21,16 @@ const formatTime = (minutes) => {
   return `${hours}h ${mins}m`
 }
 
+const toLocalDateKey = (dateLike) => {
+  if (!dateLike) return null
+  const date = dateLike instanceof Date ? dateLike : new Date(`${dateLike}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function AdminCalendar() {
   const router = useRouter()
   // Estados principales
@@ -50,21 +60,21 @@ function AdminCalendar() {
         
         // Función para obtener pedidos del día (definida inline para usar en este useEffect)
         const getPedidosDelDia = (dateObj) => {
-          const dateStr = dateObj.toISOString().split('T')[0]
+          const dateStr = toLocalDateKey(dateObj)
           const internos = pedidos.filter(p => {
             if (!p.asignadoAlCalendario) return false
             const pedidoDate = p.fechaAsignadaCalendario ? 
-              new Date(p.fechaAsignadaCalendario).toISOString().split('T')[0] : 
-              (p.fechaEntrega ? new Date(p.fechaEntrega).toISOString().split('T')[0] : null)
+              toLocalDateKey(p.fechaAsignadaCalendario) : 
+              toLocalDateKey(p.fechaEntrega)
             return pedidoDate === dateStr
           })
           
           const catalogoDia = catalogo.filter(ped => {
             if (!ped.asignadoAlCalendario) return false
             const prodDate = ped.fechaProduccionCalendario ? 
-              new Date(ped.fechaProduccionCalendario).toISOString().split('T')[0] : null
+              toLocalDateKey(ped.fechaProduccionCalendario) : null
             const entregaDate = ped.fechaEntregaCalendario ? 
-              new Date(ped.fechaEntregaCalendario).toISOString().split('T')[0] : null
+              toLocalDateKey(ped.fechaEntregaCalendario) : null
             return prodDate === dateStr || entregaDate === dateStr
           })
           
@@ -172,13 +182,13 @@ function AdminCalendar() {
 
   // Obtener pedidos de catálogo del día
   const getPedidosCatalogoDelDia = useCallback((date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toLocalDateKey(date)
     return catalogoByDate[dateStr] || []
   }, [catalogoByDate])
 
   // Obtener pedidos internos del día
   const getPedidosInternosDelDia = useCallback((date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toLocalDateKey(date)
     return internosByDate[dateStr] || []
   }, [internosByDate])
 
@@ -208,13 +218,13 @@ function AdminCalendar() {
     const monthPedidosInternos = (pedidos || []).filter(pedido => {
       const f = pedido.fechaEntrega || pedido.fecha
       if (!f) return false
-      const d = new Date(`${f}T00:00:00`)
+      const d = new Date(`${f}T12:00:00`)
       return d.getFullYear() === year && d.getMonth() === month
     })
 
     const monthPedidosCatalogo = (catalogo || []).filter(pedido => {
       if (!pedido.asignadoAlCalendario || pedido.estado === 'entregado' || !pedido.fechaProduccionCalendario) return false
-      const d = new Date(`${pedido.fechaProduccionCalendario}T00:00:00`)
+      const d = new Date(`${pedido.fechaProduccionCalendario}T12:00:00`)
       return d.getFullYear() === year && d.getMonth() === month
     })
 
@@ -286,7 +296,7 @@ function AdminCalendar() {
 
   const days = useMemo(() => getDaysInMonth(), [getDaysInMonth])
   const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = toLocalDateKey(today)
 
   // Efectos
   useEffect(() => {
@@ -1169,7 +1179,7 @@ function AdminCalendar() {
 
           {/* Días del calendario */}
           {days.map((dayObj, index) => {
-            const dateStr = dayObj.date.toISOString().split('T')[0]
+            const dateStr = toLocalDateKey(dayObj.date)
             const isToday = dateStr === todayStr
             const pedidosInternos = getPedidosInternosDelDia(dayObj.date)
             const pedidosCatalogo = getPedidosCatalogoDelDia(dayObj.date)
@@ -1185,7 +1195,7 @@ function AdminCalendar() {
                     const internos = getPedidosInternosDelDia(dayObj.date) || []
                     const catalogoDia = getPedidosCatalogoDelDia(dayObj.date) || []
                     const combined = [...internos, ...catalogoDia]
-                    const dateStr2 = dayObj.date.toISOString().split('T')[0]
+                    const dateStr2 = toLocalDateKey(dayObj.date)
                     setSelectedDate(dayObj.date)
                     setPedidosForModal(combined)
                     setPedidosModalTitle(`Pedidos del ${dayObj.date.toLocaleDateString('es-ES')}`)
@@ -1519,7 +1529,7 @@ function AdminCalendar() {
                   type="date"
                   name="fecha"
                   required
-                  min={new Date().toISOString().split('T')[0]}
+                  min={toLocalDateKey(new Date())}
                   style={{
                     width: '100%',
                     padding: '10px',
