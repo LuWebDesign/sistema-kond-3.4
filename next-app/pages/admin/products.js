@@ -4764,7 +4764,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             <label style={labelStyle}>Margen Material (%)</label>
             <input 
               type="number" 
-              value={editData.margenMaterial} 
+              value={Number(editData.margenMaterial).toFixed(4)} 
               onChange={e => handleInputChange('margenMaterial', parseFloat(e.target.value) || 0)} 
               readOnly={editCalculatedFields.isPrecioUnitarioManual} 
               min="0" 

@@ -1483,7 +1483,7 @@ function NewProductComponent() {
                   <input
                     type="number"
                     name="margenMaterial"
-                    value={formData.margenMaterial}
+                    value={Number(formData.margenMaterial).toFixed(4)}
                     onChange={handleInputChange}
                     readOnly={calculatedFields.isPrecioUnitarioManual}
                     min="0"
