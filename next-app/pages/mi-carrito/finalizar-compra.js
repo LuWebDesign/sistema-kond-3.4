@@ -48,6 +48,13 @@ export default function FinalizarCompraPage() {
 
   // Descuento de promo transferencia (se recalcula según paymentMethod activo)
   const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, total) : 0
+  const transferPromoPct = paymentMethod === 'transferencia'
+    ? (() => {
+        const tp = activePromos.find(p => (p.tipo || p.type) === 'transfer_discount' && p.activo !== false)
+        const dtype = tp?.config?.transferDiscountType || 'percentage'
+        return dtype === 'percentage' ? (tp?.descuentoPorcentaje || tp?.descuento_porcentaje || 0) : 0
+      })()
+    : 0
   const finalTotal = paymentMethod === 'transferencia' ? Math.max(0, total - transferPromoDiscount) : total
 
   const paymentSectionRef = useRef(null)
@@ -328,6 +335,7 @@ export default function FinalizarCompraPage() {
         cuponTipo: activeCoupon?.tipo || null,
         cuponValor: activeCoupon?.valor || null,
         descuentoTransferencia: transferPromoDiscount > 0 ? transferPromoDiscount : undefined,
+        descuentoTransferenciaPct: transferPromoPct > 0 ? transferPromoPct : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
         montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0
       }

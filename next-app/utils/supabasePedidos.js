@@ -230,6 +230,7 @@ export async function createPedidoCatalogo(pedido, items) {
         ...(pedido.cuponValor != null ? { cupon_valor: Number(pedido.cuponValor) } : {}),
         monto_recibido: montoRecibidoToInsert,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
+        ...(pedido.appliedPromotions ? { applied_promotions: pedido.appliedPromotions } : {}),
         tenant_id: TENANT_ID,
       }])
       .select()

@@ -9,14 +9,28 @@ import {
   getPedidoMaterialInfo
 } from '../utils/pedidosCatalogoDetail'
 
-function buildDiscountLabel(pedido) {
-  const badge = pedido.cuponTipo === 'porcentaje' && pedido.cuponValor
-    ? `${pedido.cuponValor}% OFF`
-    : null
-  if (pedido.cuponCodigo && badge) return `🏷 Cupón ${pedido.cuponCodigo} · ${badge}`
-  if (pedido.cuponCodigo) return `🏷 Cupón ${pedido.cuponCodigo}`
-  if (badge) return `🏷 ${badge}`
-  return '🏷 Descuento'
+function buildPromoRows(pedido) {
+  const rows = []
+  const promos = pedido.appliedPromotions || []
+  for (const p of promos) {
+    const t = p.type
+    let icon, label, amount
+    if (t === 'percentage_discount') {
+      icon = '🏷'; label = `${p.name}${p.value ? ` (${p.value}%)` : ''}`; amount = p.discount_amount
+    } else if (t === 'fixed_price') {
+      icon = '🏷'; label = `${p.name} (precio fijo)`; amount = p.discount_amount
+    } else if (t === 'buy_x_get_y') {
+      icon = '🏷'; label = `${p.name} (2x1)`; amount = p.discount_amount
+    } else if (t === 'free_shipping') {
+      icon = '🎁'; label = p.name || 'Envío gratis'; amount = null
+    } else if (t === 'transfer_discount') {
+      icon = '🏦'; label = p.name + (p.value ? ` (${p.value}%)` : ''); amount = p.discount_amount
+    } else {
+      icon = '🏷'; label = p.name || t; amount = p.discount_amount
+    }
+    rows.push({ icon, label, amount })
+  }
+  return rows
 }
 
 const ESTADO_LABELS = {
@@ -358,15 +372,15 @@ export default function OrderCatalogDetailView({
                     <span>Subtotal</span>
                     <span>{formatCurrency(pedido.subtotal)}</span>
                   </div>
-                  {pedido.envioGratis && (
-                    <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
-                      <span>🎁 Envío gratis</span>
-                      <span>—</span>
+                  {buildPromoRows(pedido).map((row, i) => (
+                    <div key={i} className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
+                      <span>{row.icon} {row.label}</span>
+                      <span>{row.amount !== null ? `-${formatCurrency(row.amount)}` : '—'}</span>
                     </div>
-                  )}
+                  ))}
                   {pedido.descuento > 0 && (
                     <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
-                      <span>{buildDiscountLabel(pedido)}</span>
+                      <span>Descuento total</span>
                       <span>-{formatCurrency(pedido.descuento)}</span>
                     </div>
                   )}
@@ -483,15 +497,15 @@ export default function OrderCatalogDetailView({
                 <span>Subtotal ({pedido.productos?.length || 0} productos)</span>
                 <span>{formatCurrency(pedido.subtotal)}</span>
               </div>
-              {pedido.envioGratis && (
-                <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
-                  <span>🎁 Envío gratis</span>
-                  <span>—</span>
+              {buildPromoRows(pedido).map((row, i) => (
+                <div key={`sb-${i}`} className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
+                  <span>{row.icon} {row.label}</span>
+                  <span>{row.amount !== null ? `-${formatCurrency(row.amount)}` : '—'}</span>
                 </div>
-              )}
+              ))}
               {pedido.descuento > 0 && (
                 <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
-                  <span>{buildDiscountLabel(pedido)}</span>
+                  <span>Descuento total</span>
                   <span>-{formatCurrency(pedido.descuento)}</span>
                 </div>
               )}
