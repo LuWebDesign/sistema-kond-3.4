@@ -886,7 +886,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           </span>
         </h3>
           {(() => {
-            const secondaryTextColor = isDarkTheme ? '#d1d5db' : 'var(--text-secondary)'
+            const secondaryTextColor = isDarkTheme ? '#d1d5db' : '#374151' // gray-700 for light mode
             const categoryStyle = getCategoryStyle(product.categoria)
             // Ajustar estilo según tema: en versión light usar fondo gris claro y texto gris oscuro
             const badgeBackground = isDarkTheme ? 'transparent' : '#f3f4f6' // gray-100
@@ -905,7 +905,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       alignItems: 'center',
                       gap: '6px',
                       padding: '6px 10px',
-                      borderRadius: '0',
+                      borderRadius: '2px',
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       background: badgeBackground,
