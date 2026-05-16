@@ -78,8 +78,12 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
       }
     }),
     subtotal: pedidoDB.subtotal || (pedidoDB.items || []).reduce((sum, item) => sum + (Number(item.producto_precio || 0) * Number(item.cantidad || 1)), 0),
-    descuento: pedidoDB.descuento || 0,
+    descuento: pedidoDB.cupon_descuento || pedidoDB.descuento || 0,
+    cuponCodigo: pedidoDB.cupon_codigo || null,
+    cuponDescuento: pedidoDB.cupon_descuento || 0,
+    envioGratis: pedidoDB.envio_gratis || false,
     metodoPago: pedidoDB.metodo_pago,
+    metodoEntrega: pedidoDB.metodo_entrega || null,
     estadoPago: pedidoDB.estado_pago || 'sin_seña',
     mpPreferenceId: pedidoDB.mp_preference_id || null,
     mpPaymentId: pedidoDB.mp_payment_id || null,

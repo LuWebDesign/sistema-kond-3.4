@@ -544,11 +544,13 @@ export function useOrders() {
       const pedidoData = {
         cliente: orderData.cliente,
         metodoPago: orderData.metodoPago,
+        metodoEntrega: orderData.metodoEntrega || null,
         estadoPago: orderData.estadoPago || 'pagado_total',
         comprobante: orderData.comprobante || null,
         comprobanteOmitido: orderData._comprobanteOmitted || false,
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
         total: orderData.total,
+        descuento: orderData.descuento || 0,
         // Monto recibido: solo considerar el total automáticamente si el método
         // de pago confirma la transacción (por ejemplo, transferencia).
         montoRecibido: orderData.metodoPago === 'transferencia'
