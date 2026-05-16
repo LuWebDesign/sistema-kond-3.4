@@ -340,7 +340,20 @@ export default function FinalizarCompraPage() {
         descuentoTransferencia: transferPromoDiscount > 0 ? transferPromoDiscount : undefined,
         descuentoTransferenciaPct: transferPromoPct > 0 ? transferPromoPct : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
-        montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0
+        montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0,
+        appliedPromotions: [
+          ...(transferPromoDiscount > 0 ? [{
+            type: 'transfer_discount',
+            name: 'Descuento por transferencia',
+            value: transferPromoPct > 0 ? transferPromoPct : null,
+            discount_amount: transferPromoDiscount
+          }] : []),
+          ...(freeShippingEligible ? [{
+            type: 'free_shipping',
+            name: 'Envío gratis',
+            discount_amount: null
+          }] : [])
+        ]
       }
 
       const result = await saveOrder(orderData, () => {})

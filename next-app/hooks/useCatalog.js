@@ -560,59 +560,23 @@ export function useOrders() {
           : Number(orderData.montoRecibido || 0)
       }
 
-      // Determinar promos aplicadas y enviar gratis
+      // Determinar si aplica envío gratis a todo el carrito
+      pedidoData.envioGratis = false
       try {
         const { applyPromotionsToCart } = await import('../utils/promoEngine')
-        // NOTE (React Query): getPromocionesActivas() is called here inside an async mutation path
-        // (saveOrder). React Query hooks cannot be called inside async functions, so we keep
-        // this direct fetch. Impact is low: it only fires when the user submits an order.
-        // Future improvement: pass promociones as a parameter from the component that calls useOrders.
         const { getPromocionesActivas: fetchPromos } = await import('../utils/supabaseMarketing')
         const { data: promosData } = await fetchPromos()
-        const promoResult = applyPromotionsToCart(orderData.items || [], promosData || [])
-        pedidoData.envioGratis = !!promoResult.freeShipping
-
-        // Build applied_promotions array for order summary
-        const appliedPromos = []
-        // Cart-level product promos (percentage_discount, fixed_price, buy_x_get_y)
-        if (promoResult.totalDiscount > 0 && promoResult.appliedPromotions) {
-          const seen = new Set()
-          for (const p of promoResult.appliedPromotions) {
-            const ptype = p.type || p.tipo
-            // Skip free_shipping (handled separately) and badge_only (no discount)
-            if (ptype === 'free_shipping' || ptype === 'badge_only') continue
-            if (seen.has(p.id)) continue
-            seen.add(p.id)
-            appliedPromos.push({
-              type: ptype,
-              name: p.nombre || p.name || ptype,
-              value: p.descuentoPorcentaje || p.descuento_porcentaje || null,
-              discount_amount: promoResult.totalDiscount
-            })
-          }
+        if (promosData && promosData.length > 0) {
+          const promoResult = applyPromotionsToCart(orderData.items || [], promosData)
+          pedidoData.envioGratis = !!promoResult.freeShipping
         }
-        // Transfer discount (separate from coupon)
-        if (orderData.descuentoTransferencia > 0) {
-          appliedPromos.push({
-            type: 'transfer_discount',
-            name: 'Descuento por transferencia',
-            value: orderData.descuentoTransferenciaPct || null,
-            discount_amount: Number(orderData.descuentoTransferencia)
-          })
-        }
-        // Free shipping
-        if (promoResult.freeShipping) {
-          const shipPromo = promoResult.appliedPromotions?.find(p => (p.type || p.tipo) === 'free_shipping')
-          appliedPromos.push({
-            type: 'free_shipping',
-            name: shipPromo?.nombre || shipPromo?.name || 'Envío gratis',
-            discount_amount: null
-          })
-        }
-        pedidoData.appliedPromotions = appliedPromos.length > 0 ? appliedPromos : null
       } catch (promoErr) {
-        pedidoData.envioGratis = false
-        pedidoData.appliedPromotions = null
+        // Non-critical: promo engine may fail, order still proceeds
+      }
+
+      // appliedPromotions lo recibe ya calculado desde el checkout
+      if (orderData.appliedPromotions && orderData.appliedPromotions.length > 0) {
+        pedidoData.appliedPromotions = orderData.appliedPromotions
       }
 
       // Convertir items al formato esperado
