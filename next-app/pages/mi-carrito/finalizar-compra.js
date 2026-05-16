@@ -238,7 +238,14 @@ export default function FinalizarCompraPage() {
         cuponTipo: activeCoupon?.tipo || null,
         cuponValor: activeCoupon?.valor || null,
         comprobante: null,
-        montoRecibido: 0
+        montoRecibido: 0,
+        appliedPromotions: [
+          ...(freeShippingEligible ? [{
+            type: 'free_shipping',
+            name: 'Envío gratis',
+            discount_amount: null
+          }] : [])
+        ]
       }
 
       const result = await saveOrder(orderData, () => {})
