@@ -126,10 +126,15 @@ function Toggle({ checked, onChange, label, description }) {
 
 function VerificationTool({ icon, title, description, value, onChange, fieldKey }) {
   const isVerified = value?.trim().length > 0
-  const [editing, setEditing] = useState(false)
+  
+  // Si está verificado, el input está deshabilitado pero editable con el botón
+  // Si no está verificado, el input está habilitado
+  const isEditable = !isVerified
 
-  // Auto-unlock if user clears the value
-  const isEditable = !isVerified || editing
+  const handleClear = () => {
+    // Limpiar el valor para poder editar de nuevo
+    onChange(fieldKey, '')
+  }
 
   return (
     <div>
@@ -142,36 +147,36 @@ function VerificationTool({ icon, title, description, value, onChange, fieldKey 
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
         <input
-          style={{ ...inputStyle, flex: 1, opacity: isEditable ? 1 : 0.6 }}
+          style={{ ...inputStyle, flex: 1, opacity: isEditable ? 1 : 0.5 }}
           value={value || ''}
           onChange={e => onChange(fieldKey, e.target.value)}
           placeholder={isEditable ? "Código de verificación" : "Verificado"}
           disabled={!isEditable}
         />
-        {isVerified && !editing ? (
+        <span style={{
+          padding: '0 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
+          display: 'flex', alignItems: 'center',
+          background: isVerified ? 'var(--accent-green)22' : 'var(--bg-secondary)',
+          color: isVerified ? 'var(--accent-green)' : 'var(--text-muted)',
+          border: `1px solid ${isVerified ? 'var(--accent-green)44' : 'var(--border-color)'}`,
+          whiteSpace: 'nowrap',
+          minWidth: '80px', justifyContent: 'center',
+        }}>
+          {isVerified ? (fieldKey === 'googleAnalytics' ? 'Conectado' : '✓ Verificado') : 'Pendiente'}
+        </span>
+        {isVerified && (
           <button
-            onClick={() => setEditing(true)}
+            onClick={handleClear}
             style={{
-              padding: '0 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600,
+              padding: '0 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600,
               display: 'flex', alignItems: 'center',
-              background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-              border: '1px solid var(--border-color)', cursor: 'pointer', whiteSpace: 'nowrap',
+              background: 'var(--accent-red)11', color: 'var(--accent-red)',
+              border: '1px solid var(--accent-red)44', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
-            title="Editar"
+            title="Eliminar verificación"
           >
-            ✏️
+            🗑️
           </button>
-        ) : (
-          <span style={{
-            padding: '0 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
-            display: 'flex', alignItems: 'center',
-            background: isVerified ? 'var(--accent-green)22' : 'var(--bg-secondary)',
-            color: isVerified ? 'var(--accent-green)' : 'var(--text-muted)',
-            border: `1px solid ${isVerified ? 'var(--accent-green)44' : 'var(--border-color)'}`,
-            whiteSpace: 'nowrap',
-          }}>
-            {isVerified ? (fieldKey === 'googleAnalytics' ? 'Conectado' : 'Verificado') : 'Verificar'}
-          </span>
         )}
       </div>
     </div>
