@@ -31,12 +31,7 @@ export default function FinalizarCompraPage() {
 
   const [paymentMethod, setPaymentMethod] = useState('')
   const [activePromos, setActivePromos] = useState([])
-  const [deliveryMethod, setDeliveryMethod] = useState(() => {
-    if (typeof window === 'undefined') return 'retiro'
-    try {
-      return localStorage.getItem('checkoutDeliveryMethod') || 'retiro'
-    } catch { return 'retiro' }
-  })
+  const [deliveryMethod, setDeliveryMethod] = useState('retiro')
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
@@ -75,6 +70,14 @@ export default function FinalizarCompraPage() {
       // Auto-colapsar perfil si ya está completo
       if (data.name && data.phone) setIsProfileCollapsed(true)
     } catch { /* optional prefill: ignore if user data unavailable */ }
+  }, [])
+
+  // Cargar método de entrega guardado (client-side only — evita hydration mismatch)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('checkoutDeliveryMethod')
+      if (saved === 'envio' || saved === 'retiro') setDeliveryMethod(saved)
+    } catch { /* ignore */ }
   }, [])
 
   // Cargar configuración de pago
