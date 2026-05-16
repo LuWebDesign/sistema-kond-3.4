@@ -234,10 +234,12 @@ function ProductsComponent() {
       
       // Mapear campos de snake_case a camelCase y calcular costoMaterial
       const initializedProducts = (productList || []).map(p => {
-        // Calcular costo material: costoPlaca / unidadesPorPlaca
+        // Calcular costo material: (costoPlaca * usoPlacas) / unidades
         const unidadesPorPlaca = p.unidades_por_placa || 1
         const costoPlaca = p.costo_placa || 0
-        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        const usoPlacas = p.uso_placas || 0
+        const unidades = p.unidades || 1
+        const costoMaterialCalculado = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
         
         return {
           id: p.id,
@@ -434,7 +436,9 @@ function ProductsComponent() {
     const initializedProducts = productList.map(p => {
       const unidadesPorPlaca = p.unidades_por_placa || 1
       const costoPlaca = p.costo_placa || 0
-      const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+      const usoPlacas = p.uso_placas || 0
+      const unidades = p.unidades || 1
+      const costoMaterialCalculado = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
 
       return {
         id: p.id,
@@ -658,21 +662,24 @@ function ProductsComponent() {
   // Actualizar campos calculados cuando cambien inputs relevantes (una sola pasada, sin cascada)
   useEffect(() => {
     try {
-      const { unidades, unidadesPorPlaca, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
+      const { unidades, unidadesPorPlaca, usoPlacas, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
       const { isUsoPlacasManual, isCostoMaterialManual, isPrecioUnitarioManual } = calculatedFields
 
       const updates = {}
 
       // 1. Calcular uso de placas
+      let calculatedUsoPlacas = usoPlacas
       if (!isUsoPlacasManual) {
-        const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
-        if (Number(formData.usoPlacas) !== Number(usoPlacas)) updates.usoPlacas = usoPlacas
+        calculatedUsoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
+        if (Number(formData.usoPlacas) !== Number(calculatedUsoPlacas)) updates.usoPlacas = calculatedUsoPlacas
       }
 
       // 2. Calcular costo de material y retener el valor efectivo para el paso siguiente
       let costoMaterialEfectivo = costoMaterial
       if (!isCostoMaterialManual) {
-        const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        // Costo material = (costoPlaca * placas usadas) / unidades
+        const placasEfectivas = isUsoPlacasManual ? usoPlacas : calculatedUsoPlacas
+        const costoMaterialCalc = unidades > 0 ? (costoPlaca * placasEfectivas) / unidades : 0
         const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
         if (Number(costoMaterial) !== costoMaterialRounded) updates.costoMaterial = costoMaterialRounded
         costoMaterialEfectivo = costoMaterialRounded
