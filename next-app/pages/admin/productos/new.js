@@ -1487,7 +1487,7 @@ function NewProductComponent() {
                     onChange={handleInputChange}
                     readOnly={calculatedFields.isPrecioUnitarioManual}
                     min="0"
-                    step="0.0001"
+                    step="any"
                     style={{ ...inputBase, flex: 1, opacity: calculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: calculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }}
                   />
                   <button
