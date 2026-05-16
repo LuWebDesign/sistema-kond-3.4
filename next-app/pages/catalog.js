@@ -695,8 +695,8 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       className="product-card"
       onClick={navigateToProduct}
       style={{
-        background: 'var(--bg-card, #2a2a2a)',
-        border: '1px solid var(--border-color, rgba(255,255,255,0.05))',
+        background: '#ffffff',
+        border: '1px solid #e5e7eb',
         borderRadius: '0 0 12px 12px',
         overflow: 'hidden',
         cursor: 'pointer'
