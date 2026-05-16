@@ -124,8 +124,19 @@ function Toggle({ checked, onChange, label, description }) {
   )
 }
 
-function VerificationTool({ icon, title, description, value, onChange, fieldKey }) {
-  const isVerified = value?.trim().length > 0
+function VerificationTool({ icon, title, description, value, initialValue, onChange, fieldKey }) {
+  // Comparamos con el valor inicial guardado en la DB
+  const wasVerified = initialValue?.trim().length > 0
+  const hasChanges = value !== initialValue
+  const isVerified = wasVerified && !hasChanges
+  
+  //Editable si: no estaba verificado O tiene cambios pendientes
+  const isEditable = !wasVerified || hasChanges
+
+  const handleClear = () => {
+    onChange(fieldKey, '')
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -137,21 +148,37 @@ function VerificationTool({ icon, title, description, value, onChange, fieldKey 
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
         <input
-          style={{ ...inputStyle, flex: 1 }}
+          style={{ ...inputStyle, flex: 1, opacity: isEditable ? 1 : 0.5 }}
           value={value || ''}
           onChange={e => onChange(fieldKey, e.target.value)}
-          placeholder="Código de verificación"
+          placeholder={isEditable ? "Código de verificación" : "Verificado"}
+          disabled={!isEditable}
         />
         <span style={{
           padding: '0 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
           display: 'flex', alignItems: 'center',
-          background: isVerified ? 'var(--accent-green)22' : 'var(--bg-secondary)',
-          color: isVerified ? 'var(--accent-green)' : 'var(--text-muted)',
-          border: `1px solid ${isVerified ? 'var(--accent-green)44' : 'var(--border-color)'}`,
+          background: isVerified ? 'var(--accent-green)22' : (hasChanges ? '#f59e0b22' : 'var(--bg-secondary)'),
+          color: isVerified ? 'var(--accent-green)' : (hasChanges ? '#f59e0b' : 'var(--text-muted)'),
+          border: `1px solid ${isVerified ? 'var(--accent-green)44' : (hasChanges ? '#f59e0b44' : 'var(--border-color)')}`,
           whiteSpace: 'nowrap',
+          minWidth: '80px', justifyContent: 'center',
         }}>
-          {isVerified ? (fieldKey === 'googleAnalytics' ? 'Conectado' : 'Verificado') : 'Verificar'}
+          {isVerified ? (fieldKey === 'googleAnalytics' ? 'Conectado' : '✓ Verificado') : (hasChanges ? 'Pendiente' : 'Pendiente')}
         </span>
+        {isVerified && (
+          <button
+            onClick={handleClear}
+            style={{
+              padding: '0 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center',
+              background: 'var(--accent-red)11', color: 'var(--accent-red)',
+              border: '1px solid var(--accent-red)44', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+            title="Eliminar verificación"
+          >
+            🗑️
+          </button>
+        )}
       </div>
     </div>
   )
@@ -712,6 +739,7 @@ const TABS = [
 function SeoPage() {
   const [activeTab, setActiveTab] = useState('general')
   const [config, setConfig] = useState(null)
+  const [initialConfig, setInitialConfig] = useState(null)
   const [redirections, setRedirections] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -731,7 +759,9 @@ function SeoPage() {
       fetch('/api/admin/seo-config').then(r => r.json()),
       fetch('/api/admin/redirections?limit=5').then(r => r.json()),
     ]).then(([seoRes, redirRes]) => {
-      setConfig(seoRes.config || DEFAULT_SEO_CONFIG)
+      const configData = seoRes.config || DEFAULT_SEO_CONFIG
+      setConfig(configData)
+      setInitialConfig(configData)
       setRedirections(redirRes.redirections || [])
     }).catch(() => setConfig(DEFAULT_SEO_CONFIG))
     .finally(() => setLoading(false))
@@ -747,6 +777,7 @@ function SeoPage() {
         body: JSON.stringify({ config }),
       })
       if (!res.ok) throw new Error('Error al guardar')
+      setInitialConfig(config) // Sync initial with saved config
       showToast('Configuración guardada')
     } catch (e) {
       showToast(e.message, 'error')
@@ -942,12 +973,12 @@ function SeoPage() {
                   <h2 style={sectionTitle}>Verificaciones para herramientas</h2>
                   <p style={sectionSubtitle}>Conectá y verificá tu sitio con las principales herramientas de webmasters</p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                    <VerificationTool icon="🔍" title="Google Search Console" description="Verificá tu sitio en Google Search Console" value={config.googleSearchConsole} onChange={setField} fieldKey="googleSearchConsole" />
-                    <VerificationTool icon="📊" title="Google Analytics" description="ID de medición" value={config.googleAnalytics} onChange={setField} fieldKey="googleAnalytics" />
-                    <VerificationTool icon="🔷" title="Bing Webmaster Tools" description="Verificá tu sitio en Bing Webmaster Tools" value={config.bingWebmaster} onChange={setField} fieldKey="bingWebmaster" />
-                    <VerificationTool icon="🟡" title="Yandex Webmaster" description="Verificá tu sitio en Yandex Webmaster" value={config.yandexWebmaster} onChange={setField} fieldKey="yandexWebmaster" />
-                    <VerificationTool icon="📌" title="Pinterest Verification" description="Verificá tu sitio en Pinterest" value={config.pinterestVerification} onChange={setField} fieldKey="pinterestVerification" />
-                    <VerificationTool icon="🔵" title="Facebook Domain Verification" description="Verificá tu dominio en Facebook" value={config.facebookDomainVerification} onChange={setField} fieldKey="facebookDomainVerification" />
+                    <VerificationTool icon="🔍" title="Google Search Console" description="Verificá tu sitio en Google Search Console" value={config.googleSearchConsole} initialValue={initialConfig?.googleSearchConsole} onChange={setField} fieldKey="googleSearchConsole" />
+                    <VerificationTool icon="📊" title="Google Analytics" description="ID de medición" value={config.googleAnalytics} initialValue={initialConfig?.googleAnalytics} onChange={setField} fieldKey="googleAnalytics" />
+                    <VerificationTool icon="🔷" title="Bing Webmaster Tools" description="Verificá tu sitio en Bing Webmaster Tools" value={config.bingWebmaster} initialValue={initialConfig?.bingWebmaster} onChange={setField} fieldKey="bingWebmaster" />
+                    <VerificationTool icon="🟡" title="Yandex Webmaster" description="Verificá tu sitio en Yandex Webmaster" value={config.yandexWebmaster} initialValue={initialConfig?.yandexWebmaster} onChange={setField} fieldKey="yandexWebmaster" />
+                    <VerificationTool icon="📌" title="Pinterest Verification" description="Verificá tu sitio en Pinterest" value={config.pinterestVerification} initialValue={initialConfig?.pinterestVerification} onChange={setField} fieldKey="pinterestVerification" />
+                    <VerificationTool icon="🔵" title="Facebook Domain Verification" description="Verificá tu dominio en Facebook" value={config.facebookDomainVerification} initialValue={initialConfig?.facebookDomainVerification} onChange={setField} fieldKey="facebookDomainVerification" />
                   </div>
                   <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
                     <button onClick={handleSaveConfig} disabled={saving} style={btnPrimary}>{saving ? 'Guardando...' : '💾 Guardar verificaciones'}</button>
