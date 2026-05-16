@@ -205,7 +205,7 @@ function NewProductComponent() {
 
       if (!isPrecioUnitarioManual) {
         const precioUnitarioCalc = costoMaterialEfectivo * (1 + margenMaterial / 100)
-        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(0))
         if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
       } else {
         const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0

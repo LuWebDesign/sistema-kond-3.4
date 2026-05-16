@@ -687,7 +687,7 @@ function ProductsComponent() {
       if (!isPrecioUnitarioManual) {
         // Modo auto: derivar precio desde margen y costo material
         const precioUnitarioCalc = costoMaterialEfectivo * (1 + margenMaterial / 100)
-        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(0))
         if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
       } else {
         // Modo manual de precio: derivar margen desde precio y costo material
@@ -2962,7 +2962,7 @@ function ProductCard({
   // Recalcular precio unitario cuando cambian costoMaterial o margenMaterial
   useEffect(() => {
     if (!editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial !== undefined && editData.margenMaterial !== undefined) {
-      const precioUnitarioCalc = parseFloat((editData.costoMaterial * (1 + editData.margenMaterial / 100)).toFixed(2))
+      const precioUnitarioCalc = parseFloat((editData.costoMaterial * (1 + editData.margenMaterial / 100)).toFixed(0))
       setEditData(prev => {
         if (prev.precioUnitario === precioUnitarioCalc) return prev
         return { ...prev, precioUnitario: precioUnitarioCalc }
