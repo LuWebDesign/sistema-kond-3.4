@@ -3180,3 +3180,144 @@
     font-size: 0.9rem;
   }
 }
+
+/* ====== TABLA DE PEDIDOS ( estilo sidebar ) ====== */
+.pedidosTableContainer {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.pedidosTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.pedidosTable thead {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.pedidosTable th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pedidosTable tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+}
+
+.pedidosTable tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.pedidosTable td {
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+/* Clases independientes para JS */
+.tableBadge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Badges de estado */
+.pendiente { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.confirmado, .en_proparacion { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.listo { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.entregado { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.cancelado { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* Badges de pago */
+.sin_seña { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
+.seña_pagada { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.pagado_total, .pagado { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.pendiente_mp { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.rechazado_mp { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.idCell { font-weight: 600; color: var(--accent-primary); font-size: 0.85rem; }
+.clienteCell { font-weight: 500; }
+.montoCell { font-weight: 600; color: var(--text-primary); text-align: right; font-family: monospace; }
+.fechaCell { color: var(--text-secondary); font-size: 0.85rem; }
+.productosCell { font-size: 0.8rem; color: var(--text-primary); max-width: 150px; }
+.productosCell div { margin-bottom: 2px; }
+.pagoCell { font-size: 0.8rem; }
+.pagoCell .metodoPago { margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem; }
+.tiempoCell { font-size: 0.85rem; color: var(--text-primary); font-family: monospace; }
+.tableActionBtn { padding: 8px 14px; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.15s ease; }
+.tableActionBtn:hover { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
+
+/* Badges de estado y pago como clases independientes */
+.pedidosTable .idCell {
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: 0.85rem;
+}
+
+.pedidosTable .clienteCell {
+  font-weight: 500;
+}
+
+.pedidosTable .montoCell {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  font-family: monospace;
+}
+
+.pedidosTable .fechaCell {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* Badges en tabla */
+.tableBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Estado */
+.tableBadge.pendiente { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.tableBadge.confirmado, .tableBadge.en_proparacion { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.tableBadge.listo { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.tableBadge.entregado { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.tableBadge.cancelado { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* Pago */
+.tableBadge.sin_seña { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
+.tableBadge.seña_pagada { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.tableBadge.pagado_total, .tableBadge.pagado { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.tableBadge.pendiente_mp { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.tableBadge.rechazado_mp { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+/* Botón acción */
+.tableActionBtn {
+  padding: 8px 14px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.tableActionBtn:hover {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
