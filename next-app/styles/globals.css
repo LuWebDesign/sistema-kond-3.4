@@ -91,32 +91,34 @@
   color: var(--text-primary);
 }
 
-/* Fix: in the light theme the category "ticket" could render white in some cases
-   due to inline styles or specificity. Force it to use the text primary color
-   (dark) on the light theme so it remains readable. In dark theme the ticket
-   keeps its current styles. */
-body[data-theme="light"] .product-card .category-badge,
-body[data-theme="light"] .category-badge {
-  color: var(--text-primary) !important;
-  border-color: var(--text-primary) !important;
+/* Fix: category badge always uses fixed colors for light mode (public pages) */
+.product-card .category-badge,
+.category-badge {
+  color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+.product-card .category-badge *,
+.category-badge * {
+  color: #1f2937 !important;
 }
 
 /* Product detail page: ensure price and category badge colors follow theme too */
 .product-detail-price {
-  color: var(--text-primary) !important;
+  color: var(--text-primary, #1a1a1a) !important;
 }
 
-body[data-theme="light"] .pd-info-name .category-badge {
-  color: var(--text-primary) !important;
-  border-color: var(--text-primary) !important;
+.pd-info-name .category-badge {
+  color: #1f2937 !important;
+  border-color: #1f2937 !important;
 }
 
 /* Ensure category badge text is visible in light theme (cover inner spans) */
-body[data-theme="light"] .category-badge,
-body[data-theme="light"] .category-badge span,
-body[data-theme="light"] .pd-info-name .category-badge,
-body[data-theme="light"] .pd-info-name .category-badge span {
-  color: var(--text-primary) !important;
+.category-badge,
+.category-badge span,
+.pd-info-name .category-badge,
+.pd-info-name .category-badge span {
+  color: #1f2937 !important;
 }
 
 /* Grid del catálogo: columnas configurables por dispositivo vía CSS custom properties.

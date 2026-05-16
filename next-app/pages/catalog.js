@@ -273,7 +273,7 @@ export default function Catalog({ seoConfig }) {
         color: '#333'
       },
       'default': {
-        background: 'linear-gradient(135deg, var(--accent-blue) 0%, #5dade2 100%)',
+        background: 'linear-gradient(135deg, #2196F3 0%, #5dade2 100%)',
         icon: '🏷️',
         color: 'white'
       }
@@ -601,7 +601,9 @@ export default function Catalog({ seoConfig }) {
 const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true, categoriasAPI = [] }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
-  const [isDarkTheme, setIsDarkTheme] = useState(false)
+
+  // Pages catalog and home are ALWAYS light mode (admin uses dark mode)
+  const isDarkTheme = false
 
   const resolveCategoriaDisplay = (prod) => {
     if (!prod.categoriaId || categoriasAPI.length === 0) {
@@ -615,41 +617,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
     }
     return { label: sub.nombre, isHierarchy: false }
   }
-
-  // ProductCard will use the shared slugify helper imported above
-
-  // Detectar tema (dark vs light) para ajustar estilos de badge de categoría
-  useEffect(() => {
-    try {
-      if (typeof window === 'undefined') return
-      
-      // Función para detectar el tema actual desde data-theme del body
-      const getTheme = () => {
-        const theme = document.body.getAttribute('data-theme')
-        return theme === 'dark'
-      }
-      
-      setIsDarkTheme(getTheme())
-
-      // Observar cambios en el atributo data-theme del body
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-            setIsDarkTheme(getTheme())
-          }
-        })
-      })
-
-      observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-      })
-
-      return () => observer.disconnect()
-    } catch (e) {
-      // ignore
-    }
-  }, [])
 
   // Obtener información del material
   const getMaterialInfo = () => {
@@ -728,8 +695,8 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
       className="product-card"
       onClick={navigateToProduct}
       style={{
-        background: 'var(--bg-card, #2a2a2a)',
-        border: '1px solid var(--border-color, rgba(255,255,255,0.05))',
+        background: '#ffffff',
+        border: '1px solid #e5e7eb',
         borderRadius: '0 0 12px 12px',
         overflow: 'hidden',
         cursor: 'pointer'
@@ -886,12 +853,12 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           </span>
         </h3>
           {(() => {
-            const secondaryTextColor = isDarkTheme ? '#d1d5db' : '#374151' // gray-700 for light mode
+            const secondaryTextColor = isDarkTheme ? '#d1d5db' : '#1f2937' // gray-800 for better contrast
             const categoryStyle = getCategoryStyle(product.categoria)
-            // Ajustar estilo según tema: en versión light usar fondo gris claro y texto gris oscuro
-            const badgeBackground = isDarkTheme ? 'transparent' : '#f3f4f6' // gray-100
-            // En dark: texto blanco con borde; en light: texto gris oscuro sobre fondo gris claro
-            const badgeTextColor = isDarkTheme ? '#ffffff' : '#374151' // gray-700
+            // Ajustar estilo según tema: en versión light usar fondo más oscuro para visibilidad
+            const badgeBackground = isDarkTheme ? 'transparent' : '#d1d5db' // gray-300 for better visibility
+            // En dark: texto blanco con borde; en light: texto más oscuro sobre fondo más oscuro
+            const badgeTextColor = isDarkTheme ? '#ffffff' : '#111827' // gray-900 for better contrast
             const badgeBorder = isDarkTheme ? `1px solid ${categoryStyle.color || 'rgba(0,0,0,0.12)'}` : 'none'
             
             return (
@@ -909,6 +876,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       background: badgeBackground,
+                      color: badgeTextColor,
                       border: badgeBorder,
                       marginBottom: '10px',
                       cursor: 'default'
@@ -919,13 +887,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       if (cat.isHierarchy) {
                         return (
                           <>
-                            <span style={{ opacity: 0.65, fontSize: '0.72rem' }}>{cat.parent}</span>
-                            <span style={{ margin: '0 3px', opacity: 0.5 }}>›</span>
-                            <span>{cat.label}</span>
+                            <span style={{ opacity: 0.65, fontSize: '0.72rem', color: 'inherit' }}>{cat.parent}</span>
+                            <span style={{ margin: '0 3px', opacity: 0.5, color: 'inherit' }}>›</span>
+                            <span style={{ color: 'inherit' }}>{cat.label}</span>
                           </>
                         )
                       }
-                      return <span>{cat.label || product.categoria}</span>
+                      return <span style={{ color: 'inherit' }}>{cat.label || product.categoria}</span>
                     })()}
                   </div>
                 )}
