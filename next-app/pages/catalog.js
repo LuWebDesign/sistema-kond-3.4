@@ -973,7 +973,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       backgroundColor: badge.color || '#ef4444',
                       color: badge.textColor || '#ffffff',
                       padding: '3px 6px',
-                      borderRadius: '10px',
+                      borderRadius: '0',
                       fontSize: '0.7rem',
                       fontWeight: 600
                     }}

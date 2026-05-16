@@ -185,7 +185,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
   const typeConfig = PROMO_TYPES[formData.tipo];
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
   <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeModal} onClick={onClose}>×</button>
         <div className={styles.modalHeader}>
