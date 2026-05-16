@@ -281,6 +281,11 @@
   color: var(--text-primary);
   cursor: pointer;
   width: 100%;
+  color-scheme: light;
+}
+
+:global([data-theme="dark"]) .infoValueSelect {
+  color-scheme: dark;
 }
 
 .clienteNombreMain {
@@ -699,6 +704,11 @@
   background: var(--bg-section);
   color: var(--text-primary);
   cursor: pointer;
+  color-scheme: light;
+}
+
+:global([data-theme="dark"]) .pagoSelect {
+  color-scheme: dark;
 }
 
 .montoInputRow {

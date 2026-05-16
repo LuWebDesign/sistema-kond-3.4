@@ -21,9 +21,9 @@ const ESTADO_LABELS = {
 
 const METODO_PAGO_LABELS = {
   transferencia: '🏦 Transferencia',
-  envio: '🚚 Envío',
+  envio: '🚚 Envío a domicilio',
   whatsapp: '💬 WhatsApp',
-  retiro: '🏪 Retiro',
+  retiro: '🏪 Retiro en local',
   mercadopago: '💳 MercadoPago',
 }
 
@@ -191,7 +191,7 @@ export default function OrderCatalogDetailView({
                   <span className={styles.infoLabel}>N° pedido</span>
                   <span className={styles.infoValue}>#{pedido.id}</span>
 
-                  <span className={styles.infoLabel}>Canal</span>
+                  <span className={styles.infoLabel}>Entrega</span>
                   <span className={styles.infoValue}>
                     {METODO_PAGO_LABELS[pedido.metodoPago] || pedido.metodoPago || '—'}
                   </span>

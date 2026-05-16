@@ -139,23 +139,24 @@ function DetallePedidoPage() {
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleChangeFechaProduccion = useCallback((valor) => {
-    setPedido(prev => {
-      if (!prev) return prev
-      if (valor) {
-        const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
-        const fechaProd = new Date(valor + 'T00:00:00')
-        if (fechaProd < hoy) {
-          createToast('La fecha de producción no puede ser en el pasado', 'error')
-          return prev
-        }
-        if (prev.fechaConfirmadaEntrega) {
-          const fechaEntrega = new Date(prev.fechaConfirmadaEntrega + 'T00:00:00')
-          if (fechaProd > fechaEntrega) {
-            createToast('La fecha de producción no puede ser posterior a la fecha de entrega confirmada', 'error')
-            return prev
-          }
+    // Validate OUTSIDE the updater (avoids React Strict Mode double-invoke side effects)
+    if (valor) {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+      const fechaProd = new Date(valor + 'T00:00:00')
+      if (fechaProd < hoy) {
+        createToast('La fecha de producción no puede ser en el pasado', 'error')
+        return
+      }
+      if (pedido?.fechaConfirmadaEntrega) {
+        const fechaEntrega = new Date(pedido.fechaConfirmadaEntrega + 'T00:00:00')
+        if (fechaProd > fechaEntrega) {
+          createToast('La fecha de producción no puede ser posterior a la fecha de entrega confirmada', 'error')
+          return
         }
       }
+    }
+    setPedido(prev => {
+      if (!prev) return prev
       const updated = normalizePedido({
         ...prev,
         fechaProduccion: valor,
@@ -164,29 +165,31 @@ function DetallePedidoPage() {
       })
       const cache = upsertPedidoLocal(updated)
       persistAndEmit(cache, updated.id, 'fechaProduccionChanged', valor)
-      if (valor) logEvent('fecha', `Fecha de producción → ${valor}`)
       return updated
     })
-  }, [upsertPedidoLocal, logEvent])
+    // logEvent OUTSIDE updater — avoids double DB insert in React Strict Mode
+    if (valor) logEvent('fecha', `Fecha de producción → ${valor}`)
+  }, [pedido, upsertPedidoLocal, logEvent])
 
   const handleChangeFechaConfirmada = useCallback((valor) => {
-    setPedido(prev => {
-      if (!prev) return prev
-      if (valor) {
-        const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
-        const fechaEntrega = new Date(valor + 'T00:00:00')
-        if (fechaEntrega < hoy) {
-          createToast('La fecha de entrega no puede ser en el pasado', 'error')
-          return prev
-        }
-        if (prev.fechaProduccion) {
-          const fechaProd = new Date(prev.fechaProduccion + 'T00:00:00')
-          if (fechaEntrega < fechaProd) {
-            createToast('La fecha de entrega no puede ser anterior a la fecha de producción', 'error')
-            return prev
-          }
+    // Validate OUTSIDE the updater
+    if (valor) {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+      const fechaEntrega = new Date(valor + 'T00:00:00')
+      if (fechaEntrega < hoy) {
+        createToast('La fecha de entrega no puede ser en el pasado', 'error')
+        return
+      }
+      if (pedido?.fechaProduccion) {
+        const fechaProd = new Date(pedido.fechaProduccion + 'T00:00:00')
+        if (fechaEntrega < fechaProd) {
+          createToast('La fecha de entrega no puede ser anterior a la fecha de producción', 'error')
+          return
         }
       }
+    }
+    setPedido(prev => {
+      if (!prev) return prev
       const updated = normalizePedido({
         ...prev,
         fechaConfirmadaEntrega: valor,
@@ -195,10 +198,11 @@ function DetallePedidoPage() {
       })
       const cache = upsertPedidoLocal(updated)
       persistAndEmit(cache, updated.id, 'fechaEntregaChanged', valor)
-      if (valor) logEvent('fecha', `Entrega confirmada → ${valor}`)
       return updated
     })
-  }, [upsertPedidoLocal, logEvent])
+    // logEvent OUTSIDE updater
+    if (valor) logEvent('fecha', `Entrega confirmada → ${valor}`)
+  }, [pedido, upsertPedidoLocal, logEvent])
 
   const handleChangeEstado = useCallback((newStatus) => {
     setPedido(prev => {
@@ -225,9 +229,10 @@ function DetallePedidoPage() {
       }
       const cache = upsertPedidoLocal(updated)
       persistAndEmit(cache, updated.id, 'update-status')
-      logEvent('estado', `Estado → ${ESTADO_LABELS[newStatus] || newStatus}`)
       return updated
     })
+    // logEvent OUTSIDE updater — avoids double DB insert in React Strict Mode
+    logEvent('estado', `Estado → ${ESTADO_LABELS[newStatus] || newStatus}`)
   }, [upsertPedidoLocal, logEvent])
 
   const handleChangeEstadoPago = useCallback((newEstadoPago) => {
@@ -239,10 +244,11 @@ function DetallePedidoPage() {
       else if (newEstadoPago === 'pagado_total') updated.montoRecibido = totalPedido
       const cache = upsertPedidoLocal(updated)
       persistAndEmit(cache, updated.id, 'update-payment')
-      const labels = { sin_seña: 'Sin seña', seña_pagada: 'Seña pagada', pagado_total: 'Pagado total' }
-      logEvent('pago', `Estado de pago → ${labels[newEstadoPago] || newEstadoPago}`)
       return updated
     })
+    // logEvent OUTSIDE updater — avoids double DB insert in React Strict Mode
+    const labels = { sin_seña: 'Sin seña', seña_pagada: 'Seña pagada', pagado_total: 'Pagado total' }
+    logEvent('pago', `Estado de pago → ${labels[newEstadoPago] || newEstadoPago}`)
   }, [upsertPedidoLocal, logEvent])
 
   const handleChangeMontoRecibido = useCallback((monto) => {

@@ -126,7 +126,11 @@ export const normalizePedido = (p) => {
 export const formatPedidoDate = (dateString) => {
   if (!dateString) return 'Sin fecha'
   if (typeof window === 'undefined') return dateString
-  const date = new Date(`${dateString}T12:00:00`)
+  // ISO timestamps from Supabase already contain 'T'; don't append it again
+  const date = String(dateString).includes('T')
+    ? new Date(dateString)
+    : new Date(`${dateString}T12:00:00`)
+  if (isNaN(date.getTime())) return String(dateString)
   return date.toLocaleDateString('es-AR', {
     day: '2-digit',
     month: '2-digit',
