@@ -544,11 +544,15 @@ export function useOrders() {
       const pedidoData = {
         cliente: orderData.cliente,
         metodoPago: orderData.metodoPago,
+        metodoEntrega: orderData.metodoEntrega || null,
         estadoPago: orderData.estadoPago || 'pagado_total',
         comprobante: orderData.comprobante || null,
         comprobanteOmitido: orderData._comprobanteOmitted || false,
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
         total: orderData.total,
+        descuento: orderData.descuento || 0,
+        cuponTipo: orderData.cuponTipo || null,
+        cuponValor: orderData.cuponValor || null,
         // Monto recibido: solo considerar el total automáticamente si el método
         // de pago confirma la transacción (por ejemplo, transferencia).
         montoRecibido: orderData.metodoPago === 'transferencia'
@@ -557,18 +561,22 @@ export function useOrders() {
       }
 
       // Determinar si aplica envío gratis a todo el carrito
+      pedidoData.envioGratis = false
       try {
         const { applyPromotionsToCart } = await import('../utils/promoEngine')
-        // NOTE (React Query): getPromocionesActivas() is called here inside an async mutation path
-        // (saveOrder). React Query hooks cannot be called inside async functions, so we keep
-        // this direct fetch. Impact is low: it only fires when the user submits an order.
-        // Future improvement: pass promociones as a parameter from the component that calls useOrders.
         const { getPromocionesActivas: fetchPromos } = await import('../utils/supabaseMarketing')
         const { data: promosData } = await fetchPromos()
-        const promoResult = applyPromotionsToCart(orderData.items || [], promosData || [])
-        pedidoData.envioGratis = !!promoResult.freeShipping
+        if (promosData && promosData.length > 0) {
+          const promoResult = applyPromotionsToCart(orderData.items || [], promosData)
+          pedidoData.envioGratis = !!promoResult.freeShipping
+        }
       } catch (promoErr) {
-        pedidoData.envioGratis = false
+        // Non-critical: promo engine may fail, order still proceeds
+      }
+
+      // appliedPromotions lo recibe ya calculado desde el checkout
+      if (orderData.appliedPromotions && orderData.appliedPromotions.length > 0) {
+        pedidoData.appliedPromotions = orderData.appliedPromotions
       }
 
       // Convertir items al formato esperado

@@ -4,6 +4,7 @@
 // ============================================
 
 import supabase from './supabaseClient';
+import { TENANT_ID } from '../lib/tenant';
 
 // Logger silenciado en producción para evitar fugas de info sensible
 const log = process.env.NODE_ENV !== 'production'
@@ -68,11 +69,14 @@ export async function getAllPedidosCatalogo() {
         comprobante_url, comprobante_omitido,
         fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
         total, monto_recibido, envio_gratis,
+        cupon_codigo, cupon_descuento, cupon_tipo, cupon_valor,
+        applied_promotions,
         asignado_al_calendario,
         mp_preference_id, mp_payment_id, mp_payment_status,
         created_at, updated_at,
         items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
+      .eq('tenant_id', TENANT_ID)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;
@@ -165,6 +169,8 @@ export async function getPedidoCatalogoById(id) {
         comprobante_url, comprobante_omitido,
         fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
         total, monto_recibido, envio_gratis,
+        cupon_codigo, cupon_descuento, cupon_tipo, cupon_valor,
+        applied_promotions,
         asignado_al_calendario,
         created_at, updated_at,
         items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
@@ -217,13 +223,19 @@ export async function createPedidoCatalogo(pedido, items) {
         cliente_email: pedido.cliente.email || '',
         cliente_direccion: pedido.cliente.direccion || '',
         metodo_pago: pedido.metodoPago,
+        ...(pedido.metodoEntrega != null ? { metodo_entrega: pedido.metodoEntrega } : {}),
         estado_pago: pedido.estadoPago || 'pagado_total',
         comprobante_url: pedido.comprobante || null,
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
         total: Number(pedido.total) || 0,
+        ...(pedido.descuento > 0 ? { cupon_descuento: Number(pedido.descuento) } : {}),
+        ...(pedido.cuponTipo != null ? { cupon_tipo: pedido.cuponTipo } : {}),
+        ...(pedido.cuponValor != null ? { cupon_valor: Number(pedido.cuponValor) } : {}),
         monto_recibido: montoRecibidoToInsert,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
+        ...(pedido.appliedPromotions ? { applied_promotions: pedido.appliedPromotions } : {}),
+        tenant_id: TENANT_ID,
       }])
       .select()
       .single();
@@ -239,6 +251,7 @@ export async function createPedidoCatalogo(pedido, items) {
       cantidad: item.quantity || item.cantidad,
       medidas: item.measures || item.medidas,
       producto_imagen: item.imagen || item.image || null,
+      tenant_id: TENANT_ID,
     }));
 
     const { data: itemsInserted, error: itemsError } = await supabase
@@ -480,6 +493,8 @@ const PEDIDO_SELECT = `
   comprobante_url, comprobante_omitido,
   fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
   total, monto_recibido, envio_gratis,
+  cupon_codigo, cupon_descuento, cupon_tipo, cupon_valor,
+  applied_promotions,
   asignado_al_calendario,
   mp_preference_id, mp_payment_id, mp_payment_status,
   created_at, updated_at,

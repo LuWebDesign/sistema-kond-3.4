@@ -21,7 +21,7 @@ export default function FinalizarCompraPage() {
   const router = useRouter()
   const { cart, clearCart, subtotal } = useCart()
   const { products } = useProducts()
-  const { calculateDiscount } = useCoupons()
+  const { calculateDiscount, activeCoupon } = useCoupons()
   const { saveOrder } = useOrders()
   const notificationsContext = useNotifications()
   const addNotification = notificationsContext?.addNotification
@@ -31,12 +31,7 @@ export default function FinalizarCompraPage() {
 
   const [paymentMethod, setPaymentMethod] = useState('')
   const [activePromos, setActivePromos] = useState([])
-  const [deliveryMethod, setDeliveryMethod] = useState(() => {
-    if (typeof window === 'undefined') return 'retiro'
-    try {
-      return localStorage.getItem('checkoutDeliveryMethod') || 'retiro'
-    } catch { return 'retiro' }
-  })
+  const [deliveryMethod, setDeliveryMethod] = useState('retiro')
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
@@ -48,6 +43,13 @@ export default function FinalizarCompraPage() {
 
   // Descuento de promo transferencia (se recalcula según paymentMethod activo)
   const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, total) : 0
+  const transferPromoPct = paymentMethod === 'transferencia'
+    ? (() => {
+        const tp = activePromos.find(p => (p.tipo || p.type) === 'transfer_discount' && p.activo !== false)
+        const dtype = tp?.config?.transferDiscountType || 'percentage'
+        return dtype === 'percentage' ? (tp?.descuentoPorcentaje || tp?.descuento_porcentaje || 0) : 0
+      })()
+    : 0
   const finalTotal = paymentMethod === 'transferencia' ? Math.max(0, total - transferPromoDiscount) : total
 
   const paymentSectionRef = useRef(null)
@@ -68,6 +70,14 @@ export default function FinalizarCompraPage() {
       // Auto-colapsar perfil si ya está completo
       if (data.name && data.phone) setIsProfileCollapsed(true)
     } catch { /* optional prefill: ignore if user data unavailable */ }
+  }, [])
+
+  // Cargar método de entrega guardado (client-side only — evita hydration mismatch)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('checkoutDeliveryMethod')
+      if (saved === 'envio' || saved === 'retiro') setDeliveryMethod(saved)
+    } catch { /* ignore */ }
   }, [])
 
   // Cargar configuración de pago
@@ -225,8 +235,17 @@ export default function FinalizarCompraPage() {
         total,
         subtotal,
         descuento: discount,
+        cuponTipo: activeCoupon?.tipo || null,
+        cuponValor: activeCoupon?.valor || null,
         comprobante: null,
-        montoRecibido: 0
+        montoRecibido: 0,
+        appliedPromotions: [
+          ...(freeShippingEligible ? [{
+            type: 'free_shipping',
+            name: 'Envío gratis',
+            discount_amount: null
+          }] : [])
+        ]
       }
 
       const result = await saveOrder(orderData, () => {})
@@ -323,9 +342,25 @@ export default function FinalizarCompraPage() {
         total: finalTotal,
         subtotal,
         descuento: discount + transferPromoDiscount,
+        cuponTipo: activeCoupon?.tipo || null,
+        cuponValor: activeCoupon?.valor || null,
         descuentoTransferencia: transferPromoDiscount > 0 ? transferPromoDiscount : undefined,
+        descuentoTransferenciaPct: transferPromoPct > 0 ? transferPromoPct : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
-        montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0
+        montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0,
+        appliedPromotions: [
+          ...(transferPromoDiscount > 0 ? [{
+            type: 'transfer_discount',
+            name: 'Descuento por transferencia',
+            value: transferPromoPct > 0 ? transferPromoPct : null,
+            discount_amount: transferPromoDiscount
+          }] : []),
+          ...(freeShippingEligible ? [{
+            type: 'free_shipping',
+            name: 'Envío gratis',
+            discount_amount: null
+          }] : [])
+        ]
       }
 
       const result = await saveOrder(orderData, () => {})

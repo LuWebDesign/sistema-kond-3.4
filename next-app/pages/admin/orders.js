@@ -3,6 +3,7 @@ import withAdminAuth from '../../components/withAdminAuth'
 import AvailabilityCalendar from '../../components/AvailabilityCalendar'
 import PedidoCard from '../../components/PedidoCard'
 import ConfirmModal from '../../components/ConfirmModal'
+import OrderCatalogDetailView from '../../components/OrderCatalogDetailView'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import styles from '../../styles/pedidos-catalogo.module.css'
@@ -254,14 +255,19 @@ function PedidosCatalogo() {
     }
 
     // Actualizar selectedPedido localmente
-    const updatedPedido = { ...selectedPedido, fechaProduccion: valor }
-
-    // Si hay una fecha y el pedido está confirmado, asignarlo automáticamente al calendario
-    // IMPORTANTE: no cambiar el estado a 'en_produccion' aquí — debe permanecer 'confirmado'
-    if (valor && updatedPedido.estado === 'confirmado') {
-      updatedPedido.asignadoAlCalendario = true
-      updatedPedido.fechaProduccionCalendario = valor
+    const updatedPedido = {
+      ...selectedPedido,
+      fechaProduccion: valor,
+      fechaProduccionCalendario: valor || null
     }
+
+    // Si hay fecha de producción, queda asignado al calendario sin cambiar el estado.
+    // Si se limpia, mantener la asignación solo si queda otra fecha visible en calendario.
+    updatedPedido.asignadoAlCalendario = Boolean(
+      updatedPedido.fechaProduccionCalendario ||
+      updatedPedido.fechaEntregaCalendario ||
+      updatedPedido.fechaConfirmadaEntrega
+    )
 
     // Actualizar lista global pedidosCatalogo
     const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
@@ -303,14 +309,18 @@ function PedidosCatalogo() {
       }
     }
 
-    const updatedPedido = { ...selectedPedido, fechaConfirmadaEntrega: valor }
-
-    // Si hay una fecha de entrega y el pedido está confirmado, asignarlo al calendario
-    // IMPORTANTE: no cambiar el estado a 'en_produccion' aquí — debe permanecer 'confirmado'
-    if (valor && updatedPedido.estado === 'confirmado') {
-      updatedPedido.asignadoAlCalendario = true
-      updatedPedido.fechaEntregaCalendario = valor
+    const updatedPedido = {
+      ...selectedPedido,
+      fechaConfirmadaEntrega: valor,
+      fechaEntregaCalendario: valor || null
     }
+
+    // Si hay una fecha de entrega, mantener asignación al calendario.
+    updatedPedido.asignadoAlCalendario = Boolean(
+      updatedPedido.fechaProduccionCalendario ||
+      updatedPedido.fechaEntregaCalendario ||
+      updatedPedido.fechaProduccion
+    )
 
     const index = pedidosCatalogo.findIndex(p => p.id === updatedPedido.id)
     if (index !== -1) {
@@ -731,7 +741,7 @@ function PedidosCatalogo() {
   const formatDate = useCallback((dateString) => {
     if (!dateString) return 'Sin fecha'
     if (typeof window === 'undefined') return dateString
-    const date = new Date(dateString)
+    const date = new Date(`${dateString}T12:00:00`)
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',
       month: '2-digit',
@@ -784,6 +794,29 @@ function PedidosCatalogo() {
       'rechazado_mp': 'Rechazado MP'
     }
     return labels[status] || status
+  }, [])
+
+  const getStatusBadgeClass = useCallback((estado) => {
+    switch (estado) {
+      case 'entregado': return 'entregado'
+      case 'listo': return 'listo'
+      case 'en_preparacion':
+      case 'confirmado': return 'en_proparacion'
+      case 'pendiente': return 'pendiente'
+      case 'cancelado': return 'cancelado'
+      default: return 'pendiente'
+    }
+  }, [])
+
+  const getPaymentBadgeClass = useCallback((estadoPago) => {
+    switch (estadoPago) {
+      case 'pagado_total':
+      case 'pagado': return 'pagado_total'
+      case 'seña_pagada': return 'seña_pagada'
+      case 'pendiente_mp': return 'pendiente_mp'
+      case 'rechazado_mp': return 'rechazado_mp'
+      default: return 'sin_seña'
+    }
   }, [])
 
   const formatFechaEntrega = useCallback((pedido) => {
@@ -944,15 +977,13 @@ function PedidosCatalogo() {
   }, [productosBase])
 
   const handleCardClick = useCallback((pedido) => {
-    // Abrir modal y actualizar la URL para que incluya el ID del pedido
     try {
+      router.push(`/admin/orders/detalle-pedido/${pedido.id}`)
+    } catch (e) {
+      // Respaldo mínimo: mantener el flujo anterior si la navegación falla
       const asPath = `/admin/orders/detalle-pedido/${pedido.id}`
       router.push({ pathname: router.pathname, query: { ...router.query, modal: 'detalle', id: pedido.id } }, asPath, { shallow: true })
-    } catch (e) {
-      // Si router falla, abrir modal sin cambiar URL
     }
-    setSelectedPedido(pedido)
-    setShowDetailModal(true)
   }, [router])
 
   const handleCloseModal = () => {
@@ -1518,25 +1549,108 @@ function PedidosCatalogo() {
               </div>
             ) : (
               <>
-                <div className={styles.pedidosGrid}>
-                  {currentPendientes.map(pedido => (
-                    <PedidoCard
-                      key={pedido.id}
-                      pedido={pedido}
-                      onClick={handleCardClick}
-                      formatCurrency={formatCurrency}
-                      formatDate={formatDate}
-                      getStatusEmoji={getStatusEmoji}
-                      getStatusLabel={getStatusLabel}
-                      getPaymentLabel={getPaymentLabel}
-                      getProductThumbnail={getProductThumbnail}
-                      formatFechaEntrega={formatFechaEntrega}
-                      formatFechaProduccion={formatFechaProduccion}
-                      createToast={createToast}
-                      productosBase={productosBase}
-                      materiales={materiales}
-                    />
-                  ))}
+                <div className={styles.pedidosTableContainer}>
+                  <table className={styles.pedidosTable}>
+                    <thead>
+                      <tr>
+                        <th style={{width: '80px'}}>ID</th>
+                        <th style={{width: '140px'}}>Cliente</th>
+                        <th style={{width: '120px'}}>Productos</th>
+                        <th style={{width: '80px'}}>Tiempo</th>
+                        <th style={{width: '90px'}}>Estado</th>
+                        <th style={{width: '100px'}}>Pago</th>
+                        <th style={{width: '90px', textAlign: 'right'}}>Total</th>
+                        <th style={{width: '90px'}}>Producción</th>
+                        <th style={{width: '90px'}}>Entrega</th>
+                        <th style={{width: '60px'}}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentPendientes.map(pedido => {
+                        const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
+                        const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
+                        
+                        // Calcular tiempo total de producción (igual que PedidoCard)
+                        const getProductData = (prod) => {
+                          if (prod.tiempoUnitario) {
+                            return { tiempoUnitario: prod.tiempoUnitario }
+                          }
+                          const productoBase = productosBase?.find(p => 
+                            p.id === prod.productId || 
+                            p.id === prod.idProducto ||
+                            p.nombre?.toLowerCase() === prod.nombre?.toLowerCase()
+                          )
+                          return { tiempoUnitario: productoBase?.tiempoUnitario || '00:00:00' }
+                        }
+                        
+                        const timeToSeconds = (timeStr) => {
+                          if (!timeStr) return 0
+                          const parts = timeStr.split(':')
+                          return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0)
+                        }
+                        
+                        const tiempoTotal = pedido.productos?.reduce((sum, prod) => {
+                          const prodData = getProductData(prod)
+                          const tiempoSeg = timeToSeconds(prodData.tiempoUnitario)
+                          return sum + (tiempoSeg * (prod.cantidad || 1))
+                        }, 0) || 0
+                        const tiempoHrs = Math.floor(tiempoTotal / 3600)
+                        const tiempoMin = Math.floor((tiempoTotal % 3600) / 60)
+                        const tiempoStr = `${tiempoHrs}h ${tiempoMin}m`
+                        
+                        // Productos compactos - nombre en línea 1, unidades en línea 2
+                        const productosLines = pedido.productos?.slice(0, 2).map(p => 
+                          `<div>${p.nombre}</div><div style="font-size:0.75rem;color:var(--text-secondary)">${p.cantidad || 1} unidades</div>`
+                        ) || []
+                        const productosText = productosLines.join('') + (pedido.productos?.length > 2 ? `<div style="font-size:0.75rem;color:var(--text-muted)">+${pedido.productos.length - 2} más</div>` : '') || '—'
+                        
+                        return (
+                          <tr key={pedido.id}>
+                            <td className={styles.idCell}>
+                              {pedido.nroPedido || `N°${pedido.id}`}
+                            </td>
+                            <td className={styles.clienteCell}>
+                              {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
+                            </td>
+                            <td className={styles.productosCell} title={pedido.productos?.map(p => `${p.nombre}: ${p.cantidad || 1}u`).join('\n')}>
+                              <div dangerouslySetInnerHTML={{ __html: productosText }} />
+                            </td>
+                            <td className={styles.tiempoCell}>
+                              ⏱ {tiempoStr}
+                            </td>
+                            <td>
+                              <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>
+                                {getStatusLabel(pedido.estado)}
+                              </span>
+                            </td>
+                            <td className={styles.pagoCell}>
+                              <div className={styles.metodoPago}>{pedido.metodoPago === 'transferencia' ? '💳 Transferencia' : pedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : pedido.metodoPago === 'retiro' ? '🏪 Retiro' : pedido.metodoPago === 'mercadopago' ? '💳 MercadoPago' : '—'}</div>
+                              <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>
+                                {getPaymentLabel(pedido.estadoPago, pedido)}
+                              </span>
+                            </td>
+                            <td className={styles.montoCell}>
+                              {formatCurrency(pedido.total)}
+                            </td>
+                            <td className={styles.fechaCell}>
+                              {produccionDate ? formatDate(produccionDate) : '—'}
+                            </td>
+                            <td className={styles.fechaCell}>
+                              {entregaDate ? formatDate(entregaDate) : '—'}
+                            </td>
+                            <td>
+                              <button 
+                                className={styles.tableActionBtn}
+                                onClick={() => handleCardClick(pedido)}
+                              >
+                                Ver
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Paginación */}
@@ -1735,356 +1849,26 @@ function PedidosCatalogo() {
         {/* Modal de Detalle - Diseño Pro */}
         {showDetailModal && selectedPedido && (
           <div className={styles.modalOverlay} onClick={handleCloseModal}>
-            <div className={styles.modalContentNew} onClick={(e) => e.stopPropagation()}>
-              {/* Header con info del pedido */}
-              <div className={styles.modalHeaderNew}>
-                <div className={styles.headerTop}>
-                  <div className={styles.headerIdBadge}>
-                    <span className={styles.pedidoIdTag}>#{selectedPedido.id}</span>
-                    <span className={styles.metodoPagoBadge}>
-                      {selectedPedido.metodoPago === 'transferencia' ? '🏦 Transferencia' : selectedPedido.metodoPago === 'envio' ? '🚚 Envío' : selectedPedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : '🏪 Retiro'}
-                    </span>
-                  </div>
-                  <button onClick={handleCloseModal} className={styles.closeBtnNew}>×</button>
-                </div>
-                <div className={styles.headerInfo}>
-                  <div className={styles.clienteMain}>
-                    <span className={styles.clienteNombre}>
-                      {selectedPedido.cliente.nombre} {selectedPedido.cliente.apellido || ''}
-                    </span>
-                    <span className={styles.clienteContacto}>
-                      {selectedPedido.cliente.telefono} · {selectedPedido.cliente.email || 'Sin email'}
-                    </span>
-                  </div>
-                  <div className={styles.contactActions}>
-                    <button onClick={handleContactWhatsApp} className={styles.btnWhatsApp} title="WhatsApp">
-                      📱
-                    </button>
-                    <button onClick={handleContactEmail} className={styles.btnEmail} title="Email">
-                      📧
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.modalBodyNew}>
-                {/* Estados con iconos visuales */}
-                <div className={styles.estadosGrid}>
-                  <div className={styles.estadoCard}>
-                    <div className={styles.estadoCardHeader}>
-                      <span className={styles.estadoIcon}>📋</span>
-                      <label className={styles.estadoLabel}>Estado del Pedido</label>
-                    </div>
-                    <select
-                      value={selectedPedido.estado || 'pendiente'}
-                      onChange={(e) => handleChangeEstado(e.target.value)}
-                      className={styles.selectInline}
-                    >
-                      <option value="pendiente">Pendiente</option>
-                      <option value="confirmado">Confirmado</option>
-                      <option value="en_preparacion">En preparación</option>
-                      <option value="en_produccion">En Producción</option>
-                      <option value="listo">Listo</option>
-                      <option value="entregado">Entregado</option>
-                      <option value="cancelado">Cancelado</option>
-                    </select>
-                  </div>
-
-                  <div className={styles.estadoCard}>
-                    <div className={styles.estadoCardHeader}>
-                      <span className={styles.estadoIcon}>💳</span>
-                      <label className={styles.estadoLabel}>Estado de Pago</label>
-                    </div>
-                    {selectedPedido.metodoPago === 'mercadopago' ? (
-                      <span style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: selectedPedido.mpPaymentStatus === 'approved'
-                          ? 'var(--success-color, #22c55e)'
-                          : selectedPedido.mpPaymentStatus === 'rejected'
-                          ? 'var(--danger-color, #ef4444)'
-                          : 'var(--warning-color, #f59e0b)'
-                      }}>
-                        {selectedPedido.mpPaymentStatus === 'approved' ? '✓ Pagado via MP'
-                          : selectedPedido.mpPaymentStatus === 'rejected' ? '✗ Rechazado MP'
-                          : selectedPedido.mpPaymentStatus === 'pending' ? '⏳ Pendiente MP'
-                          : '⏳ Esperando confirmación MP'}
-                      </span>
-                    ) : (
-                      <select
-                        value={selectedPedido.estadoPago || 'sin_seña'}
-                        onChange={(e) => handleChangeEstadoPago(e.target.value)}
-                        className={styles.selectInline}
-                      >
-                        <option value="sin_seña">Sin seña</option>
-                        <option value="seña_pagada">Seña pagada</option>
-                        <option value="pagado_total">Pagado total</option>
-                      </select>
-                    )}
-                  </div>
-                </div>
-
-                {/* Fechas con iconos */}
-                <div className={styles.fechasSection}>
-                  <div className={styles.sectionTitleRow}>
-                    <span className={styles.sectionIcon}>📅</span>
-                    <span className={styles.sectionTitle}>Fechas</span>
-                  </div>
-                  <div className={styles.fechasGrid}>
-                    <div className={styles.fechaItem}>
-                      <label>Solicitada</label>
-                      <div className={styles.fechaValue}>{formatDate(selectedPedido.fechaSolicitudEntrega)}</div>
-                    </div>
-                    <div className={styles.fechaItem}>
-                      <label>Producción</label>
-                      <div className={styles.fechaValue}>
-                        <input
-                          type="date"
-                          value={selectedPedido.fechaProduccion || ''}
-                          onChange={handleChangeFechaProduccion}
-                          className={styles.dateInput}
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.fechaItem}>
-                      <label>Entrega confirmada</label>
-                      <div className={styles.fechaValue}>
-                        <input
-                          type="date"
-                          value={selectedPedido.fechaConfirmadaEntrega || ''}
-                          onChange={handleChangeFechaConfirmada}
-                          className={styles.dateInput}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botón Calendario */}
-                {selectedPedido.estado === 'confirmado' && !selectedPedido.asignadoAlCalendario && (
-                  <button onClick={handleAsignarCalendario} className={styles.btnCalendarNew}>
-                    📅 Asignar al Calendario
-                  </button>
-                )}
-                
-                {selectedPedido.asignadoAlCalendario && (
-                  <div className={styles.alertSuccessNew}>
-                    ✓ Asignado al calendario
-                  </div>
-                )}
-
-                {/* Productos */}
-                <div className={styles.productosSection}>
-                  <div className={styles.sectionTitleRow}>
-                    <span className={styles.sectionIcon}>📦</span>
-                    <span className={styles.sectionTitle}>Productos ({selectedPedido.productos.length})</span>
-                  </div>
-                  <div className={styles.productosListNew}>
-                    {selectedPedido.productos.map((prod, idx) => {
-                      const productData = getProductData(prod)
-                      const materialInfo = productData.material ? getMaterialInfo(productData.material, productData.materialId) : null
-                      return (
-                        <div key={idx} className={styles.productoItemNew}>
-                          <div className={styles.productoLeft}>
-                            <div className={styles.productoNombreNew}>{prod.nombre}</div>
-                            <div className={styles.productoMetaNew}>
-                              {prod.medidas && <span className={styles.metaTag}>{prod.medidas}</span>}
-                              <span className={styles.metaTag}>×{prod.cantidad}</span>
-                              {productData.tiempoUnitario && (
-                                <span className={styles.tiempoTag}>⏱ {productData.tiempoUnitario}</span>
-                              )}
-                              {productData.precioPorMinuto > 0 && (
-                                <span className={styles.precioMinTag}>{formatCurrency(productData.precioPorMinuto)}/min</span>
-                              )}
-                            </div>
-                            {materialInfo && (
-                              <div className={styles.productoMaterial}>
-                                Material: {materialInfo.nombre} • {materialInfo.tipo} • {materialInfo.espesor || 'N/A'}mm
-                              </div>
-                            )}
-                          </div>
-                          <div className={styles.productoRight}>
-                            <div className={styles.precioUnit}>{formatCurrency(prod.precioUnitario)} c/u</div>
-                            <div className={styles.subtotalProd}>{formatCurrency(prod.subtotal)}</div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Resumen Financiero con barra de progreso */}
-                {(() => {
-                  const savedPedido = pedidosCatalogo.find(p => p.id === selectedPedido.id)
-                  const savedMonto = Number(savedPedido?.montoRecibido || 0)
-                  const total = Number(selectedPedido.total || 0)
-                  const restante = Math.max(0, total - savedMonto)
-                  const pagadoCompleto = savedMonto > 0 && savedMonto >= total
-                  const porcentajePago = total > 0 ? Math.min(100, Math.round((savedMonto / total) * 100)) : 0
-                  return (
-                    <div className={styles.financieroSection}>
-                      <div className={styles.sectionTitleRow}>
-                        <span className={styles.sectionIcon}>💰</span>
-                        <span className={styles.sectionTitle}>Resumen Financiero</span>
-                      </div>
-                      <div className={styles.financieroGrid}>
-                        <div className={styles.finItem}>
-                          <span>Subtotal</span>
-                          <span>{formatCurrency(selectedPedido.subtotal)}</span>
-                        </div>
-                        {selectedPedido.descuento > 0 && (
-                          <div className={`${styles.finItem} ${styles.descuento}`}>
-                            <span>Descuento</span>
-                            <span>-{formatCurrency(selectedPedido.descuento)}</span>
-                          </div>
-                        )}
-                        <div className={`${styles.finItem} ${styles.total}`}>
-                          <span>Total</span>
-                          <span>{formatCurrency(total)}</span>
-                        </div>
-                      </div>
-
-                      {/* Barra de progreso de pago — solo para pedidos no-MP */}
-                      {total > 0 && selectedPedido.metodoPago !== 'mercadopago' && (
-                        <div className={styles.pagoProgressSection}>
-                          <div className={styles.pagoProgressHeader}>
-                            <span className={styles.pagoProgressLabel}>
-                              {pagadoCompleto ? '✓ Pagado completo' : savedMonto > 0 ? 'Pago parcial' : 'Sin pagos'}
-                            </span>
-                            <span className={styles.pagoProgressPercent}>{porcentajePago}%</span>
-                          </div>
-                          <div className={styles.pagoProgressBar}>
-                            <div
-                              className={`${styles.pagoProgressFill} ${pagadoCompleto ? styles.pagoComplete : savedMonto > 0 ? styles.pagoPartial : ''}`}
-                              style={{ width: `${porcentajePago}%` }}
-                            />
-                          </div>
-                          <div className={styles.pagoProgressDetails}>
-                            {savedMonto > 0 && (
-                              <span className={styles.pagoRecibido}>Recibido: {formatCurrency(savedMonto)}</span>
-                            )}
-                            {!pagadoCompleto && savedMonto > 0 && (
-                              <span className={styles.pagoRestante}>Restante: {formatCurrency(restante)}</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {/* Indicador de estado para pedidos MP */}
-                      {total > 0 && selectedPedido.metodoPago === 'mercadopago' && (
-                        <div className={styles.pagoProgressSection}>
-                          <div className={styles.pagoProgressHeader}>
-                            <span className={styles.pagoProgressLabel}>
-                              {selectedPedido.mpPaymentStatus === 'approved'
-                                ? '✓ Pago confirmado por MercadoPago'
-                                : selectedPedido.mpPaymentStatus === 'rejected'
-                                ? '✗ Pago rechazado por MercadoPago'
-                                : '⏳ En proceso de pago via MercadoPago'}
-                            </span>
-                          </div>
-                          {selectedPedido.mpPaymentStatus === 'approved' && (
-                            <div className={styles.pagoProgressBar}>
-                              <div
-                                className={`${styles.pagoProgressFill} ${styles.pagoComplete}`}
-                                style={{ width: '100%' }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Input para registrar / actualizar monto recibido — oculto para pagos MP */}
-                      {selectedPedido.metodoPago === 'mercadopago' ? (
-                        <div className={styles.montoInputSection}>
-                          <label className={styles.montoInputLabel}>Información de pago MercadoPago</label>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                              <span style={{ color: 'var(--text-secondary)' }}>Estado MP</span>
-                              <span style={{
-                                fontWeight: 600,
-                                color: selectedPedido.mpPaymentStatus === 'approved' ? 'var(--success-color, #22c55e)'
-                                  : selectedPedido.mpPaymentStatus === 'rejected' ? 'var(--danger-color, #ef4444)'
-                                  : 'var(--warning-color, #f59e0b)'
-                              }}>
-                                {selectedPedido.mpPaymentStatus === 'approved' ? '✓ Aprobado'
-                                  : selectedPedido.mpPaymentStatus === 'rejected' ? '✗ Rechazado'
-                                  : selectedPedido.mpPaymentStatus === 'pending' ? '⏳ Pendiente'
-                                  : selectedPedido.estadoPago === 'pendiente_mp' ? '⏳ Esperando confirmación'
-                                  : '—'}
-                              </span>
-                            </div>
-                            {selectedPedido.mpPaymentId && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>ID de pago</span>
-                                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{selectedPedido.mpPaymentId}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                      <div className={styles.montoInputSection}>
-                        <label className={styles.montoInputLabel}>
-                          {savedMonto > 0 ? 'Actualizar monto recibido' : 'Registrar seña / monto recibido'}
-                        </label>
-                        <div className={styles.montoInputWrapper}>
-                          <span className={styles.currencyPrefix}>$</span>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="0"
-                            value={formatInputNumber(selectedPedido.montoRecibido)}
-                            onChange={(e) => {
-                              const raw = e.target.value
-                              const numeric = parseInputNumber(raw)
-                              setSelectedPedido({ ...selectedPedido, montoRecibido: numeric })
-                            }}
-                            className={styles.montoInput}
-                          />
-                        </div>
-                      </div>
-                      )}
-                    </div>
-                  )
-                })()}
-
-                {/* Comprobante */}
-                {selectedPedido.comprobante && (
-                  <div className={styles.comprobanteSection}>
-                    <div className={styles.sectionTitleRow}>
-                      <span className={styles.sectionIcon}>🧾</span>
-                      <span className={styles.sectionTitle}>Comprobante de Pago</span>
-                    </div>
-                    <div className={styles.comprobanteWrapper}>
-                      <img src={selectedPedido.comprobante} alt="Comprobante" className={styles.comprobanteImgNew} />
-                      <button onClick={() => downloadComprobante(selectedPedido)} className={styles.btnDownloadNew}>
-                        ⬇ Descargar comprobante
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Dirección de Entrega */}
-                {selectedPedido.metodoPago === 'envio' && selectedPedido.cliente?.direccion && selectedPedido.cliente.direccion !== 'No proporcionada' && (
-                  <div className={styles.direccionSection}>
-                    <div className={styles.sectionTitleRow}>
-                      <span className={styles.sectionIcon}>📍</span>
-                      <label>Dirección de Entrega</label>
-                    </div>
-                    <p>{selectedPedido.cliente.direccion}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer con acciones */}
-              <div className={styles.modalFooterNew}>
-                <button className={styles.btnDanger} onClick={handleDelete}>
-                  🗑 Eliminar
-                </button>
-                <div className={styles.footerActions}>
-                  <button className={styles.btnSecondary} onClick={handleCloseModal}>Cerrar</button>
-                  <button className={styles.btnSave} onClick={handleSaveChanges}>💾 Guardar cambios</button>
-                </div>
-              </div>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <OrderCatalogDetailView
+                pedido={selectedPedido}
+                setPedido={setSelectedPedido}
+                productosBase={productosBase}
+                materiales={materiales}
+                onChangeEstado={handleChangeEstado}
+                onChangeEstadoPago={handleChangeEstadoPago}
+                onChangeFechaProduccion={handleChangeFechaProduccion}
+                onChangeFechaConfirmada={handleChangeFechaConfirmada}
+                onChangeMontoRecibido={(monto) => setSelectedPedido(prev => prev ? { ...prev, montoRecibido: monto } : prev)}
+                onSave={handleSaveChanges}
+                onDelete={handleDelete}
+                onClose={handleCloseModal}
+                onAssignCalendar={handleAsignarCalendario}
+                onContactWhatsApp={handleContactWhatsApp}
+                onContactEmail={handleContactEmail}
+                onDownloadComprobante={downloadComprobante}
+                showFooter={true}
+              />
             </div>
           </div>
         )}
