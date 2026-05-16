@@ -273,7 +273,7 @@ export default function Catalog({ seoConfig }) {
         color: '#333'
       },
       'default': {
-        background: 'linear-gradient(135deg, var(--accent-blue) 0%, #5dade2 100%)',
+        background: 'linear-gradient(135deg, #2196F3 0%, #5dade2 100%)',
         icon: '🏷️',
         color: 'white'
       }
@@ -876,6 +876,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       background: badgeBackground,
+                      color: badgeTextColor,
                       border: badgeBorder,
                       marginBottom: '10px',
                       cursor: 'default'
@@ -886,13 +887,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       if (cat.isHierarchy) {
                         return (
                           <>
-                            <span style={{ opacity: 0.65, fontSize: '0.72rem' }}>{cat.parent}</span>
-                            <span style={{ margin: '0 3px', opacity: 0.5 }}>›</span>
-                            <span>{cat.label}</span>
+                            <span style={{ opacity: 0.65, fontSize: '0.72rem', color: 'inherit' }}>{cat.parent}</span>
+                            <span style={{ margin: '0 3px', opacity: 0.5, color: 'inherit' }}>›</span>
+                            <span style={{ color: 'inherit' }}>{cat.label}</span>
                           </>
                         )
                       }
-                      return <span>{cat.label || product.categoria}</span>
+                      return <span style={{ color: 'inherit' }}>{cat.label || product.categoria}</span>
                     })()}
                   </div>
                 )}
