@@ -993,6 +993,24 @@ function SeoPage() {
                         </div>
                       </div>
 
+                      {config.siteUrl && (
+                        <div style={{ marginBottom: '20px', padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>URL del sitemap</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <code style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-primary)', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: '6px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {config.siteUrl}/sitemap.xml
+                            </code>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(`${config.siteUrl}/sitemap.xml`).then(() => showToast('URL copiada al portapapeles')) }}
+                              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}
+                              title="Copiar URL"
+                            >
+                              📋
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       <label style={{ ...labelStyle, marginBottom: '12px' }}>Opciones de generación</label>
                       {[
                         { key: 'sitemapIncludeProducts',   label: 'Incluir productos' },
@@ -1008,7 +1026,7 @@ function SeoPage() {
                       ))}
 
                       <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
-                        <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                        <a href={config.siteUrl ? `${config.siteUrl}/sitemap.xml` : '/sitemap.xml'} target="_blank" rel="noopener noreferrer" style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                           Ver sitemap ↗
                         </a>
                         <button onClick={handleRegenerateSitemap} disabled={regenerating} style={btnPrimary}>
@@ -1102,12 +1120,31 @@ function SeoPage() {
               <PaginasTab config={config} setField={setField} saving={saving} onSave={handleSaveConfig} />
             )}
 
-            {/* ── Técnico / Auditoría — próximamente ── */}
-            {(activeTab === 'tecnico' || activeTab === 'auditoria') && (
+            {/* ── Técnico / Auditoría — proximamente ── */}
+            {activeTab === 'tecnico' && (
               <div style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🚧</div>
-                <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Próximamente</h3>
-                <p style={{ color: 'var(--text-muted)', margin: 0 }}>Esta sección está en desarrollo.</p>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⚡</div>
+                <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Técnico</h3>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>Análisis de rendimiento y Core Web Vitals</p>
+                <div style={{ display: 'inline-flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>LCP</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>FID</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>CLS</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>TTFB</span>
+                </div>
+              </div>
+            )}
+            {activeTab === 'auditoria' && (
+              <div style={{ ...card, textAlign: 'center', padding: '60px 24px' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔎</div>
+                <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Auditoría SEO</h3>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>Auditoría automática de SEO on-page</p>
+                <div style={{ display: 'inline-flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>Meta tags</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>Headings</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>Imágenes</span>
+                  <span style={{ padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>Links</span>
+                </div>
               </div>
             )}
           </>
