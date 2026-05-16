@@ -21,10 +21,16 @@ const ESTADO_LABELS = {
 
 const METODO_PAGO_LABELS = {
   transferencia: '🏦 Transferencia',
-  envio: '🚚 Envío a domicilio',
   whatsapp: '💬 WhatsApp',
-  retiro: '🏪 Retiro en local',
   mercadopago: '💳 MercadoPago',
+  // Compatibilidad con pedidos legacy donde la entrega estaba embebida en metodo_pago
+  envio: '🚚 Envío a domicilio',
+  retiro: '🏪 Retiro en local',
+}
+
+const METODO_ENTREGA_LABELS = {
+  envio: '🚚 Envío a domicilio',
+  retiro: '🏪 Retiro en local',
 }
 
 const HISTORIAL_DOT = {
@@ -191,9 +197,17 @@ export default function OrderCatalogDetailView({
                   <span className={styles.infoLabel}>N° pedido</span>
                   <span className={styles.infoValue}>#{pedido.id}</span>
 
-                  <span className={styles.infoLabel}>Entrega</span>
+                  <span className={styles.infoLabel}>Pago</span>
                   <span className={styles.infoValue}>
                     {METODO_PAGO_LABELS[pedido.metodoPago] || pedido.metodoPago || '—'}
+                  </span>
+
+                  <span className={styles.infoLabel}>Entrega</span>
+                  <span className={styles.infoValue}>
+                    {pedido.metodoEntrega
+                      ? (METODO_ENTREGA_LABELS[pedido.metodoEntrega] || pedido.metodoEntrega)
+                      : (METODO_ENTREGA_LABELS[pedido.metodoPago] || '—')
+                    }
                   </span>
 
                   {pedido.fechaSolicitudEntrega && (
@@ -334,9 +348,19 @@ export default function OrderCatalogDetailView({
                     <span>Subtotal</span>
                     <span>{formatCurrency(pedido.subtotal)}</span>
                   </div>
+                  {pedido.envioGratis && (
+                    <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
+                      <span>🎁 Envío gratis</span>
+                      <span>—</span>
+                    </div>
+                  )}
                   {pedido.descuento > 0 && (
                     <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
-                      <span>Descuento</span>
+                      <span>
+                        {pedido.cuponCodigo
+                          ? `🏷 Cupón ${pedido.cuponCodigo}`
+                          : '🏷 Descuento'}
+                      </span>
                       <span>-{formatCurrency(pedido.descuento)}</span>
                     </div>
                   )}
@@ -453,9 +477,19 @@ export default function OrderCatalogDetailView({
                 <span>Subtotal ({pedido.productos?.length || 0} productos)</span>
                 <span>{formatCurrency(pedido.subtotal)}</span>
               </div>
+              {pedido.envioGratis && (
+                <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
+                  <span>🎁 Envío gratis</span>
+                  <span>—</span>
+                </div>
+              )}
               {pedido.descuento > 0 && (
                 <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
-                  <span>Descuentos</span>
+                  <span>
+                    {pedido.cuponCodigo
+                      ? `🏷 Cupón ${pedido.cuponCodigo}`
+                      : '🏷 Descuento'}
+                  </span>
                   <span>-{formatCurrency(pedido.descuento)}</span>
                 </div>
               )}

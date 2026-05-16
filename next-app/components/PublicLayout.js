@@ -43,8 +43,8 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
   useEffect(() => {
     // Forzar siempre tema light en el catálogo público
+    // Solo aplicar al DOM — NO sobrescribir localStorage para no pisar el tema del panel admin
     try {
-      localStorage.setItem('theme', 'light')
       document.body.setAttribute('data-theme', 'light')
       document.body.className = 'light'
     } catch (e) {
