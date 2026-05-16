@@ -219,7 +219,7 @@ export async function createPedidoCatalogo(pedido, items) {
         cliente_email: pedido.cliente.email || '',
         cliente_direccion: pedido.cliente.direccion || '',
         metodo_pago: pedido.metodoPago,
-        metodo_entrega: pedido.metodoEntrega || null,
+        ...(pedido.metodoEntrega != null ? { metodo_entrega: pedido.metodoEntrega } : {}),
         estado_pago: pedido.estadoPago || 'pagado_total',
         comprobante_url: pedido.comprobante || null,
         comprobante_omitido: pedido.comprobanteOmitido || false,
