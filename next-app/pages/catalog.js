@@ -905,7 +905,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       alignItems: 'center',
                       gap: '6px',
                       padding: '6px 10px',
-                      borderRadius: '12px',
+                      borderRadius: '0',
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       background: badgeBackground,

@@ -330,6 +330,33 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
 
               <div className={styles.formField}>
                 <label className={styles.label}>Color del badge</label>
+                {/* Paleta de colores del sistema */}
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  {[
+                    { color: '#4CAF50', name: 'Verde' },
+                    { color: '#2196F3', name: 'Azul' },
+                    { color: '#a29bfe', name: 'Púrpura' },
+                    { color: '#FF9800', name: 'Naranja' },
+                    { color: '#EF4444', name: 'Rojo' },
+                    { color: '#6B7280', name: 'Gris' }
+                  ].map(({ color, name }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => updateField('badgeColor', color)}
+                      title={name}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        background: color,
+                        border: formData.badgeColor === color ? '2px solid #fff' : '2px solid transparent',
+                        borderRadius: 0,
+                        cursor: 'pointer',
+                        boxShadow: formData.badgeColor === color ? '0 0 0 2px ' + color : 'none'
+                      }}
+                    />
+                  ))}
+                </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="color"
