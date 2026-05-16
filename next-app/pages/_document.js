@@ -5,7 +5,17 @@ class MyDocument extends Document {
     return (
       <Html lang="es">
         <Head />
-        <body data-theme="dark">
+        <body>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  var theme = localStorage.getItem('theme') || 'dark';
+                  document.body.setAttribute('data-theme', theme);
+                })();
+              `
+            }}
+          />
           <Main />
           <NextScript />
         </body>

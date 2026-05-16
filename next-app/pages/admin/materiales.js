@@ -40,18 +40,8 @@ function Materiales() {
   const [showNewEspesor, setShowNewEspesor] = useState(false)
   const [newEspesor, setNewEspesor] = useState('')
 
-  // Inicializar darkMode desde localStorage inmediatamente para evitar flash
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('finanzas_dark')
-        return saved ? JSON.parse(saved) : false
-      } catch {
-        return false
-      }
-    }
-    return false
-  })
+  // Usar tema centralizado desde body (data-theme) en lugar de finanzas_dark
+  const isDarkMode = typeof window !== 'undefined' && document.body.getAttribute('data-theme') !== 'light'
 
   const [form, setForm] = useState({
     nombre: '',
@@ -287,7 +277,7 @@ function Materiales() {
 
   return (
     <Layout>
-  <div className={`${styles.container} ${darkMode ? styles.dark : ''}`}>
+  <div className={`${styles.container} ${isDarkMode ? styles.dark : ''}`}>
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Materiales</h1>
@@ -615,7 +605,7 @@ function Materiales() {
       </div>
 
       {confirmModal && (
-        <div className={`${styles.confirmOverlay} ${darkMode ? styles.dark : ''}`} onClick={() => setConfirmModal(null)}>
+        <div className={`${styles.confirmOverlay} ${isDarkMode ? styles.dark : ''}`} onClick={() => setConfirmModal(null)}>
           <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
             <h4 className={styles.confirmTitle}>{confirmModal.title}</h4>
             <p className={styles.confirmMsg}>{confirmModal.message}</p>

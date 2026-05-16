@@ -69,18 +69,22 @@ function SectionDivider({ label }) {
   )
 }
 
+// Get theme from body (already set by _document.js script) or localStorage
+const getTheme = () => {
+  if (typeof window === 'undefined') return 'dark'
+  return document.body.getAttribute('data-theme') || localStorage.getItem('theme') || 'dark'
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 export default function Layout({ children, title = 'Sistema KOND' }) {
-  const [theme, setTheme] = useState('dark')
+  const [theme, setTheme] = useState(null)
   const [userInfo, setUserInfo] = useState(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark'
-    setTheme(savedTheme)
-    document.body.setAttribute('data-theme', savedTheme)
+    setTheme(getTheme())
     loadUserInfo()
   }, [])
 
@@ -132,11 +136,14 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
   }
 
   const toggleTheme = () => {
+    if (!theme) return
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     document.body.setAttribute('data-theme', newTheme)
     if (typeof window !== 'undefined') localStorage.setItem('theme', newTheme)
   }
+
+  const currentTheme = theme || 'dark'
 
   return (
     <>
@@ -235,12 +242,12 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           )}
           <button className="sidebar-btn" onClick={toggleTheme}>
             <span className="nav-icon-wrap">
-              <NavIcon d={theme === 'dark'
+              <NavIcon d={currentTheme === 'dark'
                 ? 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z'
                 : 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z'
               } />
             </span>
-            <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+            <span className="nav-label">{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
           </button>
         </div>
       </aside>

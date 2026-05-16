@@ -163,23 +163,23 @@
   .headerActions { width: 100%; justify-content: flex-end; }
 }
 
-/* ─── Dark mode ─── */
+/* ─── Dark mode (usa CSS vars del tema centralizado) ─── */
 .dark { background: transparent; }
-.dark .kpiCard  { background: #071229; border-color: rgba(255,255,255,0.06); }
-.dark .kpiLabel { color: rgba(255,255,255,0.5); }
-.dark .kpiValue { color: #e6eef8; }
+.dark .kpiCard  { background: var(--bg-card); border-color: var(--border-color); }
+.dark .kpiLabel { color: var(--text-secondary); }
+.dark .kpiValue { color: var(--text-primary); }
 .dark .kpiAlert { color: #f87171; }
 
-.dark .card        { background: #0b1220; border-color: rgba(255,255,255,0.08); }
-.dark .card:hover  { box-shadow: 0 3px 14px rgba(0,0,0,0.35); }
-.dark .name        { color: #e6eef8; }
-.dark .infoValue   { color: #e6eef8; }
-.dark .infoCost    { color: #60a5fa; }
-.dark .infoLabel   { color: rgba(255,255,255,0.45); }
+.dark .card        { background: var(--bg-card); border-color: var(--border-color); }
+.dark .card:hover  { box-shadow: var(--shadow-md); }
+.dark .name        { color: var(--text-primary); }
+.dark .infoValue   { color: var(--text-primary); }
+.dark .infoCost    { color: var(--accent-blue); }
+.dark .infoLabel   { color: var(--text-secondary); }
 .dark .stockOk     { background: rgba(16,185,129,0.15); color: #34d399; }
 .dark .stockBajo   { background: rgba(234,179,8,0.12);  color: #fbbf24; }
-.dark .stockCero   { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); }
-.dark .notas       { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.06); }
+.dark .stockCero   { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+.dark .notas       { color: var(--text-secondary); border-color: var(--border-color); }
 
 /* ─── Confirm modal ─── */
 .confirmOverlay {
@@ -211,26 +211,26 @@
 .btnDanger { background: #dc2626; color: white; border: none; padding: 9px 18px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: opacity 0.15s; }
 .btnDanger:hover { opacity: 0.85; }
 
-.dark .confirmBox   { background: #0b1220; border: 1px solid rgba(255,255,255,0.08); }
-.dark .confirmTitle { color: #e6eef8; }
-.dark .confirmMsg   { color: rgba(255,255,255,0.55); }
+.dark .confirmBox   { background: var(--bg-card); border: 1px solid var(--border-color); }
+.dark .confirmTitle { color: var(--text-primary); }
+.dark .confirmMsg   { color: var(--text-secondary); }
 
-.dark .empty     { background: #071229; border-color: rgba(255,255,255,0.07); }
-.dark .emptyText { color: #e6eef8; }
-.dark .loading   { color: rgba(255,255,255,0.5); }
+.dark .empty     { background: var(--bg-card); border-color: var(--border-color); }
+.dark .emptyText { color: var(--text-primary); }
+.dark .loading   { color: var(--text-secondary); }
 
-.dark .formContainer { background: #071229; border-color: rgba(255,255,255,0.05); }
-.dark .formHeader    { border-color: rgba(255,255,255,0.06); }
-.dark .formTitle     { color: #f3f4f6; }
-.dark .label         { color: rgba(255,255,255,0.5); }
-.dark .field         { background: #0b1220; color: #e6eef8; border-color: rgba(255,255,255,0.08); }
-.dark .field:focus   { border-color: rgba(37,99,235,0.5); box-shadow: 0 2px 8px rgba(37,99,235,0.15); }
-.dark .btnSecondary  { background: transparent; color: #e6eef8; border-color: rgba(255,255,255,0.08); }
-.dark .btnSmall      { background: transparent; border-color: rgba(255,255,255,0.08); color: #e6eef8; }
-.dark .btnSmall:hover { background: rgba(255,255,255,0.05); }
+.dark .formContainer { background: var(--bg-card); border-color: var(--border-color); }
+.dark .formHeader    { border-color: var(--border-color); }
+.dark .formTitle     { color: var(--text-primary); }
+.dark .label         { color: var(--text-secondary); }
+.dark .field         { background: var(--bg-input); color: var(--text-primary); border-color: var(--border-input); }
+.dark .field:focus   { border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(37,99,235,0.15); }
+.dark .btnSecondary  { background: transparent; color: var(--text-primary); border-color: var(--border-color); }
+.dark .btnSmall      { background: transparent; border-color: var(--border-color); color: var(--text-primary); }
+.dark .btnSmall:hover { background: var(--bg-hover); }
 .dark .btnSmallDanger { background: transparent; border-color: rgba(239,68,68,0.4); color: #f87171; }
 .dark .btnSmallDanger:hover { background: rgba(239,68,68,0.1); }
-.dark .closeBtn:hover { background: rgba(255,255,255,0.06); }
-.dark .costPreviewFull { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2); color: #60a5fa; }
-.dark .darkToggle     { border-color: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
-.dark .formActions    { border-color: rgba(255,255,255,0.06); }
+.dark .closeBtn:hover { background: var(--bg-hover); }
+.dark .costPreviewFull { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2); color: var(--accent-blue); }
+.dark .darkToggle     { border-color: var(--border-color); color: var(--text-secondary); }
+.dark .formActions    { border-color: var(--border-color); }
