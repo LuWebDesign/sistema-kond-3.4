@@ -194,10 +194,10 @@ function NewProductComponent() {
 
       let costoMaterialEfectivo = costoMaterial
       if (!isCostoMaterialManual) {
-        // Costo material = (costoPlaca * placas usadas) / unidades
+        // Costo material = (costoPlaca * placas usadas) / unidadesPorPlaca
         // Si usoPlacas manual, usar ese valor; si no, usar el calculado
         const placasEfectivas = isUsoPlacasManual ? usoPlacas : calculatedUsoPlacas
-        const costoMaterialCalc = unidades > 0 ? (costoPlaca * placasEfectivas) / unidades : 0
+        const costoMaterialCalc = unidadesPorPlaca > 0 ? (costoPlaca * placasEfectivas) / unidadesPorPlaca : 0
         const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
         if (Number(costoMaterial) !== costoMaterialRounded) updates.costoMaterial = costoMaterialRounded
         costoMaterialEfectivo = costoMaterialRounded

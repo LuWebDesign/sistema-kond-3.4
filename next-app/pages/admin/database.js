@@ -56,12 +56,11 @@ function DatabaseComponent() {
       
       // Mapear campos de snake_case a camelCase y calcular costo material
       const mappedProducts = (productList || []).map(p => {
-        // Calcular costo material: (costoPlaca * usoPlacas) / unidades
+        // Calcular costo material: (costoPlaca * usoPlacas) / unidadesPorPlaca
         const unidadesPorPlaca = p.unidades_por_placa || 1
         const costoPlaca = p.costo_placa || 0
         const usoPlacas = p.uso_placas || 0
-        const unidades = p.unidades || 1
-        const costoMaterialCalculado = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
         
         return {
           id: p.id,

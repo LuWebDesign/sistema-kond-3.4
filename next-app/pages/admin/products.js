@@ -234,12 +234,11 @@ function ProductsComponent() {
       
       // Mapear campos de snake_case a camelCase y calcular costoMaterial
       const initializedProducts = (productList || []).map(p => {
-        // Calcular costo material: (costoPlaca * usoPlacas) / unidades
+        // Calcular costo material: (costoPlaca * usoPlacas) / unidadesPorPlaca
         const unidadesPorPlaca = p.unidades_por_placa || 1
         const costoPlaca = p.costo_placa || 0
         const usoPlacas = p.uso_placas || 0
-        const unidades = p.unidades || 1
-        const costoMaterialCalculado = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
         
         return {
           id: p.id,
@@ -437,8 +436,7 @@ function ProductsComponent() {
       const unidadesPorPlaca = p.unidades_por_placa || 1
       const costoPlaca = p.costo_placa || 0
       const usoPlacas = p.uso_placas || 0
-      const unidades = p.unidades || 1
-      const costoMaterialCalculado = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
+      const costoMaterialCalculado = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
 
       return {
         id: p.id,
@@ -2984,18 +2982,18 @@ function ProductCard({
     }
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
-  // Recalcular costoMaterial cuando cambian usoPlacas, unidades o costoPlaca (solo en modo automático)
+  // Recalcular costoMaterial cuando cambian usoPlacas, unidadesPorPlaca o costoPlaca (solo en modo automático)
   useEffect(() => {
-    const { costoPlaca, usoPlacas, unidades, costoMaterial } = editData
-    if (!editCalculatedFields.isCostoMaterialManual && costoPlaca !== undefined && usoPlacas !== undefined && unidades !== undefined) {
-      // Costo material = (costoPlaca * usoPlacas) / unidades
-      const costoMaterialCalc = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
+    const { costoPlaca, usoPlacas, unidadesPorPlaca, costoMaterial } = editData
+    if (!editCalculatedFields.isCostoMaterialManual && costoPlaca !== undefined && usoPlacas !== undefined && unidadesPorPlaca !== undefined) {
+      // Costo material = (costoPlaca * usoPlacas) / unidadesPorPlaca
+      const costoMaterialCalc = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
       const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
       if (Number(costoMaterial) !== costoMaterialRounded) {
         setEditData(prev => ({ ...prev, costoMaterial: costoMaterialRounded }))
       }
     }
-  }, [editData.costoPlaca, editData.usoPlacas, editData.unidades, editCalculatedFields.isCostoMaterialManual])
+  }, [editData.costoPlaca, editData.usoPlacas, editData.unidadesPorPlaca, editCalculatedFields.isCostoMaterialManual])
 
   // Resetear modos manuales cuando sale de edición
   // isPrecioUnitarioManual se restaura desde product.precio_manual (persistido en BD)
