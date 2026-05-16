@@ -4764,7 +4764,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           </div>
           <div>
             <label style={labelStyle}>Margen Material (%)</label>
-            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} min="0" step="0.1" style={inputStyle} />
+            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} readOnly={editCalculatedFields.isPrecioUnitarioManual} min="0" step="0.1" style={{ ...inputStyle, opacity: editCalculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }} />
           </div>
           <div>
             <label style={labelStyle}>Precio Unitario</label>

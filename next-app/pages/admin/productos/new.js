@@ -1485,9 +1485,10 @@ function NewProductComponent() {
                     name="margenMaterial"
                     value={formData.margenMaterial}
                     onChange={handleInputChange}
+                    readOnly={calculatedFields.isPrecioUnitarioManual}
                     min="0"
                     step="0.1"
-                    style={{ ...inputBase, flex: 1 }}
+                    style={{ ...inputBase, flex: 1, opacity: calculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: calculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }}
                   />
                   <button
                     type="button"
