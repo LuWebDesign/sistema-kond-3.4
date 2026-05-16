@@ -225,7 +225,7 @@ export async function createPedidoCatalogo(pedido, items) {
         comprobante_omitido: pedido.comprobanteOmitido || false,
         fecha_solicitud_entrega: pedido.fechaSolicitudEntrega || null,
         total: Number(pedido.total) || 0,
-        cupon_descuento: Number(pedido.descuento || 0),
+        ...(pedido.descuento > 0 ? { cupon_descuento: Number(pedido.descuento) } : {}),
         monto_recibido: montoRecibidoToInsert,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
         tenant_id: TENANT_ID,

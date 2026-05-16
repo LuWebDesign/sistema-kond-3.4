@@ -7,6 +7,13 @@
 ALTER TABLE public.pedidos_catalogo
   ADD COLUMN IF NOT EXISTS metodo_entrega TEXT; -- 'envio' | 'retiro'
 
+-- Cupón y descuento
+ALTER TABLE public.pedidos_catalogo
+  ADD COLUMN IF NOT EXISTS cupon_codigo TEXT;
+
+ALTER TABLE public.pedidos_catalogo
+  ADD COLUMN IF NOT EXISTS cupon_descuento NUMERIC DEFAULT 0;
+
 -- Monto recibido (seña o pago total)
 ALTER TABLE public.pedidos_catalogo
   ADD COLUMN IF NOT EXISTS monto_recibido NUMERIC DEFAULT 0;
