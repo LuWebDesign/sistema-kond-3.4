@@ -21,7 +21,7 @@ export default function FinalizarCompraPage() {
   const router = useRouter()
   const { cart, clearCart, subtotal } = useCart()
   const { products } = useProducts()
-  const { calculateDiscount } = useCoupons()
+  const { calculateDiscount, activeCoupon } = useCoupons()
   const { saveOrder } = useOrders()
   const notificationsContext = useNotifications()
   const addNotification = notificationsContext?.addNotification
@@ -225,6 +225,8 @@ export default function FinalizarCompraPage() {
         total,
         subtotal,
         descuento: discount,
+        cuponTipo: activeCoupon?.tipo || null,
+        cuponValor: activeCoupon?.valor || null,
         comprobante: null,
         montoRecibido: 0
       }
@@ -323,6 +325,8 @@ export default function FinalizarCompraPage() {
         total: finalTotal,
         subtotal,
         descuento: discount + transferPromoDiscount,
+        cuponTipo: activeCoupon?.tipo || null,
+        cuponValor: activeCoupon?.valor || null,
         descuentoTransferencia: transferPromoDiscount > 0 ? transferPromoDiscount : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
         montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0

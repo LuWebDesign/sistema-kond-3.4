@@ -81,6 +81,8 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
     descuento: pedidoDB.cupon_descuento || pedidoDB.descuento || 0,
     cuponCodigo: pedidoDB.cupon_codigo || null,
     cuponDescuento: pedidoDB.cupon_descuento || 0,
+    cuponTipo: pedidoDB.cupon_tipo || null,
+    cuponValor: pedidoDB.cupon_valor || null,
     envioGratis: pedidoDB.envio_gratis || false,
     metodoPago: pedidoDB.metodo_pago,
     metodoEntrega: pedidoDB.metodo_entrega || null,

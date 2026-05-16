@@ -551,6 +551,8 @@ export function useOrders() {
         fechaSolicitudEntrega: orderData.fechaSolicitudEntrega || null,
         total: orderData.total,
         descuento: orderData.descuento || 0,
+        cuponTipo: orderData.cuponTipo || null,
+        cuponValor: orderData.cuponValor || null,
         // Monto recibido: solo considerar el total automáticamente si el método
         // de pago confirma la transacción (por ejemplo, transferencia).
         montoRecibido: orderData.metodoPago === 'transferencia'

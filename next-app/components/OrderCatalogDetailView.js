@@ -9,6 +9,16 @@ import {
   getPedidoMaterialInfo
 } from '../utils/pedidosCatalogoDetail'
 
+function buildDiscountLabel(pedido) {
+  const badge = pedido.cuponTipo === 'porcentaje' && pedido.cuponValor
+    ? `${pedido.cuponValor}% OFF`
+    : null
+  if (pedido.cuponCodigo && badge) return `🏷 Cupón ${pedido.cuponCodigo} · ${badge}`
+  if (pedido.cuponCodigo) return `🏷 Cupón ${pedido.cuponCodigo}`
+  if (badge) return `🏷 ${badge}`
+  return '🏷 Descuento'
+}
+
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
   confirmado: 'Confirmado',
@@ -356,11 +366,7 @@ export default function OrderCatalogDetailView({
                   )}
                   {pedido.descuento > 0 && (
                     <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
-                      <span>
-                        {pedido.cuponCodigo
-                          ? `🏷 Cupón ${pedido.cuponCodigo}`
-                          : '🏷 Descuento'}
-                      </span>
+                      <span>{buildDiscountLabel(pedido)}</span>
                       <span>-{formatCurrency(pedido.descuento)}</span>
                     </div>
                   )}
@@ -485,11 +491,7 @@ export default function OrderCatalogDetailView({
               )}
               {pedido.descuento > 0 && (
                 <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
-                  <span>
-                    {pedido.cuponCodigo
-                      ? `🏷 Cupón ${pedido.cuponCodigo}`
-                      : '🏷 Descuento'}
-                  </span>
+                  <span>{buildDiscountLabel(pedido)}</span>
                   <span>-{formatCurrency(pedido.descuento)}</span>
                 </div>
               )}
