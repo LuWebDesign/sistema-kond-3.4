@@ -11,7 +11,7 @@ function fileToBase64(file) {
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2 }).format(value || 0);
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value || 0);
 }
 
 function timeToMinutes(timeStr) {

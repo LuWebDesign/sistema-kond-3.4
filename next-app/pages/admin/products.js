@@ -234,10 +234,11 @@ function ProductsComponent() {
       
       // Mapear campos de snake_case a camelCase y calcular costoMaterial
       const initializedProducts = (productList || []).map(p => {
-        // Calcular costo material: costoPlaca / unidadesPorPlaca
+        // Calcular costo material: (costoPlaca * usoPlacas) / unidadesPorPlaca
         const unidadesPorPlaca = p.unidades_por_placa || 1
         const costoPlaca = p.costo_placa || 0
-        const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        const usoPlacas = p.uso_placas || 0
+        const costoMaterialCalculado = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
         
         return {
           id: p.id,
@@ -434,7 +435,8 @@ function ProductsComponent() {
     const initializedProducts = productList.map(p => {
       const unidadesPorPlaca = p.unidades_por_placa || 1
       const costoPlaca = p.costo_placa || 0
-      const costoMaterialCalculado = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+      const usoPlacas = p.uso_placas || 0
+      const costoMaterialCalculado = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
 
       return {
         id: p.id,
@@ -658,21 +660,24 @@ function ProductsComponent() {
   // Actualizar campos calculados cuando cambien inputs relevantes (una sola pasada, sin cascada)
   useEffect(() => {
     try {
-      const { unidades, unidadesPorPlaca, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
+      const { unidades, unidadesPorPlaca, usoPlacas, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
       const { isUsoPlacasManual, isCostoMaterialManual, isPrecioUnitarioManual } = calculatedFields
 
       const updates = {}
 
       // 1. Calcular uso de placas
+      let calculatedUsoPlacas = usoPlacas
       if (!isUsoPlacasManual) {
-        const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
-        if (Number(formData.usoPlacas) !== Number(usoPlacas)) updates.usoPlacas = usoPlacas
+        calculatedUsoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
+        if (Number(formData.usoPlacas) !== Number(calculatedUsoPlacas)) updates.usoPlacas = calculatedUsoPlacas
       }
 
       // 2. Calcular costo de material y retener el valor efectivo para el paso siguiente
       let costoMaterialEfectivo = costoMaterial
       if (!isCostoMaterialManual) {
-        const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        // Costo material = (costoPlaca * placas usadas) / unidades
+        const placasEfectivas = isUsoPlacasManual ? usoPlacas : calculatedUsoPlacas
+        const costoMaterialCalc = unidades > 0 ? (costoPlaca * placasEfectivas) / unidades : 0
         const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
         if (Number(costoMaterial) !== costoMaterialRounded) updates.costoMaterial = costoMaterialRounded
         costoMaterialEfectivo = costoMaterialRounded
@@ -682,12 +687,12 @@ function ProductsComponent() {
       if (!isPrecioUnitarioManual) {
         // Modo auto: derivar precio desde margen y costo material
         const precioUnitarioCalc = costoMaterialEfectivo * (1 + margenMaterial / 100)
-        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(0))
         if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
       } else {
         // Modo manual de precio: derivar margen desde precio y costo material
         const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0
-        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
         if (Number(margenMaterial) !== margenRedondeado) updates.margenMaterial = margenRedondeado
       }
 
@@ -2957,7 +2962,7 @@ function ProductCard({
   // Recalcular precio unitario cuando cambian costoMaterial o margenMaterial
   useEffect(() => {
     if (!editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial !== undefined && editData.margenMaterial !== undefined) {
-      const precioUnitarioCalc = parseFloat((editData.costoMaterial * (1 + editData.margenMaterial / 100)).toFixed(2))
+      const precioUnitarioCalc = parseFloat((editData.costoMaterial * (1 + editData.margenMaterial / 100)).toFixed(0))
       setEditData(prev => {
         if (prev.precioUnitario === precioUnitarioCalc) return prev
         return { ...prev, precioUnitario: precioUnitarioCalc }
@@ -2969,13 +2974,26 @@ function ProductCard({
   useEffect(() => {
     if (editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial > 0 && editData.precioUnitario !== undefined) {
       const margenDesdePrecio = ((editData.precioUnitario / editData.costoMaterial) - 1) * 100
-      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
       setEditData(prev => {
         if (prev.margenMaterial === margenRedondeado) return prev
         return { ...prev, margenMaterial: margenRedondeado }
       })
     }
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
+
+  // Recalcular costoMaterial cuando cambian usoPlacas, unidadesPorPlaca o costoPlaca (solo en modo automático)
+  useEffect(() => {
+    const { costoPlaca, usoPlacas, unidadesPorPlaca, costoMaterial } = editData
+    if (!editCalculatedFields.isCostoMaterialManual && costoPlaca !== undefined && usoPlacas !== undefined && unidadesPorPlaca !== undefined) {
+      // Costo material = (costoPlaca * usoPlacas) / unidadesPorPlaca
+      const costoMaterialCalc = unidadesPorPlaca > 0 ? (costoPlaca * usoPlacas) / unidadesPorPlaca : 0
+      const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
+      if (Number(costoMaterial) !== costoMaterialRounded) {
+        setEditData(prev => ({ ...prev, costoMaterial: costoMaterialRounded }))
+      }
+    }
+  }, [editData.costoPlaca, editData.usoPlacas, editData.unidadesPorPlaca, editCalculatedFields.isCostoMaterialManual])
 
   // Resetear modos manuales cuando sale de edición
   // isPrecioUnitarioManual se restaura desde product.precio_manual (persistido en BD)
@@ -4732,7 +4750,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           <div>
             <label style={labelStyle}>Costo Material</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input type="number" value={editData.costoMaterial} onChange={e => handleInputChange('costoMaterial', Number(e.target.value))} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <input type="number" value={editData.costoMaterial} onChange={e => handleInputChange('costoMaterial', Number(e.target.value))} readOnly={!editCalculatedFields.isCostoMaterialManual} min="0" step="0.01" style={{ ...inputStyle, flex: 1, opacity: editCalculatedFields.isCostoMaterialManual ? 1 : 0.7, cursor: editCalculatedFields.isCostoMaterialManual ? 'text' : 'not-allowed' }} />
               <button type="button" onClick={() => toggleEditFieldMode('isCostoMaterialManual')} title={editCalculatedFields.isCostoMaterialManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isCostoMaterialManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isCostoMaterialManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 {editCalculatedFields.isCostoMaterialManual ? 'MAN' : 'AUTO'}
               </button>
@@ -4744,12 +4762,20 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           </div>
           <div>
             <label style={labelStyle}>Margen Material (%)</label>
-            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} min="0" step="0.1" style={inputStyle} />
+            <input 
+              type="number" 
+              value={Number(editData.margenMaterial).toFixed(4)} 
+              onChange={e => handleInputChange('margenMaterial', parseFloat(e.target.value) || 0)} 
+              readOnly={editCalculatedFields.isPrecioUnitarioManual} 
+              min="0" 
+              step="any" 
+              style={{ ...inputStyle, opacity: editCalculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }} 
+            />
           </div>
           <div>
             <label style={labelStyle}>Precio Unitario</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input type="number" value={editData.precioUnitario} onChange={e => handleInputChange('precioUnitario', Number(e.target.value))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); try { onSave && onSave() } catch (err) { console.error(err) } } }} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <input type="number" value={editData.precioUnitario} onChange={e => handleInputChange('precioUnitario', Number(e.target.value))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); try { onSave && onSave() } catch (err) { console.error(err) } } }} readOnly={!editCalculatedFields.isPrecioUnitarioManual} min="0" step="0.01" style={{ ...inputStyle, flex: 1, opacity: editCalculatedFields.isPrecioUnitarioManual ? 1 : 0.7, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'text' : 'not-allowed' }} />
               <button type="button" onClick={() => toggleEditFieldMode('isPrecioUnitarioManual')} title={editCalculatedFields.isPrecioUnitarioManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isPrecioUnitarioManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 {editCalculatedFields.isPrecioUnitarioManual ? 'MAN' : 'AUTO'}
               </button>

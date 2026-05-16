@@ -180,19 +180,24 @@ function NewProductComponent() {
   // Actualizar campos calculados cuando cambien inputs relevantes
   useEffect(() => {
     try {
-      const { unidades, unidadesPorPlaca, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
+      const { unidades, unidadesPorPlaca, usoPlacas, costoPlaca, margenMaterial, tiempoUnitario, costoMaterial, precioUnitario } = formData
       const { isUsoPlacasManual, isCostoMaterialManual, isPrecioUnitarioManual } = calculatedFields
 
       const updates = {}
 
+      // Calcular usoPlacas automático si no es manual
+      let calculatedUsoPlacas = usoPlacas
       if (!isUsoPlacasManual) {
-        const usoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
-        if (Number(formData.usoPlacas) !== Number(usoPlacas)) updates.usoPlacas = usoPlacas
+        calculatedUsoPlacas = unidadesPorPlaca > 0 ? Math.ceil(unidades / unidadesPorPlaca) : 0
+        if (Number(formData.usoPlacas) !== Number(calculatedUsoPlacas)) updates.usoPlacas = calculatedUsoPlacas
       }
 
       let costoMaterialEfectivo = costoMaterial
       if (!isCostoMaterialManual) {
-        const costoMaterialCalc = unidadesPorPlaca > 0 ? costoPlaca / unidadesPorPlaca : 0
+        // Costo material = (costoPlaca * placas usadas) / unidadesPorPlaca
+        // Si usoPlacas manual, usar ese valor; si no, usar el calculado
+        const placasEfectivas = isUsoPlacasManual ? usoPlacas : calculatedUsoPlacas
+        const costoMaterialCalc = unidadesPorPlaca > 0 ? (costoPlaca * placasEfectivas) / unidadesPorPlaca : 0
         const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
         if (Number(costoMaterial) !== costoMaterialRounded) updates.costoMaterial = costoMaterialRounded
         costoMaterialEfectivo = costoMaterialRounded
@@ -200,11 +205,11 @@ function NewProductComponent() {
 
       if (!isPrecioUnitarioManual) {
         const precioUnitarioCalc = costoMaterialEfectivo * (1 + margenMaterial / 100)
-        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(2))
+        const precioRounded = parseFloat(precioUnitarioCalc.toFixed(0))
         if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
       } else {
         const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0
-        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
         if (Number(margenMaterial) !== margenRedondeado) updates.margenMaterial = margenRedondeado
       }
 
@@ -1463,11 +1468,11 @@ function NewProductComponent() {
               gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '16px'
             }}>
-              {/* Costo Placa */}
+              {/* Costo Placa (total = costo unitario × placas usadas) */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Costo Placa</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Costo Placa ({formData.usoPlacas || 1}×)</label>
                 <div style={{ ...inputBase, background: 'var(--bg-tertiary)', color: 'var(--text-muted)', cursor: 'not-allowed' }} readOnly>
-                  {formatCurrency(formData.costoPlaca)}
+                  {formatCurrency(formData.costoPlaca * (formData.usoPlacas || 1))}
                 </div>
               </div>
 
@@ -1478,11 +1483,12 @@ function NewProductComponent() {
                   <input
                     type="number"
                     name="margenMaterial"
-                    value={formData.margenMaterial}
+                    value={Number(formData.margenMaterial).toFixed(4)}
                     onChange={handleInputChange}
+                    readOnly={calculatedFields.isPrecioUnitarioManual}
                     min="0"
-                    step="0.1"
-                    style={{ ...inputBase, flex: 1 }}
+                    step="any"
+                    style={{ ...inputBase, flex: 1, opacity: calculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: calculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }}
                   />
                   <button
                     type="button"
