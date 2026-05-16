@@ -2984,6 +2984,19 @@ function ProductCard({
     }
   }, [editData.precioUnitario, editData.costoMaterial, editCalculatedFields.isPrecioUnitarioManual])
 
+  // Recalcular costoMaterial cuando cambian usoPlacas, unidades o costoPlaca (solo en modo automático)
+  useEffect(() => {
+    const { costoPlaca, usoPlacas, unidades, costoMaterial } = editData
+    if (!editCalculatedFields.isCostoMaterialManual && costoPlaca !== undefined && usoPlacas !== undefined && unidades !== undefined) {
+      // Costo material = (costoPlaca * usoPlacas) / unidades
+      const costoMaterialCalc = unidades > 0 ? (costoPlaca * usoPlacas) / unidades : 0
+      const costoMaterialRounded = parseFloat(costoMaterialCalc.toFixed(2))
+      if (Number(costoMaterial) !== costoMaterialRounded) {
+        setEditData(prev => ({ ...prev, costoMaterial: costoMaterialRounded }))
+      }
+    }
+  }, [editData.costoPlaca, editData.usoPlacas, editData.unidades, editCalculatedFields.isCostoMaterialManual])
+
   // Resetear modos manuales cuando sale de edición
   // isPrecioUnitarioManual se restaura desde product.precio_manual (persistido en BD)
   useEffect(() => {
