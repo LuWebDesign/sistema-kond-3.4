@@ -96,6 +96,12 @@
 .category-badge {
   color: #1f2937 !important;
   border-color: #1f2937 !important;
+  background-color: #e5e7eb !important;
+}
+
+.product-card .category-badge *,
+.category-badge * {
+  color: #1f2937 !important;
 }
 
 /* Product detail page: ensure price and category badge colors follow theme too */
