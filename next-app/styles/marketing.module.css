@@ -263,6 +263,9 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  min-width: 120px;
 }
 
 .btnPrimary::before {
@@ -297,6 +300,9 @@
   font-weight: 500;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  min-width: 120px;
 }
 
 .btnSecondary:hover {
