@@ -84,7 +84,15 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
     cuponTipo: pedidoDB.cupon_tipo || null,
     cuponValor: pedidoDB.cupon_valor || null,
     envioGratis: pedidoDB.envio_gratis || false,
-    appliedPromotions: pedidoDB.applied_promotions || [],
+    appliedPromotions: (() => {
+      const raw = pedidoDB.applied_promotions;
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'string') {
+        try { return JSON.parse(raw); } catch { return []; }
+      }
+      return [];
+    })(),
     metodoPago: pedidoDB.metodo_pago,
     metodoEntrega: pedidoDB.metodo_entrega || null,
     estadoPago: pedidoDB.estado_pago || 'sin_seña',

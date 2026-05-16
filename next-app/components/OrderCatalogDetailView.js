@@ -372,12 +372,6 @@ export default function OrderCatalogDetailView({
                     <span>Subtotal</span>
                     <span>{formatCurrency(pedido.subtotal)}</span>
                   </div>
-                  {buildPromoRows(pedido).map((row, i) => (
-                    <div key={i} className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
-                      <span>{row.icon} {row.label}</span>
-                      <span>{row.amount !== null ? `-${formatCurrency(row.amount)}` : '—'}</span>
-                    </div>
-                  ))}
                   {pedido.descuento > 0 && (
                     <div className={`${styles.totalRow} ${styles.totalRowDiscount}`}>
                       <span>Descuento total</span>
@@ -499,8 +493,8 @@ export default function OrderCatalogDetailView({
               </div>
               {buildPromoRows(pedido).map((row, i) => (
                 <div key={`sb-${i}`} className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
-                  <span>{row.icon} {row.label}</span>
-                  <span>{row.amount !== null ? `-${formatCurrency(row.amount)}` : '—'}</span>
+                  <span style={{ color: '#dc2626' }}>{row.icon} {row.label}</span>
+                  <span style={{ color: '#dc2626' }}>{row.amount !== null ? `-${formatCurrency(row.amount)}` : '—'}</span>
                 </div>
               ))}
               {pedido.descuento > 0 && (
