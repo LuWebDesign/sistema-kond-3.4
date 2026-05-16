@@ -209,7 +209,7 @@ function NewProductComponent() {
         if (Number(precioUnitario) !== precioRounded) updates.precioUnitario = precioRounded
       } else {
         const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0
-        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
         if (Number(margenMaterial) !== margenRedondeado) updates.margenMaterial = margenRedondeado
       }
 
@@ -1487,7 +1487,7 @@ function NewProductComponent() {
                     onChange={handleInputChange}
                     readOnly={calculatedFields.isPrecioUnitarioManual}
                     min="0"
-                    step="0.1"
+                    step="0.0001"
                     style={{ ...inputBase, flex: 1, opacity: calculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: calculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }}
                   />
                   <button

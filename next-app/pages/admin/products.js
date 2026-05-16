@@ -694,7 +694,7 @@ function ProductsComponent() {
       } else {
         // Modo manual de precio: derivar margen desde precio y costo material
         const margenDesdePrecio = costoMaterialEfectivo > 0 ? ((precioUnitario / costoMaterialEfectivo) - 1) * 100 : 0
-        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+        const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
         if (Number(margenMaterial) !== margenRedondeado) updates.margenMaterial = margenRedondeado
       }
 
@@ -2976,7 +2976,7 @@ function ProductCard({
   useEffect(() => {
     if (editCalculatedFields.isPrecioUnitarioManual && editData.costoMaterial > 0 && editData.precioUnitario !== undefined) {
       const margenDesdePrecio = ((editData.precioUnitario / editData.costoMaterial) - 1) * 100
-      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(1))
+      const margenRedondeado = parseFloat(margenDesdePrecio.toFixed(4))
       setEditData(prev => {
         if (prev.margenMaterial === margenRedondeado) return prev
         return { ...prev, margenMaterial: margenRedondeado }
@@ -4764,7 +4764,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           </div>
           <div>
             <label style={labelStyle}>Margen Material (%)</label>
-            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} readOnly={editCalculatedFields.isPrecioUnitarioManual} min="0" step="0.1" style={{ ...inputStyle, opacity: editCalculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }} />
+            <input type="number" value={editData.margenMaterial} onChange={e => handleInputChange('margenMaterial', Number(e.target.value))} readOnly={editCalculatedFields.isPrecioUnitarioManual} min="0" step="0.0001" style={{ ...inputStyle, opacity: editCalculatedFields.isPrecioUnitarioManual ? 0.7 : 1, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'not-allowed' : 'text' }} />
           </div>
           <div>
             <label style={labelStyle}>Precio Unitario</label>
