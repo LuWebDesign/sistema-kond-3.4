@@ -4752,7 +4752,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           <div>
             <label style={labelStyle}>Costo Material</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input type="number" value={editData.costoMaterial} onChange={e => handleInputChange('costoMaterial', Number(e.target.value))} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <input type="number" value={editData.costoMaterial} onChange={e => handleInputChange('costoMaterial', Number(e.target.value))} readOnly={!editCalculatedFields.isCostoMaterialManual} min="0" step="0.01" style={{ ...inputStyle, flex: 1, opacity: editCalculatedFields.isCostoMaterialManual ? 1 : 0.7, cursor: editCalculatedFields.isCostoMaterialManual ? 'text' : 'not-allowed' }} />
               <button type="button" onClick={() => toggleEditFieldMode('isCostoMaterialManual')} title={editCalculatedFields.isCostoMaterialManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isCostoMaterialManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isCostoMaterialManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 {editCalculatedFields.isCostoMaterialManual ? 'MAN' : 'AUTO'}
               </button>
@@ -4769,7 +4769,7 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
           <div>
             <label style={labelStyle}>Precio Unitario</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input type="number" value={editData.precioUnitario} onChange={e => handleInputChange('precioUnitario', Number(e.target.value))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); try { onSave && onSave() } catch (err) { console.error(err) } } }} min="0" step="0.01" style={{ ...inputStyle, flex: 1 }} />
+              <input type="number" value={editData.precioUnitario} onChange={e => handleInputChange('precioUnitario', Number(e.target.value))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); try { onSave && onSave() } catch (err) { console.error(err) } } }} readOnly={!editCalculatedFields.isPrecioUnitarioManual} min="0" step="0.01" style={{ ...inputStyle, flex: 1, opacity: editCalculatedFields.isPrecioUnitarioManual ? 1 : 0.7, cursor: editCalculatedFields.isPrecioUnitarioManual ? 'text' : 'not-allowed' }} />
               <button type="button" onClick={() => toggleEditFieldMode('isPrecioUnitarioManual')} title={editCalculatedFields.isPrecioUnitarioManual ? 'Manual' : 'Auto'} style={{ padding: '10px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: editCalculatedFields.isPrecioUnitarioManual ? '#3b82f6' : 'var(--bg-card)', color: editCalculatedFields.isPrecioUnitarioManual ? 'white' : 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 {editCalculatedFields.isPrecioUnitarioManual ? 'MAN' : 'AUTO'}
               </button>
