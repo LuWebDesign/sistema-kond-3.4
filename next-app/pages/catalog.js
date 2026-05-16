@@ -365,7 +365,7 @@ export default function Catalog({ seoConfig }) {
   // Using shared slugify helper from ../utils/slugify
 
   return (
-    <PublicLayout title="Catálogo - KOND">
+    <PublicLayout title={seoConfig?.pagesSeo?.catalogo?.title || seoConfig?.siteTitle || 'Catálogo - KOND'}>
       <SeoHead
         config={seoConfig || {}}
         pageTitle={seoConfig?.pagesSeo?.catalogo?.title || undefined}
