@@ -47,24 +47,25 @@ function PaymentConfigAdmin() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (paymentConfig.transferencia.alias && paymentConfig.transferencia.cbu) {
-        setIsTransferenciaCollapsed(true)
-      }
-      if (paymentConfig.whatsapp.numero) {
-        setIsWhatsappCollapsed(true)
-      }
-      if (paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.length > 3) {
-        setIsRetiroCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoTransferencia) {
-        setIsTextoTransferenciaCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoWhatsapp) {
-        setIsTextoWhatsappCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoRetiro) {
-        setIsTextoRetiroCollapsed(true)
-      }
+      // Collapse sections that have data; collapse empty ones too for a clean initial view
+      setIsTransferenciaCollapsed(
+        !!(paymentConfig.transferencia.alias && paymentConfig.transferencia.cbu)
+      )
+      setIsWhatsappCollapsed(
+        !!paymentConfig.whatsapp.numero
+      )
+      setIsRetiroCollapsed(
+        !!(paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.length > 0)
+      )
+      setIsTextoTransferenciaCollapsed(
+        !!paymentConfig.textos?.infoTransferencia
+      )
+      setIsTextoWhatsappCollapsed(
+        !!paymentConfig.textos?.infoWhatsapp
+      )
+      setIsTextoRetiroCollapsed(
+        !!paymentConfig.textos?.infoRetiro
+      )
     }
   }, [isLoading])
 
@@ -213,8 +214,13 @@ function PaymentConfigAdmin() {
           </div>
         )}
 
-        {/* Simplified form - keeps the same fields as before */}
-        <div style={{ display: 'grid', gap: 16 }}>
+        {/* ═══ Sección: Métodos de Pago ═══ */}
+        <div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            💳 Métodos de Pago
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Configurá los métodos disponibles en el checkout</p>
+          <div style={{ display: 'grid', gap: 16 }}>
           <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -315,9 +321,17 @@ function PaymentConfigAdmin() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* MercadoPago */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+        {/* ═══ Sección: Opciones del Checkout ═══ */}
+        <div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            ⚙️ Opciones del Checkout
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Funcionalidades adicionales del proceso de compra</p>
+          <div style={{ display: 'grid', gap: 16 }}>
+            {/* MercadoPago */}
+            <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>💳 MercadoPago</h3>
@@ -365,14 +379,18 @@ function PaymentConfigAdmin() {
               </button>
             </div>
           </div>
+          </div>
+        </div>
 
-          {/* Textos informativos del checkout */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
-            <h3 style={{ margin: '0 0 4px 0' }}>📝 Textos del Checkout</h3>
-            <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)' }}>Bloques informativos que ve el cliente al finalizar la compra</p>
-
+        {/* ═══ Sección: Textos Informativos ═══ */}
+        <div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            📝 Textos Informativos
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Bloques de texto que ve el cliente al finalizar la compra</p>
+          <div style={{ display: 'grid', gap: 16 }}>
             {/* Info Transferencia */}
-            <div style={{ marginBottom: 12, padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+            <div style={{ padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 14 }}>🏦 Transferencia Bancaria</h3>
@@ -458,11 +476,12 @@ function PaymentConfigAdmin() {
               )}
             </div>
           </div>
+        </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={handleSaveConfig} disabled={isSaving} style={{ padding: '12px 24px', borderRadius: 8, background: isSaving ? 'var(--text-secondary)' : 'var(--accent-blue)', color: 'white', border: 'none' }}>{isSaving ? '⏳ Guardando...' : '💾 Guardar Configuración'}</button>
-            <button onClick={() => router.back()} style={{ padding: '12px 24px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancelar</button>
-          </div>
+        {/* ═══ Botones de acción ═══ */}
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={handleSaveConfig} disabled={isSaving} style={{ padding: '12px 24px', borderRadius: 8, background: isSaving ? 'var(--text-secondary)' : 'var(--accent-blue)', color: 'white', border: 'none' }}>{isSaving ? '⏳ Guardando...' : '💾 Guardar Configuración'}</button>
+          <button onClick={() => router.back()} style={{ padding: '12px 24px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancelar</button>
         </div>
 
         {/* Modal de confirmación personalizado */}
@@ -610,6 +629,7 @@ function PaymentConfigAdmin() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </Layout>
   )
