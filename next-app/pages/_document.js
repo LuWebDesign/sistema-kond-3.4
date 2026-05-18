@@ -9,10 +9,10 @@ class MyDocument extends Document {
           <script
             dangerouslySetInnerHTML={{
               __html: `
-                (function() {
-                  var theme = localStorage.getItem('theme') || 'dark';
-                  document.body.setAttribute('data-theme', theme);
-                })();
+            (function() {
+              var theme = localStorage.getItem('theme') || 'light';
+              document.body.setAttribute('data-theme', theme);
+            })();
               `
             }}
           />

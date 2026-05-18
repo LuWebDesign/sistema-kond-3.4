@@ -21,6 +21,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [isClient, setIsClient] = useState(false)
   const [isMobileWidth, setIsMobileWidth] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [stylesLoaded, setStylesLoaded] = useState(false)
   const router = useRouter()
 
   // Cargar cantidad del carrito desde localStorage
@@ -66,9 +67,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     getCatalogStyles().then(s => {
       if (s) {
         setCatalogStyles(s)
+        setStylesLoaded(true)
         try { localStorage.setItem('catalogStyles', JSON.stringify(s)) } catch (e) {}
       }
-    }).catch(() => {})
+    }).catch(() => { setStylesLoaded(true) })
     // Escuchar actualizaciones en tiempo real desde el admin
     const onStylesUpdate = (e) => { if (e.detail) setCatalogStyles(prev => ({ ...prev, ...e.detail })) }
     if (typeof window !== 'undefined') window.addEventListener('catalogStyles:updated', onStylesUpdate)
@@ -201,11 +203,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               alignItems: 'center',
               gap: '8px'
             }}>
-              {!isClient
+              {!isClient || !stylesLoaded
                 ? <span style={{ display: 'inline-block', width: 120, height: 24, borderRadius: 4, background: 'var(--border-color, #e2e8f0)' }} />
                 : catalogStyles.logoUrl
                   ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
-                  : (catalogStyles.logoText || 'KOND')
+                  : (catalogStyles.logoText || '')
               }
             </Link>
           </div>
@@ -318,7 +320,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                     fontSize: '1.1rem',
                     fontWeight: 600
                   }}>
-                    {catalogStyles.logoText || catalogStyles.logoUrl ? (catalogStyles.logoText || '') : 'KOND'}
+                    {catalogStyles.logoText || catalogStyles.logoUrl ? (catalogStyles.logoText || '') : ''}
                   </h3>
                   <p style={{
                     fontSize: '0.9rem',

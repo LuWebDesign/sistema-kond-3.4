@@ -5,7 +5,7 @@ const DEFAULT_STYLES = {
   // Header
   headerBg: '',
   headerTextColor: '',
-  logoText: 'KOND',
+  logoText: '',
   logoUrl: '',
   // General
   catalogBg: '',

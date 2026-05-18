@@ -4,7 +4,7 @@ import { TENANT_ID } from '../../../lib/tenant'
 const DEFAULT_STYLES = {
   headerBg: '',
   headerTextColor: '',
-  logoText: 'KOND',
+  logoText: '',
   logoUrl: '',
   catalogBg: '',
   catalogTextColor: '',
