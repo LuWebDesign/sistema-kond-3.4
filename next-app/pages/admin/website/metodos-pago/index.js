@@ -1,8 +1,8 @@
-import Layout from '../../components/Layout'
-import withAdminAuth from '../../components/withAdminAuth'
+import Layout from '../../../../components/Layout'
+import withAdminAuth from '../../../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getPaymentConfig, savePaymentConfig } from '../../utils/supabasePaymentConfig'
+import { getPaymentConfig, savePaymentConfig } from '../../../../utils/supabasePaymentConfig'
 
 function PaymentConfigAdmin() {
   const router = useRouter()
@@ -25,12 +25,12 @@ function PaymentConfigAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
 
-  const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(false)
-  const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(false)
-  const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(false)
-  const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(false)
-  const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(false)
-  const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(false)
+  const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(true)
+  const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(true)
+  const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(true)
+  const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(true)
+  const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(true)
+  const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(true)
   
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -45,29 +45,6 @@ function PaymentConfigAdmin() {
     loadConfig()
   }, [])
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (paymentConfig.transferencia.alias && paymentConfig.transferencia.cbu) {
-        setIsTransferenciaCollapsed(true)
-      }
-      if (paymentConfig.whatsapp.numero) {
-        setIsWhatsappCollapsed(true)
-      }
-      if (paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.length > 3) {
-        setIsRetiroCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoTransferencia) {
-        setIsTextoTransferenciaCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoWhatsapp) {
-        setIsTextoWhatsappCollapsed(true)
-      }
-      if (paymentConfig.textos?.infoRetiro) {
-        setIsTextoRetiroCollapsed(true)
-      }
-    }
-  }, [isLoading])
-
   const loadConfig = async () => {
     setIsLoading(true)
     try {
@@ -80,6 +57,13 @@ function PaymentConfigAdmin() {
           mercadopago: { ...prev.mercadopago, ...(config.mercadopago || {}) },
           textos: { ...prev.textos, ...(config.textos || {}) },
         }))
+        // All sections start collapsed; user must click "Editar" to expand
+        setIsTransferenciaCollapsed(true)
+        setIsWhatsappCollapsed(true)
+        setIsRetiroCollapsed(true)
+        setIsTextoTransferenciaCollapsed(true)
+        setIsTextoWhatsappCollapsed(true)
+        setIsTextoRetiroCollapsed(true)
       }
     } catch (error) {
       console.error('Error al cargar configuración:', error)
@@ -213,9 +197,14 @@ function PaymentConfigAdmin() {
           </div>
         )}
 
-        {/* Simplified form - keeps the same fields as before */}
-        <div style={{ display: 'grid', gap: 16 }}>
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+        {/* ═══ Sección: Métodos de Pago ═══ */}
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            💳 Métodos de Pago
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Configurá los métodos disponibles en el checkout</p>
+          <div style={{ display: 'grid', gap: 16 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>🏦 Transferencia Bancaria</h3>
@@ -250,7 +239,7 @@ function PaymentConfigAdmin() {
             )}
           </div>
 
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>💬 WhatsApp</h3>
@@ -282,7 +271,7 @@ function PaymentConfigAdmin() {
             )}
           </div>
 
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>📦 Retiro</h3>
@@ -315,9 +304,17 @@ function PaymentConfigAdmin() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* MercadoPago */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+        {/* ═══ Sección: Opciones del Checkout ═══ */}
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            ⚙️ Opciones del Checkout
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Funcionalidades adicionales del proceso de compra</p>
+          <div style={{ display: 'grid', gap: 16 }}>
+            {/* MercadoPago */}
+            <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>💳 MercadoPago</h3>
@@ -342,7 +339,7 @@ function PaymentConfigAdmin() {
           </div>
 
           {/* Calendario de Fecha de Entrega */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>📅 Fecha de entrega solicitada</h3>
@@ -365,14 +362,18 @@ function PaymentConfigAdmin() {
               </button>
             </div>
           </div>
+          </div>
+        </div>
 
-          {/* Textos informativos del checkout */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
-            <h3 style={{ margin: '0 0 4px 0' }}>📝 Textos del Checkout</h3>
-            <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)' }}>Bloques informativos que ve el cliente al finalizar la compra</p>
-
+        {/* ═══ Sección: Textos Informativos ═══ */}
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            📝 Textos Informativos
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Bloques de texto que ve el cliente al finalizar la compra</p>
+          <div style={{ display: 'grid', gap: 16 }}>
             {/* Info Transferencia */}
-            <div style={{ marginBottom: 12, padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+            <div style={{ padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 14 }}>🏦 Transferencia Bancaria</h3>
@@ -458,11 +459,12 @@ function PaymentConfigAdmin() {
               )}
             </div>
           </div>
+        </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={handleSaveConfig} disabled={isSaving} style={{ padding: '12px 24px', borderRadius: 8, background: isSaving ? 'var(--text-secondary)' : 'var(--accent-blue)', color: 'white', border: 'none' }}>{isSaving ? '⏳ Guardando...' : '💾 Guardar Configuración'}</button>
-            <button onClick={() => router.back()} style={{ padding: '12px 24px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancelar</button>
-          </div>
+        {/* ═══ Botones de acción ═══ */}
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={handleSaveConfig} disabled={isSaving} style={{ padding: '12px 24px', borderRadius: 8, background: isSaving ? 'var(--text-secondary)' : 'var(--accent-blue)', color: 'white', border: 'none' }}>{isSaving ? '⏳ Guardando...' : '💾 Guardar Configuración'}</button>
+          <button onClick={() => router.back()} style={{ padding: '12px 24px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancelar</button>
         </div>
 
         {/* Modal de confirmación personalizado */}
@@ -610,6 +612,7 @@ function PaymentConfigAdmin() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </Layout>
   )

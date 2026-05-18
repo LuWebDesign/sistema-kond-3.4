@@ -74,6 +74,17 @@ const nextConfig = {
         source: '/mis-pedidos',
         destination: '/catalog/mis-pedidos',
         permanent: false
+      },
+      // Redirecciones por reorganización de website admin
+      {
+        source: '/admin/payment-config',
+        destination: '/admin/website/metodos-pago',
+        permanent: false
+      },
+      {
+        source: '/admin/catalog-styles',
+        destination: '/admin/website/estilos',
+        permanent: false
       }
     ]
   },

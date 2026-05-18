@@ -19,12 +19,13 @@ Keep analysis extremely short after that.
 
 - **Next.js dev** (`next-app/`):
   - Install: `npm ci` (CI) or `npm install` (local)
-  - Env: copy `.env.example` → `.env.local` — required vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_USE_SUPABASE`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`, `NEXT_PUBLIC_TENANT_ID`
+  - Env: copy `.env.example` → `.env.local` — required vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_USE_SUPABASE`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`, `NEXT_PUBLIC_MP_PUBLIC_KEY`, `NEXT_PUBLIC_TENANT_ID`
   - `NEXT_PUBLIC_TENANT_ID` must be set or `next-app/lib/tenant.js` throws at module load (fail-fast). Use seed UUID `00000000-0000-0000-0000-000000000001` for local dev.
-  - Run: `npm run dev` (binds 0.0.0.0:3000). Uses `WATCHPACK_POLLING=true` via `cross-env` — required on Windows/WSL; don't remove.
+  - Run: `npm run dev` (binds 0.0.0.0:3000). Uses `WATCHPACK_POLLING=true` + `CHOKIDAR_USEPOLLING=1` via `cross-env` — required on Windows/WSL; don't remove.
   - Build: `npm run build`. Start: `npm start`. Prod-test: `npm run test:prod` (build + start on :3001).
   - **Node mismatch**: `package.json` says 22.x, CI uses 20 (via `.github/workflows/ci.yml`). If build fails, check Node version.
-  - **Pages Router** (not App Router). All pages live in `next-app/pages/`. Admin pages are under `pages/admin/`; old top-level paths (`/products`, `/dashboard`, etc.) redirect there via `next.config.js`.
+  - **Pages Router** (not App Router). All pages live in `next-app/pages/`. Admin pages are under `pages/admin/`; old top-level paths redirect there via `next.config.js`.
+  - **Playwright** is installed as dev dependency — no test scripts defined yet.
 
 - **Pre-check**: Run `node verify-setup.js` from repo root before infra changes — exits non-zero if critical Supabase files missing.
 
@@ -34,7 +35,16 @@ Keep analysis extremely short after that.
 
 - **Admin route layout** (`next-app/pages/admin/`):
   - All admin pages live under `/admin/`. Old top-level paths (`/products`, `/dashboard`, `/pedidos`, `/marketing`, `/finanzas`, `/materiales`, `/mi-cuenta`, `/pedidos-catalogo`, `/database`) redirect via `next.config.js` — never create new pages at those old paths.
+  - Other redirects: `/catalogo` → `/catalog`, `/calendario` → `/calendar`, `/catalog-public.html` → `/catalog`, `/mis-pedidos` → `/catalog/mis-pedidos`.
   - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD for categorías), `metricas.js`, `cotizaciones.js`.
+
+- **Static HTML entry points**:
+  - `index.html` — admin dashboard
+  - `home.html` — landing
+  - `marketing.html` — promotions
+  - `user-public.html` — public user view
+  - `EJECUTAR-SISTEMA.bat` — Windows launcher script
+  - Script load order: `utils.js` → `supabase-init.js` → `promo-engine.js` → [module] → `main.js`
 
 - **MercadoPago return flow** (`next-app/pages/mi-carrito/`):
   - `mp-success.js`, `mp-failure.js`, `mp-pending.js` — MP redirects land here after payment.
@@ -43,21 +53,14 @@ Keep analysis extremely short after that.
 - **Supabase setup**:
   - SQL order: `supabase/schema.sql` → `supabase/storage-buckets.sql`
   - Buckets: `comprobantes` (private), `productos` (public)
-  - Client: `supabase/client.js`. Static HTML uses `window.KOND_SUPABASE_CONFIG` + `js/supabase-init.js`.
-  - NEVER expose SUPABASE_SERVICE_ROLE_KEY in client code.
+  - NEVER expose `SUPABASE_SERVICE_ROLE_KEY` in client code.
 
 - **localStorage keys** (preserve on migrations):
-  - Data: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `notifications`
+  - Data: `productosBase`, `pedidos`, `pedidosCatalogo`, `cart`, `notifications`, `marketing_promotions`, `marketing_coupons`
   - Auth: `kond-user`, `kond-admin`, `currentUser`, `adminSession`, `userSession` — clear ALL on logout
   - `safeLocalStorageSetItem` may omit `comprobante` on QuotaExceededError — don't remove without planning
 
-- **Static HTML entry points**:
-  - `index.html` — admin dashboard
-  - `home.html` — landing
-  - `marketing.html` — promotions
-  - Script order: `utils.js` → `supabase-init.js` → `promo-engine.js` → [module] → `main.js`
-
-- **CI**: Node 20, caches `next-app/package-lock.json`. ESLint non-fatal in CI (`npx eslint . || true`).
+- **CI**: Node 20, caches `next-app/package-lock.json`. ESLint non-fatal in CI (`npx eslint . --ext .js,.jsx,.ts,.tsx || true`).
 
 - **Security**: Always use `escapeHtml()` before `.innerHTML`. Never commit `.env.local` or keys.
 
@@ -75,17 +78,6 @@ Keep analysis extremely short after that.
   - `productos.categoria_id` FK → `categorias.id` (ON DELETE SET NULL). A product can point to a parent OR a leaf category.
   - `categorias` with `active = true` → public SELECT via RLS. Writes require service role.
 
-- **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
-
-- **Skills**: Project-specific skills live in `skills/` at repo root. Registry: `.atl/skill-registry.md`. Key ones:
-  - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome
-  - `react-query-kond` — staleTime policies, queryKeys from `next-app/lib/queryKeys.js`
-  - `supabase-egress-best-practices` — no `select(*)`, server-side filters, pagination
-  - `analytics-cards` — card components patterns
-  - `mi-carrito-summary` — cart/checkout flow context
-
-- **Deep context**: See `.github/copilot-instructions.md` for full technical details (schema, patterns, functions).
-
 - **Multi-tenant foundation** (`NEXT_PUBLIC_TENANT_ID`):
   - Every Vercel deployment gets its own `NEXT_PUBLIC_TENANT_ID` UUID — this is how tenants are isolated.
   - `next-app/lib/tenant.js` exports `TENANT_ID` — throws at module load if env var missing.
@@ -94,16 +86,38 @@ Keep analysis extremely short after that.
   - To add a second tenant: insert row in `tenants` table + new Vercel deployment with new UUID.
   - MP webhook resolves tenant via `pedidos_catalogo.mp_preference_id` join (no env var needed there).
 
+- **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
+
+- **Skills**: Project-specific skills live in `skills/` at repo root. Registry: `.atl/skill-registry.md`. Key ones:
+  - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome
+  - `react-query-kond` — staleTime policies, queryKeys from `next-app/lib/queryKeys.js`
+  - `supabase-egress-best-practices` — no `select(*)`, server-side filters, pagination
+  - `analytics-cards` — card components patterns
+  - `mi-carrito-summary` — cart/checkout flow context
+  - `theme-centralized` — use centralized theme system; no local `useState('dark')` or localStorage theme keys
+  - `collapsible-sections` — use CollapsibleSection for long admin forms
+  - `api-route-supabase` — Supabase patterns for Next.js API routes
+
+- **Deep context**: See `.github/copilot-instructions.md` for full technical details (schema, patterns, functions, dual Supabase/localStorage pattern, promo engine rules, calendar constraints, coding conventions).
+
+## Critical conventions agents miss
+
+- **Never use native `alert()` or `confirm()`** — always use `showCustomAlert()` and `showCustomConfirm()` from `js/utils.js`.
+- **Always call `guardarProductos()` after mutating `productosBase` or `pedidos`** in vanilla JS code.
+- **Promo engine load order**: `promo-engine.js` MUST load before `catalog.js` in static HTML.
+- **DB naming**: `snake_case` in Supabase, `camelCase` in frontend. Convert at layer boundaries.
+- **Theme**: use `document.body.getAttribute('data-theme')` and `setAppTheme()` from `utils/theme.js` — never local state for theme.
+
 ## Files to open first
 
-1. verify-setup.js
-2. .env.example
-3. .github/workflows/ci.yml
-4. next-app/package.json
-5. supabase/client.js
-6. supabase/schema.sql (tables + RLS)
-7. .atl/skill-registry.md
-8. .github/copilot-instructions.md
+1. `verify-setup.js`
+2. `.env.example`
+3. `.github/workflows/ci.yml`
+4. `next-app/package.json`
+5. `supabase/client.js`
+6. `supabase/schema.sql` (tables + RLS)
+7. `.atl/skill-registry.md`
+8. `.github/copilot-instructions.md`
 
 ## Commands
 
@@ -111,10 +125,9 @@ Keep analysis extremely short after that.
 - Next.js dev: `cd next-app && npm run dev`
 - Next.js build: `cd next-app && npm run build`
 - Lint: `cd next-app && npx eslint .`
+- Prod-test: `cd next-app && npm run test:prod`
 
 ## Quick Start Local
-
-Run a quick local setup and start both targets:
 
 ```
 # Install root deps (if any) and verify setup
@@ -125,4 +138,5 @@ node verify-setup.js
 cd next-app && npm install && npm run dev
 
 # Static site: open `index.html` or serve with a simple static server
+# Windows: double-click `EJECUTAR-SISTEMA.bat`
 ```

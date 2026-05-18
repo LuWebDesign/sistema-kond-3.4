@@ -57,6 +57,18 @@ const PAGES = [
     title: 'Secciones',
     desc: 'Activá, desactivá y reordená las secciones de la home.',
   },
+  {
+    href: '/admin/website/metodos-pago',
+    icon: '💳',
+    title: 'Métodos de Pago',
+    desc: 'Configurá los métodos de pago y el checkout del catálogo.',
+  },
+  {
+    href: '/admin/website/estilos',
+    icon: '🎨',
+    title: 'Estilos del Catálogo',
+    desc: 'Personalizá colores, textos y estilos del catálogo público.',
+  },
 ]
 
 function WebsiteLanding() {
