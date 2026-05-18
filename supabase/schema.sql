@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS public.productos (
   publicado BOOLEAN DEFAULT false,
   hidden_in_productos BOOLEAN DEFAULT false,
   allow_promotions BOOLEAN DEFAULT true,
+  featured BOOLEAN DEFAULT false,
   promo_badge TEXT,
   static_promo_price NUMERIC,
   static_promo_start DATE,
@@ -88,6 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON public.productos(catego
 CREATE INDEX IF NOT EXISTS idx_productos_publicado ON public.productos(publicado);
 CREATE INDEX IF NOT EXISTS idx_productos_active ON public.productos(active);
 CREATE INDEX IF NOT EXISTS idx_productos_nombre ON public.productos(nombre);
+CREATE INDEX IF NOT EXISTS idx_productos_featured ON public.productos(featured) WHERE featured = true;
 
 -- ============================================
 -- TABLA: pedidos (internos/producción)
