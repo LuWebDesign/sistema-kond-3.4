@@ -198,13 +198,13 @@ function PaymentConfigAdmin() {
         )}
 
         {/* ═══ Sección: Métodos de Pago ═══ */}
-        <div>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             💳 Métodos de Pago
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Configurá los métodos disponibles en el checkout</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Configurá los métodos disponibles en el checkout</p>
           <div style={{ display: 'grid', gap: 16 }}>
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>🏦 Transferencia Bancaria</h3>
@@ -239,7 +239,7 @@ function PaymentConfigAdmin() {
             )}
           </div>
 
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>💬 WhatsApp</h3>
@@ -271,7 +271,7 @@ function PaymentConfigAdmin() {
             )}
           </div>
 
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>📦 Retiro</h3>
@@ -307,14 +307,14 @@ function PaymentConfigAdmin() {
         </div>
 
         {/* ═══ Sección: Opciones del Checkout ═══ */}
-        <div>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             ⚙️ Opciones del Checkout
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Funcionalidades adicionales del proceso de compra</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Funcionalidades adicionales del proceso de compra</p>
           <div style={{ display: 'grid', gap: 16 }}>
             {/* MercadoPago */}
-            <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+            <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>💳 MercadoPago</h3>
@@ -339,7 +339,7 @@ function PaymentConfigAdmin() {
           </div>
 
           {/* Calendario de Fecha de Entrega */}
-          <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 8 }}>
+          <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0 }}>📅 Fecha de entrega solicitada</h3>
@@ -366,11 +366,11 @@ function PaymentConfigAdmin() {
         </div>
 
         {/* ═══ Sección: Textos Informativos ═══ */}
-        <div>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             📝 Textos Informativos
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '-8px 0 16px' }}>Bloques de texto que ve el cliente al finalizar la compra</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>Bloques de texto que ve el cliente al finalizar la compra</p>
           <div style={{ display: 'grid', gap: 16 }}>
             {/* Info Transferencia */}
             <div style={{ padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
