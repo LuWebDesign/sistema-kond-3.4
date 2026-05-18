@@ -47,22 +47,6 @@ async function fetchCategories() {
   }
 }
 
-async function fetchPublishedProducts() {
-  const res = await fetch('/api/productos?publicado=true&limit=200')
-  if (!res.ok) return []
-  const json = await res.json()
-  return json.productos || json || []
-}
-
-async function toggleFeatured(productId, featured) {
-  const res = await fetch(`/api/admin/productos/${productId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ featured }),
-  })
-  if (!res.ok) throw new Error('Error al actualizar producto')
-}
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const card = {
@@ -394,86 +378,6 @@ function CategoryOrderTab({ config, categories, onSave, saving }) {
         cancelText="Cancelar"
         type="info"
       />
-    </div>
-  )
-}
-
-// Tab 2: Featured products
-function FeaturedProductsTab({ products, onToggle, saving }) {
-  const [search, setSearch] = useState('')
-  const featured = products.filter((p) => p.featured)
-  const filtered = products.filter(
-    (p) =>
-      p.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-      p.id?.toString().includes(search)
-  )
-
-  return (
-    <div>
-      <p style={sectionSubtitle}>
-        Los productos destacados aparecen en la sección Hero de la home. Marcá hasta 8.
-      </p>
-
-      <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={badge(true)}>{featured.length} destacados</span>
-        <input
-          type="text"
-          placeholder="Buscar producto..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: 200,
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.9rem',
-          }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {filtered.map((p) => (
-          <label
-            key={p.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: p.featured ? 'var(--accent-blue)11' : 'var(--bg-secondary)',
-              border: `1px solid ${p.featured ? 'var(--accent-blue)44' : 'var(--border-color)'}`,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={!!p.featured}
-              disabled={saving}
-              onChange={() => onToggle(p.id, !p.featured)}
-              style={{ width: 16, height: 16, cursor: 'pointer' }}
-            />
-            {p.imagenes_urls?.[0] ? (
-              <img
-                src={p.imagenes_urls[0]}
-                alt=""
-                style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{ width: 36, height: 36, borderRadius: '6px', background: 'var(--bg-card)', flexShrink: 0 }} />
-            )}
-            <span style={{ flex: 1, fontWeight: 500, fontSize: '0.9rem' }}>{p.nombre}</span>
-            {p.featured && <span style={badge(true)}>Destacado</span>}
-          </label>
-        ))}
-        {filtered.length === 0 && (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Sin resultados.</p>
-        )}
-      </div>
     </div>
   )
 }
@@ -815,7 +719,6 @@ function SectionsTab({ config, categories, onSave, saving }) {
 
 const TABS = [
   { id: 'categories', label: '📂 Categorías' },
-  { id: 'featured',   label: '⭐ Destacados' },
   { id: 'banner',     label: '📢 Banner' },
   { id: 'sections',   label: '🧩 Secciones' },
 ]
@@ -824,7 +727,6 @@ function WebsitePage() {
   const [activeTab, setActiveTab] = useState('categories')
   const [config, setConfig] = useState(null)
   const [categories, setCategories] = useState([])
-  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
@@ -836,11 +738,10 @@ function WebsitePage() {
   }
 
   useEffect(() => {
-    Promise.all([fetchConfig(), fetchCategories(), fetchPublishedProducts()])
-      .then(([cfg, cats, prods]) => {
+    Promise.all([fetchConfig(), fetchCategories()])
+      .then(([cfg, cats]) => {
         setConfig(cfg)
         setCategories(cats)
-        setProducts(prods)
       })
       .catch((e) => {
         showToast(e.message || 'Error al cargar datos', 'error')
@@ -874,19 +775,6 @@ function WebsitePage() {
       },
     })
   }, [handleSaveConfig])
-
-  const handleToggleFeatured = useCallback(async (id, featured) => {
-    setSaving(true)
-    try {
-      await toggleFeatured(id, featured)
-      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, featured } : p))
-      showToast(featured ? '⭐ Marcado como destacado' : 'Quitado de destacados')
-    } catch (e) {
-      showToast(e.message, 'error')
-    } finally {
-      setSaving(false)
-    }
-  }, [])
 
   return (
     <Layout title="Website — Home | Sistema KOND">
@@ -975,14 +863,6 @@ function WebsitePage() {
                 />
               )}
 
-              {activeTab === 'featured' && (
-                <FeaturedProductsTab
-                  products={products}
-                  onToggle={handleToggleFeatured}
-                  saving={saving}
-                />
-              )}
-
               {activeTab === 'banner' && (
                 <BannerTab
                   config={config}
@@ -999,6 +879,16 @@ function WebsitePage() {
                   saving={saving}
                 />
               )}
+            </div>
+
+            {/* Quick link to featured products page */}
+            <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <a
+                href="/admin/website/destacados"
+                style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+              >
+                ⭐ Gestionar Productos Destacados →
+              </a>
             </div>
           </>
         )}
