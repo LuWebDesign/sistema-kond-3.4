@@ -45,30 +45,6 @@ function PaymentConfigAdmin() {
     loadConfig()
   }, [])
 
-  useEffect(() => {
-    if (!isLoading) {
-      // Collapse sections that have data; collapse empty ones too for a clean initial view
-      setIsTransferenciaCollapsed(
-        !!(paymentConfig.transferencia.alias && paymentConfig.transferencia.cbu)
-      )
-      setIsWhatsappCollapsed(
-        !!paymentConfig.whatsapp.numero
-      )
-      setIsRetiroCollapsed(
-        !!(paymentConfig.retiro.direccion && paymentConfig.retiro.direccion.length > 0)
-      )
-      setIsTextoTransferenciaCollapsed(
-        !!paymentConfig.textos?.infoTransferencia
-      )
-      setIsTextoWhatsappCollapsed(
-        !!paymentConfig.textos?.infoWhatsapp
-      )
-      setIsTextoRetiroCollapsed(
-        !!paymentConfig.textos?.infoRetiro
-      )
-    }
-  }, [isLoading])
-
   const loadConfig = async () => {
     setIsLoading(true)
     try {
@@ -81,6 +57,13 @@ function PaymentConfigAdmin() {
           mercadopago: { ...prev.mercadopago, ...(config.mercadopago || {}) },
           textos: { ...prev.textos, ...(config.textos || {}) },
         }))
+        // Collapse sections that have data; leave empty ones collapsed for a clean view
+        setIsTransferenciaCollapsed(!!(config.transferencia?.alias && config.transferencia?.cbu))
+        setIsWhatsappCollapsed(!!config.whatsapp?.numero)
+        setIsRetiroCollapsed(!!(config.retiro?.direccion && config.retiro.direccion.length > 0))
+        setIsTextoTransferenciaCollapsed(!!config.textos?.infoTransferencia)
+        setIsTextoWhatsappCollapsed(!!config.textos?.infoWhatsapp)
+        setIsTextoRetiroCollapsed(!!config.textos?.infoRetiro)
       }
     } catch (error) {
       console.error('Error al cargar configuración:', error)
