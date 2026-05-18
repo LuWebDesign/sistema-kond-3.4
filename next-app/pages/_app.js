@@ -41,7 +41,7 @@ export default function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     // Establecer tema por defecto
-    const savedTheme = localStorage.getItem('theme') || 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'light'
     document.body.setAttribute('data-theme', savedTheme)
 
     // Cargar email del comprador si está logueado
