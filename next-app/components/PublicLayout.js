@@ -21,6 +21,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [isClient, setIsClient] = useState(false)
   const [isMobileWidth, setIsMobileWidth] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [stylesLoaded, setStylesLoaded] = useState(false)
   const router = useRouter()
 
   // Cargar cantidad del carrito desde localStorage
@@ -43,10 +44,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
   useEffect(() => {
     // Forzar siempre tema light en el catálogo público
-    // Solo aplicar al DOM — NO sobrescribir localStorage para no pisar el tema del panel admin
+    // :root ya es light por defecto, solo aseguramos data-theme
     try {
       document.body.setAttribute('data-theme', 'light')
-      document.body.className = 'light'
+      document.body.classList.remove('dark')
     } catch (e) {
       // ignore if document.body is not available yet
     }
@@ -66,9 +67,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
     getCatalogStyles().then(s => {
       if (s) {
         setCatalogStyles(s)
+        setStylesLoaded(true)
         try { localStorage.setItem('catalogStyles', JSON.stringify(s)) } catch (e) {}
       }
-    }).catch(() => {})
+    }).catch(() => { setStylesLoaded(true) })
     // Escuchar actualizaciones en tiempo real desde el admin
     const onStylesUpdate = (e) => { if (e.detail) setCatalogStyles(prev => ({ ...prev, ...e.detail })) }
     if (typeof window !== 'undefined') window.addEventListener('catalogStyles:updated', onStylesUpdate)
@@ -201,11 +203,11 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               alignItems: 'center',
               gap: '8px'
             }}>
-              {!isClient
+              {!isClient || !stylesLoaded
                 ? <span style={{ display: 'inline-block', width: 120, height: 24, borderRadius: 4, background: 'var(--border-color, #e2e8f0)' }} />
                 : catalogStyles.logoUrl
                   ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
-                  : (catalogStyles.logoText || 'KOND')
+                  : (catalogStyles.logoText || '')
               }
             </Link>
           </div>
@@ -318,7 +320,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                     fontSize: '1.1rem',
                     fontWeight: 600
                   }}>
-                    {catalogStyles.logoText || catalogStyles.logoUrl ? (catalogStyles.logoText || '') : 'KOND'}
+                    {catalogStyles.logoText || catalogStyles.logoUrl ? (catalogStyles.logoText || '') : ''}
                   </h3>
                   <p style={{
                     fontSize: '0.9rem',
@@ -402,33 +404,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         </div>
       </div>
       
-      {/* Variables CSS */}
+      {/* Variables CSS — public is always light */}
       <style jsx global>{`
         :root {
-          --bg-primary: #0f172a;
-          --bg-secondary: #1e293b;
-          --bg-card: #334155;
-          --bg-section: #475569;
-          --bg-input: #1e293b;
-          --bg-hover: #475569;
-          --text-primary: #f1f5f9;
-          --text-secondary: #cbd5e1;
-          --text-muted: #94a3b8;
-          --border-color: #475569;
-          /* RGB form of border color so we can create subtle dividers with alpha */
-          --border-rgb: 71,85,105;
-          --accent-blue: #3b82f6;
-          --accent-secondary: #10b981;
-          --person-color: #8b5cf6;
-          --orders-color: #f59e0b;
-          --products-color: #06b6d4;
-          --calendar-color: #84cc16;
-          --database-color: #f97316;
-          --finances-color: #eab308;
-          --account-color: #6366f1;
-        }
-        
-        body.light {
           --bg-primary: #ffffff;
           --bg-secondary: #f8fafc;
           --bg-card: #f1f5f9;
@@ -440,6 +418,15 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --text-muted: #64748b;
           --border-color: #e2e8f0;
           --border-rgb: 226,232,240;
+          --accent-blue: #3b82f6;
+          --accent-secondary: #10b981;
+          --person-color: #8b5cf6;
+          --orders-color: #f59e0b;
+          --products-color: #06b6d4;
+          --calendar-color: #84cc16;
+          --database-color: #f97316;
+          --finances-color: #eab308;
+          --account-color: #6366f1;
         }
         
         * {
