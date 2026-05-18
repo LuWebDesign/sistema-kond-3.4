@@ -10,10 +10,25 @@ import ConfirmDialog from '../../../../components/ConfirmDialog'
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function fetchPublishedProducts() {
-  const res = await fetch('/api/productos?publicado=true&limit=200')
+  // Use home-data API which uses supabaseAdmin + TENANT_ID
+  const res = await fetch('/api/home-data')
   if (!res.ok) return []
   const json = await res.json()
-  return json.productos || json || []
+  // Featured products already have the `featured` field
+  const featured = json.featured || []
+  const featuredIds = new Set(featured.map((p) => p.id))
+  // Products from byCategory don't have `featured` — add it as false
+  const byCategory = json.byCategory || {}
+  const allFromCategories = Object.values(byCategory).flat()
+  // Deduplicate and merge
+  const seen = new Set()
+  const all = []
+  for (const p of [...featured, ...allFromCategories]) {
+    if (seen.has(p.id)) continue
+    seen.add(p.id)
+    all.push({ ...p, featured: featuredIds.has(p.id) })
+  }
+  return all
 }
 
 async function toggleFeatured(productId, featured) {
