@@ -12,6 +12,10 @@ class MyDocument extends Document {
                 (function() {
                   var theme = localStorage.getItem('theme') || 'light';
                   document.body.setAttribute('data-theme', theme);
+                  // Force light theme on public pages to avoid dark flash from admin usage
+                  if (!window.location.pathname.startsWith('/admin')) {
+                    document.body.setAttribute('data-theme', 'light');
+                  }
                 })();
               `
             }}
