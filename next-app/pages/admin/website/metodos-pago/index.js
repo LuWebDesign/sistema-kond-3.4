@@ -25,12 +25,12 @@ function PaymentConfigAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
 
-  const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(false)
-  const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(false)
-  const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(false)
-  const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(false)
-  const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(false)
-  const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(false)
+  const [isTransferenciaCollapsed, setIsTransferenciaCollapsed] = useState(true)
+  const [isWhatsappCollapsed, setIsWhatsappCollapsed] = useState(true)
+  const [isRetiroCollapsed, setIsRetiroCollapsed] = useState(true)
+  const [isTextoTransferenciaCollapsed, setIsTextoTransferenciaCollapsed] = useState(true)
+  const [isTextoWhatsappCollapsed, setIsTextoWhatsappCollapsed] = useState(true)
+  const [isTextoRetiroCollapsed, setIsTextoRetiroCollapsed] = useState(true)
   
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -57,13 +57,13 @@ function PaymentConfigAdmin() {
           mercadopago: { ...prev.mercadopago, ...(config.mercadopago || {}) },
           textos: { ...prev.textos, ...(config.textos || {}) },
         }))
-        // Collapse sections that have data; leave empty ones collapsed for a clean view
-        setIsTransferenciaCollapsed(!!(config.transferencia?.alias && config.transferencia?.cbu))
-        setIsWhatsappCollapsed(!!config.whatsapp?.numero)
-        setIsRetiroCollapsed(!!(config.retiro?.direccion && config.retiro.direccion.length > 0))
-        setIsTextoTransferenciaCollapsed(!!config.textos?.infoTransferencia)
-        setIsTextoWhatsappCollapsed(!!config.textos?.infoWhatsapp)
-        setIsTextoRetiroCollapsed(!!config.textos?.infoRetiro)
+        // All sections start collapsed; user must click "Editar" to expand
+        setIsTransferenciaCollapsed(true)
+        setIsWhatsappCollapsed(true)
+        setIsRetiroCollapsed(true)
+        setIsTextoTransferenciaCollapsed(true)
+        setIsTextoWhatsappCollapsed(true)
+        setIsTextoRetiroCollapsed(true)
       }
     } catch (error) {
       console.error('Error al cargar configuración:', error)
