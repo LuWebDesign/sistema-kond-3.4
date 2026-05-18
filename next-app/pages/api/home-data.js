@@ -64,16 +64,9 @@ export default async function handler(req, res) {
     const categories = categoriesResult.data || [];
     const allProducts = allProductsResult.data || [];
     const promos = promosResult.data || [];
-    let featured = featuredResult.data || [];
+    const featured = featuredResult.data || [];
 
-    // Fallback: if featured.length < 4, fill from newest published products
-    if (featured.length < 4) {
-      const featuredIds = new Set(featured.map((p) => p.id));
-      const extras = allProducts
-        .filter((p) => !featuredIds.has(p.id))
-        .slice(0, 8 - featured.length);
-      featured = [...featured, ...extras];
-    }
+    // No fallback — show exactly the featured products the admin selected
 
     // Group allProducts by categoria_id
     const byCategory = {};
