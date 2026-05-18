@@ -40,9 +40,12 @@ export default function MyApp({ Component, pageProps }) {
   }
 
   useEffect(() => {
-    // Establecer tema por defecto
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    document.body.setAttribute('data-theme', savedTheme)
+    // Establecer tema por defecto — solo en admin, público siempre light
+    const isAdminRoute = router.pathname.startsWith('/admin')
+    if (isAdminRoute) {
+      const savedTheme = localStorage.getItem('theme') || 'dark'
+      document.body.setAttribute('data-theme', savedTheme)
+    }
 
     // Cargar email del comprador si está logueado
     refreshBuyerEmail()
