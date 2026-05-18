@@ -429,7 +429,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --account-color: #6366f1;
         }
         
-        body.dark {
+        body[data-theme="dark"] {
           --bg-primary: #0f172a;
           --bg-secondary: #1e293b;
           --bg-card: #334155;
