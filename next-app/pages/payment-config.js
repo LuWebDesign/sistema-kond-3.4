@@ -6,7 +6,7 @@
                   const router = useRouter()
                   useEffect(() => {
                     // Redirigir al editor dentro del panel admin
-                    router.replace('/admin/payment-config')
+                    router.replace('/admin/website/metodos-pago')
                   }, [router])
 
                   return null

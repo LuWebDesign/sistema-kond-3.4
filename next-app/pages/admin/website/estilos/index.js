@@ -1,7 +1,7 @@
-import Layout from '../../components/Layout'
-import withAdminAuth from '../../components/withAdminAuth'
+import Layout from '../../../../components/Layout'
+import withAdminAuth from '../../../../components/withAdminAuth'
 import { useState, useEffect, useRef } from 'react'
-import { getCatalogStyles, saveCatalogStyles, DEFAULT_STYLES } from '../../utils/supabaseCatalogStyles'
+import { getCatalogStyles, saveCatalogStyles, DEFAULT_STYLES } from '../../../../utils/supabaseCatalogStyles'
 
 function CatalogStylesAdmin() {
   const [styles, setStyles] = useState(DEFAULT_STYLES)

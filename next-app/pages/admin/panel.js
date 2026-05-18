@@ -94,7 +94,7 @@ function AdminPanel() {
             Personalizá los colores, textos y estilos del catálogo público, incluyendo el header, footer y banner.
           </p>
           <div className="card-actions">
-            <button onClick={() => router.push('/admin/catalog-styles')} className="btn btn-primary">
+            <button onClick={() => router.push('/admin/website/estilos')} className="btn btn-primary">
               🎨 Personalizar Estilos
             </button>
           </div>
@@ -107,7 +107,7 @@ function AdminPanel() {
             Configurá los métodos de pago, datos de retiro y contacto disponibles en el catálogo público.
           </p>
           <div className="card-actions">
-            <button onClick={() => router.push('/admin/payment-config')} className="btn btn-primary">
+            <button onClick={() => router.push('/admin/website/metodos-pago')} className="btn btn-primary">
               ⚙️ Ir a Configuración
             </button>
           </div>

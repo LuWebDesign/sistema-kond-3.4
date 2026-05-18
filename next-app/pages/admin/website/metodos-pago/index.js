@@ -1,8 +1,8 @@
-import Layout from '../../components/Layout'
-import withAdminAuth from '../../components/withAdminAuth'
+import Layout from '../../../../components/Layout'
+import withAdminAuth from '../../../../components/withAdminAuth'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { getPaymentConfig, savePaymentConfig } from '../../utils/supabasePaymentConfig'
+import { getPaymentConfig, savePaymentConfig } from '../../../../utils/supabasePaymentConfig'
 
 function PaymentConfigAdmin() {
   const router = useRouter()

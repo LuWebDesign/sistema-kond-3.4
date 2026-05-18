@@ -365,7 +365,7 @@ function Dashboard() {
                 subtitle="Promociones"
               />
               <QuickActionButton
-                href="/admin/payment-config"
+                href="/admin/website/metodos-pago"
                 icon="💳"
                 title="Finalizar Compra"
                 subtitle="Configuración de checkout"
