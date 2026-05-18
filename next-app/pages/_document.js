@@ -37,19 +37,6 @@ class MyDocument extends Document {
               --accent-blue: #3b82f6;
               --accent-secondary: #10b981;
             }
-            body[data-theme="dark"] {
-              --bg-primary: #0f172a;
-              --bg-secondary: #1e293b;
-              --bg-card: #334155;
-              --bg-section: #475569;
-              --bg-input: #1e293b;
-              --bg-hover: #475569;
-              --text-primary: #f1f5f9;
-              --text-secondary: #cbd5e1;
-              --text-muted: #94a3b8;
-              --border-color: #475569;
-              --border-rgb: 71,85,105;
-            }
           ` }} />
           <Main />
           <NextScript />

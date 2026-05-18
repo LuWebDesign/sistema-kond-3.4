@@ -404,7 +404,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         </div>
       </div>
       
-      {/* Variables CSS */}
+      {/* Variables CSS — public is always light */}
       <style jsx global>{`
         :root {
           --bg-primary: #ffffff;
@@ -427,20 +427,6 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           --database-color: #f97316;
           --finances-color: #eab308;
           --account-color: #6366f1;
-        }
-        
-        body[data-theme="dark"] {
-          --bg-primary: #0f172a;
-          --bg-secondary: #1e293b;
-          --bg-card: #334155;
-          --bg-section: #475569;
-          --bg-input: #1e293b;
-          --bg-hover: #475569;
-          --text-primary: #f1f5f9;
-          --text-secondary: #cbd5e1;
-          --text-muted: #94a3b8;
-          --border-color: #475569;
-          --border-rgb: 71,85,105;
         }
         
         * {
