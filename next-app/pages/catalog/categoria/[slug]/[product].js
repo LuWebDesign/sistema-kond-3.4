@@ -3,6 +3,7 @@ import Link from 'next/link'
 import PublicLayout from '../../../../components/PublicLayout'
 import { useProducts } from '../../../../hooks/useCatalog'
 import { slugifyPreserveCase } from '../../../../utils/slugify'
+import { formatCurrency } from '../../../../utils/catalogUtils'
 
 export default function ProductPage({ params }) {
   const { products } = useProducts()
@@ -43,14 +44,87 @@ export default function ProductPage({ params }) {
             )}
           </div>
 
-          <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
-            <h1 style={{ marginTop: 0, color: 'var(--text-primary)' }}>{found.nombre}</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>{found.medidas}</p>
-            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.1rem' }}>
-              {found.precio ? `$ ${found.precio}` : ''}
-            </p>
-            <div style={{ marginTop: 12 }}>
-              <p style={{ color: 'var(--text-secondary)' }}>{found.descripcion || 'Sin descripción disponible.'}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Block 1: Title + Category */}
+            <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+              <h1 style={{ marginTop: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{found.nombre}</h1>
+              <span style={{
+                display: 'inline-block',
+                background: 'var(--accent-blue)',
+                color: '#fff',
+                padding: '2px 8px',
+                borderRadius: 4,
+                fontSize: '0.8rem',
+                fontWeight: 600
+              }}>
+                {found.categoria}
+              </span>
+            </div>
+
+            {/* Block 2: Price (with promo conditional) */}
+            <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Precio
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {found.hasPromotion && found.precioPromocional !== undefined && found.precioPromocional !== found.precioUnitario ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+                      {formatCurrency(found.precioUnitario || 0)}
+                    </div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>
+                      {formatCurrency(found.precioPromocional)}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+                    {formatCurrency(found.precioUnitario || 0)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Block 3: Promotion Badges */}
+            {found.promotionBadges && found.promotionBadges.length > 0 && (
+              <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {found.promotionBadges.map((badge, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        backgroundColor: badge.color || '#ef4444',
+                        color: badge.textColor || '#ffffff',
+                        padding: '3px 8px',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      {badge.text}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Block 4: Description */}
+            <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Descripción
+              </div>
+              <p style={{ color: 'var(--text-primary)', margin: 0, lineHeight: 1.6 }}>
+                {found.description || 'Sin descripción disponible.'}
+              </p>
+            </div>
+
+            {/* Block 5: Measures */}
+            <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Medidas / Especificaciones
+              </div>
+              <p style={{ color: 'var(--text-primary)', margin: 0 }}>
+                {found.medidas || '—'}
+              </p>
             </div>
           </div>
         </div>
