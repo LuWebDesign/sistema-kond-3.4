@@ -14,6 +14,7 @@ function CatalogStylesAdmin() {
   const PRESETS_KEY = 'catalog_color_presets_v1'
   const [presets, setPresets] = useState([])
   const [presetName, setPresetName] = useState('')
+  const [socialUrlErrors, setSocialUrlErrors] = useState({ footerInstagram: '', footerFacebook: '', footerTikTok: '' })
 
   useEffect(() => {
     loadStyles()
@@ -60,6 +61,24 @@ function CatalogStylesAdmin() {
 
   const updateStyle = (key, value) => {
     setStyles(prev => ({ ...prev, [key]: value }))
+  }
+
+  const validateSocialUrl = (key, value) => {
+    if (!value) {
+      setSocialUrlErrors(prev => ({ ...prev, [key]: '' }))
+      return true
+    }
+    const urlPattern = /^(https?:\/\/)[^\s]+$/
+    if (!urlPattern.test(value)) {
+      setSocialUrlErrors(prev => ({ ...prev, [key]: 'URL inválida' }))
+      return false
+    }
+    setSocialUrlErrors(prev => ({ ...prev, [key]: '' }))
+    return true
+  }
+
+  const handleSocialUrlChange = (key, value) => {
+    updateStyle(key, value || '')
   }
 
   const handleLogoUpload = (e) => {
@@ -369,6 +388,27 @@ function CatalogStylesAdmin() {
                 <div style={fieldGroup}>
                   <label style={labelStyle}>📍 Dirección</label>
                   <input type="text" value={styles.footerAddress || ''} onChange={(e) => updateStyle('footerAddress', e.target.value)} placeholder="Buenos Aires, Argentina" style={inputStyle} />
+                </div>
+
+                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                  <label style={{ ...labelStyle, marginBottom: '12px' }}>Redes sociales</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8rem' }}>Instagram URL</label>
+                      <input type="url" value={styles.footerInstagram || ''} onChange={(e) => handleSocialUrlChange('footerInstagram', e.target.value)} onBlur={(e) => validateSocialUrl('footerInstagram', e.target.value)} placeholder="https://instagram.com/tu-tienda" style={inputStyle} />
+                      {socialUrlErrors.footerInstagram && <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>{socialUrlErrors.footerInstagram}</span>}
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8rem' }}>Facebook URL</label>
+                      <input type="url" value={styles.footerFacebook || ''} onChange={(e) => handleSocialUrlChange('footerFacebook', e.target.value)} onBlur={(e) => validateSocialUrl('footerFacebook', e.target.value)} placeholder="https://facebook.com/tu-tienda" style={inputStyle} />
+                      {socialUrlErrors.footerFacebook && <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>{socialUrlErrors.footerFacebook}</span>}
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8rem' }}>TikTok URL</label>
+                      <input type="url" value={styles.footerTikTok || ''} onChange={(e) => handleSocialUrlChange('footerTikTok', e.target.value)} onBlur={(e) => validateSocialUrl('footerTikTok', e.target.value)} placeholder="https://tiktok.com/@tu-tienda" style={inputStyle} />
+                      {socialUrlErrors.footerTikTok && <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>{socialUrlErrors.footerTikTok}</span>}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -711,6 +751,27 @@ function CatalogStylesAdmin() {
                     {styles.footerPhone && <span>📱 {styles.footerPhone} </span>}
                     {styles.footerEmail && <span>📧 {styles.footerEmail}</span>}
                   </div>
+                  {(styles.footerInstagram || styles.footerFacebook || styles.footerTikTok) && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      {styles.footerInstagram && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={styles.footerTextColor || 'var(--text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                          <circle cx="12" cy="12" r="5"/>
+                          <circle cx="17.5" cy="6.5" r="1.5" fill={styles.footerTextColor || 'var(--text-secondary)'} stroke="none"/>
+                        </svg>
+                      )}
+                      {styles.footerFacebook && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={styles.footerTextColor || 'var(--text-secondary)'}>
+                          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                        </svg>
+                      )}
+                      {styles.footerTikTok && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={styles.footerTextColor || 'var(--text-secondary)'}>
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.73a8.19 8.19 0 0 0 4.76 1.52V6.8a4.84 4.84 0 0 1-1-.11z"/>
+                        </svg>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
