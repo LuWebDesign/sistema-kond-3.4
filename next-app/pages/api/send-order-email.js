@@ -126,7 +126,7 @@ export default async function handler(req, res) {
           </table>
           ${buildItemsTable(items)}
           <div style="margin-top:24px;">
-            <a href="${baseUrl}/admin/orders" style="display:inline-block;padding:12px 24px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">Ver pedido en el panel</a>
+            <a href="${baseUrl}/admin/orders/detalle-pedido/${pedidoId}" style="display:inline-block;padding:12px 24px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">Ver pedido en el panel</a>
           </div>
         </div>`
 
