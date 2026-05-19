@@ -78,7 +78,7 @@ export default function ProductPage({ params }) {
                       <span
                         key={idx}
                         style={{
-                          backgroundColor: badge.color || '#ef4444',
+                          background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#ef4444',
                           color: badge.textColor || '#ffffff',
                           padding: '3px 8px',
                           borderRadius: 4,
