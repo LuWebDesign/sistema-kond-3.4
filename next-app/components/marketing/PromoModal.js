@@ -167,7 +167,6 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     };
 
     // console.log('🎯 PromoModal - Datos enviados al handler:', promoData);
-    console.log('🎯 PromoModal - badgeOpacity:', formData.badgeOpacity, '→ promoData.badgeOpacity:', promoData.badgeOpacity);
     onSubmit(promoData);
   };
 

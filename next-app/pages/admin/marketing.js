@@ -95,6 +95,7 @@ function Marketing() {
       return data || []
     },
     staleTime: STALE_TIMES.promociones,
+    refetchOnMount: true,
     enabled: typeof window !== 'undefined',
   })
 

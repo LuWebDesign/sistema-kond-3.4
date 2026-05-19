@@ -45,23 +45,12 @@ export default function ProductPage({ params }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Block 1: Title + Category */}
+            {/* Block 1: Title only */}
             <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
-              <h1 style={{ marginTop: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{found.nombre}</h1>
-              <span style={{
-                display: 'inline-block',
-                background: 'var(--accent-blue)',
-                color: '#fff',
-                padding: '2px 8px',
-                borderRadius: 4,
-                fontSize: '0.8rem',
-                fontWeight: 600
-              }}>
-                {found.categoria}
-              </span>
+              <h1 style={{ marginTop: 0, marginBottom: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{found.nombre}</h1>
             </div>
 
-            {/* Block 2: Price (with promo conditional) */}
+            {/* Block 2: Price + Promo + Badges */}
             <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Precio
@@ -81,33 +70,31 @@ export default function ProductPage({ params }) {
                     {formatCurrency(found.precioUnitario || 0)}
                   </div>
                 )}
+
+                {/* Badges inline with price */}
+                {found.promotionBadges && found.promotionBadges.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {found.promotionBadges.map((badge, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          backgroundColor: badge.color || '#ef4444',
+                          color: badge.textColor || '#ffffff',
+                          padding: '3px 8px',
+                          borderRadius: 4,
+                          fontSize: '0.75rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {badge.text}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Block 3: Promotion Badges */}
-            {found.promotionBadges && found.promotionBadges.length > 0 && (
-              <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {found.promotionBadges.map((badge, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        backgroundColor: badge.color || '#ef4444',
-                        color: badge.textColor || '#ffffff',
-                        padding: '3px 8px',
-                        borderRadius: 4,
-                        fontSize: '0.75rem',
-                        fontWeight: 600
-                      }}
-                    >
-                      {badge.text}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Block 4: Description */}
+            {/* Block 3: Description */}
             <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Descripción
@@ -117,7 +104,7 @@ export default function ProductPage({ params }) {
               </p>
             </div>
 
-            {/* Block 5: Measures */}
+            {/* Block 4: Measures */}
             <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12 }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Medidas / Especificaciones

@@ -138,7 +138,6 @@ export async function updatePromocion(id, promocion) {
     if (promocion.badgeTextColor !== undefined) updateData.badge_text_color = promocion.badgeTextColor;
     if (promocion.badge_text_color !== undefined) updateData.badge_text_color = promocion.badge_text_color;
 
-    console.log('🔧 updatePromocion — updateData being sent:', JSON.stringify(updateData, null, 2));
     if (promocion.descuentoPorcentaje !== undefined) updateData.descuento_porcentaje = parseFloat(promocion.descuentoPorcentaje);
     if (promocion.descuento_porcentaje !== undefined) updateData.descuento_porcentaje = parseFloat(promocion.descuento_porcentaje);
     if (promocion.descuentoMonto !== undefined) updateData.descuento_monto = parseFloat(promocion.descuentoMonto);
