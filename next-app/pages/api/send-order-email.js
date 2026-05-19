@@ -61,10 +61,10 @@ export default async function handler(req, res) {
     const clienteNombre = [pedido.cliente_nombre, pedido.cliente_apellido].filter(Boolean).join(' ') || 'Cliente'
     const items = pedido.pedidos_catalogo_items || []
     const total = Number(pedido.total || 0)
-    // Use request host so links always point to the correct deployment URL
-    const proto = req.headers['x-forwarded-proto'] || 'https'
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000'
-    const baseUrl = `${proto}://${host}`
+    // Use NEXT_PUBLIC_BASE_URL if set (custom domain), otherwise fallback to request host
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+      ? process.env.NEXT_PUBLIC_BASE_URL
+      : `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000'}`
     const miCuentaUrl = `${baseUrl}/catalog/mis-pedidos`
 
     let subject, bodyHtml
