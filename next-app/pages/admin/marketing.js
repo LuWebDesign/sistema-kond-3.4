@@ -117,6 +117,7 @@ function Marketing() {
       return data || []
     },
     staleTime: STALE_TIMES.productos_admin,
+    refetchOnMount: true,
     enabled: typeof window !== 'undefined',
   })
 
