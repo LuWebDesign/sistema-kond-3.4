@@ -74,21 +74,30 @@ export default function ProductPage({ params }) {
                 {/* Badges inline with price */}
                 {found.promotionBadges && found.promotionBadges.length > 0 && (
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {found.promotionBadges.map((badge, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#ef4444',
-                          color: badge.textColor || '#ffffff',
-                          padding: '3px 8px',
-                          borderRadius: 4,
-                          fontSize: '0.75rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        {badge.text}
-                      </span>
-                    ))}
+                    {found.promotionBadges.map((badge, idx) => {
+                      const opacity = badge.opacity ?? 100
+                      const bgColor = badge.color || '#ef4444'
+                      // Convertir hex a rgb para aplicar opacidad
+                      const hex = bgColor.replace('#', '')
+                      const r = parseInt(hex.substring(0, 2), 16)
+                      const g = parseInt(hex.substring(2, 4), 16)
+                      const b = parseInt(hex.substring(4, 6), 16)
+                      return (
+                        <span
+                          key={idx}
+                          style={{
+                            background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                            color: badge.textColor || '#ffffff',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            fontSize: '0.75rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          {badge.text}
+                        </span>
+                      )
+                    })}
                   </div>
                 )}
               </div>

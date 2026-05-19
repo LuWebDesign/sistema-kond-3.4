@@ -714,22 +714,30 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           gap: '4px',
           flexWrap: 'wrap',
         }}>
-          {product.promotionBadges.filter(b => b.type === 'transfer_discount').map((badge, idx) => (
-            <span
-              key={idx}
-              style={{
-                background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
-                color: badge.textColor || '#ffffff',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {badge.text}
-            </span>
-          ))}
+          {product.promotionBadges.filter(b => b.type === 'transfer_discount').map((badge, idx) => {
+            const opacity = badge.opacity ?? 100
+            const bgColor = badge.color || '#3b82f6'
+            const hex = bgColor.replace('#', '')
+            const r = parseInt(hex.substring(0, 2), 16)
+            const g = parseInt(hex.substring(2, 4), 16)
+            const b = parseInt(hex.substring(4, 6), 16)
+            return (
+              <span
+                key={idx}
+                style={{
+                  background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                  color: badge.textColor || '#ffffff',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {badge.text}
+              </span>
+            )
+          })}
         </div>
       )}
 
@@ -965,22 +973,30 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             {/* Mostrar badges de promoción al lado del precio (excluyendo transfer_discount) */}
             {product && product.promotionBadges && product.promotionBadges.filter(b => b.type !== 'transfer_discount').length > 0 && (
               <div style={{ display: 'flex', gap: '4px' }}>
-                {product.promotionBadges.filter(b => b.type !== 'transfer_discount').map((badge, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
-                      color: badge.textColor || '#ffffff',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {badge.text}
-                  </span>
-                ))}
+                {product.promotionBadges.filter(b => b.type !== 'transfer_discount').map((badge, idx) => {
+                  const opacity = badge.opacity ?? 100
+                  const bgColor = badge.color || '#3b82f6'
+                  const hex = bgColor.replace('#', '')
+                  const r = parseInt(hex.substring(0, 2), 16)
+                  const g = parseInt(hex.substring(2, 4), 16)
+                  const b = parseInt(hex.substring(4, 6), 16)
+                  return (
+                    <span
+                      key={idx}
+                      style={{
+                        background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                        color: badge.textColor || '#ffffff',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {badge.text}
+                    </span>
+                  )
+                })}
               </div>
             )}
 
