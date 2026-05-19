@@ -284,11 +284,16 @@ function Marketing() {
   };
 
   const handlePromoSubmit = async (promoData) => {
+    console.log('📝 handlePromoSubmit called — editingPromo:', editingPromo?.id, 'promoData:', promoData);
     try {
       if (editingPromo) {
+        console.log('🔄 Calling updatePromoMutation with id:', editingPromo.id);
         await updatePromoMutation.mutateAsync({ id: editingPromo.id, payload: promoData })
+        console.log('✅ updatePromoMutation succeeded');
       } else {
+        console.log('➕ Calling createPromoMutation');
         await createPromoMutation.mutateAsync(promoData)
+        console.log('✅ createPromoMutation succeeded');
       }
 
       closePromoModal()
