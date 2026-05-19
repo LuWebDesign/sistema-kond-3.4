@@ -366,6 +366,16 @@ export default function FinalizarCompraPage() {
       const result = await saveOrder(orderData, () => {})
       if (!result.success) throw new Error(result.error?.message || 'Error al guardar el pedido')
 
+      // Fire-and-forget email — non-blocking
+      const _orderId = result.orderId || result.data?.id
+      if (_orderId) {
+        fetch('/api/send-order-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pedidoId: _orderId, nuevoEstado: 'recibido' })
+        }).catch(err => console.warn('[email] send failed (non-critical):', err))
+      }
+
       createToast('Pedido procesado exitosamente.', 'success')
 
       const whatsappPhone = paymentConfig?.whatsapp?.numero || '541136231857'

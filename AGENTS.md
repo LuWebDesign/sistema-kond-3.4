@@ -37,7 +37,8 @@ Keep analysis extremely short after that.
   - All admin pages live under `/admin/`. Old top-level paths redirect there via `next.config.js` — never create new pages at those old paths.
   - Redirects: `/products` → `/admin/products`, `/dashboard` → `/admin/dashboard`, `/pedidos` → `/admin/pedidos`, `/pedidos-catalogo` → `/admin/orders`, `/marketing` → `/admin/marketing`, `/finanzas` → `/admin/finanzas`, `/materiales` → `/admin/materiales`, `/mi-cuenta` → `/admin/mi-cuenta`, `/database` → `/admin/database`, `/admin/payment-config` → `/admin/website/metodos-pago`, `/admin/catalog-styles` → `/admin/website/estilos`.
   - Other redirects: `/catalogo` → `/catalog`, `/calendario` → `/calendar`, `/catalog-public.html` → `/catalog`, `/mis-pedidos` → `/catalog/mis-pedidos`.
-  - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD for categorías), `metricas.js`, `cotizaciones.js`.
+  - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD categorías), `metricas.js`, `cotizaciones.js`.
+  - **Website management** (`/admin/website/`): reorganized under `website/` — `banner/`, `categorias/`, `destacados/`, `estilos/`, `metodos-pago/`, `secciones/`. Parent `website/index.js` is the hub.
 
 - **Static HTML entry points**:
   - `index.html` — admin dashboard
@@ -53,6 +54,7 @@ Keep analysis extremely short after that.
 
 - **Supabase setup**:
   - SQL order: `supabase/schema.sql` → `supabase/storage-buckets.sql`
+  - Migrations live in `supabase/migrations/` — apply in date order after initial schema.
   - Buckets: `comprobantes` (private), `productos` (public)
   - NEVER expose `SUPABASE_SERVICE_ROLE_KEY` in client code.
 
@@ -79,6 +81,13 @@ Keep analysis extremely short after that.
   - `productos.categoria_id` FK → `categorias.id` (ON DELETE SET NULL). A product can point to a parent OR a leaf category.
   - `categorias` with `active = true` → public SELECT via RLS. Writes require service role.
 
+- **Productos table notable columns**:
+  - `featured` (boolean) — controls visibility in admin website "destacados" section.
+  - `description` (text) — supports markdown rendering via `react-markdown`.
+  - `promo_badge`, `static_promo_price`, `static_promo_start`, `static_promo_end` — static promo overrides.
+  - `tags` (text[]) — array of tags for filtering.
+  - `hidden_in_productos` — hides from internal product list but keeps in catalog.
+
 - **Multi-tenant foundation** (`NEXT_PUBLIC_TENANT_ID`):
   - Every Vercel deployment gets its own `NEXT_PUBLIC_TENANT_ID` UUID — this is how tenants are isolated.
   - `next-app/lib/tenant.js` exports `TENANT_ID` — throws at module load if env var missing.
@@ -88,6 +97,10 @@ Keep analysis extremely short after that.
   - MP webhook resolves tenant via `pedidos_catalogo.mp_preference_id` join (no env var needed there).
 
 - **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
+
+- **SEO rewrites** (`next.config.js`): `/robots.txt` → `/api/robots-txt`, `/sitemap.xml` → `/api/sitemap-xml`. Google verification file at `next-app/public/googlef0dbeb1a47fa8146.html`.
+
+- **SDD/openspec completed changes**: `product-description-markdown`, `product-detail-blocks`, `unified-footer`. Archive reports in `openspec/changes/*/archive-report.md`.
 
 - **Skills**: Project-specific skills live in `skills/` at repo root. Registry: `.atl/skill-registry.md`. Key ones:
   - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome
