@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     const proto = req.headers['x-forwarded-proto'] || 'https'
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000'
     const baseUrl = `${proto}://${host}`
-    const miCuentaUrl = `${baseUrl}/catalog/user`
+    const miCuentaUrl = `${baseUrl}/catalog/mis-pedidos`
 
     let subject, bodyHtml
 
