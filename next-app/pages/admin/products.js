@@ -3989,18 +3989,20 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
               value={editData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Descripción del producto (visible en el catálogo)"
-              rows={3}
+              rows={8}
               style={{
                 width: '100%',
-                padding: '6px 8px',
-                borderRadius: '4px',
+                minHeight: '180px',
+                padding: '8px 10px',
+                borderRadius: '6px',
                 border: '1px solid var(--border-color)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',
                 fontSize: '0.9rem',
                 resize: 'vertical',
                 fontFamily: 'inherit',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                lineHeight: 1.6
               }}
             />
           </div>
