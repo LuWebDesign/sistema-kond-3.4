@@ -226,7 +226,7 @@ export default function ProductDetail({ product, categories = [], products = [],
           </div>
         </div>
 
-        {/* ── Nombre, precio y badges ───────────────────── */}
+        {/* ── Nombre del producto ─────────────────────── */}
         <div className="pd-info-name">
           <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {product.categoria && (
@@ -255,11 +255,16 @@ export default function ProductDetail({ product, categories = [], products = [],
             }}>
               {product.nombre}
             </h1>
+          </div>
+        </div>
 
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-               <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
-                 {formatCurrency(displayPrice)}
-               </span>
+        {/* ── Precio, promo y badges ──────────────────── */}
+        <div className="pd-info-price">
+          <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
+                {formatCurrency(displayPrice)}
+              </span>
               {hasPromo && (
                 <span style={{
                   fontSize: '1rem',
@@ -282,7 +287,7 @@ export default function ProductDetail({ product, categories = [], products = [],
                     background: badge.color || 'var(--accent-secondary)',
                     color: badge.textColor || '#fff'
                   }}>
-                    {badge.texto}
+                    {badge.text}
                   </span>
                 ))}
               </div>
@@ -698,6 +703,7 @@ export default function ProductDetail({ product, categories = [], products = [],
             grid-template-areas:
               "breadcrumb  breadcrumb"
               "images      info-name"
+              "images      info-price"
               "images      actions"
               "specs       specs"
               "description description"
@@ -710,6 +716,7 @@ export default function ProductDetail({ product, categories = [], products = [],
         .pd-breadcrumb  { grid-area: breadcrumb; min-width: 0; }
         .pd-images      { grid-area: images;     min-width: 0; }
         .pd-info-name   { grid-area: info-name;  min-width: 0; }
+        .pd-info-price  { grid-area: info-price; min-width: 0; }
         .pd-actions     { grid-area: actions;    min-width: 0; }
         .pd-specs       { grid-area: specs;      min-width: 0; }
         .pd-description { grid-area: description; min-width: 0; }
