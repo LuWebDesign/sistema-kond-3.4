@@ -4,6 +4,7 @@
 // ============================================
 
 import { supabase, supabaseAdmin } from './supabaseClient';
+import { TENANT_ID } from '../lib/tenant';
 
 // Helper to detect whether the Supabase client is initialized. In local dev
 // environments we may not have NEXT_PUBLIC_SUPABASE_URL / ANON_KEY set and the
@@ -48,6 +49,7 @@ export async function getNotifications(targetUser = 'admin', userId = null) {
     let query = supabase
       .from('notifications')
       .select('*')
+      .eq('tenant_id', TENANT_ID)
       .eq('target_user', targetUser)
       .order('created_at', { ascending: false })
       .limit(50); // Limitar a las 50 más recientes
@@ -100,7 +102,8 @@ export async function createNotification({
         type,
         meta,
         target_user: targetUser,
-        read: false
+        read: false,
+        tenant_id: TENANT_ID
       }])
       .select()
       .single();
@@ -131,7 +134,8 @@ export async function markNotificationAsRead(notificationId) {
         read: true,
         read_at: new Date().toISOString()
       })
-      .eq('id', notificationId);
+      .eq('id', notificationId)
+      .eq('tenant_id', TENANT_ID);
 
     if (error) {
       console.error('Error marcando notificación como leída:', error);
@@ -160,6 +164,7 @@ export async function markAllNotificationsAsRead(targetUser = 'admin', userId = 
         read: true,
         read_at: new Date().toISOString()
       })
+      .eq('tenant_id', TENANT_ID)
       .eq('target_user', targetUser)
       .eq('read', false);
 
@@ -193,7 +198,8 @@ export async function deleteNotification(notificationId) {
     const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('id', notificationId);
+      .eq('id', notificationId)
+      .eq('tenant_id', TENANT_ID);
 
     if (error) {
       console.error('Error eliminando notificación:', error);
@@ -222,6 +228,7 @@ export async function cleanupOldNotifications() {
     const { error } = await client
       .from('notifications')
       .delete()
+      .eq('tenant_id', TENANT_ID)
       .eq('read', true)
       .lt('created_at', thirtyDaysAgo.toISOString());
 
@@ -267,6 +274,7 @@ export async function getUnreadCount(targetUser = 'admin', userId = null) {
     let query = supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', TENANT_ID)
       .eq('target_user', targetUser)
       .eq('read', false);
 
