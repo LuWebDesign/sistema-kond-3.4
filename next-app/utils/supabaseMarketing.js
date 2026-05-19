@@ -11,7 +11,7 @@ import { TENANT_ID } from '../lib/tenant';
 // ============================================
 
 // Shared column projection for promociones reads
-const PROMO_SELECT = 'id, nombre, tipo, valor, aplica_a, categoria, producto_id, fecha_inicio, fecha_fin, activo, prioridad, badge_texto, badge_color, badge_text_color, descuento_porcentaje, descuento_monto, precio_especial, config, created_at, updated_at'
+const PROMO_SELECT = 'id, nombre, tipo, valor, aplica_a, categoria, producto_id, fecha_inicio, fecha_fin, activo, prioridad, badge_texto, badge_color, badge_opacity, badge_text_color, descuento_porcentaje, descuento_monto, precio_especial, config, created_at, updated_at'
 
 const CUPON_SELECT = 'id, codigo, nombre, tipo, valor, monto_minimo, usos_maximos, usos_actuales, fecha_inicio, fecha_expiracion, activo, created_at'
 
@@ -78,6 +78,7 @@ export async function createPromocion(promocion) {
       prioridad: promocion.prioridad || 0,
       badge_texto: promocion.badgeTexto || promocion.badge_texto || null,
       badge_color: promocion.badgeColor || promocion.badge_color || null,
+      badge_opacity: promocion.badgeOpacity ?? promocion.badge_opacity ?? 100,
       badge_text_color: promocion.badgeTextColor || promocion.badge_text_color || null,
       descuento_porcentaje: promocion.descuentoPorcentaje || promocion.descuento_porcentaje ? parseFloat(promocion.descuentoPorcentaje || promocion.descuento_porcentaje) : null,
       descuento_monto: promocion.descuentoMonto || promocion.descuento_monto ? parseFloat(promocion.descuentoMonto || promocion.descuento_monto) : null,
@@ -132,8 +133,11 @@ export async function updatePromocion(id, promocion) {
     if (promocion.badge_texto !== undefined) updateData.badge_texto = promocion.badge_texto;
     if (promocion.badgeColor !== undefined) updateData.badge_color = promocion.badgeColor;
     if (promocion.badge_color !== undefined) updateData.badge_color = promocion.badge_color;
+    if (promocion.badgeOpacity !== undefined) updateData.badge_opacity = promocion.badgeOpacity;
+    if (promocion.badge_opacity !== undefined) updateData.badge_opacity = promocion.badge_opacity;
     if (promocion.badgeTextColor !== undefined) updateData.badge_text_color = promocion.badgeTextColor;
     if (promocion.badge_text_color !== undefined) updateData.badge_text_color = promocion.badge_text_color;
+
     if (promocion.descuentoPorcentaje !== undefined) updateData.descuento_porcentaje = parseFloat(promocion.descuentoPorcentaje);
     if (promocion.descuento_porcentaje !== undefined) updateData.descuento_porcentaje = parseFloat(promocion.descuento_porcentaje);
     if (promocion.descuentoMonto !== undefined) updateData.descuento_monto = parseFloat(promocion.descuentoMonto);

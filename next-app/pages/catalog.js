@@ -699,9 +699,48 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         border: '1px solid #e5e7eb',
         borderRadius: '0 0 12px 12px',
         overflow: 'hidden',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        position: 'relative',
       }}
     >
+      {/* Transfer discount badges — top-left over the image */}
+      {product.promotionBadges && product.promotionBadges.some(b => b.type === 'transfer_discount') && (
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          left: '8px',
+          zIndex: 10,
+          display: 'flex',
+          gap: '4px',
+          flexWrap: 'wrap',
+        }}>
+          {product.promotionBadges.filter(b => b.type === 'transfer_discount').map((badge, idx) => {
+            const opacity = badge.opacity ?? 100
+            const bgColor = badge.color || '#3b82f6'
+            const hex = bgColor.replace('#', '')
+            const r = parseInt(hex.substring(0, 2), 16)
+            const g = parseInt(hex.substring(2, 4), 16)
+            const b = parseInt(hex.substring(4, 6), 16)
+            return (
+              <span
+                key={idx}
+                style={{
+                  background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                  color: badge.textColor || '#ffffff',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {badge.text}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
@@ -931,24 +970,33 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{formatCurrency(product.precioUnitario || 0)}</div>
             )}
 
-            {/* Mostrar badges de promoción al lado del precio */}
-            {product && product.promotionBadges && product.promotionBadges.length > 0 && (
+            {/* Mostrar badges de promoción al lado del precio (excluyendo transfer_discount) */}
+            {product && product.promotionBadges && product.promotionBadges.filter(b => b.type !== 'transfer_discount').length > 0 && (
               <div style={{ display: 'flex', gap: '4px' }}>
-                {product.promotionBadges.map((badge, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      backgroundColor: badge.color || '#ef4444',
-                      color: badge.textColor || '#ffffff',
-                      padding: '3px 6px',
-                      borderRadius: '0',
-                      fontSize: '0.7rem',
-                      fontWeight: 600
-                    }}
-                  >
-                    {badge.text}
-                  </span>
-                ))}
+                {product.promotionBadges.filter(b => b.type !== 'transfer_discount').map((badge, idx) => {
+                  const opacity = badge.opacity ?? 100
+                  const bgColor = badge.color || '#3b82f6'
+                  const hex = bgColor.replace('#', '')
+                  const r = parseInt(hex.substring(0, 2), 16)
+                  const g = parseInt(hex.substring(2, 4), 16)
+                  const b = parseInt(hex.substring(4, 6), 16)
+                  return (
+                    <span
+                      key={idx}
+                      style={{
+                        background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                        color: badge.textColor || '#ffffff',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {badge.text}
+                    </span>
+                  )
+                })}
               </div>
             )}
 

@@ -34,7 +34,8 @@ Keep analysis extremely short after that.
   - `next-app/supabase/client.js` — thin re-export from `next-app/utils/supabaseClient.js` (single `createClient()` instance). Always import from here inside `next-app/`.
 
 - **Admin route layout** (`next-app/pages/admin/`):
-  - All admin pages live under `/admin/`. Old top-level paths (`/products`, `/dashboard`, `/pedidos`, `/marketing`, `/finanzas`, `/materiales`, `/mi-cuenta`, `/pedidos-catalogo`, `/database`) redirect via `next.config.js` — never create new pages at those old paths.
+  - All admin pages live under `/admin/`. Old top-level paths redirect there via `next.config.js` — never create new pages at those old paths.
+  - Redirects: `/products` → `/admin/products`, `/dashboard` → `/admin/dashboard`, `/pedidos` → `/admin/pedidos`, `/pedidos-catalogo` → `/admin/orders`, `/marketing` → `/admin/marketing`, `/finanzas` → `/admin/finanzas`, `/materiales` → `/admin/materiales`, `/mi-cuenta` → `/admin/mi-cuenta`, `/database` → `/admin/database`, `/admin/payment-config` → `/admin/website/metodos-pago`, `/admin/catalog-styles` → `/admin/website/estilos`.
   - Other redirects: `/catalogo` → `/catalog`, `/calendario` → `/calendar`, `/catalog-public.html` → `/catalog`, `/mis-pedidos` → `/catalog/mis-pedidos`.
   - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD for categorías), `metricas.js`, `cotizaciones.js`.
 
@@ -108,17 +109,6 @@ Keep analysis extremely short after that.
 - **DB naming**: `snake_case` in Supabase, `camelCase` in frontend. Convert at layer boundaries.
 - **Theme**: use `document.body.getAttribute('data-theme')` and `setAppTheme()` from `utils/theme.js` — never local state for theme.
 
-## Files to open first
-
-1. `verify-setup.js`
-2. `.env.example`
-3. `.github/workflows/ci.yml`
-4. `next-app/package.json`
-5. `supabase/client.js`
-6. `supabase/schema.sql` (tables + RLS)
-7. `.atl/skill-registry.md`
-8. `.github/copilot-instructions.md`
-
 ## Commands
 
 - Verify setup: `node verify-setup.js`
@@ -126,17 +116,3 @@ Keep analysis extremely short after that.
 - Next.js build: `cd next-app && npm run build`
 - Lint: `cd next-app && npx eslint .`
 - Prod-test: `cd next-app && npm run test:prod`
-
-## Quick Start Local
-
-```
-# Install root deps (if any) and verify setup
-npm install
-node verify-setup.js
-
-# Start Next.js app (migración progresiva)
-cd next-app && npm install && npm run dev
-
-# Static site: open `index.html` or serve with a simple static server
-# Windows: double-click `EJECUTAR-SISTEMA.bat`
-```

@@ -95,6 +95,7 @@ function Marketing() {
       return data || []
     },
     staleTime: STALE_TIMES.promociones,
+    refetchOnMount: true,
     enabled: typeof window !== 'undefined',
   })
 
@@ -117,6 +118,7 @@ function Marketing() {
       return data || []
     },
     staleTime: STALE_TIMES.productos_admin,
+    refetchOnMount: true,
     enabled: typeof window !== 'undefined',
   })
 
@@ -136,6 +138,7 @@ function Marketing() {
       prioridad: p.prioridad,
       badgeTexto: p.badge_texto,
       badgeColor: p.badge_color,
+      badgeOpacity: p.badge_opacity,
       badgeTextColor: p.badge_text_color,
       descuentoPorcentaje: p.descuento_porcentaje,
       descuentoMonto: p.descuento_monto,
@@ -193,7 +196,6 @@ function Marketing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
     }
   })
 
@@ -204,8 +206,8 @@ function Marketing() {
       return res.data
     },
     onSuccess: () => {
+      // Invalidar queries para forzar refetch
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
     }
   })
 
@@ -215,7 +217,9 @@ function Marketing() {
       if (res.error) throw new Error(res.error)
       return res
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+    }
   })
 
   const createCouponMutation = useMutation({
@@ -284,11 +288,16 @@ function Marketing() {
   };
 
   const handlePromoSubmit = async (promoData) => {
+    console.log('📝 handlePromoSubmit called — editingPromo:', editingPromo?.id, 'promoData:', promoData);
     try {
       if (editingPromo) {
+        console.log('🔄 Calling updatePromoMutation with id:', editingPromo.id);
         await updatePromoMutation.mutateAsync({ id: editingPromo.id, payload: promoData })
+        console.log('✅ updatePromoMutation succeeded');
       } else {
+        console.log('➕ Calling createPromoMutation');
         await createPromoMutation.mutateAsync(promoData)
+        console.log('✅ createPromoMutation succeeded');
       }
 
       closePromoModal()

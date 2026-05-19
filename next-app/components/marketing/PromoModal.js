@@ -54,6 +54,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     fechaFin: promo?.fechaFin || promo?.fecha_fin || '',
     badgeTexto: promo?.badgeTexto || promo?.badge_texto || '',
     badgeColor: promo?.badgeColor || promo?.badge_color || '#3b82f6',
+    badgeOpacity: promo?.badgeOpacity || promo?.badge_opacity || 100,
     badgeTextColor: promo?.badgeTextColor || promo?.badge_text_color || 'auto',
     tags: (promo?.tags || promo?.tags || []).join(', '),
     activo: (promo?.activo !== undefined ? promo.activo : (promo?.activo !== false)),
@@ -150,6 +151,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
       prioridad: formData.prioridad,
       badgeTexto: formData.badgeTexto || null,
       badgeColor: formData.badgeColor || '#3b82f6',
+      badgeOpacity: formData.badgeOpacity || 100,
       badgeTextColor: formData.badgeTextColor === 'auto' ? getContrastColor(formData.badgeColor) : formData.badgeTextColor,
       descuentoPorcentaje: (formData.tipo === 'percentage_discount' || (formData.tipo === 'transfer_discount' && (formData.config?.transferDiscountType || 'percentage') === 'percentage'))
         ? parseFloat(formData.descuentoPorcentaje) : null,
@@ -357,6 +359,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                     />
                   ))}
                 </div>
+
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="color"
@@ -365,28 +368,64 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                     onChange={(e) => updateField('badgeColor', e.target.value)}
                     style={{ width: 80, height: 40, padding: 4 }}
                   />
-                  <select
-                    className={styles.select}
-                    value={formData.badgeTextColor}
-                    onChange={(e) => updateField('badgeTextColor', e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="#ffffff">⚪ Blanco</option>
-                    <option value="#000000">⚫ Negro</option>
-                  </select>
-                  <div
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 6,
-                      background: formData.badgeColor,
-                      color: previewTextColor,
-                      fontWeight: 600,
-                      minWidth: 80,
-                      textAlign: 'center'
-                    }}
-                  >
-                    {formData.badgeTexto || 'PROMO'}
-                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {[
+                      { color: '#ffffff', name: 'Blanco' },
+                      { color: '#000000', name: 'Negro' },
+                      { color: '#fbbf24', name: 'Amarillo' },
+                      { color: '#22c55e', name: 'Verde' },
+                      { color: '#3b82f6', name: 'Azul' },
+                      { color: '#ef4444', name: 'Rojo' },
+                      { color: '#a855f7', name: 'Púrpura' },
+                      { color: '#f97316', name: 'Naranja' },
+                    ].map(({ color, name }) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => updateField('badgeTextColor', color)}
+                        title={name}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          background: color,
+                          border: formData.badgeTextColor === color ? '2px solid #000' : '2px solid #e5e7eb',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          boxShadow: formData.badgeTextColor === color ? '0 0 0 2px #000' : 'none'
+                        }}
+                      />
+                    ))}
+                    <div
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 6,
+                        background: formData.badgeColor ? `${formData.badgeColor}${Math.round((formData.badgeOpacity || 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
+                        color: formData.badgeTextColor || '#ffffff',
+                        fontWeight: 600,
+                        minWidth: 80,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {formData.badgeTexto || 'PROMO'}
+                    </div>
+</div>
+                </div>
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.label}>Opacidad del badge ({formData.badgeOpacity}%)</label>
+                <input
+                  type="range"
+                  min="20"
+                  max="100"
+                  step="5"
+                  value={formData.badgeOpacity}
+                  onChange={(e) => updateField('badgeOpacity', parseInt(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  <span>20%</span>
+                  <span>100%</span>
                 </div>
               </div>
 
