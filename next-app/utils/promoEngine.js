@@ -136,6 +136,8 @@ export function applyPromotionsToProduct(product, allPromos = []) {
   let currentPrice = result.originalPrice;
   
   sortedPromos.forEach(promo => {
+    const promoType = promo.type || promo.tipo;
+
     // Recopilar badges
     if (promo.badgeTexto) {
       // Calcular color de texto si es 'auto'
@@ -147,7 +149,8 @@ export function applyPromotionsToProduct(product, allPromos = []) {
       result.badges.push({
         text: promo.badgeTexto,
         color: promo.badgeColor || '#3b82f6',
-        textColor: textColor
+        textColor: textColor,
+        type: promoType,
       });
       
       // El primer badge (mayor prioridad) se usa como principal
@@ -160,7 +163,6 @@ export function applyPromotionsToProduct(product, allPromos = []) {
 
     // Aplicar descuentos según tipo
     // Soportar propiedades en español/inglés
-    const promoType = promo.type || promo.tipo;
     const perc = promo.descuentoPorcentaje || promo.discountPercentage;
     const fixed = promo.precioEspecial || promo.fixedPrice;
 
