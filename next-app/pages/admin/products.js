@@ -3773,7 +3773,8 @@ function ViewMode({ product }) {
   )
 }
 
-// Componente para el formulario de edición
+// OBSOLETE: EditForm ya no se usa - se usa EditFormV2 en su lugar
+// Componente para el formulario de edición (OBSOLETO)
 function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
