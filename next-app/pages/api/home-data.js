@@ -95,6 +95,7 @@ export default async function handler(req, res) {
       prioridad: p.prioridad,
       badgeTexto: p.badge_texto,
       badgeColor: p.badge_color,
+      badgeOpacity: p.badge_opacity,
       badgeTextColor: p.badge_text_color,
       descuentoPorcentaje: p.descuento_porcentaje,
       descuentoMonto: p.descuento_monto,
