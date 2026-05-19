@@ -391,6 +391,42 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
                 </div>
               </div>
               
+              {/* Social media icons */}
+              {(catalogStyles.footerInstagram || catalogStyles.footerFacebook || catalogStyles.footerTikTok) && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '16px',
+                  marginBottom: '20px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid var(--border-color)',
+                }}>
+                  {catalogStyles.footerInstagram && (
+                    <a href={catalogStyles.footerInstagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'var(--text-secondary)', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <circle cx="12" cy="12" r="5"/>
+                        <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+                      </svg>
+                    </a>
+                  )}
+                  {catalogStyles.footerFacebook && (
+                    <a href={catalogStyles.footerFacebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ color: 'var(--text-secondary)', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                      </svg>
+                    </a>
+                  )}
+                  {catalogStyles.footerTikTok && (
+                    <a href={catalogStyles.footerTikTok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" style={{ color: 'var(--text-secondary)', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.73a8.19 8.19 0 0 0 4.76 1.52V6.8a4.84 4.84 0 0 1-1-.11z"/>
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
+              
               <div style={{
                 paddingTop: '24px',
                 borderTop: '1px solid var(--border-color)',

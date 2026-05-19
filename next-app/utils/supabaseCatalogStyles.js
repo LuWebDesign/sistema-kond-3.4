@@ -29,6 +29,10 @@ const DEFAULT_STYLES = {
   footerPhone: '+54 11 1234-5678',
   footerEmail: 'info@kond.com',
   footerAddress: 'Buenos Aires, Argentina',
+  // Social media (KEEP IN SYNC with pages/api/admin/catalog-styles.js DEFAULT_STYLES)
+  footerInstagram: '',
+  footerFacebook: '',
+  footerTikTok: '',
   // Banner superior (opcional)
   bannerEnabled: false,
   bannerText: '',
@@ -72,7 +76,7 @@ export async function getCatalogStyles() {
       return DEFAULT_STYLES
     }
 
-    const { data, error } = await supabase.from('catalog_styles').select('*').eq('tenant_id', TENANT_ID).single()
+    const { data, error } = await supabase.from('catalog_styles').select('id, styles, tenant_id, created_at, updated_at').eq('tenant_id', TENANT_ID).single()
     if (error) {
       if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
         return DEFAULT_STYLES

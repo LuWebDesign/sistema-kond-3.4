@@ -1142,13 +1142,58 @@
     /* Footer */
     .footer { 
       background: rgba(15, 23, 42, 0.8); 
-      padding: 40px 0; 
-      text-align: center; 
+      padding: 48px 0 24px; 
       border-top: 1px solid rgba(148, 163, 184, 0.1);
     }
-    .footer p { 
-      color: #64748b; 
-      margin-bottom: 8px; 
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+    .footer-grid h3, .footer-grid h4 {
+      color: #f8fafc;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .footer-grid p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .footer-grid a {
+      display: block;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .footer-grid a:hover { color: #3b82f6; }
+    .footer-social {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .footer-social a {
+      color: #94a3b8;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .footer-social a:hover { color: #3b82f6; }
+    .footer-copyright {
+      padding-top: 24px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      text-align: center;
+    }
+    .footer-copyright p {
+      color: #64748b;
+      font-size: 0.8rem;
     }
 
     /* Modal Mejorado */
@@ -1737,10 +1782,29 @@
   </section>
 
   <!-- Footer -->
-  <footer class="footer">
+  <footer class="footer" id="dynamic-footer">
     <div class="container">
-      <p>&copy; 2025 KOND - Sistema de Gestión de Producción</p>
-      <p>Desarrollado con tecnologías web modernas</p>
+      <div class="footer-grid">
+        <div>
+          <h3 id="footer-brand">KOND</h3>
+          <p id="footer-description">Sistema integral para gestión de producción láser, pedidos, finanzas y catálogo público.</p>
+        </div>
+        <div>
+          <h4>Enlaces utiles</h4>
+          <div>
+            <a href="catalog.html">Catalogo de productos</a>
+            <a href="#contacto">Contacto</a>
+          </div>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <div id="footer-contact"></div>
+        </div>
+      </div>
+      <div id="footer-social" class="footer-social"></div>
+      <div class="footer-copyright">
+        <p>&copy; 2025 KOND - Sistema de Gestion de Produccion</p>
+      </div>
     </div>
   </footer>
 
@@ -2221,6 +2285,109 @@
       }
     `;
     document.head.appendChild(style);
+  </script>
+  <!-- Dynamic Footer Script -->
+  <script>
+  (function() {
+    var CACHE_KEY = 'kond-footer-styles';
+    var CACHE_TTL = 5 * 60 * 1000;
+
+    function getSocialIconSVG(platform) {
+      var icons = {
+        instagram: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>',
+        facebook: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
+        tiktok: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.73a8.19 8.19 0 0 0 4.76 1.52V6.8a4.84 4.84 0 0 1-1-.11z"/></svg>'
+      };
+      return icons[platform] || '';
+    }
+
+    function renderFooter(styles) {
+      var brand = document.getElementById('footer-brand');
+      var desc = document.getElementById('footer-description');
+      var contact = document.getElementById('footer-contact');
+      var social = document.getElementById('footer-social');
+
+      if (brand) brand.textContent = styles.logoText || 'KOND';
+      if (desc) desc.textContent = styles.footerDescription || 'Sistema integral para gestion de produccion laser, pedidos, finanzas y catalogo publico.';
+
+      if (contact) {
+        var html = '';
+        if (styles.footerPhone) html += '<div>' + escapeHtml(styles.footerPhone) + '</div>';
+        if (styles.footerEmail) html += '<div>' + escapeHtml(styles.footerEmail) + '</div>';
+        if (styles.footerAddress) html += '<div>' + escapeHtml(styles.footerAddress) + '</div>';
+        contact.innerHTML = html;
+      }
+
+      if (social) {
+        var socialHtml = '';
+        var platforms = [
+          { key: 'footerInstagram', name: 'instagram', label: 'Instagram' },
+          { key: 'footerFacebook', name: 'facebook', label: 'Facebook' },
+          { key: 'footerTikTok', name: 'tiktok', label: 'TikTok' }
+        ];
+        platforms.forEach(function(p) {
+          if (styles[p.key]) {
+            socialHtml += '<a href="' + escapeHtml(styles[p.key]) + '" target="_blank" rel="noopener noreferrer" aria-label="' + p.label + '">' + getSocialIconSVG(p.name) + '</a>';
+          }
+        });
+        social.innerHTML = socialHtml;
+      }
+
+      var footerEl = document.getElementById('dynamic-footer');
+      if (footerEl) {
+        if (styles.footerBg) footerEl.style.background = styles.footerBg;
+        if (styles.footerTextColor) footerEl.style.color = styles.footerTextColor;
+      }
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function loadFooterStyles() {
+      try {
+        var cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          var parsed = JSON.parse(cached);
+          if (Date.now() - parsed.ts < CACHE_TTL) {
+            renderFooter(parsed.data);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      if (!window.KOND_SUPABASE_CONFIG || !window.supabase) return;
+
+      var client = window.supabase.createClient(
+        window.KOND_SUPABASE_CONFIG.url,
+        window.KOND_SUPABASE_CONFIG.anonKey
+      );
+
+      client.from('catalog_styles')
+        .select('styles')
+        .eq('tenant_id', window.KOND_SUPABASE_CONFIG.tenantId || '00000000-0000-0000-0000-000000000001')
+        .single()
+        .then(function(result) {
+          if (result.error) throw result.error;
+          var styles = result.data ? result.data.styles : {};
+          renderFooter(styles);
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ data: styles, ts: Date.now() }));
+          } catch (e) {}
+        })
+        .catch(function(err) {
+          console.warn('Could not load footer styles from Supabase:', err);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadFooterStyles);
+    } else {
+      loadFooterStyles();
+    }
+  })();
   </script>
   <!-- Login Modal (Usuario) - agregado para compatibilidad con js/auth.js -->
   <div id="loginModal" class="checkout-modal" aria-hidden="true" style="display:none;">

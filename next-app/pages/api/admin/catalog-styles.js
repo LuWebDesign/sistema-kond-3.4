@@ -23,6 +23,10 @@ const DEFAULT_STYLES = {
   footerPhone: '',
   footerEmail: '',
   footerAddress: '',
+  // Social media (KEEP IN SYNC with utils/supabaseCatalogStyles.js DEFAULT_STYLES)
+  footerInstagram: '',
+  footerFacebook: '',
+  footerTikTok: '',
   bannerEnabled: false,
   bannerText: '',
   bannerBg: '#3b82f6',
