@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS public.productos (
   static_promo_start DATE,
   static_promo_end DATE,
   tags TEXT[], -- Array de tags
+  description TEXT,
   -- FK a categorias: puede apuntar a padre O subcategoría (ver tabla categorias)
   categoria_id BIGINT REFERENCES public.categorias(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

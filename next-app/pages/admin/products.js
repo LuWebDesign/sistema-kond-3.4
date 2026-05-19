@@ -1825,6 +1825,14 @@ function ProductsComponent() {
                   onFocus={(e) => e.target.style.borderColor = '#10b981'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
+                <p style={{
+                  marginTop: '6px',
+                  fontSize: '0.8rem',
+                  color: 'var(--text-muted)',
+                  lineHeight: 1.4
+                }}>
+                  Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+                </p>
               </div>
 
               {/* Sección: Producción y Tiempos */}
@@ -3765,7 +3773,8 @@ function ViewMode({ product }) {
   )
 }
 
-// Componente para el formulario de edición
+// OBSOLETE: EditForm ya no se usa - se usa EditFormV2 en su lugar
+// Componente para el formulario de edición (OBSOLETO)
 function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReorderImage, onRemoveImage, onSave, materials = [], categories = [], currentMaterialId, editCalculatedFields, toggleEditFieldMode }) {
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
@@ -3854,24 +3863,14 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
   const currentMaterialData = getCurrentMaterialData()
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-      gap: '16px',
-      fontSize: '0.9rem'
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Información básica */}
-      <div>
-        <h4 style={{ 
-          margin: '0 0 12px 0', 
-          fontSize: '0.85rem', 
-          color: 'var(--text-secondary)',
-          textTransform: 'uppercase',
-          fontWeight: 600 
-        }}>
-          Información Básica
-        </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <CollapsibleSection
+        icon="📦"
+        title="Información Básica"
+        defaultCollapsed={false}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', fontSize: '0.9rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Nombre
@@ -3902,7 +3901,6 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
                 onChange={(e) => {
                   const v = e.target.value
                   if (v === '__nueva__') {
-                    // switch to custom category input
                     handleInputChange('categoria', '')
                     setShowCustomCategory(true)
                     setTimeout(() => {
@@ -3969,30 +3967,6 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',
                 fontSize: '0.9rem'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Descripción
-            </label>
-            <textarea
-              value={editData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Descripción del producto (visible en el catálogo)"
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '6px 8px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
               }}
             />
           </div>
@@ -4097,11 +4071,11 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
                     {m.nombre}{m.tipo ? ` — ${m.tipo}` : ''}{m.espesor ? ` — ${m.espesor}` : ''}
                   </option>
                 ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
+               </select>
+             </div>
+           </div>
+         </div>
+       </CollapsibleSection>
 
       {/* Producción */}
       <div>
@@ -4420,12 +4394,54 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
       </div>
 
       {/* Visibilidad / Publicación */}
-      <div style={{ gridColumn: '1 / -1' }}>
+      <div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" checked={editData.publicado || false} onChange={(e) => handleInputChange('publicado', e.target.checked)} />
           <span style={{ color: 'var(--text-primary)' }}>Publicar en catálogo público</span>
         </label>
       </div>
+
+      {/* Descripción */}
+      <CollapsibleSection
+        icon="📝"
+        title="Descripción"
+        defaultCollapsed={true}
+        summary={editData.description ? (editData.description.length > 80 ? editData.description.slice(0,80) + '…' : editData.description) : undefined}
+      >
+        <textarea
+          value={editData.description}
+          onChange={(e) => handleInputChange('description', e.target.value)}
+          placeholder="Descripción del producto (visible en el catálogo)"
+          rows={8}
+          maxLength={2000}
+          style={{
+            width: '100%',
+            minHeight: '200px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            border: '2px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s',
+            outline: 'none',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box',
+            lineHeight: 1.6
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#10b981'}
+          onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.8rem' }}>
+          <span style={{ color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+          </span>
+          <span style={{ color: editData.description?.length > 1800 ? '#ef4444' : 'var(--text-muted)' }}>
+            {editData.description?.length || 0}/2000
+          </span>
+        </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -4663,15 +4679,47 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
             </select>
           </div>
         </div>
-        <div style={{ marginTop: '14px' }}>
-          <label style={labelStyle}>Descripción</label>
-          <textarea
-            value={editData.description || ''}
-            onChange={e => handleInputChange('description', e.target.value)}
-            placeholder="Descripción del producto (visible en el catálogo)"
-            rows={3}
-            style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
-          />
+      </CollapsibleSection>
+
+      {/* Descripción */}
+      <CollapsibleSection
+        icon="📝"
+        title="Descripción"
+        defaultCollapsed={true}
+        summary={editData.description ? (editData.description.length > 80 ? editData.description.slice(0,80) + '…' : editData.description) : undefined}
+      >
+        <textarea
+          value={editData.description || ''}
+          onChange={e => handleInputChange('description', e.target.value)}
+          placeholder="Descripción del producto (visible en el catálogo)"
+          rows={8}
+          maxLength={2000}
+          style={{
+            width: '100%',
+            minHeight: '200px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            border: '2px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s',
+            outline: 'none',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box',
+            lineHeight: 1.6
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#10b981'}
+          onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.8rem' }}>
+          <span style={{ color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+          </span>
+          <span style={{ color: editData.description?.length > 1800 ? '#ef4444' : 'var(--text-muted)' }}>
+            {editData.description?.length || 0}/2000
+          </span>
         </div>
       </CollapsibleSection>
 

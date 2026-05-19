@@ -1052,9 +1052,10 @@ function NewProductComponent() {
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Descripción del producto (visible en el catálogo)"
-              rows={4}
+              rows={8}
               style={{
                 width: '100%',
+                minHeight: '200px',
                 padding: '12px 16px',
                 borderRadius: '8px',
                 border: '2px solid var(--border-color)',
@@ -1065,11 +1066,20 @@ function NewProductComponent() {
                 outline: 'none',
                 resize: 'vertical',
                 fontFamily: 'inherit',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                lineHeight: 1.6
               }}
               onFocus={(e) => e.target.style.borderColor = '#10b981'}
               onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
             />
+            <p style={{
+              marginTop: '6px',
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)',
+              lineHeight: 1.4
+            }}>
+              Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+            </p>
           </CollapsibleSection>
 
           {/* Sección: Producción y Tiempos */}
