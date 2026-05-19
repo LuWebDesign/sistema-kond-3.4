@@ -49,11 +49,10 @@ export default function ProductCard({ product, categorySlug, onClick }) {
         borderRadius: '12px',
         overflow: 'hidden',
         background: 'var(--bg-card, #fff)',
-        border: hasPromo ? '2px solid var(--accent-blue, #3b82f6)' : '1px solid var(--border-color, #e2e8f0)',
+        border: '1px solid var(--border-color, #e2e8f0)',
         transition: 'transform 0.2s, box-shadow 0.2s',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-4px)'
@@ -64,37 +63,6 @@ export default function ProductCard({ product, categorySlug, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* Promo badges */}
-      {badges.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          left: '8px',
-          zIndex: 10,
-          display: 'flex',
-          gap: '4px',
-          flexWrap: 'wrap',
-        }}>
-          {badges.map((b, idx) => (
-            <span
-              key={idx}
-              style={{
-                background: b.color || '#3b82f6',
-                color: b.textColor || '#fff',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {b.text}
-            </span>
-          ))}
-        </div>
-      )}
-
       {/* Image */}
       <div style={{ position: 'relative', width: '100%', paddingTop: '75%', background: '#f8fafc' }}>
         {imageUrl ? (
@@ -141,15 +109,37 @@ export default function ProductCard({ product, categorySlug, onClick }) {
           {product.nombre}
         </p>
 
-        {/* Price block */}
+        {/* Price block: crossed-out price above, promo price below, badge to the right */}
         {hasPromo ? (
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-              {price}
-            </span>
-            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-blue, #3b82f6)' }}>
-              {promoPrice}
-            </span>
+          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '0.8rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                {price}
+              </span>
+              <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-blue, #3b82f6)' }}>
+                {promoPrice}
+              </span>
+            </div>
+            {badges.length > 0 && (
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {badges.map((b, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      background: b.color || '#3b82f6',
+                      color: b.textColor || '#fff',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {b.text}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ) : price ? (
           <span style={{ marginTop: 'auto', fontSize: '0.95rem', fontWeight: 700, color: '#000' }}>
