@@ -3990,21 +3990,34 @@ function EditForm({ editData, setEditData, imagePreviews, onImageChange, onReord
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Descripción del producto (visible en el catálogo)"
               rows={8}
+              maxLength={2000}
               style={{
                 width: '100%',
-                minHeight: '180px',
-                padding: '8px 10px',
-                borderRadius: '6px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
+                minHeight: '200px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: '2px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
-                fontSize: '0.9rem',
+                fontSize: '0.95rem',
+                transition: 'all 0.2s',
+                outline: 'none',
                 resize: 'vertical',
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
                 lineHeight: 1.6
               }}
+              onFocus={(e) => e.target.style.borderColor = '#10b981'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
             />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.8rem' }}>
+              <span style={{ color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+              </span>
+              <span style={{ color: editData.description?.length > 1800 ? '#ef4444' : 'var(--text-muted)' }}>
+                {editData.description?.length || 0}/2000
+              </span>
+            </div>
           </div>
 
           <div>
