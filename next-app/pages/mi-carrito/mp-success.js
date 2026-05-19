@@ -1,9 +1,40 @@
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import PublicLayout from '../../components/PublicLayout'
+import { supabase } from '../../supabase/client'
+import { TENANT_ID } from '../../lib/tenant'
 
 export default function MpSuccessPage() {
   const router = useRouter()
   const { payment_id, preference_id } = router.query
+
+  const emailSentRef = useRef(false)
+  const [pedido, setPedido] = useState(null)
+
+  // Effect 1: query pedidos_catalogo when preference_id is available
+  useEffect(() => {
+    if (!preference_id) return
+    supabase
+      .from('pedidos_catalogo')
+      .select('id')
+      .eq('mp_preference_id', preference_id)
+      .eq('tenant_id', TENANT_ID)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) setPedido(data)
+      })
+  }, [preference_id])
+
+  // Effect 2: fire email once when pedido.id is available
+  useEffect(() => {
+    if (!pedido?.id || emailSentRef.current) return
+    emailSentRef.current = true
+    fetch('/api/send-order-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pedidoId: pedido.id, nuevoEstado: 'recibido_mp' })
+    }).catch(err => console.warn('[email] MP email failed:', err))
+  }, [pedido])
 
   return (
     <PublicLayout title="Pago aprobado - KOND">
