@@ -279,18 +279,27 @@ export default function ProductDetail({ product, categories = [], products = [],
 
             {product.promotionBadges && product.promotionBadges.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {product.promotionBadges.map((badge, i) => (
-                  <span key={i} style={{
-                    padding: '3px 10px',
-                    borderRadius: 12,
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    background: badge.color || 'var(--accent-secondary)',
-                    color: badge.textColor || '#fff'
-                  }}>
-                    {badge.text}
-                  </span>
-                ))}
+                {product.promotionBadges.map((badge, i) => {
+                  const opacity = badge.opacity ?? 100
+                  const bgColor = badge.color || 'var(--accent-secondary)'
+                  // Convertir hex a rgb para aplicar opacidad
+                  const hex = bgColor.replace('#', '')
+                  const r = parseInt(hex.substring(0, 2), 16)
+                  const g = parseInt(hex.substring(2, 4), 16)
+                  const b = parseInt(hex.substring(4, 6), 16)
+                  return (
+                    <span key={i} style={{
+                      padding: '3px 10px',
+                      borderRadius: 12,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
+                      color: badge.textColor || '#fff'
+                    }}>
+                      {badge.text}
+                    </span>
+                  )
+                })}
               </div>
             )}
           </div>
