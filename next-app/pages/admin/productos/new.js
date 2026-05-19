@@ -1070,6 +1070,14 @@ function NewProductComponent() {
               onFocus={(e) => e.target.style.borderColor = '#10b981'}
               onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
             />
+            <p style={{
+              marginTop: '6px',
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)',
+              lineHeight: 1.4
+            }}>
+              Soporta Markdown: <strong>negrita</strong>, <em>cursiva</em>, ## títulos, - listas, [links](url)
+            </p>
           </CollapsibleSection>
 
           {/* Sección: Producción y Tiempos */}

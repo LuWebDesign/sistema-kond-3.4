@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { slugifyPreserveCase } from '../utils/slugify'
+import ReactMarkdown from 'react-markdown'
 // SectionSelector is provided by PublicLayout for /catalog routes — avoid local duplication
 
 const SPEC_FIELDS = [
@@ -511,14 +512,13 @@ export default function ProductDetail({ product, categories = [], products = [],
           <div className="pd-description">
             <div className="pd-card">
               <h2 className="pd-section-title">Descripción</h2>
-              <p style={{
-                margin: 0,
+              <div className="pd-markdown" style={{
                 color: 'var(--text-secondary)',
                 fontSize: '0.95rem',
                 lineHeight: 1.7
               }}>
-                {product.description}
-              </p>
+                <ReactMarkdown>{product.description}</ReactMarkdown>
+              </div>
             </div>
           </div>
         )}
@@ -854,6 +854,57 @@ export default function ProductDetail({ product, categories = [], products = [],
         }
         .pd-btn-buy:active:not(:disabled) {
           transform: scale(0.97);
+        }
+
+        /* ── Markdown description ─────────────────── */
+        .pd-markdown :global(h1),
+        .pd-markdown :global(h2),
+        .pd-markdown :global(h3),
+        .pd-markdown :global(h4),
+        .pd-markdown :global(h5),
+        .pd-markdown :global(h6) {
+          color: var(--text-primary);
+          margin: 1em 0 0.5em;
+          font-weight: 600;
+        }
+        .pd-markdown :global(h1) { font-size: 1.3rem; }
+        .pd-markdown :global(h2) { font-size: 1.15rem; }
+        .pd-markdown :global(h3) { font-size: 1.05rem; }
+        .pd-markdown :global(h4),
+        .pd-markdown :global(h5),
+        .pd-markdown :global(h6) { font-size: 0.95rem; }
+        .pd-markdown :global(p) {
+          margin: 0.5em 0;
+          color: var(--text-secondary);
+          line-height: 1.7;
+        }
+        .pd-markdown :global(ul),
+        .pd-markdown :global(ol) {
+          margin: 0.5em 0;
+          padding-left: 1.5em;
+          color: var(--text-secondary);
+        }
+        .pd-markdown :global(li) {
+          margin: 0.25em 0;
+          line-height: 1.7;
+        }
+        .pd-markdown :global(strong) {
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+        .pd-markdown :global(em) {
+          font-style: italic;
+        }
+        .pd-markdown :global(a) {
+          color: var(--accent-blue);
+          text-decoration: underline;
+        }
+        .pd-markdown :global(code) {
+          background: var(--bg-section);
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.88em;
+          font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
         }
       `}</style>
     </PublicLayout>
