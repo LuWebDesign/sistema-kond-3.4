@@ -970,12 +970,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                   <span
                     key={idx}
                     style={{
-                      backgroundColor: badge.color || '#ef4444',
+                      background: badge.color || '#3b82f6',
                       color: badge.textColor || '#ffffff',
-                      padding: '3px 6px',
-                      borderRadius: '0',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
                       fontSize: '0.7rem',
-                      fontWeight: 600,
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
                       opacity: (badge.opacity ?? 100) / 100,
                     }}
                   >
