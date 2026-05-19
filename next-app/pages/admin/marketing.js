@@ -193,8 +193,6 @@ function Marketing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
-      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
     }
   })
 
@@ -205,11 +203,8 @@ function Marketing() {
       return res.data
     },
     onSuccess: () => {
-      // Invalidar y forzar refetch inmediato
+      // Invalidar queries para forzar refetch
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
-      // Forzar refetch
-      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
     }
   })
 
@@ -221,7 +216,6 @@ function Marketing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
-      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
     }
   })
 
