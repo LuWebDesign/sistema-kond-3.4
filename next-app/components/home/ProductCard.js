@@ -17,19 +17,22 @@ export default function ProductCard({ product, categorySlug, onClick }) {
   const price = formatPrice(product.precio_unitario)
 
   // Dynamic promos (enriched by API via promo engine)
+  const dynamicBadges = product.promotionBadges || []
   const hasDynamicPromo = product.hasPromotion && product.precioPromocional != null && product.precioPromocional < product.precio_unitario
   const dynamicPromoPrice = formatPrice(product.precioPromocional)
-  const dynamicBadges = product.promotionBadges || []
 
   // Static promos (from DB columns)
   const hasStaticPromo = product.static_promo_price != null && product.static_promo_price < product.precio_unitario
   const staticPromoPrice = formatPrice(product.static_promo_price)
   const staticBadge = product.promo_badge || null
 
-  // Prefer dynamic promos; fall back to static
+  // Badges come from dynamic promos (includes transfer_discount, percentage, etc.)
+  // or static promo_badge from DB
+  const badges = dynamicBadges.length > 0 ? dynamicBadges : (staticBadge ? [{ text: staticBadge, color: '#3b82f6', textColor: '#fff' }] : [])
+
+  // Price reduction: dynamic or static
   const hasPromo = hasDynamicPromo || hasStaticPromo
   const promoPrice = hasDynamicPromo ? dynamicPromoPrice : staticPromoPrice
-  const badges = hasDynamicPromo ? dynamicBadges : (staticBadge ? [{ text: staticBadge, color: '#3b82f6', textColor: '#fff' }] : [])
 
   const handleClick = () => {
     if (onClick) { onClick(product); return }
@@ -109,9 +112,9 @@ export default function ProductCard({ product, categorySlug, onClick }) {
           {product.nombre}
         </p>
 
-        {/* Price block: crossed-out price above, promo price below, badge to the right */}
-        {hasPromo ? (
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Price block: price (or crossed-out + promo) with badges to the right */}
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {hasPromo ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span style={{ fontSize: '0.8rem', color: '#94a3b8', textDecoration: 'line-through' }}>
                 {price}
@@ -120,32 +123,33 @@ export default function ProductCard({ product, categorySlug, onClick }) {
                 {promoPrice}
               </span>
             </div>
-            {badges.length > 0 && (
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {badges.map((b, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      background: b.color || '#3b82f6',
-                      color: b.textColor || '#fff',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {b.text}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : price ? (
-          <span style={{ marginTop: 'auto', fontSize: '0.95rem', fontWeight: 700, color: '#000' }}>
-            {price}
-          </span>
-        ) : null}
+          ) : price ? (
+            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#000' }}>
+              {price}
+            </span>
+          ) : null}
+
+          {badges.length > 0 && (
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {badges.map((b, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    background: b.color || '#3b82f6',
+                    color: b.textColor || '#fff',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {b.text}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

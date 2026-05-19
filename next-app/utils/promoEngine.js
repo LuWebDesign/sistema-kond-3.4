@@ -136,11 +136,6 @@ export function applyPromotionsToProduct(product, allPromos = []) {
   let currentPrice = result.originalPrice;
   
   sortedPromos.forEach(promo => {
-    // Skip transfer_discount badges — this is a checkout-level discount,
-    // not a per-product promotion. It should not show badges on product cards.
-    const promoType = promo.type || promo.tipo;
-    if (promoType === 'transfer_discount') return;
-
     // Recopilar badges
     if (promo.badgeTexto) {
       // Calcular color de texto si es 'auto'
@@ -165,6 +160,7 @@ export function applyPromotionsToProduct(product, allPromos = []) {
 
     // Aplicar descuentos según tipo
     // Soportar propiedades en español/inglés
+    const promoType = promo.type || promo.tipo;
     const perc = promo.descuentoPorcentaje || promo.discountPercentage;
     const fixed = promo.precioEspecial || promo.fixedPrice;
 
