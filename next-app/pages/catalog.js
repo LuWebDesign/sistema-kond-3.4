@@ -725,6 +725,7 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 whiteSpace: 'nowrap',
+                opacity: (badge.opacity ?? 100) / 100,
               }}
             >
               {badge.text}
@@ -974,7 +975,8 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                       padding: '3px 6px',
                       borderRadius: '0',
                       fontSize: '0.7rem',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      opacity: (badge.opacity ?? 100) / 100,
                     }}
                   >
                     {badge.text}

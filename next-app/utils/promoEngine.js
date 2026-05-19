@@ -151,6 +151,7 @@ export function applyPromotionsToProduct(product, allPromos = []) {
         color: promo.badgeColor || '#3b82f6',
         textColor: textColor,
         type: promoType,
+        opacity: promo.badgeOpacity ?? 100,
       });
       
       // El primer badge (mayor prioridad) se usa como principal

@@ -96,6 +96,7 @@ export default function ProductCard({ product, categorySlug, onClick }) {
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 whiteSpace: 'nowrap',
+                opacity: (b.opacity ?? 100) / 100,
               }}
             >
               {b.text}
@@ -180,6 +181,7 @@ export default function ProductCard({ product, categorySlug, onClick }) {
                     fontSize: '0.7rem',
                     fontWeight: 700,
                     whiteSpace: 'nowrap',
+                    opacity: (b.opacity ?? 100) / 100,
                   }}
                 >
                   {b.text}

@@ -54,6 +54,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     fechaFin: promo?.fechaFin || promo?.fecha_fin || '',
     badgeTexto: promo?.badgeTexto || promo?.badge_texto || '',
     badgeColor: promo?.badgeColor || promo?.badge_color || '#3b82f6',
+    badgeOpacity: promo?.badgeOpacity || promo?.badge_opacity || 100,
     badgeTextColor: promo?.badgeTextColor || promo?.badge_text_color || 'auto',
     tags: (promo?.tags || promo?.tags || []).join(', '),
     activo: (promo?.activo !== undefined ? promo.activo : (promo?.activo !== false)),
@@ -150,6 +151,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
       prioridad: formData.prioridad,
       badgeTexto: formData.badgeTexto || null,
       badgeColor: formData.badgeColor || '#3b82f6',
+      badgeOpacity: formData.badgeOpacity || 100,
       badgeTextColor: formData.badgeTextColor === 'auto' ? getContrastColor(formData.badgeColor) : formData.badgeTextColor,
       descuentoPorcentaje: (formData.tipo === 'percentage_discount' || (formData.tipo === 'transfer_discount' && (formData.config?.transferDiscountType || 'percentage') === 'percentage'))
         ? parseFloat(formData.descuentoPorcentaje) : null,
@@ -382,11 +384,29 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                       color: previewTextColor,
                       fontWeight: 600,
                       minWidth: 80,
-                      textAlign: 'center'
+                      textAlign: 'center',
+                      opacity: formData.badgeOpacity / 100,
                     }}
                   >
                     {formData.badgeTexto || 'PROMO'}
                   </div>
+                </div>
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.label}>Opacidad del badge ({formData.badgeOpacity}%)</label>
+                <input
+                  type="range"
+                  min="20"
+                  max="100"
+                  step="5"
+                  value={formData.badgeOpacity}
+                  onChange={(e) => updateField('badgeOpacity', parseInt(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  <span>20%</span>
+                  <span>100%</span>
                 </div>
               </div>
 
