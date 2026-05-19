@@ -718,14 +718,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
             <span
               key={idx}
               style={{
-                backgroundColor: badge.color || '#3b82f6',
+                background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
                 color: badge.textColor || '#ffffff',
                 padding: '3px 8px',
                 borderRadius: '4px',
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 whiteSpace: 'nowrap',
-                opacity: (badge.opacity ?? 100) / 100,
               }}
             >
               {badge.text}
@@ -970,14 +969,13 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
                   <span
                     key={idx}
                     style={{
-                      background: badge.color || '#3b82f6',
+                      background: badge.color ? `${badge.color}${Math.round((badge.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
                       color: badge.textColor || '#ffffff',
                       padding: '3px 8px',
                       borderRadius: '4px',
                       fontSize: '0.7rem',
                       fontWeight: 700,
                       whiteSpace: 'nowrap',
-                      opacity: (badge.opacity ?? 100) / 100,
                     }}
                   >
                     {badge.text}

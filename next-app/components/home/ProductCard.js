@@ -89,14 +89,13 @@ export default function ProductCard({ product, categorySlug, onClick }) {
             <span
               key={idx}
               style={{
-                background: b.color || '#3b82f6',
+                background: b.color ? `${b.color}${Math.round((b.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
                 color: b.textColor || '#fff',
                 padding: '3px 8px',
                 borderRadius: '4px',
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 whiteSpace: 'nowrap',
-                opacity: (b.opacity ?? 100) / 100,
               }}
             >
               {b.text}
@@ -174,14 +173,13 @@ export default function ProductCard({ product, categorySlug, onClick }) {
                 <span
                   key={idx}
                   style={{
-                    background: b.color || '#3b82f6',
+                    background: b.color ? `${b.color}${Math.round((b.opacity ?? 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
                     color: b.textColor || '#fff',
                     padding: '3px 8px',
                     borderRadius: '4px',
                     fontSize: '0.7rem',
                     fontWeight: 700,
                     whiteSpace: 'nowrap',
-                    opacity: (b.opacity ?? 100) / 100,
                   }}
                 >
                   {b.text}
