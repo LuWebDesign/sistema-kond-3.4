@@ -194,6 +194,7 @@ function Marketing() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
     }
   })
 
@@ -204,8 +205,11 @@ function Marketing() {
       return res.data
     },
     onSuccess: () => {
+      // Invalidar y forzar refetch inmediato
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productos.list() })
+      // Forzar refetch
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
     }
   })
 
@@ -215,7 +219,10 @@ function Marketing() {
       if (res.error) throw new Error(res.error)
       return res
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.promociones.all })
+    }
   })
 
   const createCouponMutation = useMutation({
