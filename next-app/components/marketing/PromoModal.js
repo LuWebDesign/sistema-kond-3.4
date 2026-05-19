@@ -367,25 +367,42 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                     onChange={(e) => updateField('badgeColor', e.target.value)}
                     style={{ width: 80, height: 40, padding: 4 }}
                   />
-                  <select
-                    className={styles.select}
-                    value={formData.badgeTextColor}
-                    onChange={(e) => updateField('badgeTextColor', e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="#ffffff">⚪ Blanco</option>
-                    <option value="#000000">⚫ Negro</option>
-                  </select>
-                  <div
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {[
+                    { color: '#ffffff', name: 'Blanco' },
+                    { color: '#000000', name: 'Negro' },
+                    { color: '#fbbf24', name: 'Amarillo' },
+                    { color: '#22c55e', name: 'Verde' },
+                    { color: '#3b82f6', name: 'Azul' },
+                    { color: '#ef4444', name: 'Rojo' },
+                    { color: '#a855f7', name: 'Púrpura' },
+                    { color: '#f97316', name: 'Naranja' },
+                  ].map(({ color, name }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => updateField('badgeTextColor', color)}
+                      title={name}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        background: color,
+                        border: formData.badgeTextColor === color ? '2px solid #000' : '2px solid #e5e7eb',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        boxShadow: formData.badgeTextColor === color ? '0 0 0 2px #000' : 'none'
+                      }}
+                    />
+                  ))}
+<div
                     style={{
                       padding: '8px 16px',
                       borderRadius: 6,
-                      background: formData.badgeColor,
-                      color: previewTextColor,
+                      background: formData.badgeColor ? `${formData.badgeColor}${Math.round((formData.badgeOpacity || 100) * 2.55).toString(16).padStart(2, '0')}` : '#3b82f6',
+                      color: formData.badgeTextColor || '#ffffff',
                       fontWeight: 600,
                       minWidth: 80,
                       textAlign: 'center',
-                      opacity: formData.badgeOpacity / 100,
                     }}
                   >
                     {formData.badgeTexto || 'PROMO'}
