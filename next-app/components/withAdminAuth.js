@@ -15,29 +15,29 @@ export default function withAdminAuth(WrappedComponent) {
     useEffect(() => {
       const checkAuth = async () => {
         try {
-          // console.log('🔍 Verificando autenticación admin...')
           const session = await getCurrentSession()
 
-          // console.log('📋 Estado de sesión:', {
-          //   hasSession: !!session,
-          //   hasUser: !!(session?.user),
-          //   userRol: session?.user?.rol,
-          //   userId: session?.user?.id
-          // })
-
+          // If Supabase session is absent (e.g. local dev without active JWT),
+          // fall back to localStorage — consistent with adminAuth.js (dashboard).
+          // TODO: remove fallback once SDD admin-login-security is implemented.
           if (!session || !session.user) {
-            // console.log('❌ No hay sesión válida, redirigiendo a login')
+            if (typeof window !== 'undefined') {
+              const adminUser = JSON.parse(localStorage.getItem('kond-admin') || 'null')
+              if (adminUser?.rol === 'admin' || adminUser?.rol === 'super_admin') {
+                setIsAuthorized(true)
+                setIsLoading(false)
+                return
+              }
+            }
             router.replace('/admin/login')
             return
           }
 
-          if (session.user.rol !== 'admin') {
-            // console.log('❌ Usuario no es admin (rol:', session.user.rol, '), redirigiendo a catálogo')
+          if (session.user.rol !== 'admin' && session.user.rol !== 'super_admin') {
             router.replace('/catalog')
             return
           }
 
-          // console.log('✅ Usuario admin autorizado')
           setIsAuthorized(true)
           setIsLoading(false)
         } catch (error) {
