@@ -210,16 +210,16 @@ function CategoriasAdmin() {
                           Padre
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px' }}>
+                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <Link href={`/admin/categorias/${padre.id}/editar`}>
-                            <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem' }}>
+                            <button style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
                               ✏️ Editar
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDeleteClick(padre)}
-                            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem' }}
+                            style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.12)', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}
                           >
                             🗑️ Eliminar
                           </button>
@@ -242,21 +242,21 @@ function CategoriasAdmin() {
                             Sub
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <Link href={`/admin/categorias/${sub.id}/editar`}>
-                              <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem' }}>
-                                ✏️ Editar
-                              </button>
-                            </Link>
-                            <button
-                              onClick={() => handleDeleteClick(sub)}
-                              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem' }}
-                            >
-                              🗑️ Eliminar
-                            </button>
-                          </div>
-                        </td>
+                         <td style={{ padding: '12px 16px' }}>
+                           <div style={{ display: 'flex', gap: '8px' }}>
+                             <Link href={`/admin/categorias/${sub.id}/editar`}>
+                               <button style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
+                                 ✏️ Editar
+                               </button>
+                             </Link>
+                             <button
+                               onClick={() => handleDeleteClick(sub)}
+                               style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.12)', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}
+                             >
+                               🗑️ Eliminar
+                             </button>
+                           </div>
+                         </td>
                       </tr>
                     ))}
                   </React.Fragment>
