@@ -201,7 +201,7 @@ export async function loginAdmin(email, password) {
     // Buscar usuario en la tabla usuarios por ID
     const { data: usuario, error: fetchError } = await supabase
       .from('usuarios')
-      .select('*')
+      .select('id, email, username, rol, nombre, apellido')
       .eq('id', authData.user.id)
       .single();
 
@@ -334,7 +334,7 @@ export async function getCurrentSession() {
       try {
         const { data: usuario, error: fetchError } = await supabase
           .from('usuarios')
-          .select('*')
+          .select('id, email, username, rol, nombre, apellido')
           .eq('id', session.user.id)
           .single();
 
