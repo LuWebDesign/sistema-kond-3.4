@@ -146,6 +146,22 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: error.message || 'Error interno' })
     }
 
+    // Sync productos.categoria (legacy text field) when nombre changed.
+    // Products filtered by text in the catalog would otherwise show the stale name
+    // alongside the updated category, producing duplicate entries in the dropdown.
+    if (updateData.nombre && updateData.nombre !== current.nombre) {
+      const { error: syncError } = await supabase
+        .from('productos')
+        .update({ categoria: updateData.nombre })
+        .eq('categoria_id', categoriaId)
+        .eq('tenant_id', TENANT_ID)
+
+      if (syncError) {
+        // Non-fatal: log but don't fail — the categoria row was already updated.
+        console.warn(`PUT /api/admin/categorias/${id} — sync productos.categoria failed:`, syncError)
+      }
+    }
+
     return res.status(200).json({ data })
   }
 
