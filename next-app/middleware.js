@@ -49,7 +49,7 @@ async function getRedirections() {
 
 async function isValidAdminJWT(request) {
   const jwtSecret = process.env.SUPABASE_JWT_SECRET
-  if (!jwtSecret) return false // local dev without secret = open (acceptable)
+  if (!jwtSecret) return true // no secret configured → skip gate (safe for local dev)
 
   const cookie = request.cookies.get('kond-admin-session')
   if (!cookie?.value) return false
