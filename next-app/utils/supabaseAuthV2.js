@@ -201,7 +201,7 @@ export async function loginAdmin(email, password) {
     // Buscar usuario en la tabla usuarios por ID
     const { data: usuario, error: fetchError } = await supabase
       .from('usuarios')
-      .select('*')
+      .select('id, email, username, rol, nombre, apellido')
       .eq('id', authData.user.id)
       .single();
 
@@ -334,7 +334,7 @@ export async function getCurrentSession() {
       try {
         const { data: usuario, error: fetchError } = await supabase
           .from('usuarios')
-          .select('*')
+          .select('id, email, username, rol, nombre, apellido')
           .eq('id', session.user.id)
           .single();
 
@@ -419,23 +419,38 @@ export async function getCurrentSession() {
  * Cerrar sesión
  */
 export async function logout() {
-  try {
-    await supabase.auth.signOut();
-    
-    if (typeof window !== 'undefined') {
-      // Remover TODAS las claves relacionadas con sesiones
-      localStorage.removeItem('kond-user');
-      localStorage.removeItem('kond-admin');
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('adminSession');
-      localStorage.removeItem('userSession');
-    }
-    
-    return { error: null };
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error);
-    return { error };
+  // 1. Clear localStorage FIRST — unconditional, before any async op that could throw
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('kond-user');
+    localStorage.removeItem('kond-admin');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('adminSession');
+    localStorage.removeItem('userSession');
+    // Clear Supabase own auth keys (sb-*-auth-token) in case they exist
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    });
   }
+
+  // 2. Clear httpOnly cookie (best-effort — failure does not block logout)
+  try {
+    if (typeof window !== 'undefined') {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    }
+  } catch (e) {
+    // ignore — cookie will expire on its own (Max-Age=3600)
+  }
+
+  // 3. Sign out Supabase Auth (best-effort — localStorage already cleared above)
+  try {
+    if (supabase) await supabase.auth.signOut();
+  } catch (e) {
+    // ignore
+  }
+
+  return { error: null };
 }
 
 /**
@@ -922,24 +937,37 @@ export async function handleOAuthCallback() {
  * Cerrar sesión de administrador
  */
 export async function logoutAdmin() {
-  try {
-    // Cerrar sesión en Supabase Auth
-    const { error } = await supabase.auth.signOut();
-
-    // Limpiar localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('kond-admin');
-      localStorage.removeItem('kond-user');
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('adminSession');
-      localStorage.removeItem('userSession');
-    }
-
-    return { error: null };
-  } catch (error) {
-    console.error('Error al cerrar sesión admin:', error);
-    return { error: error.message };
+  // 1. Clear localStorage FIRST — unconditional
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('kond-admin');
+    localStorage.removeItem('kond-user');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('adminSession');
+    localStorage.removeItem('userSession');
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    });
   }
+
+  // 2. Clear httpOnly cookie (best-effort)
+  try {
+    if (typeof window !== 'undefined') {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 3. Sign out Supabase Auth (best-effort)
+  try {
+    if (supabase) await supabase.auth.signOut();
+  } catch (e) {
+    // ignore
+  }
+
+  return { error: null };
 }
 
 /**
