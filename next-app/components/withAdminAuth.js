@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { getCurrentSession } from '../utils/supabaseAuthV2'
 
 /**
- * HOC (Higher Order Component) para proteger páginas administrativas
- * Verifica que el usuario esté autenticado y tenga rol de admin
+ * HOC (Higher Order Component) para proteger páginas administrativas.
+ * Verifica autenticación llamando al endpoint /api/admin/check-session,
+ * que valida la cookie httpOnly kond-admin-session en el servidor.
+ *
+ * NOTE: localStorage fallback has been removed — auth is now cookie-based only.
  */
 export default function withAdminAuth(WrappedComponent) {
   return function ProtectedRoute(props) {
@@ -15,29 +17,16 @@ export default function withAdminAuth(WrappedComponent) {
     useEffect(() => {
       const checkAuth = async () => {
         try {
-          const session = await getCurrentSession()
-
-          // If Supabase session is absent (e.g. local dev without active JWT),
-          // fall back to localStorage — consistent with adminAuth.js (dashboard).
-          // TODO: remove fallback once SDD admin-login-security is implemented.
-          if (!session || !session.user) {
-            if (typeof window !== 'undefined') {
-              const adminUser = JSON.parse(localStorage.getItem('kond-admin') || 'null')
-              if (adminUser?.rol === 'admin' || adminUser?.rol === 'super_admin') {
-                setIsAuthorized(true)
-                setIsLoading(false)
-                return
-              }
-            }
+          const res = await fetch('/api/admin/check-session', { credentials: 'same-origin' })
+          if (!res.ok) {
             router.replace('/admin/login')
             return
           }
-
-          if (session.user.rol !== 'admin' && session.user.rol !== 'super_admin') {
-            router.replace('/catalog')
+          const data = await res.json()
+          if (!data.authorized) {
+            router.replace('/admin/login')
             return
           }
-
           setIsAuthorized(true)
           setIsLoading(false)
         } catch (error) {
