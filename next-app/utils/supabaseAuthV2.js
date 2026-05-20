@@ -420,8 +420,17 @@ export async function getCurrentSession() {
  */
 export async function logout() {
   try {
+    // Call server endpoint to clear httpOnly cookie (if present)
+    try {
+      if (typeof window !== 'undefined') {
+        await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+      }
+    } catch (e) {
+      // ignore network errors — still attempt client-side signOut
+    }
+
     await supabase.auth.signOut();
-    
+
     if (typeof window !== 'undefined') {
       // Remover TODAS las claves relacionadas con sesiones
       localStorage.removeItem('kond-user');
@@ -430,7 +439,7 @@ export async function logout() {
       localStorage.removeItem('adminSession');
       localStorage.removeItem('userSession');
     }
-    
+
     return { error: null };
   } catch (error) {
     console.error('Error al cerrar sesión:', error);
@@ -923,6 +932,15 @@ export async function handleOAuthCallback() {
  */
 export async function logoutAdmin() {
   try {
+    // Call server endpoint to clear httpOnly cookie, then sign out client-side
+    try {
+      if (typeof window !== 'undefined') {
+        await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+      }
+    } catch (e) {
+      // ignore network errors — still attempt client-side signOut
+    }
+
     // Cerrar sesión en Supabase Auth
     const { error } = await supabase.auth.signOut();
 

@@ -24,10 +24,16 @@ if (fs.existsSync(envPath)) {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Error: Faltan variables de entorno');
   console.error('Asegúrate de tener NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en .env.local');
+  process.exit(1);
+}
+
+if (!tenantId) {
+  console.error('❌ Error: Falta NEXT_PUBLIC_TENANT_ID en .env.local');
   process.exit(1);
 }
 
@@ -42,20 +48,42 @@ async function createAdminUser() {
   try {
     // console.log('🚀 Creando usuario admin en Supabase Auth...\n');
 
-    // 1. Verificar si ya existe un usuario admin en la tabla usuarios
+    // Ensure tenant exists in tenants table (satisfy FK on usuarios).
+    // If the tenant row does not exist, create a minimal one so this
+    // script can be used reliably in local/dev environments.
+    const { data: _tenantExists, error: tenantCheckError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('id', tenantId)
+      .single();
+    if (tenantCheckError && tenantCheckError.code !== 'PGRST116') {
+      throw tenantCheckError;
+    }
+    if (!_tenantExists) {
+      const { error: insertTenantError } = await supabase
+        .from('tenants')
+        .insert({ id: tenantId, name: 'seeded-tenant' });
+      if (insertTenantError) throw insertTenantError;
+    }
+
+    // Admin config
+    let userId;
+    // Admin official email (can be overridden via env vars)
+    const adminEmail = process.env.ADMIN_EMAIL || 'megafibro@gmail.com';
+    const adminUsername = process.env.ADMIN_USERNAME || adminEmail.split('@')[0];
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!'; // Cambiar después del primer login
+
+    // 1. Verificar si ya existe un usuario admin en la tabla usuarios (tenant-scoped)
     const { data: existingUser, error: fetchError } = await supabase
       .from('usuarios')
       .select('*')
-      .eq('username', 'admin')
+      .eq('username', adminUsername)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = not found
       throw fetchError;
     }
-
-    let userId;
-    const adminEmail = 'admin@kond.local';
-    const adminPassword = 'Admin123!'; // Cambiar después del primer login
 
     if (existingUser) {
       // console.log('✓ Usuario admin encontrado en tabla usuarios');
@@ -74,7 +102,7 @@ async function createAdminUser() {
       password: adminPassword,
       email_confirm: true, // Auto-confirmar email
       user_metadata: {
-        username: 'admin',
+        username: adminUsername,
         rol: 'admin'
       }
     });
@@ -126,9 +154,10 @@ async function createAdminUser() {
           .from('usuarios')
           .insert({
             id: userId,
-            username: 'admin',
+            username: adminUsername,
             password_hash: '', // No necesario con Supabase Auth
             rol: 'admin',
+            tenant_id: tenantId,
           });
         
         if (insertError) throw insertError;
@@ -138,9 +167,10 @@ async function createAdminUser() {
           .from('usuarios')
           .upsert({
             id: userId,
-            username: 'admin',
+            username: adminUsername,
             password_hash: '', // No necesario con Supabase Auth
             rol: 'admin',
+            tenant_id: tenantId,
           }, {
             onConflict: 'id'
           });
@@ -148,7 +178,7 @@ async function createAdminUser() {
         if (upsertError) throw upsertError;
       }
 
-      // console.log('✓ Registro sincronizado en tabla usuarios\n');
+      console.log(`✅ Registro sincronizado en tabla usuarios: ${adminEmail} (username: ${adminUsername}) - ID: ${userId}`);
     }
 
     // 4. Resumen
