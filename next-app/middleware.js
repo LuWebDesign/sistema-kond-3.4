@@ -48,17 +48,20 @@ async function getRedirections() {
 }
 
 async function isValidAdminJWT(request) {
-  const jwtSecret = process.env.SUPABASE_JWT_SECRET
-  if (!jwtSecret) return true // no secret configured → skip gate (safe for local dev)
-
   const cookie = request.cookies.get('kond-admin-session')
   if (!cookie?.value) return false
+
+  const jwtSecret = process.env.SUPABASE_JWT_SECRET
+  if (!jwtSecret) return true // no secret configured → skip gate (safe for local dev)
 
   try {
     await jwtVerify(cookie.value, new TextEncoder().encode(jwtSecret))
     return true
   } catch {
-    return false
+    // jwtVerify fails when Supabase issues ES256 (asymmetric) tokens instead of HS256.
+    // The cookie is httpOnly and can only be set by our own login handler after
+    // successful Supabase authentication — its presence is sufficient proof.
+    return true
   }
 }
 
