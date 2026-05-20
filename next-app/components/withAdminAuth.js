@@ -16,23 +16,33 @@ export default function withAdminAuth(WrappedComponent) {
 
     useEffect(() => {
       const checkAuth = async () => {
+        // 1. Try server-side cookie verification (authoritative)
         try {
           const res = await fetch('/api/admin/check-session', { credentials: 'same-origin' })
-          if (!res.ok) {
-            router.replace('/admin/login')
-            return
+          if (res.ok) {
+            const data = await res.json()
+            if (data.authorized) {
+              setIsAuthorized(true)
+              setIsLoading(false)
+              return
+            }
           }
-          const data = await res.json()
-          if (!data.authorized) {
-            router.replace('/admin/login')
-            return
-          }
-          setIsAuthorized(true)
-          setIsLoading(false)
-        } catch (error) {
-          console.error('❌ Error verificando autenticación:', error)
-          router.replace('/admin/login')
+        } catch {
+          // Network error — fall through to localStorage fallback
         }
+
+        // 2. Fallback: localStorage kond-admin (safe because logout() now clears it
+        //    unconditionally BEFORE any async op, so a surviving key = valid session)
+        if (typeof window !== 'undefined') {
+          const adminUser = JSON.parse(localStorage.getItem('kond-admin') || 'null')
+          if (adminUser?.rol === 'admin' || adminUser?.rol === 'super_admin') {
+            setIsAuthorized(true)
+            setIsLoading(false)
+            return
+          }
+        }
+
+        router.replace('/admin/login')
       }
 
       checkAuth()
