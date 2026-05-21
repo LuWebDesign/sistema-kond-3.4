@@ -54,29 +54,20 @@ export default function withAdminAuth(WrappedComponent) {
         <div style={{
           minHeight: '100vh',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          justifyContent: 'center'
         }}>
           <div style={{
-            fontSize: '64px',
-            marginBottom: '24px',
-            animation: 'pulse 2s ease-in-out infinite'
-          }}>
-            🔐
-          </div>
-          <div style={{
-            color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: 600
-          }}>
-            Verificando permisos...
-          </div>
+            width: '32px',
+            height: '32px',
+            border: '3px solid #e2e8f0',
+            borderTopColor: '#3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 0.6s linear infinite'
+          }} />
           <style jsx>{`
-            @keyframes pulse {
-              0%, 100% { opacity: 1; transform: scale(1); }
-              50% { opacity: 0.8; transform: scale(1.1); }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
             }
           `}</style>
         </div>
