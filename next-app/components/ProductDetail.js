@@ -5,6 +5,7 @@ import PublicLayout from './PublicLayout'
 import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
+import { applyTransferDiscount, getActivePromotions } from '../utils/promoEngine'
 import { slugifyPreserveCase } from '../utils/slugify'
 import ReactMarkdown from 'react-markdown'
 // SectionSelector is provided by PublicLayout for /catalog routes — avoid local duplication
@@ -43,7 +44,7 @@ function getCategoryImage(catName, products) {
   return DEFAULT_CATEGORY_IMAGES[catName] || null
 }
 
-export default function ProductDetail({ product, categories = [], products = [], categoriasAPI = [] }) {
+export default function ProductDetail({ product, categories = [], products = [], categoriasAPI = [], promociones = [] }) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
@@ -87,6 +88,17 @@ export default function ProductDetail({ product, categories = [], products = [],
     product.precioPromocional !== product.precioUnitario
   const displayPrice = hasPromo ? product.precioPromocional : product.precioUnitario
   const hasStock = (product.stock || 0) > 0
+
+  // Transfer discount — applied on top of the effective price (promo price if hasPromo, else base)
+  const activeTransferPromo = (() => {
+    const tps = (promociones || []).filter(p => (p.tipo || p.type) === 'transfer_discount')
+    return getActivePromotions(tps)[0] || null
+  })()
+  const transferDiscountAmount = activeTransferPromo
+    ? applyTransferDiscount(promociones || [], displayPrice)
+    : 0
+  const transferPrice = transferDiscountAmount > 0 ? displayPrice - transferDiscountAmount : null
+  const hasAnyDiscount = hasPromo || transferPrice !== null
 
   const specs = SPEC_FIELDS.filter(({ key }) => {
     const val = product[key]
@@ -261,47 +273,76 @@ export default function ProductDetail({ product, categories = [], products = [],
 
         {/* ── Precio, promo y badges ──────────────────── */}
         <div className="pd-info-price">
-          <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+            {/* Fila 1: precio original tachado (solo si hay algún descuento activo) */}
+            {hasAnyDiscount && (
+              <div>
+                <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                  {formatCurrency(product.precioUnitario)}
+                </span>
+              </div>
+            )}
+
+            {/* Fila 2: precio vigente (con promo aplicada o precio base) + badges de promo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
                 {formatCurrency(displayPrice)}
               </span>
-              {hasPromo && (
-                <span style={{
-                  fontSize: '1rem',
-                  color: 'var(--text-muted)',
-                  textDecoration: 'line-through'
-                }}>
-                  {formatCurrency(product.precioUnitario)}
-                </span>
+              {product.promotionBadges && product.promotionBadges.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {product.promotionBadges.map((badge, i) => {
+                    const opacity = badge.opacity ?? 100
+                    const bgColor = badge.color || 'var(--accent-secondary)'
+                    const hex = bgColor.replace('#', '')
+                    const r = parseInt(hex.substring(0, 2), 16)
+                    const g = parseInt(hex.substring(2, 4), 16)
+                    const b = parseInt(hex.substring(4, 6), 16)
+                    return (
+                      <span key={i} style={{
+                        padding: '3px 10px',
+                        borderRadius: 12,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
+                        color: badge.textColor || '#fff'
+                      }}>
+                        {badge.text}
+                      </span>
+                    )
+                  })}
+                </div>
               )}
             </div>
 
-            {product.promotionBadges && product.promotionBadges.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {product.promotionBadges.map((badge, i) => {
-                  const opacity = badge.opacity ?? 100
-                  const bgColor = badge.color || 'var(--accent-secondary)'
-                  // Convertir hex a rgb para aplicar opacidad
-                  const hex = bgColor.replace('#', '')
-                  const r = parseInt(hex.substring(0, 2), 16)
-                  const g = parseInt(hex.substring(2, 4), 16)
-                  const b = parseInt(hex.substring(4, 6), 16)
-                  return (
-                    <span key={i} style={{
-                      padding: '3px 10px',
-                      borderRadius: 12,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
-                      color: badge.textColor || '#fff'
-                    }}>
-                      {badge.text}
-                    </span>
-                  )
-                })}
-              </div>
-            )}
+            {/* Fila 3: precio por transferencia + badge (solo si hay promo transfer activa) */}
+            {transferPrice !== null && (() => {
+              const bgColor = activeTransferPromo?.badgeColor || '#10b981'
+              const hex = bgColor.replace('#', '')
+              const r = parseInt(hex.substring(0, 2), 16)
+              const g = parseInt(hex.substring(2, 4), 16)
+              const b = parseInt(hex.substring(4, 6), 16)
+              const textColor = activeTransferPromo?.badgeTextColor || '#fff'
+              const badgeText = activeTransferPromo?.badgeTexto || '💳 Transferencia'
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {formatCurrency(transferPrice)}
+                  </span>
+                  <span style={{
+                    padding: '3px 10px',
+                    borderRadius: 12,
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, 1)` : bgColor,
+                    color: textColor
+                  }}>
+                    {badgeText}
+                  </span>
+                </div>
+              )
+            })()}
+
           </div>
         </div>
 
