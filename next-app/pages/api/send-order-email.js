@@ -3,6 +3,8 @@
 
 import { supabaseAdmin } from '../../utils/supabaseClient'
 import { TENANT_ID } from '../../lib/tenant'
+import { verifyAdminCookie } from '../../utils/verifyAdminCookie'
+import { rateLimit, getClientIp } from '../../utils/rateLimit'
 import {
   escapeHtml,
   formatCurrency,
@@ -13,7 +15,19 @@ import {
   buildRecibidoEmail
 } from '../../utils/emailTemplates'
 
+const checkRateLimit = rateLimit({ maxRequests: 20, windowMs: 60_000 })
+
 export default async function handler(req, res) {
+  const userId = await verifyAdminCookie(req)
+  if (!userId) return res.status(401).json({ error: 'No autorizado' })
+
+  const ip = getClientIp(req)
+  const { allowed, retryAfter } = checkRateLimit(ip)
+  if (!allowed) {
+    res.setHeader('Retry-After', String(retryAfter))
+    return res.status(429).json({ error: 'Demasiadas solicitudes', retryAfter })
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' })
   }

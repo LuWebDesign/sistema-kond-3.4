@@ -34,7 +34,12 @@ export async function verifyAdminCookie(req) {
   try {
     const { payload } = await jwtVerify(cookie, jwks)
     return payload.sub || null
-  } catch {
+  } catch (err) {
+    const ip =
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      req.headers['x-real-ip'] ||
+      'unknown'
+    console.warn(`[verifyAdminCookie] Invalid or expired token — ip=${ip} path=${req.url} err=${err?.code || err?.message}`)
     return null
   }
 }
