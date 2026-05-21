@@ -1,16 +1,27 @@
 // GET /api/admin/check-session
-// Verifies the httpOnly kond-admin-session cookie and returns the user from DB.
-// Used by withAdminAuth to replace the insecure localStorage fallback.
+// Verifies the httpOnly kond-admin-session cookie via Supabase JWKS and returns the user from DB.
+// Used by withAdminAuth to confirm admin identity server-side.
 
-import { jwtVerify } from 'jose'
+import { jwtVerify, createRemoteJWKSet } from 'jose'
 import { supabaseAdmin } from '../../../utils/supabaseClient'
 import { TENANT_ID } from '../../../lib/tenant'
 
+// Module-level JWKS cache — reused across warm Lambda instances
+let _jwks = null
+function getJWKS() {
+  if (!_jwks) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) return null
+    _jwks = createRemoteJWKSet(
+      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`)
+    )
+  }
+  return _jwks
+}
+
 /**
  * Decode JWT payload without cryptographic verification.
- * Used as fallback when Supabase issues ES256 (asymmetric) tokens — our
- * SUPABASE_JWT_SECRET is HS256 and cannot verify them.
- * Security: we still perform a DB lookup to confirm the user exists and is admin.
+ * Used only as local-dev fallback when NEXT_PUBLIC_SUPABASE_URL is not set.
  */
 function extractUserIdFromJWT(jwt) {
   try {
@@ -28,30 +39,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ authorized: false, error: 'Method not allowed' })
   }
 
-  const jwtSecret = process.env.SUPABASE_JWT_SECRET
   const cookie = req.cookies?.['kond-admin-session']
-
-  // No secret configured (local dev) — allow if cookie is present and non-empty
-  if (!jwtSecret) {
-    if (!cookie) return res.status(401).json({ authorized: false })
-    // Without secret we can't verify — return authorized=true for local dev
-    return res.status(200).json({ authorized: true, user: null })
-  }
-
   if (!cookie) {
     return res.status(401).json({ authorized: false })
   }
 
   let userId = null
+  const jwks = getJWKS()
 
-  try {
-    const { payload } = await jwtVerify(cookie, new TextEncoder().encode(jwtSecret))
-    userId = payload.sub
-  } catch {
-    // jwtVerify fails when Supabase issues ES256 (asymmetric) tokens.
-    // Fall back to decoding the payload without crypto verification.
-    // The DB lookup below is the authoritative security check.
+  if (!jwks) {
+    // Local dev without .env.local — decode without verification
     userId = extractUserIdFromJWT(cookie)
+    if (!userId) return res.status(401).json({ authorized: false })
+  } else {
+    try {
+      const { payload } = await jwtVerify(cookie, jwks)
+      userId = payload.sub
+    } catch {
+      return res.status(401).json({ authorized: false })
+    }
   }
 
   if (!userId) {

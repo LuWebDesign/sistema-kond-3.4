@@ -4,7 +4,7 @@
 // Cache: module-level, 5-min TTL per Edge instance.
 
 import { NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { jwtVerify, createRemoteJWKSet } from 'jose'
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
@@ -47,21 +47,31 @@ async function getRedirections() {
   return _redirectionsCache
 }
 
+// Module-level JWKS cache — reused across requests within the same Edge instance
+let _jwks = null
+function getJWKS() {
+  if (!_jwks) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) return null
+    _jwks = createRemoteJWKSet(
+      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`)
+    )
+  }
+  return _jwks
+}
+
 async function isValidAdminJWT(request) {
   const cookie = request.cookies.get('kond-admin-session')
   if (!cookie?.value) return false
 
-  const jwtSecret = process.env.SUPABASE_JWT_SECRET
-  if (!jwtSecret) return true // no secret configured → skip gate (safe for local dev)
+  const jwks = getJWKS()
+  if (!jwks) return true // no Supabase URL → skip gate (local dev without .env.local)
 
   try {
-    await jwtVerify(cookie.value, new TextEncoder().encode(jwtSecret))
+    await jwtVerify(cookie.value, jwks)
     return true
   } catch {
-    // jwtVerify fails when Supabase issues ES256 (asymmetric) tokens instead of HS256.
-    // The cookie is httpOnly and can only be set by our own login handler after
-    // successful Supabase authentication — its presence is sufficient proof.
-    return true
+    return false
   }
 }
 
