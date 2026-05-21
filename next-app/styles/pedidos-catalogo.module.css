@@ -869,6 +869,11 @@
   transition: all 0.18s ease;
 }
 
+.actionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
 /* Dark-mode: botón 'Ver' con fondo gris claro y texto neutro */
 @media (prefers-color-scheme: dark) {
   .actionButton {
@@ -876,6 +881,12 @@
     color: #374151; /* texto neutro oscuro */
     border: 1px solid rgba(0,0,0,0.12);
     box-shadow: none;
+  }
+
+  .actionButton:hover {
+    background: #f8f9fa;
+    color: #000;
+    border-color: rgba(0,0,0,0.2);
   }
 
   /* header hover en dark: bajar sutilmente el tono (más evidente sobre bg oscuro) */
@@ -912,6 +923,12 @@
   box-shadow: none;
 }
 
+[data-theme="dark"] .actionButton:hover {
+  background: #f8f9fa;
+  color: #000;
+  border-color: rgba(0,0,0,0.2);
+}
+
 [data-theme="dark"] .pedidoHeader:hover {
   filter: brightness(0.80);
   box-shadow: 0 12px 34px rgba(0,0,0,0.28);
@@ -940,11 +957,6 @@
 [data-theme="dark"] .productoIdBadge {
   background: var(--accent-blue);
   color: white;
-}
-
-.actionButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
 /* Floating total shown in the bottom-right of the card (above actionGroup) */
@@ -3181,6 +3193,145 @@
   }
 }
 
+/* ====== ORDER BLOCKS (card-style per order) ====== */
+.orderBlocks {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.orderBlock {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.orderBlockHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--bg-section);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.orderBlockTop {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.orderBlockId {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-primary);
+  font-family: monospace;
+}
+
+.orderBlockCliente {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.orderBlockBadges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.orderBlockDate {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.orderBlockMetodo {
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Product rows inside block */
+.orderProductRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.orderProductRow:last-child {
+  border-bottom: none;
+}
+
+.orderProductThumb {
+  flex-shrink: 0;
+}
+
+.orderProductInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orderProductName {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderProductQty {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.orderProductSubtotal {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: monospace;
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+/* Block footer */
+.orderBlockFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-section);
+  border-top: 2px solid var(--border-color);
+}
+
+.orderBlockFooterLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.orderBlockFooterTotal {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  font-family: monospace;
+}
+
 /* ====== TABLA DE PEDIDOS ( estilo sidebar ) ====== */
 .pedidosTableContainer {
   width: 100%;
@@ -3210,6 +3361,50 @@
   letter-spacing: 0.5px;
 }
 
+/* Order header row */
+.orderHeaderRow {
+  background: var(--bg-section);
+}
+
+.orderHeaderRow td {
+  padding: 10px 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.orderHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.orderHeaderId {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent-primary);
+  font-family: monospace;
+}
+
+.orderHeaderCliente {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.orderHeaderDate {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.orderHeaderTotal {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-secondary);
+  font-family: monospace;
+  margin-left: auto;
+}
+
+/* Product rows */
 .pedidosTable tbody tr {
   border-bottom: 1px solid var(--border-color);
   transition: background 0.15s ease;
@@ -3219,49 +3414,19 @@
   background: var(--bg-hover);
 }
 
+/* Subtle background tint for product sub-rows (same order) */
+.pedidosTable tbody tr.orderSubRow {
+  background: var(--bg-section);
+}
+
 .pedidosTable td {
-  padding: 14px 16px;
+  padding: 10px 16px;
   color: var(--text-primary);
   font-size: 0.9rem;
   vertical-align: middle;
 }
 
-/* Clases independientes para JS */
-.tableBadge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-
-/* Badges de estado */
-.pendiente { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-.confirmado, .en_proparacion { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.listo { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-.entregado { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-.cancelado { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-
-/* Badges de pago */
-.sin_seña { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
-.seña_pagada { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-.pagado_total, .pagado { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-.pendiente_mp { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.rechazado_mp { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-
-.idCell { font-weight: 600; color: var(--accent-primary); font-size: 0.85rem; }
-.clienteCell { font-weight: 500; }
-.montoCell { font-weight: 600; color: var(--text-primary); text-align: right; font-family: monospace; }
-.fechaCell { color: var(--text-secondary); font-size: 0.85rem; }
-.productosCell { font-size: 0.85rem; color: var(--text-primary); }
-.productosCell > div > div:first-child {
-  font-weight: 500;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.3;
-}
-.productosCell div { margin-bottom: 2px; }
-.pagoCell { font-size: 0.8rem; }
-.pagoCell .metodoPago { margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem; }
-.tiempoCell { font-size: 0.85rem; color: var(--text-primary); font-family: monospace; }
-
-/* Thumbnail de producto en tabla */
+/* Product cells */
 .thumbCell {
   padding: 10px 16px;
   vertical-align: middle;
@@ -3286,6 +3451,27 @@
   font-size: 1.2rem;
 }
 
+.productoNameCell {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 16px;
+}
+.cantidadCell {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-align: center;
+  padding: 10px 16px;
+}
+.subtotalCell {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: right;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+}
 .tableActionBtn { padding: 8px 14px; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.15s ease; }
 .tableActionBtn:hover { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
 
@@ -3309,7 +3495,27 @@
 
 .pedidosTable .fechaCell {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.fechaStack {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.fechaLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+}
+
+.fechaNone {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
 }
 
 /* Badges en tabla */
@@ -3354,4 +3560,110 @@
   background: var(--accent-primary);
   color: #fff;
   border-color: var(--accent-primary);
+}
+
+/* Dark mode: tableActionBtn (botón "Ver" en pendientes) */
+[data-theme="dark"] .tableActionBtn {
+  background: #e9ecef;
+  color: #374151;
+  border-color: rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] .tableActionBtn:hover {
+  background: #f8f9fa;
+  color: #000;
+  border-color: rgba(0,0,0,0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tableActionBtn {
+    background: #e9ecef;
+    color: #374151;
+    border-color: rgba(0,0,0,0.12);
+  }
+
+  .tableActionBtn:hover {
+    background: #f8f9fa;
+    color: #000;
+    border-color: rgba(0,0,0,0.2);
+  }
+}
+
+/* ====== DARK MODE: ORDER BLOCKS ====== */
+[data-theme="dark"] .orderBlock {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .orderBlockHeader {
+  background: rgba(255,255,255,0.03);
+}
+
+[data-theme="dark"] .orderBlockId {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .orderProductRow {
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .orderBlockFooter {
+  background: rgba(255,255,255,0.03);
+  border-top-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .orderBlockFooterTotal {
+  color: #34d399;
+}
+
+[data-theme="dark"] .orderProductThumbPlaceholder {
+  background: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .tableBadge.sin_seña {
+  background: rgba(255,255,255,0.08);
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .orderBlockMetodo {
+  color: #d1d5db;
+}
+
+@media (prefers-color-scheme: dark) {
+  .orderBlock {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .orderBlockHeader {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .orderBlockId {
+    color: #60a5fa;
+  }
+
+  .orderProductRow {
+    border-bottom-color: rgba(255,255,255,0.06);
+  }
+
+  .orderBlockFooter {
+    background: rgba(255,255,255,0.03);
+    border-top-color: rgba(255,255,255,0.1);
+  }
+
+  .orderBlockFooterTotal {
+    color: #34d399;
+  }
+
+  .orderProductThumbPlaceholder {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .tableBadge.sin_seña {
+    background: rgba(255,255,255,0.08);
+    color: #9ca3af;
+  }
+
+  .orderBlockMetodo {
+    color: #d1d5db;
+  }
 }
