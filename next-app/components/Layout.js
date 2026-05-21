@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import ConfirmDialog from './ConfirmDialog'
-import { getCurrentSession, logout as supabaseLogout } from '../utils/supabaseAuthV2'
+import { logout as supabaseLogout } from '../utils/supabaseAuthV2'
 
 // ── SVG icon helper ────────────────────────────────────────────────────────
 function NavIcon({ d, size = 20 }) {
@@ -90,32 +90,57 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
   const loadUserInfo = async () => {
     try {
-      const session = await getCurrentSession()
-      if (session?.user) {
-        setUserInfo({
-          email: session.user.email,
-          username: session.user.username,
-          rol: session.user.rol,
-          loginTime: new Date().toLocaleString('es-AR')
-        })
-      } else {
-        if (typeof window !== 'undefined') {
-          const sessionData = localStorage.getItem('adminSession')
-          if (sessionData) {
-            const localSession = JSON.parse(sessionData)
-            if (localSession.isLoggedIn || localSession.loggedIn) {
-              setUserInfo({
-                email: localSession.email || localSession.user?.email,
-                username: localSession.user?.username,
-                rol: localSession.user?.rol,
-                loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
-              })
-            }
-          }
+      // Primary: check server-side session via httpOnly cookie
+      const res = await fetch('/api/admin/check-session', { credentials: 'same-origin' })
+      if (res.ok) {
+        const { user } = await res.json()
+        if (user) {
+          setUserInfo({
+            email: user.email,
+            username: user.username,
+            rol: user.rol,
+            loginTime: new Date().toLocaleString('es-AR')
+          })
+          return
         }
       }
-    } catch (error) {
-      console.error('Error loading user info:', error)
+    } catch {
+      // ignore fetch errors — fall through to localStorage
+    }
+
+    // Fallback: kond-admin localStorage (set by login page)
+    if (typeof window !== 'undefined') {
+      const adminStr = localStorage.getItem('kond-admin')
+      if (adminStr) {
+        try {
+          const admin = JSON.parse(adminStr)
+          if (admin?.email || admin?.username) {
+            setUserInfo({
+              email: admin.email,
+              username: admin.username,
+              rol: admin.rol,
+              loginTime: new Date().toLocaleString('es-AR')
+            })
+            return
+          }
+        } catch { /* ignore */ }
+      }
+
+      // Last resort: adminSession (legacy)
+      const sessionData = localStorage.getItem('adminSession')
+      if (sessionData) {
+        try {
+          const localSession = JSON.parse(sessionData)
+          if (localSession.isLoggedIn || localSession.loggedIn) {
+            setUserInfo({
+              email: localSession.email || localSession.user?.email,
+              username: localSession.user?.username,
+              rol: localSession.user?.rol,
+              loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
+            })
+          }
+        } catch { /* ignore */ }
+      }
     }
   }
 
