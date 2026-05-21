@@ -3562,6 +3562,33 @@
   border-color: var(--accent-primary);
 }
 
+/* Dark mode: tableActionBtn (botón "Ver" en pendientes) */
+[data-theme="dark"] .tableActionBtn {
+  background: #e9ecef;
+  color: #374151;
+  border-color: rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] .tableActionBtn:hover {
+  background: #f8f9fa;
+  color: #000;
+  border-color: rgba(0,0,0,0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tableActionBtn {
+    background: #e9ecef;
+    color: #374151;
+    border-color: rgba(0,0,0,0.12);
+  }
+
+  .tableActionBtn:hover {
+    background: #f8f9fa;
+    color: #000;
+    border-color: rgba(0,0,0,0.2);
+  }
+}
+
 /* ====== DARK MODE: ORDER BLOCKS ====== */
 [data-theme="dark"] .orderBlock {
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
