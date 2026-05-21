@@ -6,7 +6,7 @@ import PublicLayout from '../../../components/PublicLayout'
 import { slugifyPreserveCase } from '../../../utils/slugify'
 
 export default function ProductCatchAll({ params }) {
-  const { products, categories, isLoading } = useProducts()
+  const { products, categories, isLoading, promociones } = useProducts()
   const { data: categoriasAPI = [], isLoading: catLoading } = useCategorias()
   const { category, segments = [] } = params || {}
 
@@ -71,7 +71,7 @@ export default function ProductCatchAll({ params }) {
     )
   }
 
-  return <ProductDetail product={found} categories={categories} products={products} categoriasAPI={categoriasAPI} />
+  return <ProductDetail product={found} categories={categories} products={products} categoriasAPI={categoriasAPI} promociones={promociones} />
 }
 
 export async function getServerSideProps(context) {

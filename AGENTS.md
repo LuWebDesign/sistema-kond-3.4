@@ -128,6 +128,9 @@ Keep analysis extremely short after that.
   - `image-upload-compress` — image upload/compression flow
   - `code-cleanup` — cleanup patterns
   - `skill-manager` — managing project skills
+  - `admin-categorias-kond` — patterns and guards for /admin/categorias CRUD and API
+  - `admin-api-public-get` — allow public GET for admin read-only endpoints and protect write methods
+  - `admin-website-kond` — patterns and guards for /admin/website and all subpages (banner, secciones, categorias, destacados, metodos-pago, estilos)
 
 - **Deep context**: See `.github/copilot-instructions.md` for full technical details (schema, patterns, functions, dual Supabase/localStorage pattern, promo engine rules, calendar constraints, coding conventions).
 
