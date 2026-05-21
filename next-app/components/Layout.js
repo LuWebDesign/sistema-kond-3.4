@@ -85,8 +85,11 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
   useEffect(() => {
     setTheme(getTheme())
-    loadUserInfo()
-  }, [])
+    // Skip session check on login page — no cookie exists yet, would always 401
+    if (router.pathname !== '/admin/login') {
+      loadUserInfo()
+    }
+  }, [router.pathname])
 
   const loadUserInfo = async () => {
     try {
