@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { loginAdmin, getCurrentSession } from '../../utils/supabaseAuthV2';
+import { getCurrentSession } from '../../utils/supabaseAuthV2';
 import ConfirmModal from '../../components/ConfirmModal';
 
 export default function AdminLogin() {
@@ -36,15 +36,27 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const { error, user } = await loginAdmin(formData.email, formData.password);
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password })
+      })
+      const data = await res.json()
 
-      if (error) {
-        setError(error);
-        setIsLoading(false);
-        return;
+      if (!res.ok) {
+        setError(data.error || 'Login failed')
+        setIsLoading(false)
+        return
       }
 
-      // Usuario ya verificado en loginAdmin
+      const user = data.user
+      // Persist to localStorage for HOC/layout compatibility
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kond-admin', JSON.stringify(user))
+        localStorage.setItem('kond-user', JSON.stringify(user))
+      }
+
+      // Usuario ya verificado en API route
       setIsLoading(false);
       setCountdown(3);
       setShowWelcomeModal(true);

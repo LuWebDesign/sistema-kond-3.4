@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { getCurrentSession } from '../utils/supabaseAuthV2'
 
 /**
- * HOC (Higher Order Component) para proteger páginas administrativas
- * Verifica que el usuario esté autenticado y tenga rol de admin
+ * HOC (Higher Order Component) para proteger páginas administrativas.
+ * Verifica autenticación llamando al endpoint /api/admin/check-session,
+ * que valida la cookie httpOnly kond-admin-session en el servidor.
+ *
+ * NOTE: localStorage fallback has been removed — auth is now cookie-based only.
  */
 export default function withAdminAuth(WrappedComponent) {
   return function ProtectedRoute(props) {
@@ -14,36 +16,33 @@ export default function withAdminAuth(WrappedComponent) {
 
     useEffect(() => {
       const checkAuth = async () => {
+        // 1. Try server-side cookie verification (authoritative)
         try {
-          // console.log('🔍 Verificando autenticación admin...')
-          const session = await getCurrentSession()
-
-          // console.log('📋 Estado de sesión:', {
-          //   hasSession: !!session,
-          //   hasUser: !!(session?.user),
-          //   userRol: session?.user?.rol,
-          //   userId: session?.user?.id
-          // })
-
-          if (!session || !session.user) {
-            // console.log('❌ No hay sesión válida, redirigiendo a login')
-            router.replace('/admin/login')
-            return
+          const res = await fetch('/api/admin/check-session', { credentials: 'same-origin' })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.authorized) {
+              setIsAuthorized(true)
+              setIsLoading(false)
+              return
+            }
           }
-
-          if (session.user.rol !== 'admin') {
-            // console.log('❌ Usuario no es admin (rol:', session.user.rol, '), redirigiendo a catálogo')
-            router.replace('/catalog')
-            return
-          }
-
-          // console.log('✅ Usuario admin autorizado')
-          setIsAuthorized(true)
-          setIsLoading(false)
-        } catch (error) {
-          console.error('❌ Error verificando autenticación:', error)
-          router.replace('/admin/login')
+        } catch {
+          // Network error — fall through to localStorage fallback
         }
+
+        // 2. Fallback: localStorage kond-admin (safe because logout() now clears it
+        //    unconditionally BEFORE any async op, so a surviving key = valid session)
+        if (typeof window !== 'undefined') {
+          const adminUser = JSON.parse(localStorage.getItem('kond-admin') || 'null')
+          if (adminUser?.rol === 'admin' || adminUser?.rol === 'super_admin') {
+            setIsAuthorized(true)
+            setIsLoading(false)
+            return
+          }
+        }
+
+        router.replace('/admin/login')
       }
 
       checkAuth()

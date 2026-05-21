@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit, getClientIp } from '../../../utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -7,15 +8,16 @@ const supabaseAdmin = createClient(
 
 // Webhook has no TENANT_ID env context — tenant is resolved from DB via mp_preference_id
 
-const STATUS_MAP = {
-  approved: 'pagado',
-  pending: 'pendiente_mp',
-  in_process: 'pendiente_mp',
-  rejected: 'rechazado_mp',
-  cancelled: 'rechazado_mp',
-}
+const checkRateLimit = rateLimit({ maxRequests: 60, windowMs: 60_000 })
 
 export default async function handler(req, res) {
+  const ip = getClientIp(req)
+  const { allowed, retryAfter } = checkRateLimit(ip)
+  if (!allowed) {
+    res.setHeader('Retry-After', String(retryAfter))
+    return res.status(429).end()
+  }
+
   if (req.method === 'GET') {
     return res.status(200).end()
   }

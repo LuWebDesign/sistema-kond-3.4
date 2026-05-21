@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import ConfirmDialog from './ConfirmDialog'
-import { getCurrentSession, logout as supabaseLogout } from '../utils/supabaseAuthV2'
+import { logout as supabaseLogout } from '../utils/supabaseAuthV2'
 
 // ── SVG icon helper ────────────────────────────────────────────────────────
 function NavIcon({ d, size = 20 }) {
@@ -85,37 +85,65 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
 
   useEffect(() => {
     setTheme(getTheme())
-    loadUserInfo()
-  }, [])
+    // Skip session check on login page — no cookie exists yet, would always 401
+    if (router.pathname !== '/admin/login') {
+      loadUserInfo()
+    }
+  }, [router.pathname])
 
   const loadUserInfo = async () => {
     try {
-      const session = await getCurrentSession()
-      if (session?.user) {
-        setUserInfo({
-          email: session.user.email,
-          username: session.user.username,
-          rol: session.user.rol,
-          loginTime: new Date().toLocaleString('es-AR')
-        })
-      } else {
-        if (typeof window !== 'undefined') {
-          const sessionData = localStorage.getItem('adminSession')
-          if (sessionData) {
-            const localSession = JSON.parse(sessionData)
-            if (localSession.isLoggedIn || localSession.loggedIn) {
-              setUserInfo({
-                email: localSession.email || localSession.user?.email,
-                username: localSession.user?.username,
-                rol: localSession.user?.rol,
-                loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
-              })
-            }
-          }
+      // Primary: check server-side session via httpOnly cookie
+      const res = await fetch('/api/admin/check-session', { credentials: 'same-origin' })
+      if (res.ok) {
+        const { user } = await res.json()
+        if (user) {
+          setUserInfo({
+            email: user.email,
+            username: user.username,
+            rol: user.rol,
+            loginTime: new Date().toLocaleString('es-AR')
+          })
+          return
         }
       }
-    } catch (error) {
-      console.error('Error loading user info:', error)
+    } catch {
+      // ignore fetch errors — fall through to localStorage
+    }
+
+    // Fallback: kond-admin localStorage (set by login page)
+    if (typeof window !== 'undefined') {
+      const adminStr = localStorage.getItem('kond-admin')
+      if (adminStr) {
+        try {
+          const admin = JSON.parse(adminStr)
+          if (admin?.email || admin?.username) {
+            setUserInfo({
+              email: admin.email,
+              username: admin.username,
+              rol: admin.rol,
+              loginTime: new Date().toLocaleString('es-AR')
+            })
+            return
+          }
+        } catch { /* ignore */ }
+      }
+
+      // Last resort: adminSession (legacy)
+      const sessionData = localStorage.getItem('adminSession')
+      if (sessionData) {
+        try {
+          const localSession = JSON.parse(sessionData)
+          if (localSession.isLoggedIn || localSession.loggedIn) {
+            setUserInfo({
+              email: localSession.email || localSession.user?.email,
+              username: localSession.user?.username,
+              rol: localSession.user?.rol,
+              loginTime: new Date(localSession.timestamp).toLocaleString('es-AR')
+            })
+          }
+        } catch { /* ignore */ }
+      }
     }
   }
 
@@ -189,6 +217,7 @@ export default function Layout({ children, title = 'Sistema KOND' }) {
           {/* ── Gestión Interna ── */}
           <SectionDivider label="Gestión Interna" />
           <NavLink href="/admin/products" icon="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" label="Productos" router={router} />
+          <NavLink href="/admin/categorias" icon="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" label="Categorías" router={router} />
           <NavLink href="/admin/cotizaciones" icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" label="Cotizaciones Corte" router={router} />
           <NavLink href="/admin/calendar" icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" label="Calendario" router={router} />
           <NavLink href="/admin/database" icon="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" label="Base de Datos" router={router} />
