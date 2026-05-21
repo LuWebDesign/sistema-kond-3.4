@@ -170,8 +170,25 @@ Para íconos multi-path: `icon={['M...path1', 'M...path2']}`.
 - NEVER confiar en `overflow-x: hidden` solo para esconder texto — agregar `max-width: 0` explícito
 - NEVER usar íconos emoji en nav — sólo SVG via `NavIcon`
 
+## Legacy files and source-of-truth
+
+Hay varios archivos históricos en el repositorio que contienen variantes del layout (por ejemplo: `next-app/components/Layout-old.js`, `next-app/components/Layout-broken.js`, `next-app/components/Layout-simple.js`). Estos son artefactos históricos y pueden confundir a los desarrolladores.
+
+Regla operativa:
+- `next-app/components/Layout.js` es la única fuente de verdad para el sidebar admin. No modifiquen las versiones "-old" o "-broken" sin un propósito claro; o márquenlas como archivadas (comentario en el encabezado) o muévanlas a `archive/`.
+
+## Tests (recommended)
+
+Agregar una verificación ligera en `skills/admin-sidebar-kond/assets/check-sidebar.sh` que:
+- Verifique que `next-app/components/Layout.js` contiene `nav-icon-wrap`.
+- Verifique que existe `sidebarOpen` (estado) para mobile.
+- Busque la presencia de `::before` en los estilos y `max-width: 0` en CSS para colapsado.
+
+Esta prueba es un smoke-check para evitar regresiones que causen el gotcha Windows/Chrome.
+
 ## Files
 
 | File | Role |
 |------|------|
 | `next-app/components/Layout.js` | Único source of truth del sidebar admin |
+| `skills/admin-sidebar-kond/assets/check-sidebar.sh` | Smoke-check script para validar reglas básicas del sidebar |
