@@ -3569,6 +3569,13 @@
 
 [data-theme="dark"] .orderProductRow:hover {
   background: rgba(255,255,255,0.02);
+  color: #000;
+}
+
+[data-theme="dark"] .orderProductRow:hover .orderProductName,
+[data-theme="dark"] .orderProductRow:hover .orderProductQty,
+[data-theme="dark"] .orderProductRow:hover .orderProductSubtotal {
+  color: #000;
 }
 
 [data-theme="dark"] .orderBlockFooter {
@@ -3612,6 +3619,13 @@
 
   .orderProductRow:hover {
     background: rgba(255,255,255,0.02);
+    color: #000;
+  }
+
+  .orderProductRow:hover .orderProductName,
+  .orderProductRow:hover .orderProductQty,
+  .orderProductRow:hover .orderProductSubtotal {
+    color: #000;
   }
 
   .orderBlockFooter {
