@@ -3181,6 +3181,140 @@
   }
 }
 
+/* ====== ORDER BLOCKS (card-style per order) ====== */
+.orderBlocks {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.orderBlock {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.orderBlockHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--bg-section);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.orderBlockTop {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.orderBlockId {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-primary);
+  font-family: monospace;
+}
+
+.orderBlockCliente {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.orderBlockBadges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.orderBlockDate {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Product rows inside block */
+.orderProductRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.orderProductRow:last-child {
+  border-bottom: none;
+}
+
+.orderProductThumb {
+  flex-shrink: 0;
+}
+
+.orderProductInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orderProductName {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderProductQty {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.orderProductSubtotal {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: monospace;
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+/* Block footer */
+.orderBlockFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-section);
+  border-top: 2px solid var(--border-color);
+}
+
+.orderBlockFooterLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.orderBlockFooterTotal {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  font-family: monospace;
+}
+
 /* ====== TABLA DE PEDIDOS ( estilo sidebar ) ====== */
 .pedidosTableContainer {
   width: 100%;

@@ -1549,104 +1549,67 @@ function PedidosCatalogo() {
               </div>
             ) : (
               <>
-                <div className={styles.pedidosTableContainer}>
-                  <table className={styles.pedidosTable}>
-                    <thead>
-                      <tr>
-                        <th style={{width: '50px'}}>Foto</th>
-                        <th style={{width: '200px'}}>Producto</th>
-                        <th style={{width: '60px'}}>Cant.</th>
-                        <th style={{width: '80px', textAlign: 'right'}}>Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentPendientes.map(pedido => {
-                        const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
-                        const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
-                        
-                        const getProductDataInner = (prod) => {
-                          if (prod.tiempoUnitario) return { tiempoUnitario: prod.tiempoUnitario }
-                          const productoBase = productosBase?.find(p =>
-                            p.id === prod.productId ||
-                            p.id === prod.idProducto ||
-                            p.nombre?.toLowerCase() === prod.nombre?.toLowerCase()
+                <div className={styles.orderBlocks}>
+                  {currentPendientes.map(pedido => {
+                    const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
+                    const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
+                    
+                    return (
+                      <div key={pedido.id} className={styles.orderBlock}>
+                        {/* Block header */}
+                        <div className={styles.orderBlockHeader}>
+                          <div className={styles.orderBlockTop}>
+                            <span className={styles.orderBlockId}>{pedido.nroPedido || `N°${pedido.id}`}</span>
+                            <span className={styles.orderBlockCliente}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</span>
+                          </div>
+                          <div className={styles.orderBlockBadges}>
+                            <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
+                            <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
+                            <span className={styles.orderBlockDate}>Producir: {produccionDate ? formatDate(produccionDate) : '—'}</span>
+                            <span className={styles.orderBlockDate}>Entrega: {entregaDate ? formatDate(entregaDate) : '—'}</span>
+                          </div>
+                          <button
+                            className={styles.tableActionBtn}
+                            onClick={() => handleCardClick(pedido)}
+                          >
+                            Ver
+                          </button>
+                        </div>
+                        {/* Product rows */}
+                        {(pedido.productos || []).map((prod, idx) => {
+                          const prodBase = productosBase.find(p =>
+                            p.id === prod.productId || p.id === prod.idProducto
                           )
-                          return { tiempoUnitario: productoBase?.tiempoUnitario || '00:00:00' }
-                        }
-                        
-                        const timeToSeconds = (timeStr) => {
-                          if (!timeStr) return 0
-                          const parts = timeStr.split(':')
-                          return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0)
-                        }
-                        
-                        const tiempoTotal = pedido.productos?.reduce((sum, prod) => {
-                          const prodData = getProductDataInner(prod)
-                          const tiempoSeg = timeToSeconds(prodData.tiempoUnitario)
-                          return sum + (tiempoSeg * (prod.cantidad || 1))
-                        }, 0) || 0
-                        const tiempoHrs = Math.floor(tiempoTotal / 3600)
-                        const tiempoMin = Math.floor((tiempoTotal % 3600) / 60)
-                        const tiempoStr = `${tiempoHrs}h ${tiempoMin}m`
-                        
-                        const numProducts = pedido.productos?.length || 1
-                        
+                          const thumbUrl = prodBase?.imagen || prodBase?.imagen_url || null
+                          const prodSubtotal = (Number(prod.precioUnitario || prod.price || prod.precio || 0)) * (prod.cantidad || 1)
+                          
                           return (
-                          <>
-                            {/* Order header row */}
-                            <tr key={`header-${pedido.id}`} className={styles.orderHeaderRow}>
-                              <td colSpan={4}>
-                                <div className={styles.orderHeaderContent}>
-                                  <span className={styles.orderHeaderId}>{pedido.nroPedido || `N°${pedido.id}`}</span>
-                                  <span className={styles.orderHeaderCliente}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</span>
-                                  <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
-                                  <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
-                                  <span className={styles.orderHeaderDate}>Producir: {produccionDate ? formatDate(produccionDate) : '—'}</span>
-                                  <span className={styles.orderHeaderDate}>Entrega: {entregaDate ? formatDate(entregaDate) : '—'}</span>
-                                  <span className={styles.orderHeaderTotal}>{formatCurrency(pedido.total)}</span>
-                                  <button
-                                    className={styles.tableActionBtn}
-                                    onClick={() => handleCardClick(pedido)}
-                                  >
-                                    Ver
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                            {/* Product rows */}
-                            {(pedido.productos || []).map((prod, idx) => {
-                              const prodBase = productosBase.find(p =>
-                                p.id === prod.productId || p.id === prod.idProducto
-                              )
-                              const thumbUrl = prodBase?.imagen || prodBase?.imagen_url || null
-                              const prodSubtotal = (Number(prod.precioUnitario || prod.price || prod.precio || 0)) * (prod.cantidad || 1)
-                              
-                              return (
-                                <tr key={`${pedido.id}-${idx}`} className={idx > 0 ? styles.orderSubRow : ''}>
-                                  <td className={styles.thumbCell}>
-                                    {thumbUrl ? (
-                                      <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
-                                    ) : (
-                                      <div className={styles.productThumbPlaceholder}>📦</div>
-                                    )}
-                                  </td>
-                                  <td className={styles.productoNameCell}>
-                                    {prod.nombre}
-                                  </td>
-                                  <td className={styles.cantidadCell}>
-                                    {prod.cantidad || 1}
-                                  </td>
-                                  <td className={styles.subtotalCell}>
-                                    {formatCurrency(prodSubtotal)}
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                            <div key={`${pedido.id}-${idx}`} className={styles.orderProductRow}>
+                              <div className={styles.orderProductThumb}>
+                                {thumbUrl ? (
+                                  <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
+                                ) : (
+                                  <div className={styles.productThumbPlaceholder}>📦</div>
+                                )}
+                              </div>
+                              <div className={styles.orderProductInfo}>
+                                <span className={styles.orderProductName}>{prod.nombre}</span>
+                                <span className={styles.orderProductQty}>{prod.cantidad || 1} u.</span>
+                              </div>
+                              <div className={styles.orderProductSubtotal}>
+                                {formatCurrency(prodSubtotal)}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {/* Block footer with total */}
+                        <div className={styles.orderBlockFooter}>
+                          <span className={styles.orderBlockFooterLabel}>Total</span>
+                          <span className={styles.orderBlockFooterTotal}>{formatCurrency(pedido.total)}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {/* Paginación */}
