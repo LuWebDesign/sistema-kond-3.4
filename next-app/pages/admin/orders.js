@@ -1562,8 +1562,7 @@ function PedidosCatalogo() {
                         <th style={{width: '90px'}}>Estado</th>
                         <th style={{width: '100px'}}>Pago</th>
                         <th style={{width: '90px', textAlign: 'right'}}>Total</th>
-                        <th style={{width: '90px'}}>Producción</th>
-                        <th style={{width: '90px'}}>Entrega</th>
+                        <th style={{width: '110px'}}>Fechas</th>
                         <th style={{width: '60px'}}></th>
                       </tr>
                     </thead>
@@ -1657,10 +1656,22 @@ function PedidosCatalogo() {
                                     {formatCurrency(pedido.total)}
                                   </td>
                                   <td className={styles.fechaCell} rowSpan={numProducts}>
-                                    {produccionDate ? formatDate(produccionDate) : '—'}
-                                  </td>
-                                  <td className={styles.fechaCell} rowSpan={numProducts}>
-                                    {entregaDate ? formatDate(entregaDate) : '—'}
+                                    {produccionDate ? (
+                                      <div className={styles.fechaStack}>
+                                        <span className={styles.fechaLabel}>Prod:</span>
+                                        <span>{formatDate(produccionDate)}</span>
+                                      </div>
+                                    ) : (
+                                      <div className={styles.fechaStack}><span className={styles.fechaNone}>—</span></div>
+                                    )}
+                                    {entregaDate ? (
+                                      <div className={styles.fechaStack}>
+                                        <span className={styles.fechaLabel}>Entrega:</span>
+                                        <span>{formatDate(entregaDate)}</span>
+                                      </div>
+                                    ) : (
+                                      <div className={styles.fechaStack}><span className={styles.fechaNone}>—</span></div>
+                                    )}
                                   </td>
                                   <td rowSpan={numProducts}>
                                     <button

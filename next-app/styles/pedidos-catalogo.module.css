@@ -3335,7 +3335,27 @@
 
 .pedidosTable .fechaCell {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.fechaStack {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.fechaLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+}
+
+.fechaNone {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
 }
 
 /* Badges en tabla */
