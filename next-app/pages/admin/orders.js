@@ -1553,8 +1553,7 @@ function PedidosCatalogo() {
                   <table className={styles.pedidosTable}>
                     <thead>
                       <tr>
-                        <th style={{width: '80px'}}>ID</th>
-                        <th style={{width: '120px'}}>Cliente</th>
+                        <th style={{width: '160px'}}>Pedido</th>
                         <th style={{width: '50px'}}>Foto</th>
                         <th style={{width: '180px'}}>Producto</th>
                         <th style={{width: '60px'}}>Cant.</th>
@@ -1614,14 +1613,10 @@ function PedidosCatalogo() {
                           return (
                             <tr key={`${pedido.id}-${idx}`} className={idx === numProducts - 1 ? styles.orderLastRow : idx > 0 ? styles.orderSubRow : ''}>
                               {idx === 0 ? (
-                                <>
-                                  <td className={styles.idCell} rowSpan={numProducts}>
-                                    {pedido.nroPedido || `N°${pedido.id}`}
-                                  </td>
-                                  <td className={styles.clienteCell} rowSpan={numProducts}>
-                                    {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
-                                  </td>
-                                </>
+                                <td className={styles.pedidoInfoCell} rowSpan={numProducts}>
+                                  <div className={styles.pedidoId}>{pedido.nroPedido || `N°${pedido.id}`}</div>
+                                  <div className={styles.pedidoCliente}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
+                                </td>
                               ) : null}
                               <td className={styles.thumbCell}>
                                 {thumbUrl ? (
