@@ -29,8 +29,47 @@ Subagents still read their assigned executor/phase skill. During normal runtime,
 
 ## Selected skills and compact rules
 
+### admin-api-public-get
+- Path: C:\dev\sistema kond 3.4\skills\admin-api-public-get\SKILL.md
+- Trigger: admin API returns 401 for public GET requests. Allow public GET for admin read-only endpoints and protect write methods.
+- Rules:
+  - Public GETs: Endpoints that only READ configuration or public data MUST allow unauthenticated GET requests.
+  - Protected writes: Any non-GET that mutates server state MUST verify admin auth.
+  - Do NOT expose SUPABASE_SERVICE_ROLE_KEY or other secret keys to client-side code.
+  - Add tests (assets/check-admin-apis.sh) for every endpoint changed.
+
+### admin-categorias-kond
+- Path: C:\dev\sistema kond 3.4\skills\admin-categorias-kond\SKILL.md
+- Trigger: /admin/categorias changes. Standardize category CRUD (parent/child), slug uniqueness, deletion rules, tenant scoping and UI patterns.
+- Rules:
+  - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
+
+### admin-website-kond
+- Path: C:\dev\sistema kond 3.4\skills\admin-website-kond\SKILL.md
+- Trigger: /admin/website and all subpages (banner, secciones, categorias, destacados, metodos-pago, estilos). Patterns and guards for website management.
+- Rules:
+  - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
+
 ### admin-sidebar-kond
 - Path: C:\dev\sistema kond 3.4\skills\admin-sidebar-kond\SKILL.md
+- Rules:
+  - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
+
+### admin-mi-cuenta
+- Path: C:\dev\sistema kond 3.4\next-app\skills\admin-mi-cuenta\SKILL.md
+- Trigger: Diseño de "Mi Cuenta" para el panel de administración (/admin/mi-cuenta).
+- Rules:
+  - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
+
+### catalog-user-design
+- Path: C:\dev\sistema kond 3.4\next-app\skills\catalog-user-design\SKILL.md
+- Trigger: Diseño de páginas de usuario en el catálogo y su adaptación para el área de administración.
+- Rules:
+  - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
+
+### catalog-user-mi-cuenta
+- Path: C:\dev\sistema kond 3.4\next-app\skills\catalog-user-mi-cuenta\SKILL.md
+- Trigger: Diseño de "Mi Cuenta" para usuarios del catálogo público (/catalog/user y /catalog/user/perfil).
 - Rules:
   - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
 
