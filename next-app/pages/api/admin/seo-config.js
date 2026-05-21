@@ -1,6 +1,7 @@
 // next-app/pages/api/admin/seo-config.js
 import { supabaseAdmin } from '../../../utils/supabaseClient'
 import { TENANT_ID } from '../../../lib/tenant'
+import { verifyAdminCookie } from '../../../utils/verifyAdminCookie'
 
 export const DEFAULT_SEO_CONFIG = {
   // ── General ──────────────────────────────────────────────────────────────────
@@ -55,6 +56,9 @@ export const DEFAULT_SEO_CONFIG = {
 }
 
 export default async function handler(req, res) {
+  const userId = await verifyAdminCookie(req)
+  if (!userId) return res.status(401).json({ error: 'No autorizado' })
+
   if (!['GET', 'POST', 'PUT'].includes(req.method)) {
     res.setHeader('Allow', ['GET', 'POST', 'PUT'])
     return res.status(405).end(`Method ${req.method} Not Allowed`)
