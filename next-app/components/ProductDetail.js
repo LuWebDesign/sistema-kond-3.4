@@ -315,33 +315,14 @@ export default function ProductDetail({ product, categories = [], products = [],
               )}
             </div>
 
-            {/* Fila 3: precio por transferencia + badge (solo si hay promo transfer activa) */}
-            {transferPrice !== null && (() => {
-              const bgColor = activeTransferPromo?.badgeColor || '#10b981'
-              const hex = bgColor.replace('#', '')
-              const r = parseInt(hex.substring(0, 2), 16)
-              const g = parseInt(hex.substring(2, 4), 16)
-              const b = parseInt(hex.substring(4, 6), 16)
-              const textColor = activeTransferPromo?.badgeTextColor || '#fff'
-              const badgeText = activeTransferPromo?.badgeTexto || '💳 Transferencia'
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {formatCurrency(transferPrice)}
-                  </span>
-                  <span style={{
-                    padding: '3px 10px',
-                    borderRadius: 12,
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, 1)` : bgColor,
-                    color: textColor
-                  }}>
-                    {badgeText}
-                  </span>
-                </div>
-              )
-            })()}
+            {/* Fila 3: precio por transferencia (el badge ya aparece en Fila 2 vía promotionBadges) */}
+            {transferPrice !== null && (
+              <div>
+                <span style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {formatCurrency(transferPrice)}
+                </span>
+              </div>
+            )}
 
           </div>
         </div>
