@@ -3260,6 +3260,7 @@
 .pedidoInfoCell {
   padding: 12px 16px;
   vertical-align: middle;
+  text-align: left;
 }
 
 .pedidoId {
@@ -3268,14 +3269,26 @@
   font-size: 0.9rem;
   font-family: monospace;
   margin-bottom: 4px;
+  text-align: left;
 }
 
 .pedidoCliente {
   font-size: 0.82rem;
   color: var(--text-secondary);
   font-weight: 500;
+  text-align: left;
 }
 .montoCell { font-weight: 600; color: var(--text-primary); text-align: right; font-family: monospace; }
+
+/* Subtotal per product row */
+.subtotalCell {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: right;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+}
 .fechaCell { color: var(--text-secondary); font-size: 0.85rem; }
 .productosCell { font-size: 0.85rem; color: var(--text-primary); }
 .productosCell > div > div:first-child {

@@ -1560,7 +1560,8 @@ function PedidosCatalogo() {
                         <th style={{width: '70px'}}>Tiempo</th>
                         <th style={{width: '90px'}}>Estado</th>
                         <th style={{width: '100px'}}>Pago</th>
-                        <th style={{width: '90px', textAlign: 'right'}}>Total</th>
+                        <th style={{width: '80px', textAlign: 'right'}}>Subtotal</th>
+                        <th style={{width: '80px', textAlign: 'right'}}>Total</th>
                         <th style={{width: '110px'}}>Fechas</th>
                         <th style={{width: '60px'}}></th>
                       </tr>
@@ -1647,13 +1648,16 @@ function PedidosCatalogo() {
                                       {getPaymentLabel(pedido.estadoPago, pedido)}
                                     </span>
                                   </td>
+                                  <td className={styles.subtotalCell}>
+                                    {formatCurrency((Number(prod.precioUnitario || prod.price || prod.precio || 0)) * (prod.cantidad || 1))}
+                                  </td>
                                   <td className={styles.montoCell} rowSpan={numProducts}>
                                     {formatCurrency(pedido.total)}
                                   </td>
                                   <td className={styles.fechaCell} rowSpan={numProducts}>
                                     {produccionDate ? (
                                       <div className={styles.fechaStack}>
-                                        <span className={styles.fechaLabel}>Prod:</span>
+                                        <span className={styles.fechaLabel}>Producir:</span>
                                         <span>{formatDate(produccionDate)}</span>
                                       </div>
                                     ) : (
