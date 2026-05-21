@@ -1557,11 +1557,10 @@ function PedidosCatalogo() {
                         <th style={{width: '50px'}}>Foto</th>
                         <th style={{width: '180px'}}>Producto</th>
                         <th style={{width: '60px'}}>Cant.</th>
-                        <th style={{width: '70px'}}>Tiempo</th>
-                        <th style={{width: '90px'}}>Estado</th>
-                        <th style={{width: '100px'}}>Pago</th>
                         <th style={{width: '80px', textAlign: 'right'}}>Subtotal</th>
                         <th style={{width: '80px', textAlign: 'right'}}>Total</th>
+                        <th style={{width: '90px'}}>Estado</th>
+                        <th style={{width: '100px'}}>Pago</th>
                         <th style={{width: '110px'}}>Fechas</th>
                         <th style={{width: '60px'}}></th>
                       </tr>
@@ -1571,7 +1570,6 @@ function PedidosCatalogo() {
                         const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
                         const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
                         
-                        // Calcular tiempo total de producción
                         const getProductDataInner = (prod) => {
                           if (prod.tiempoUnitario) return { tiempoUnitario: prod.tiempoUnitario }
                           const productoBase = productosBase?.find(p =>
@@ -1599,92 +1597,87 @@ function PedidosCatalogo() {
                         
                         const numProducts = pedido.productos?.length || 1
                         
-                        // Render one row per product, with rowSpan on order-level columns
-                        return (pedido.productos || []).map((prod, idx) => {
-                          const prodBase = productosBase.find(p =>
-                            p.id === prod.productId || p.id === prod.idProducto
-                          )
-                          const thumbUrl = prodBase?.imagen || prodBase?.imagen_url || null
-                          const prodTiempo = getProductDataInner(prod)
-                          const prodTiempoSeg = timeToSeconds(prodTiempo.tiempoUnitario) * (prod.cantidad || 1)
-                          const prodTiempoHrs = Math.floor(prodTiempoSeg / 3600)
-                          const prodTiempoMin = Math.floor((prodTiempoSeg % 3600) / 60)
-                          const prodTiempoStr = `${prodTiempoHrs}h ${prodTiempoMin}m`
-                          
-                          return (
-                            <tr key={`${pedido.id}-${idx}`} className={idx === numProducts - 1 ? styles.orderLastRow : idx > 0 ? styles.orderSubRow : ''}>
-                              {idx === 0 ? (
-                                <td className={styles.pedidoInfoCell} rowSpan={numProducts}>
-                                  <div className={styles.pedidoId}>{pedido.nroPedido || `N°${pedido.id}`}</div>
-                                  <div className={styles.pedidoCliente}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</div>
-                                </td>
-                              ) : null}
-                              <td className={styles.thumbCell}>
-                                {thumbUrl ? (
-                                  <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
-                                ) : (
-                                  <div className={styles.productThumbPlaceholder}>📦</div>
-                                )}
+                        return (
+                          <>
+                            {/* Order header row */}
+                            <tr key={`header-${pedido.id}`} className={styles.orderHeaderRow}>
+                              <td colSpan={10}>
+                                <div className={styles.orderHeaderContent}>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Pedido</span>
+                                    <span className={styles.orderHeaderValue}>{pedido.nroPedido || `N°${pedido.id}`}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Cliente</span>
+                                    <span className={styles.orderHeaderValue}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Estado</span>
+                                    <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Pago</span>
+                                    <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Total</span>
+                                    <span className={styles.orderHeaderTotal}>{formatCurrency(pedido.total)}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Producir</span>
+                                    <span>{produccionDate ? formatDate(produccionDate) : '—'}</span>
+                                  </div>
+                                  <div className={styles.orderHeaderGroup}>
+                                    <span className={styles.orderHeaderLabel}>Entrega</span>
+                                    <span>{entregaDate ? formatDate(entregaDate) : '—'}</span>
+                                  </div>
+                                  <button
+                                    className={styles.tableActionBtn}
+                                    onClick={() => handleCardClick(pedido)}
+                                  >
+                                    Ver
+                                  </button>
+                                </div>
                               </td>
-                              <td className={styles.productoNameCell}>
-                                {prod.nombre}
-                              </td>
-                              <td className={styles.cantidadCell}>
-                                {prod.cantidad || 1}
-                              </td>
-                              {idx === 0 ? (
-                                <>
-                                  <td className={styles.tiempoCell} rowSpan={numProducts}>
-                                    ⏱ {tiempoStr}
+                            </tr>
+                            {/* Product rows */}
+                            {(pedido.productos || []).map((prod, idx) => {
+                              const prodBase = productosBase.find(p =>
+                                p.id === prod.productId || p.id === prod.idProducto
+                              )
+                              const thumbUrl = prodBase?.imagen || prodBase?.imagen_url || null
+                              const prodSubtotal = (Number(prod.precioUnitario || prod.price || prod.precio || 0)) * (prod.cantidad || 1)
+                              
+                              return (
+                                <tr key={`${pedido.id}-${idx}`} className={idx > 0 ? styles.orderSubRow : ''}>
+                                  <td className={styles.pedidoCellSpacer}></td>
+                                  <td className={styles.thumbCell}>
+                                    {thumbUrl ? (
+                                      <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
+                                    ) : (
+                                      <div className={styles.productThumbPlaceholder}>📦</div>
+                                    )}
                                   </td>
-                                  <td rowSpan={numProducts}>
-                                    <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>
-                                      {getStatusLabel(pedido.estado)}
-                                    </span>
+                                  <td className={styles.productoNameCell}>
+                                    {prod.nombre}
                                   </td>
-                                  <td className={styles.pagoCell} rowSpan={numProducts}>
-                                    <div className={styles.metodoPago}>{pedido.metodoPago === 'transferencia' ? '💳 Transferencia' : pedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : pedido.metodoPago === 'retiro' ? '🏪 Retiro' : pedido.metodoPago === 'mercadopago' ? '💳 MercadoPago' : '—'}</div>
-                                    <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>
-                                      {getPaymentLabel(pedido.estadoPago, pedido)}
-                                    </span>
+                                  <td className={styles.cantidadCell}>
+                                    {prod.cantidad || 1}
                                   </td>
                                   <td className={styles.subtotalCell}>
-                                    {formatCurrency((Number(prod.precioUnitario || prod.price || prod.precio || 0)) * (prod.cantidad || 1))}
+                                    {formatCurrency(prodSubtotal)}
                                   </td>
-                                  <td className={styles.montoCell} rowSpan={numProducts}>
-                                    {formatCurrency(pedido.total)}
-                                  </td>
-                                  <td className={styles.fechaCell} rowSpan={numProducts}>
-                                    {produccionDate ? (
-                                      <div className={styles.fechaStack}>
-                                        <span className={styles.fechaLabel}>Producir:</span>
-                                        <span>{formatDate(produccionDate)}</span>
-                                      </div>
-                                    ) : (
-                                      <div className={styles.fechaStack}><span className={styles.fechaNone}>—</span></div>
-                                    )}
-                                    {entregaDate ? (
-                                      <div className={styles.fechaStack}>
-                                        <span className={styles.fechaLabel}>Entrega:</span>
-                                        <span>{formatDate(entregaDate)}</span>
-                                      </div>
-                                    ) : (
-                                      <div className={styles.fechaStack}><span className={styles.fechaNone}>—</span></div>
-                                    )}
-                                  </td>
-                                  <td rowSpan={numProducts}>
-                                    <button
-                                      className={styles.tableActionBtn}
-                                      onClick={() => handleCardClick(pedido)}
-                                    >
-                                      Ver
-                                    </button>
-                                  </td>
-                                </>
-                              ) : null}
-                            </tr>
-                          )
-                        })
+                                  {/* Spacer cells for rowSpan columns */}
+                                  <td className={styles.totalCellSpacer}></td>
+                                  <td className={styles.estadoCellSpacer}></td>
+                                  <td className={styles.pagoCellSpacer}></td>
+                                  <td className={styles.fechasCellSpacer}></td>
+                                  <td className={styles.actionCellSpacer}></td>
+                                </tr>
+                              )
+                            })}
+                          </>
+                        )
                       })}
                     </tbody>
                   </table>

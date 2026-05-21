@@ -3210,6 +3210,51 @@
   letter-spacing: 0.5px;
 }
 
+/* Order header row */
+.orderHeaderRow {
+  background: var(--bg-section);
+}
+
+.orderHeaderRow td {
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.orderHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.orderHeaderGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.orderHeaderLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.orderHeaderValue {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.orderHeaderTotal {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  font-family: monospace;
+}
+
+/* Product rows */
 .pedidosTable tbody tr {
   border-bottom: 1px solid var(--border-color);
   transition: background 0.15s ease;
@@ -3219,21 +3264,26 @@
   background: var(--bg-hover);
 }
 
-/* Thicker separator between different orders */
-.pedidosTable tbody tr.orderLastRow {
-  border-bottom: 2px solid var(--border-color);
-}
-
 /* Subtle background tint for product sub-rows (same order) */
 .pedidosTable tbody tr.orderSubRow {
   background: var(--bg-section);
 }
 
 .pedidosTable td {
-  padding: 14px 16px;
+  padding: 10px 16px;
   color: var(--text-primary);
   font-size: 0.9rem;
   vertical-align: middle;
+}
+
+/* Spacer cells for order-level columns in product rows */
+.pedidoCellSpacer,
+.totalCellSpacer,
+.estadoCellSpacer,
+.pagoCellSpacer,
+.fechasCellSpacer,
+.actionCellSpacer {
+  padding: 4px 16px;
 }
 
 /* Clases independientes para JS */
@@ -3253,74 +3303,7 @@
 .pendiente_mp { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
 .rechazado_mp { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
 
-.idCell { font-weight: 600; color: var(--accent-primary); font-size: 0.85rem; }
-.clienteCell { font-weight: 500; }
-
-/* Combined ID + Cliente cell */
-.pedidoInfoCell {
-  padding: 12px 16px;
-  vertical-align: middle;
-  text-align: left;
-}
-
-.pedidoId {
-  font-weight: 700;
-  color: var(--accent-primary);
-  font-size: 0.9rem;
-  font-family: monospace;
-  margin-bottom: 4px;
-  text-align: left;
-}
-
-.pedidoCliente {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-align: left;
-}
-.montoCell { font-weight: 600; color: var(--text-primary); text-align: right; font-family: monospace; }
-
-/* Subtotal per product row */
-.subtotalCell {
-  font-weight: 500;
-  color: var(--text-primary);
-  text-align: right;
-  font-family: monospace;
-  font-size: 0.85rem;
-  padding: 10px 16px;
-}
-.fechaCell { color: var(--text-secondary); font-size: 0.85rem; }
-.productosCell { font-size: 0.85rem; color: var(--text-primary); }
-.productosCell > div > div:first-child {
-  font-weight: 500;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.3;
-}
-.productosCell div { margin-bottom: 2px; }
-
-/* Per-product cells in expanded table */
-.productoNameCell {
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  padding: 10px 16px;
-}
-.cantidadCell {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--accent-primary);
-  text-align: center;
-  padding: 10px 16px;
-}
-
-.pagoCell { font-size: 0.8rem; }
-.pagoCell .metodoPago { margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem; }
-.tiempoCell { font-size: 0.85rem; color: var(--text-primary); font-family: monospace; }
-
-/* Thumbnail de producto en tabla */
+/* Product cells */
 .thumbCell {
   padding: 10px 16px;
   vertical-align: middle;
@@ -3345,6 +3328,27 @@
   font-size: 1.2rem;
 }
 
+.productoNameCell {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 16px;
+}
+.cantidadCell {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-align: center;
+  padding: 10px 16px;
+}
+.subtotalCell {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: right;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+}
 .tableActionBtn { padding: 8px 14px; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.15s ease; }
 .tableActionBtn:hover { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
 
