@@ -28,8 +28,12 @@ export const DEFAULT_HOME_CONFIG = {
 }
 
 export default async function handler(req, res) {
-  const userId = await verifyAdminCookie(req)
-  if (!userId) return res.status(401).json({ error: 'No autorizado' })
+  // Allow public GET requests (front and admin UI read). Only guard
+  // POST/PUT which modify the config.
+  if (req.method !== 'GET') {
+    const userId = await verifyAdminCookie(req)
+    if (!userId) return res.status(401).json({ error: 'No autorizado' })
+  }
 
   if (!['GET', 'POST', 'PUT'].includes(req.method)) {
     res.setHeader('Allow', ['GET', 'POST', 'PUT'])

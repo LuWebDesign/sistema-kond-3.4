@@ -41,8 +41,12 @@ const DEFAULT_STYLES = {
 }
 
 export default async function handler(req, res) {
-  const userId = await verifyAdminCookie(req)
-  if (!userId) return res.status(401).json({ error: 'No autorizado' })
+  // Allow public GET requests (used by the storefront to fetch styles).
+  // Require admin cookie only for state-changing methods (POST/PUT).
+  if (req.method !== 'GET') {
+    const userId = await verifyAdminCookie(req)
+    if (!userId) return res.status(401).json({ error: 'No autorizado' })
+  }
 
   try {
     const supabase = supabaseAdmin()
