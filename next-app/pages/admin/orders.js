@@ -1553,16 +1553,10 @@ function PedidosCatalogo() {
                   <table className={styles.pedidosTable}>
                     <thead>
                       <tr>
-                        <th style={{width: '160px'}}>Pedido</th>
                         <th style={{width: '50px'}}>Foto</th>
-                        <th style={{width: '180px'}}>Producto</th>
+                        <th style={{width: '200px'}}>Producto</th>
                         <th style={{width: '60px'}}>Cant.</th>
                         <th style={{width: '80px', textAlign: 'right'}}>Subtotal</th>
-                        <th style={{width: '80px', textAlign: 'right'}}>Total</th>
-                        <th style={{width: '90px'}}>Estado</th>
-                        <th style={{width: '100px'}}>Pago</th>
-                        <th style={{width: '110px'}}>Fechas</th>
-                        <th style={{width: '60px'}}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1597,40 +1591,19 @@ function PedidosCatalogo() {
                         
                         const numProducts = pedido.productos?.length || 1
                         
-                        return (
+                          return (
                           <>
                             {/* Order header row */}
                             <tr key={`header-${pedido.id}`} className={styles.orderHeaderRow}>
-                              <td colSpan={10}>
+                              <td colSpan={4}>
                                 <div className={styles.orderHeaderContent}>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Pedido</span>
-                                    <span className={styles.orderHeaderValue}>{pedido.nroPedido || `N°${pedido.id}`}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Cliente</span>
-                                    <span className={styles.orderHeaderValue}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Estado</span>
-                                    <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Pago</span>
-                                    <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Total</span>
-                                    <span className={styles.orderHeaderTotal}>{formatCurrency(pedido.total)}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Producir</span>
-                                    <span>{produccionDate ? formatDate(produccionDate) : '—'}</span>
-                                  </div>
-                                  <div className={styles.orderHeaderGroup}>
-                                    <span className={styles.orderHeaderLabel}>Entrega</span>
-                                    <span>{entregaDate ? formatDate(entregaDate) : '—'}</span>
-                                  </div>
+                                  <span className={styles.orderHeaderId}>{pedido.nroPedido || `N°${pedido.id}`}</span>
+                                  <span className={styles.orderHeaderCliente}>{pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}</span>
+                                  <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
+                                  <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
+                                  <span className={styles.orderHeaderDate}>Producir: {produccionDate ? formatDate(produccionDate) : '—'}</span>
+                                  <span className={styles.orderHeaderDate}>Entrega: {entregaDate ? formatDate(entregaDate) : '—'}</span>
+                                  <span className={styles.orderHeaderTotal}>{formatCurrency(pedido.total)}</span>
                                   <button
                                     className={styles.tableActionBtn}
                                     onClick={() => handleCardClick(pedido)}
@@ -1650,7 +1623,6 @@ function PedidosCatalogo() {
                               
                               return (
                                 <tr key={`${pedido.id}-${idx}`} className={idx > 0 ? styles.orderSubRow : ''}>
-                                  <td className={styles.pedidoCellSpacer}></td>
                                   <td className={styles.thumbCell}>
                                     {thumbUrl ? (
                                       <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
@@ -1667,12 +1639,6 @@ function PedidosCatalogo() {
                                   <td className={styles.subtotalCell}>
                                     {formatCurrency(prodSubtotal)}
                                   </td>
-                                  {/* Spacer cells for rowSpan columns */}
-                                  <td className={styles.totalCellSpacer}></td>
-                                  <td className={styles.estadoCellSpacer}></td>
-                                  <td className={styles.pagoCellSpacer}></td>
-                                  <td className={styles.fechasCellSpacer}></td>
-                                  <td className={styles.actionCellSpacer}></td>
                                 </tr>
                               )
                             })}
