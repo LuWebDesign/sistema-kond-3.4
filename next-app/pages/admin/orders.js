@@ -1565,6 +1565,7 @@ function PedidosCatalogo() {
                           <div className={styles.orderBlockBadges}>
                             <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>{getStatusLabel(pedido.estado)}</span>
                             <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>{getPaymentLabel(pedido.estadoPago, pedido)}</span>
+                            <span className={styles.orderBlockMetodo}>{pedido.metodoPago === 'transferencia' ? '💳 Transferencia' : pedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : pedido.metodoPago === 'retiro' ? '🏪 Retiro' : pedido.metodoPago === 'mercadopago' ? '💳 MercadoPago' : '—'}</span>
                             <span className={styles.orderBlockDate}>Producir: {produccionDate ? formatDate(produccionDate) : '—'}</span>
                             <span className={styles.orderBlockDate}>Entrega: {entregaDate ? formatDate(entregaDate) : '—'}</span>
                           </div>
