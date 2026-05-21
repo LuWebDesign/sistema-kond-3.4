@@ -284,62 +284,76 @@ export default function ProductDetail({ product, categories = [], products = [],
               </div>
             )}
 
-            {/* Fila 2: precio vigente (con promo aplicada o precio base) + badges de promo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
-                {formatCurrency(displayPrice)}
-              </span>
-              {product.promotionBadges && product.promotionBadges.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {product.promotionBadges.map((badge, i) => {
-                    const opacity = badge.opacity ?? 100
-                    const bgColor = badge.color || 'var(--accent-secondary)'
-                    const hex = bgColor.replace('#', '')
-                    const r = parseInt(hex.substring(0, 2), 16)
-                    const g = parseInt(hex.substring(2, 4), 16)
-                    const b = parseInt(hex.substring(4, 6), 16)
-                    return (
-                      <span key={i} style={{
-                        padding: '3px 10px',
-                        borderRadius: 12,
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
-                        color: badge.textColor || '#fff'
-                      }}>
-                        {badge.text}
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Fila 3: precio por transferencia + badge (solo si hay promo transfer activa) */}
-            {transferPrice !== null && (() => {
-              const bgColor = activeTransferPromo?.badgeColor || '#10b981'
-              const hex = bgColor.replace('#', '')
-              const r = parseInt(hex.substring(0, 2), 16)
-              const g = parseInt(hex.substring(2, 4), 16)
-              const b = parseInt(hex.substring(4, 6), 16)
-              const textColor = activeTransferPromo?.badgeTextColor || '#fff'
-              const badgeText = activeTransferPromo?.badgeTexto || '💳 Transferencia'
+            {/* Fila 2: precio vigente + badges de promo (excluye el badge de transferencia) */}
+            {(() => {
+              const transferBadgeText = activeTransferPromo?.badgeTexto || null
+              const promoBadges = (product.promotionBadges || []).filter(
+                b => !transferBadgeText || b.text !== transferBadgeText
+              )
+              const transferBadge = transferBadgeText
+                ? (product.promotionBadges || []).find(b => b.text === transferBadgeText) || null
+                : null
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {formatCurrency(transferPrice)}
-                  </span>
-                  <span style={{
-                    padding: '3px 10px',
-                    borderRadius: 12,
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, 1)` : bgColor,
-                    color: textColor
-                  }}>
-                    {badgeText}
-                  </span>
-                </div>
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="product-detail-price" style={{ fontSize: '1.7rem', fontWeight: 800 }}>
+                      {formatCurrency(displayPrice)}
+                    </span>
+                    {promoBadges.length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {promoBadges.map((badge, i) => {
+                          const opacity = badge.opacity ?? 100
+                          const bgColor = badge.color || 'var(--accent-secondary)'
+                          const hex = bgColor.replace('#', '')
+                          const r = parseInt(hex.substring(0, 2), 16)
+                          const g = parseInt(hex.substring(2, 4), 16)
+                          const b = parseInt(hex.substring(4, 6), 16)
+                          return (
+                            <span key={i} style={{
+                              padding: '3px 10px',
+                              borderRadius: 12,
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
+                              color: badge.textColor || '#fff'
+                            }}>
+                              {badge.text}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fila 3: precio por transferencia (más chico) + badge de transferencia */}
+                  {transferPrice !== null && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {formatCurrency(transferPrice)}
+                      </span>
+                      {transferBadge && (() => {
+                        const opacity = transferBadge.opacity ?? 100
+                        const bgColor = transferBadge.color || '#10b981'
+                        const hex = bgColor.replace('#', '')
+                        const r = parseInt(hex.substring(0, 2), 16)
+                        const g = parseInt(hex.substring(2, 4), 16)
+                        const b = parseInt(hex.substring(4, 6), 16)
+                        return (
+                          <span style={{
+                            padding: '3px 10px',
+                            borderRadius: 12,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
+                            color: transferBadge.textColor || '#fff'
+                          }}>
+                            {transferBadge.text}
+                          </span>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </>
               )
             })()}
 
