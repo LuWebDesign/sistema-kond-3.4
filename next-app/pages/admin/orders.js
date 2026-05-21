@@ -1555,7 +1555,8 @@ function PedidosCatalogo() {
                       <tr>
                         <th style={{width: '80px'}}>ID</th>
                         <th style={{width: '140px'}}>Cliente</th>
-                        <th style={{width: '120px'}}>Productos</th>
+                        <th style={{width: '50px'}}>Foto</th>
+                        <th style={{width: '200px'}}>Productos</th>
                         <th style={{width: '80px'}}>Tiempo</th>
                         <th style={{width: '90px'}}>Estado</th>
                         <th style={{width: '100px'}}>Pago</th>
@@ -1604,6 +1605,9 @@ function PedidosCatalogo() {
                         ) || []
                         const productosText = productosLines.join('') + (pedido.productos?.length > 2 ? `<div style="font-size:0.75rem;color:var(--text-muted)">+${pedido.productos.length - 2} más</div>` : '') || '—'
                         
+                        // Thumbnail del primer producto
+                        const thumbUrl = getProductThumbnail(pedido)
+                        
                         return (
                           <tr key={pedido.id}>
                             <td className={styles.idCell}>
@@ -1611,6 +1615,13 @@ function PedidosCatalogo() {
                             </td>
                             <td className={styles.clienteCell}>
                               {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
+                            </td>
+                            <td className={styles.thumbCell}>
+                              {thumbUrl ? (
+                                <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
+                              ) : (
+                                <div className={styles.productThumbPlaceholder}>📦</div>
+                              )}
                             </td>
                             <td className={styles.productosCell} title={pedido.productos?.map(p => `${p.nombre}: ${p.cantidad || 1}u`).join('\n')}>
                               <div dangerouslySetInnerHTML={{ __html: productosText }} />
