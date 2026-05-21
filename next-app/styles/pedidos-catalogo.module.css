@@ -878,6 +878,12 @@
     box-shadow: none;
   }
 
+  .actionButton:hover {
+    background: #f8f9fa;
+    color: #000;
+    border-color: rgba(0,0,0,0.2);
+  }
+
   /* header hover en dark: bajar sutilmente el tono (más evidente sobre bg oscuro) */
   .pedidoHeader:hover {
     filter: brightness(0.80);
@@ -910,6 +916,12 @@
   color: #374151; /* texto neutro oscuro */
   border: 1px solid rgba(0,0,0,0.12);
   box-shadow: none;
+}
+
+[data-theme="dark"] .actionButton:hover {
+  background: #f8f9fa;
+  color: #000;
+  border-color: rgba(0,0,0,0.2);
 }
 
 [data-theme="dark"] .pedidoHeader:hover {
