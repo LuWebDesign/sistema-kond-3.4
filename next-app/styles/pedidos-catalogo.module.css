@@ -869,6 +869,11 @@
   transition: all 0.18s ease;
 }
 
+.actionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
 /* Dark-mode: botón 'Ver' con fondo gris claro y texto neutro */
 @media (prefers-color-scheme: dark) {
   .actionButton {
@@ -952,11 +957,6 @@
 [data-theme="dark"] .productoIdBadge {
   background: var(--accent-blue);
   color: white;
-}
-
-.actionButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
 /* Floating total shown in the bottom-right of the card (above actionGroup) */
@@ -3579,17 +3579,6 @@
   border-bottom-color: rgba(255,255,255,0.06);
 }
 
-[data-theme="dark"] .orderProductRow:hover {
-  background: rgba(255,255,255,0.02);
-  color: #000;
-}
-
-[data-theme="dark"] .orderProductRow:hover .orderProductName,
-[data-theme="dark"] .orderProductRow:hover .orderProductQty,
-[data-theme="dark"] .orderProductRow:hover .orderProductSubtotal {
-  color: #000;
-}
-
 [data-theme="dark"] .orderBlockFooter {
   background: rgba(255,255,255,0.03);
   border-top-color: rgba(255,255,255,0.1);
@@ -3627,17 +3616,6 @@
 
   .orderProductRow {
     border-bottom-color: rgba(255,255,255,0.06);
-  }
-
-  .orderProductRow:hover {
-    background: rgba(255,255,255,0.02);
-    color: #000;
-  }
-
-  .orderProductRow:hover .orderProductName,
-  .orderProductRow:hover .orderProductQty,
-  .orderProductRow:hover .orderProductSubtotal {
-    color: #000;
   }
 
   .orderBlockFooter {
