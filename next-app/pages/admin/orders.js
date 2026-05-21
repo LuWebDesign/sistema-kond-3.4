@@ -1554,10 +1554,11 @@ function PedidosCatalogo() {
                     <thead>
                       <tr>
                         <th style={{width: '80px'}}>ID</th>
-                        <th style={{width: '140px'}}>Cliente</th>
+                        <th style={{width: '120px'}}>Cliente</th>
                         <th style={{width: '50px'}}>Foto</th>
-                        <th style={{width: '200px'}}>Productos</th>
-                        <th style={{width: '80px'}}>Tiempo</th>
+                        <th style={{width: '180px'}}>Producto</th>
+                        <th style={{width: '60px'}}>Cant.</th>
+                        <th style={{width: '70px'}}>Tiempo</th>
                         <th style={{width: '90px'}}>Estado</th>
                         <th style={{width: '100px'}}>Pago</th>
                         <th style={{width: '90px', textAlign: 'right'}}>Total</th>
@@ -1571,13 +1572,11 @@ function PedidosCatalogo() {
                         const entregaDate = pedido.fechaEntregaCalendario || pedido.fechaConfirmadaEntrega || pedido.fechaSolicitudEntrega || null
                         const produccionDate = pedido.fechaProduccionCalendario || pedido.fechaProduccion || null
                         
-                        // Calcular tiempo total de producción (igual que PedidoCard)
-                        const getProductData = (prod) => {
-                          if (prod.tiempoUnitario) {
-                            return { tiempoUnitario: prod.tiempoUnitario }
-                          }
-                          const productoBase = productosBase?.find(p => 
-                            p.id === prod.productId || 
+                        // Calcular tiempo total de producción
+                        const getProductDataInner = (prod) => {
+                          if (prod.tiempoUnitario) return { tiempoUnitario: prod.tiempoUnitario }
+                          const productoBase = productosBase?.find(p =>
+                            p.id === prod.productId ||
                             p.id === prod.idProducto ||
                             p.nombre?.toLowerCase() === prod.nombre?.toLowerCase()
                           )
@@ -1591,7 +1590,7 @@ function PedidosCatalogo() {
                         }
                         
                         const tiempoTotal = pedido.productos?.reduce((sum, prod) => {
-                          const prodData = getProductData(prod)
+                          const prodData = getProductDataInner(prod)
                           const tiempoSeg = timeToSeconds(prodData.tiempoUnitario)
                           return sum + (tiempoSeg * (prod.cantidad || 1))
                         }, 0) || 0
@@ -1599,66 +1598,83 @@ function PedidosCatalogo() {
                         const tiempoMin = Math.floor((tiempoTotal % 3600) / 60)
                         const tiempoStr = `${tiempoHrs}h ${tiempoMin}m`
                         
-                        // Productos compactos - nombre en línea 1, unidades en línea 2
-                        const productosLines = pedido.productos?.slice(0, 2).map(p => 
-                          `<div>${p.nombre}</div><div style="font-size:0.75rem;color:var(--text-secondary)">${p.cantidad || 1} unidades</div>`
-                        ) || []
-                        const productosText = productosLines.join('') + (pedido.productos?.length > 2 ? `<div style="font-size:0.75rem;color:var(--text-muted)">+${pedido.productos.length - 2} más</div>` : '') || '—'
+                        const numProducts = pedido.productos?.length || 1
                         
-                        // Thumbnail del primer producto
-                        const thumbUrl = getProductThumbnail(pedido)
-                        
-                        return (
-                          <tr key={pedido.id}>
-                            <td className={styles.idCell}>
-                              {pedido.nroPedido || `N°${pedido.id}`}
-                            </td>
-                            <td className={styles.clienteCell}>
-                              {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
-                            </td>
-                            <td className={styles.thumbCell}>
-                              {thumbUrl ? (
-                                <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
-                              ) : (
-                                <div className={styles.productThumbPlaceholder}>📦</div>
-                              )}
-                            </td>
-                            <td className={styles.productosCell} title={pedido.productos?.map(p => `${p.nombre}: ${p.cantidad || 1}u`).join('\n')}>
-                              <div dangerouslySetInnerHTML={{ __html: productosText }} />
-                            </td>
-                            <td className={styles.tiempoCell}>
-                              ⏱ {tiempoStr}
-                            </td>
-                            <td>
-                              <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>
-                                {getStatusLabel(pedido.estado)}
-                              </span>
-                            </td>
-                            <td className={styles.pagoCell}>
-                              <div className={styles.metodoPago}>{pedido.metodoPago === 'transferencia' ? '💳 Transferencia' : pedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : pedido.metodoPago === 'retiro' ? '🏪 Retiro' : pedido.metodoPago === 'mercadopago' ? '💳 MercadoPago' : '—'}</div>
-                              <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>
-                                {getPaymentLabel(pedido.estadoPago, pedido)}
-                              </span>
-                            </td>
-                            <td className={styles.montoCell}>
-                              {formatCurrency(pedido.total)}
-                            </td>
-                            <td className={styles.fechaCell}>
-                              {produccionDate ? formatDate(produccionDate) : '—'}
-                            </td>
-                            <td className={styles.fechaCell}>
-                              {entregaDate ? formatDate(entregaDate) : '—'}
-                            </td>
-                            <td>
-                              <button 
-                                className={styles.tableActionBtn}
-                                onClick={() => handleCardClick(pedido)}
-                              >
-                                Ver
-                              </button>
-                            </td>
-                          </tr>
-                        )
+                        // Render one row per product, with rowSpan on order-level columns
+                        return (pedido.productos || []).map((prod, idx) => {
+                          const prodBase = productosBase.find(p =>
+                            p.id === prod.productId || p.id === prod.idProducto
+                          )
+                          const thumbUrl = prodBase?.imagen || prodBase?.imagen_url || null
+                          const prodTiempo = getProductDataInner(prod)
+                          const prodTiempoSeg = timeToSeconds(prodTiempo.tiempoUnitario) * (prod.cantidad || 1)
+                          const prodTiempoHrs = Math.floor(prodTiempoSeg / 3600)
+                          const prodTiempoMin = Math.floor((prodTiempoSeg % 3600) / 60)
+                          const prodTiempoStr = `${prodTiempoHrs}h ${prodTiempoMin}m`
+                          
+                          return (
+                            <tr key={`${pedido.id}-${idx}`} className={idx === numProducts - 1 ? styles.orderLastRow : idx > 0 ? styles.orderSubRow : ''}>
+                              {idx === 0 ? (
+                                <>
+                                  <td className={styles.idCell} rowSpan={numProducts}>
+                                    {pedido.nroPedido || `N°${pedido.id}`}
+                                  </td>
+                                  <td className={styles.clienteCell} rowSpan={numProducts}>
+                                    {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
+                                  </td>
+                                </>
+                              ) : null}
+                              <td className={styles.thumbCell}>
+                                {thumbUrl ? (
+                                  <img src={thumbUrl} alt="" className={styles.productThumb} loading="lazy" />
+                                ) : (
+                                  <div className={styles.productThumbPlaceholder}>📦</div>
+                                )}
+                              </td>
+                              <td className={styles.productoNameCell}>
+                                {prod.nombre}
+                              </td>
+                              <td className={styles.cantidadCell}>
+                                {prod.cantidad || 1}
+                              </td>
+                              {idx === 0 ? (
+                                <>
+                                  <td className={styles.tiempoCell} rowSpan={numProducts}>
+                                    ⏱ {tiempoStr}
+                                  </td>
+                                  <td rowSpan={numProducts}>
+                                    <span className={`${styles.tableBadge} ${styles[getStatusBadgeClass(pedido.estado)]}`}>
+                                      {getStatusLabel(pedido.estado)}
+                                    </span>
+                                  </td>
+                                  <td className={styles.pagoCell} rowSpan={numProducts}>
+                                    <div className={styles.metodoPago}>{pedido.metodoPago === 'transferencia' ? '💳 Transferencia' : pedido.metodoPago === 'whatsapp' ? '💬 WhatsApp' : pedido.metodoPago === 'retiro' ? '🏪 Retiro' : pedido.metodoPago === 'mercadopago' ? '💳 MercadoPago' : '—'}</div>
+                                    <span className={`${styles.tableBadge} ${styles[getPaymentBadgeClass(pedido.estadoPago)]}`}>
+                                      {getPaymentLabel(pedido.estadoPago, pedido)}
+                                    </span>
+                                  </td>
+                                  <td className={styles.montoCell} rowSpan={numProducts}>
+                                    {formatCurrency(pedido.total)}
+                                  </td>
+                                  <td className={styles.fechaCell} rowSpan={numProducts}>
+                                    {produccionDate ? formatDate(produccionDate) : '—'}
+                                  </td>
+                                  <td className={styles.fechaCell} rowSpan={numProducts}>
+                                    {entregaDate ? formatDate(entregaDate) : '—'}
+                                  </td>
+                                  <td rowSpan={numProducts}>
+                                    <button
+                                      className={styles.tableActionBtn}
+                                      onClick={() => handleCardClick(pedido)}
+                                    >
+                                      Ver
+                                    </button>
+                                  </td>
+                                </>
+                              ) : null}
+                            </tr>
+                          )
+                        })
                       })}
                     </tbody>
                   </table>

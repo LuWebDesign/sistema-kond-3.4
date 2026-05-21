@@ -3219,6 +3219,16 @@
   background: var(--bg-hover);
 }
 
+/* Thicker separator between different orders */
+.pedidosTable tbody tr.orderLastRow {
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* Subtle background tint for product sub-rows (same order) */
+.pedidosTable tbody tr.orderSubRow {
+  background: var(--bg-section);
+}
+
 .pedidosTable td {
   padding: 14px 16px;
   color: var(--text-primary);
@@ -3257,6 +3267,22 @@
   line-height: 1.3;
 }
 .productosCell div { margin-bottom: 2px; }
+
+/* Per-product cells in expanded table */
+.productoNameCell {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 16px;
+}
+.cantidadCell {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-align: center;
+  padding: 10px 16px;
+}
+
 .pagoCell { font-size: 0.8rem; }
 .pagoCell .metodoPago { margin-bottom: 4px; color: var(--text-secondary); font-size: 0.75rem; }
 .tiempoCell { font-size: 0.85rem; color: var(--text-primary); font-family: monospace; }
