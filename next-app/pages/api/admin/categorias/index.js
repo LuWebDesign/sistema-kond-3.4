@@ -5,28 +5,11 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { slugify } from '../../../../utils/slugify'
 import { TENANT_ID } from '../../../../lib/tenant'
-
-const ADMIN_SECRET = process.env.ADMIN_API_SECRET
-
-/**
- * Verifica que el request incluya el header x-admin-secret válido.
- * Retorna true si la autenticación pasa.
- *
- * Nota: los admin routes existentes del proyecto no implementan auth
- * server-side (la protección es front-end via localStorage). Este guard
- * usa ADMIN_API_SECRET como mecanismo server-side opcional; si la variable
- * no está definida, se permite el acceso (comportamiento compatible con el
- * resto de las rutas admin existentes).
- */
-function isAdminAuthorized(req) {
-  if (!ADMIN_SECRET) return true // compatible con rutas admin existentes sin auth
-  return req.headers['x-admin-secret'] === ADMIN_SECRET
-}
+import { verifyAdminCookie } from '../../../../utils/verifyAdminCookie'
 
 export default async function handler(req, res) {
-  if (!isAdminAuthorized(req)) {
-    return res.status(401).json({ error: 'No autorizado' })
-  }
+  const userId = await verifyAdminCookie(req)
+  if (!userId) return res.status(401).json({ error: 'No autorizado' })
 
   const supabase = supabaseAdmin()
 
