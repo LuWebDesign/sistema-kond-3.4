@@ -754,6 +754,7 @@ export default function ProductDetail({ product, categories = [], products = [],
             "breadcrumb"
             "images"
             "info-name"
+            "info-price"
             "actions"
             "specs"
             "description"
@@ -890,6 +891,13 @@ export default function ProductDetail({ product, categories = [], products = [],
           }
           .pd-images :global(.pd-card) {
             padding: 8px;
+          }
+          .pd-info-price :global(.pd-card) {
+            padding: 12px 16px;
+          }
+          /* Precio principal más compacto en mobile */
+          :global(.product-detail-price) {
+            font-size: 1.45rem !important;
           }
           /* Imagen principal: sin aspect-ratio cuadrado en mobile, altura fija */
           .pd-main-img-wrap {
