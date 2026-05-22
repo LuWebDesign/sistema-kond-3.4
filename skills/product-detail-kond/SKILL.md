@@ -29,9 +29,9 @@ Current area order:
 | Position | Desktop (left col) | Desktop (right col) | Mobile |
 |----------|--------------------|---------------------|--------|
 | 1 | `breadcrumb` (full width) | — | `breadcrumb` |
-| 2 | `images` | `info-name` | `images` |
-| 3 | `images` | `info-price` | `info-name` |
-| 4 | `images` | `actions` | `info-price` ← must come before `actions` |
+| 2 | `images` | `info-name` | `info-name` (categoría + título) |
+| 3 | `images` | `info-price` | `images` |
+| 4 | `images` | `actions` | `info-price` |
 | 5 | `specs` (full width) | — | `actions` |
 | 6 | `description` (full width) | — | `specs` |
 | 7 | `categories` (full width) | — | `description` |
