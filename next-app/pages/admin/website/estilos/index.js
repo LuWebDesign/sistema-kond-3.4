@@ -15,6 +15,7 @@ function CatalogStylesAdmin() {
   const [presets, setPresets] = useState([])
   const [presetName, setPresetName] = useState('')
   const [socialUrlErrors, setSocialUrlErrors] = useState({ footerInstagram: '', footerFacebook: '', footerTikTok: '' })
+  const [whatsappError, setWhatsappError] = useState('')
 
   useEffect(() => {
     loadStyles()
@@ -35,6 +36,14 @@ function CatalogStylesAdmin() {
   }
 
   const handleSave = async () => {
+    // Validate WhatsApp number if enabled
+    if (styles.whatsappEnabled && styles.whatsappNumber) {
+      if (!validateWhatsappNumber(styles.whatsappNumber)) {
+        setSaveMessage('❌ Número de WhatsApp inválido. Formato: código de país + número (ej: 5491112345678)')
+        setTimeout(() => setSaveMessage(''), 5000)
+        return
+      }
+    }
     setIsSaving(true)
     setSaveMessage('')
     try {
@@ -75,6 +84,37 @@ function CatalogStylesAdmin() {
     }
     setSocialUrlErrors(prev => ({ ...prev, [key]: '' }))
     return true
+  }
+
+  const validateWhatsappNumber = (value) => {
+    if (!value) {
+      setWhatsappError('')
+      return true
+    }
+    // Must be digits only, no spaces, no +, no dashes
+    if (!/^\d+$/.test(value)) {
+      setWhatsappError('Solo números, sin espacios ni símbolos')
+      return false
+    }
+    // Must be at least 8 digits
+    if (value.length < 8) {
+      setWhatsappError('Mínimo 8 dígitos')
+      return false
+    }
+    // Must be at most 15 digits (E.164 max)
+    if (value.length > 15) {
+      setWhatsappError('Máximo 15 dígitos')
+      return false
+    }
+    setWhatsappError('')
+    return true
+  }
+
+  const handleWhatsappNumberChange = (value) => {
+    // Strip any non-digit characters on the fly
+    const cleaned = value.replace(/[^\d]/g, '')
+    updateStyle('whatsappNumber', cleaned)
+    validateWhatsappNumber(cleaned)
   }
 
   const handleSocialUrlChange = (key, value) => {
@@ -631,13 +671,20 @@ function CatalogStylesAdmin() {
                   <input
                     type="text"
                     value={styles.whatsappNumber || ''}
-                    onChange={(e) => updateStyle('whatsappNumber', e.target.value)}
+                    onChange={(e) => handleWhatsappNumberChange(e.target.value)}
                     placeholder="5491112345678 (código de país + número, sin + ni espacios)"
-                    style={inputStyle}
+                    style={{ ...inputStyle, borderColor: whatsappError ? '#ef4444' : inputStyle.borderColor }}
                   />
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
-                    Ejemplo Argentina: 5491112345678
-                  </span>
+                  {whatsappError && (
+                    <span style={{ fontSize: '0.78rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                      {whatsappError}
+                    </span>
+                  )}
+                  {!whatsappError && (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                      Ejemplo Argentina: 5491112345678
+                    </span>
+                  )}
                 </div>
 
                 <div style={fieldGroup}>

@@ -49,7 +49,7 @@ export default function ProductDetail({ product, categories = [], products = [],
   const router = useRouter()
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
-  const [whatsappNumber, setWhatsappNumber] = useState('1136231857')
+  const [whatsappNumber, setWhatsappNumber] = useState('541136231857')
   const [catPage, setCatPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 
