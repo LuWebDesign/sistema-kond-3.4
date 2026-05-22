@@ -64,7 +64,10 @@ function mapProducto(p) {
     imagen: (p.imagenes_urls && p.imagenes_urls.length > 0) ? p.imagenes_urls[0] : '',
     imagenes: p.imagenes_urls || [],
     description: p.description || '',
-    fechaCreacion: p.created_at || new Date().toISOString()
+    fechaCreacion: p.created_at || new Date().toISOString(),
+    // Static promo fields (promo_badge / static_promo_price set on the producto table)
+    promoBadge: p.promo_badge || null,
+    staticPromoPrice: p.static_promo_price || null,
   }
 }
 

@@ -1000,6 +1000,21 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
               </div>
             )}
 
+            {/* Static badge desde la columna promo_badge del producto (si no hay ya un badge dinámico) */}
+            {product && product.promoBadge && (!product.promotionBadges || product.promotionBadges.filter(b => b.type !== 'transfer_discount').length === 0) && (
+              <span style={{
+                background: '#3b82f6',
+                color: '#fff',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+              }}>
+                {product.promoBadge}
+              </span>
+            )}
+
             {/* Indicador de stock al lado del precio (más pequeño, sin icono) */}
             {showControls && product.stock !== undefined && product.stock !== null && (
               <div style={{
