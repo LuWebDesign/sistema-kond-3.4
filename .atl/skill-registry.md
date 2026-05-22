@@ -107,7 +107,17 @@ Subagents still read their assigned executor/phase skill. During normal runtime,
   - Date-only promo ranges (`YYYY-MM-DD`) must be parsed in local time, not with `new Date('YYYY-MM-DD')`.
   - Keep promo behavior aligned across home, catalog, product detail, and cart flows.
   - `free_shipping` may show a badge without changing the product price.
+  - `transfer_discount` may need its own price row, separate from the main promo badge row.
+  - Gate catalog card rendering with skeletons when promo enrichment inputs are still loading.
   - Compare affected flows against `pages/api/home-data.js` as the known-good reference when debugging.
+
+### product-detail-kond
+- Path: C:\Dev\sistema-kond-3.4\skills\product-detail-kond\SKILL.md
+- Trigger: ProductDetail.js, product detail page, página de producto, mobile layout, grid areas. Patterns and guards for next-app/components/ProductDetail.js.
+- Rules:
+  - Keep the 3-row price hierarchy: original price, main price, transfer-price row.
+  - For long descriptions, use plain-text preview + measured overflow, then expand to full markdown.
+  - Do not clamp the `ReactMarkdown` wrapper directly for `Ver más / Ver menos` behavior.
 
 ### chained-pr
 - Path: C:\Users\Noxi-PC\.config\agents\skills\chained-pr\SKILL.md

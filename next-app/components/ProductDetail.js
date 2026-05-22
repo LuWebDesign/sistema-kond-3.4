@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import PublicLayout from './PublicLayout'
@@ -44,6 +44,20 @@ function getCategoryImage(catName, products) {
   return DEFAULT_CATEGORY_IMAGES[catName] || null
 }
 
+function markdownToPreviewText(markdown = '') {
+  return String(markdown)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/`{1,3}([^`]*)`{1,3}/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/[*_~]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export default function ProductDetail({ product, categories = [], products = [], categoriasAPI = [], promociones = [] }) {
   const { addToCart } = useCart()
   const router = useRouter()
@@ -52,6 +66,9 @@ export default function ProductDetail({ product, categories = [], products = [],
   const [whatsappNumber, setWhatsappNumber] = useState('541136231857')
   const [catPage, setCatPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false)
+  const [showDescriptionToggle, setShowDescriptionToggle] = useState(false)
+  const descriptionPreviewRef = useRef(null)
 
   // Detectar tamaño de pantalla
   useEffect(() => {
@@ -66,6 +83,10 @@ export default function ProductDetail({ product, categories = [], products = [],
     setCatPage(0)
   }, [categories.length, isMobile])
 
+  useEffect(() => {
+    setDescriptionExpanded(false)
+  }, [product?.id, product?.description])
+
   // Cantidad de categorías por página: 5 desktop, scroll en mobile
   const CAT_PER_PAGE = isMobile ? 20 : 5
   const totalCatPages = Math.ceil(categories.length / CAT_PER_PAGE)
@@ -79,6 +100,32 @@ export default function ProductDetail({ product, categories = [], products = [],
       .then(s => { if (s && s.whatsappNumber) setWhatsappNumber(s.whatsappNumber) })
       .catch(() => {})
   }, [])
+
+  const descriptionText = String(product?.description || '').trim()
+  const descriptionPreview = markdownToPreviewText(descriptionText)
+
+  useEffect(() => {
+    if (!descriptionText || descriptionExpanded) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const el = descriptionPreviewRef.current
+      setShowDescriptionToggle(!!el && el.scrollHeight > el.clientHeight + 1)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [descriptionText, descriptionExpanded])
+
+  useEffect(() => {
+    if (descriptionExpanded) return
+
+    const onResize = () => {
+      const el = descriptionPreviewRef.current
+      setShowDescriptionToggle(!!el && el.scrollHeight > el.clientHeight + 1)
+    }
+
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [descriptionExpanded])
 
   if (!product) return null
 
@@ -572,17 +619,50 @@ export default function ProductDetail({ product, categories = [], products = [],
         )}
 
         {/* ── Descripción ───────────────────────────────── */}
-        {product.description && (
+        {descriptionText && (
           <div className="pd-description">
             <div className="pd-card">
               <h2 className="pd-section-title">Descripción</h2>
-              <div className="pd-markdown" style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.95rem',
-                lineHeight: 1.7
-              }}>
-                <ReactMarkdown>{product.description}</ReactMarkdown>
-              </div>
+              {descriptionExpanded ? (
+                <div className="pd-markdown" style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7
+                }}>
+                  <ReactMarkdown>{product.description}</ReactMarkdown>
+                </div>
+              ) : (
+                <div
+                  ref={descriptionPreviewRef}
+                  className="pd-description-preview"
+                  style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.95rem',
+                    lineHeight: 1.7,
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {descriptionPreview}
+                </div>
+              )}
+              {showDescriptionToggle && (
+                <button
+                  type="button"
+                  onClick={() => setDescriptionExpanded(prev => !prev)}
+                  style={{
+                    marginTop: 12,
+                    padding: 0,
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--accent-blue)',
+                    fontWeight: 600,
+                    fontSize: '0.92rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {descriptionExpanded ? 'Ver menos' : 'Ver más'}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -981,6 +1061,12 @@ export default function ProductDetail({ product, categories = [], products = [],
           border-radius: 4px;
           font-size: 0.88em;
           font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+        }
+        .pd-description-preview {
+          display: -webkit-box;
+          -webkit-line-clamp: 5;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </PublicLayout>

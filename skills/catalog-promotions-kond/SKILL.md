@@ -39,8 +39,16 @@ Do not fix one surface and leave another with different promo evaluation rules.
 - `percentage_discount` and `fixed_price` affect displayed price
 - `free_shipping` may show a badge without changing product price
 - `transfer_discount` should remain separable from the main promo badge row when the UI expects it
+- catalog cards may show transfer price on a dedicated third row, separate from main promo badges
 
 Do not assume `hasPromotion` means the visible product price must change.
+
+### Avoid partial promo hydration in catalog cards
+
+If product cards depend on products + promos + materials, do not mount the real card UI until all
+required inputs for promo enrichment are ready.
+
+Use a loading gate and skeletons so the card does not render price first and badges/details later.
 
 ## Decision Gates
 
@@ -50,6 +58,7 @@ Do not assume `hasPromotion` means the visible product price must change.
 | Promo has explicit datetime | Preserve native datetime behavior |
 | Bug appears only on home or only on catalog | Compare data source AND promo-engine evaluation |
 | Badge missing but price unchanged | Check for `free_shipping` / `badge_only` before assuming enrichment failed |
+| Catalog flashes content before badges | Gate card render until enrichment inputs finish loading |
 
 ## Execution Steps
 

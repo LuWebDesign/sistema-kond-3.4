@@ -1071,9 +1071,9 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
                     <span style={{
                       background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
                       color: transferBadge.textColor || '#111827',
-                      padding: '4px 10px',
+                      padding: '3px 8px',
                       borderRadius: '999px',
-                      fontSize: '0.8rem',
+                      fontSize: '0.72rem',
                       fontWeight: 700,
                       whiteSpace: 'nowrap',
                     }}>

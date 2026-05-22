@@ -50,11 +50,23 @@ Mobile overrides live in `@media (max-width: 640px)` inside that same block.
 ### Price display — keep the 3-row hierarchy
 
 Price renders in 3 rows in order:
-1. Original price (strikethrough, shown only when promo is active)
+1. Original price (strikethrough, shown for any active discount, including transfer-only)
 2. Promo / final price (large, highlighted)
-3. Static promo badge with dates (shown only when applicable)
+3. Transfer price on its own row, with the transfer badge when available
 
 Do NOT flatten this into a single element. The hierarchy communicates value.
+
+### Long descriptions — use preview mode, not markdown clamping
+
+If the description needs `Ver más / Ver menos`, do NOT apply CSS line clamp directly to the
+`ReactMarkdown` wrapper.
+
+Use this pattern instead:
+1. Collapsed state -> render a plain-text preview clamped by visible lines
+2. Expanded state -> render full `ReactMarkdown`
+3. Show the toggle only when the preview truly overflows
+
+Reason: line clamp on markdown block content (`p`, `ul`, headings) clips inconsistently.
 
 ### isMobile detection is JS-driven — do not fight it
 
@@ -68,6 +80,7 @@ Do not replace inline `isMobile` checks with CSS-only media queries for that sec
 |------|------|
 | Add new data section | Add grid area to BOTH templates; respect mobile order |
 | Adjust price display | Edit rows inside `pd-info-price` — never collapse them |
+| Add description collapse | Use plain-text preview + measured overflow, then expand to markdown |
 | Mobile padding / font tweaks | Add to `@media (max-width: 640px)` inside `<style jsx>` |
 | Category section layout | Edit inline styles that check `isMobile`, not the CSS grid |
 | New badge or label | Add inside the relevant area block; use existing `pd-badge` styles |
