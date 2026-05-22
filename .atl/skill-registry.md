@@ -100,6 +100,15 @@ Subagents still read their assigned executor/phase skill. During normal runtime,
 - Rules:
   - No compact rules declared; delegators should load the full skill file before direct work, or pass an explicit fallback path only when Project Standards cannot be injected.
 
+### catalog-promotions-kond
+- Path: C:\Dev\sistema-kond-3.4\skills\catalog-promotions-kond\SKILL.md
+- Trigger: promoEngine.js, promociones catálogo, marketing badge, free_shipping, percentage_discount, transfer_discount. Rules for promo evaluation, badges, and date parsing in next-app catalog flows.
+- Rules:
+  - Date-only promo ranges (`YYYY-MM-DD`) must be parsed in local time, not with `new Date('YYYY-MM-DD')`.
+  - Keep promo behavior aligned across home, catalog, product detail, and cart flows.
+  - `free_shipping` may show a badge without changing the product price.
+  - Compare affected flows against `pages/api/home-data.js` as the known-good reference when debugging.
+
 ### chained-pr
 - Path: C:\Users\Noxi-PC\.config\agents\skills\chained-pr\SKILL.md
 - Trigger: Trigger: PRs over 400 lines, stacked PRs, review slices. Split oversized changes into chained PRs that protect review focus.
