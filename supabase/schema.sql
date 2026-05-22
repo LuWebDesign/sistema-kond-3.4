@@ -309,6 +309,11 @@ CREATE POLICY "Cupones activos son visibles"
   ON public.cupones FOR SELECT
   USING (active = true);
 
+-- Permitir lectura pública de promociones activas
+CREATE POLICY "Promociones activas son visibles públicamente"
+  ON public.promociones FOR SELECT
+  USING (activo = true);
+
 -- Permitir inserción de pedidos de catálogo (usuarios anónimos)
 CREATE POLICY "Cualquiera puede crear pedidos de catálogo" 
   ON public.pedidos_catalogo FOR INSERT
