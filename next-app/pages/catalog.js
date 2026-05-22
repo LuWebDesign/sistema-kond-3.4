@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   createToast
 } from '../utils/catalogUtils'
+import { applyTransferDiscount, getActivePromotions } from '../utils/promoEngine'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
 import { getSeoConfigServer } from '../lib/getSeoConfigServer'
 import { useState, useEffect, useMemo, useCallback, memo } from 'react'
@@ -18,7 +19,7 @@ import { slugifyPreserveCase } from '../utils/slugify'
 
 export default function Catalog({ seoConfig }) {
   const router = useRouter()
-  const { products, categories, materials, isLoading } = useProducts()
+  const { products, categories, materials, isLoading, promociones } = useProducts()
   const { addToCart, subtotal } = useCart()
   const { calculateDiscount } = useCoupons()
 
@@ -238,6 +239,7 @@ export default function Catalog({ seoConfig }) {
 
   const discount = calculateDiscount(subtotal)
   const total = subtotal - discount
+  const skeletonCards = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => index)
 
   // Función para obtener estilos de categoría
   const getCategoryStyle = (categoria) => {
@@ -426,19 +428,22 @@ export default function Catalog({ seoConfig }) {
           '--catalog-cols-desktop': gridColumnsDesktop,
           '--catalog-cols-mobile': gridColumnsMobile,
         }}>
-          {displayedProducts.map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              getCategoryStyle={getCategoryStyle}
-              onImageClick={handleImageClick}
-              onAddToCart={handleAddToCart}
-              materials={materials}
-              showControls={false}
-              showActions={false}
-              categoriasAPI={categoriasAPI}
-            />
-          ))}
+          {isLoading
+            ? skeletonCards.map((index) => <CatalogCardSkeleton key={`skeleton-${index}`} />)
+            : displayedProducts.map(product => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  promociones={promociones}
+                  getCategoryStyle={getCategoryStyle}
+                  onImageClick={handleImageClick}
+                  onAddToCart={handleAddToCart}
+                  materials={materials}
+                  showControls={false}
+                  showActions={false}
+                  categoriasAPI={categoriasAPI}
+                />
+              ))}
         </div>
 
         {/* Paginación */}
@@ -597,10 +602,66 @@ export default function Catalog({ seoConfig }) {
     </PublicLayout>
   )
 }
+
+function CatalogCardSkeleton() {
+  return (
+    <div style={{
+      background: '#ffffff',
+      border: '1px solid #e5e7eb',
+      borderRadius: '0 0 12px 12px',
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
+      <div style={{
+        paddingTop: '100%',
+        background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%)',
+        backgroundSize: '400% 100%',
+        animation: 'catalogSkeletonPulse 1.4s ease infinite'
+      }} />
+
+      <div style={{ padding: '16px 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ width: '42%', height: '24px', borderRadius: '999px', background: '#e5e7eb' }} />
+        <div style={{ width: '88%', height: '22px', borderRadius: '8px', background: '#e5e7eb' }} />
+        <div style={{ width: '64%', height: '16px', borderRadius: '6px', background: '#e5e7eb' }} />
+        <div style={{ width: '34%', height: '14px', borderRadius: '6px', background: '#e5e7eb' }} />
+        <div style={{ width: '58%', height: '28px', borderRadius: '6px', background: '#dbeafe' }} />
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ width: '58px', height: '24px', borderRadius: '999px', background: '#dbeafe' }} />
+          <div style={{ width: '86px', height: '24px', borderRadius: '999px', background: '#dcfce7' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ width: '48%', height: '24px', borderRadius: '6px', background: '#e5e7eb' }} />
+          <div style={{ width: '42%', height: '28px', borderRadius: '999px', background: '#e5e7eb' }} />
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes catalogSkeletonPulse {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 // Componente de tarjeta de producto (memoizado para evitar re-renders innecesarios)
-const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true, categoriasAPI = [] }) {
+const ProductCard = memo(function ProductCard({ product, promociones = [], onAddToCart, getCategoryStyle, onImageClick, materials = [], showControls = false, showActions = true, categoriasAPI = [] }) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
+  const hasPromo = product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario
+  const displayPrice = hasPromo ? product.precioPromocional : (product.precioUnitario || 0)
+  const activeTransferPromo = (() => {
+    const transferPromos = (promociones || []).filter(p => (p.tipo || p.type) === 'transfer_discount')
+    return getActivePromotions(transferPromos)[0] || null
+  })()
+  const transferBadgeText = activeTransferPromo?.badgeTexto || null
+  const transferBadge = transferBadgeText
+    ? (product?.promotionBadges || []).find(b => b.text === transferBadgeText) || null
+    : null
+  const transferDiscountAmount = activeTransferPromo ? applyTransferDiscount(promociones || [], displayPrice) : 0
+  const transferPrice = transferDiscountAmount > 0 ? Math.max(0, displayPrice - transferDiscountAmount) : null
+  const hasAnyDiscount = hasPromo || transferPrice !== null
 
   // Pages catalog and home are ALWAYS light mode (admin uses dark mode)
   const isDarkTheme = false
@@ -703,44 +764,6 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
         position: 'relative',
       }}
     >
-      {/* Transfer discount badges — top-left over the image */}
-      {product.promotionBadges && product.promotionBadges.some(b => b.type === 'transfer_discount') && (
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          left: '8px',
-          zIndex: 10,
-          display: 'flex',
-          gap: '4px',
-          flexWrap: 'wrap',
-        }}>
-          {product.promotionBadges.filter(b => b.type === 'transfer_discount').map((badge, idx) => {
-            const opacity = badge.opacity ?? 100
-            const bgColor = badge.color || '#3b82f6'
-            const hex = bgColor.replace('#', '')
-            const r = parseInt(hex.substring(0, 2), 16)
-            const g = parseInt(hex.substring(2, 4), 16)
-            const b = parseInt(hex.substring(4, 6), 16)
-            return (
-              <span
-                key={idx}
-                style={{
-                  background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
-                  color: badge.textColor || '#ffffff',
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {badge.text}
-              </span>
-            )
-          })}
-        </div>
-      )}
-
       {/* Imagen del producto (ahora soporta varias imágenes con control prev/next) */}
       <div style={{
         position: 'relative',
@@ -959,77 +982,105 @@ const ProductCard = memo(function ProductCard({ product, onAddToCart, getCategor
           fontWeight: 700,
           marginBottom: '16px'
         }}>
-          {/* Mostrar precio con promoción si corresponde */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {product && product.hasPromotion && product.precioPromocional !== undefined && product.precioPromocional !== product.precioUnitario ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>{formatCurrency(product.precioUnitario || 0)}</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-blue)' }}>{formatCurrency(product.precioPromocional)}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+            {hasAnyDiscount && (
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+                {formatCurrency(product.precioUnitario || 0)}
               </div>
-            ) : (
-              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{formatCurrency(product.precioUnitario || 0)}</div>
             )}
 
-            {/* Mostrar badges de promoción al lado del precio (excluyendo transfer_discount) */}
-            {product && product.promotionBadges && product.promotionBadges.filter(b => b.type !== 'transfer_discount').length > 0 && (
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {product.promotionBadges.filter(b => b.type !== 'transfer_discount').map((badge, idx) => {
-                  const opacity = badge.opacity ?? 100
-                  const bgColor = badge.color || '#3b82f6'
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: hasPromo ? '1.2rem' : '1.1rem', fontWeight: hasPromo ? 800 : 700, color: hasPromo ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
+                {formatCurrency(displayPrice)}
+              </div>
+
+              {product && product.promotionBadges && product.promotionBadges.filter(b => b.type !== 'transfer_discount').length > 0 && (
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {product.promotionBadges.filter(b => b.type !== 'transfer_discount').map((badge, idx) => {
+                    const opacity = badge.opacity ?? 100
+                    const bgColor = badge.color || '#3b82f6'
+                    const hex = bgColor.replace('#', '')
+                    const r = parseInt(hex.substring(0, 2), 16)
+                    const g = parseInt(hex.substring(2, 4), 16)
+                    const b = parseInt(hex.substring(4, 6), 16)
+                    return (
+                      <span
+                        key={idx}
+                        style={{
+                          background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                          color: badge.textColor || '#ffffff',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {badge.text}
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+
+              {product && product.promoBadge && (!product.promotionBadges || product.promotionBadges.filter(b => b.type !== 'transfer_discount').length === 0) && (
+                <span style={{
+                  background: '#3b82f6',
+                  color: '#fff',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {product.promoBadge}
+                </span>
+              )}
+
+              {showControls && product.stock !== undefined && product.stock !== null && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
+                  border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`
+                }}>
+                  <span>Stock: {product.stock}</span>
+                </div>
+              )}
+            </div>
+
+            {transferPrice !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {formatCurrency(transferPrice)}
+                </div>
+                {transferBadge && (() => {
+                  const opacity = transferBadge.opacity ?? 100
+                  const bgColor = transferBadge.color || '#9ca3af'
                   const hex = bgColor.replace('#', '')
                   const r = parseInt(hex.substring(0, 2), 16)
                   const g = parseInt(hex.substring(2, 4), 16)
                   const b = parseInt(hex.substring(4, 6), 16)
                   return (
-                    <span
-                      key={idx}
-                      style={{
-                        background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
-                        color: badge.textColor || '#ffffff',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {badge.text}
+                    <span style={{
+                      background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                      color: transferBadge.textColor || '#111827',
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {transferBadge.text}
                     </span>
                   )
-                })}
-              </div>
-            )}
-
-            {/* Static badge desde la columna promo_badge del producto (si no hay ya un badge dinámico) */}
-            {product && product.promoBadge && (!product.promotionBadges || product.promotionBadges.filter(b => b.type !== 'transfer_discount').length === 0) && (
-              <span style={{
-                background: '#3b82f6',
-                color: '#fff',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-              }}>
-                {product.promoBadge}
-              </span>
-            )}
-
-            {/* Indicador de stock al lado del precio (más pequeño, sin icono) */}
-            {showControls && product.stock !== undefined && product.stock !== null && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                background: product.stock > 10 ? 'rgba(16, 185, 129, 0.1)' : product.stock > 0 ? 'rgba(251, 191, 36, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-                color: product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444',
-                border: `1px solid ${product.stock > 10 ? '#10b981' : product.stock > 0 ? '#f59e0b' : '#ef4444'}`
-              }}>
-                <span>Stock: {product.stock}</span>
+                })()}
               </div>
             )}
           </div>
