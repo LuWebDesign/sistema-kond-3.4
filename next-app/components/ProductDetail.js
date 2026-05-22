@@ -753,8 +753,8 @@ export default function ProductDetail({ product, categories = [], products = [],
           grid-template-areas:
             "breadcrumb"
             "info-name"
-            "info-price"
             "images"
+            "info-price"
             "actions"
             "specs"
             "description"
