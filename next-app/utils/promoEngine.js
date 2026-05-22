@@ -19,6 +19,39 @@ export function getContrastColor(hexColor) {
 }
 
 // Filtrar promociones activas según fecha actual
+function parsePromoDate(dateValue, { endOfDay = false } = {}) {
+  if (!dateValue) return null;
+
+  const raw = String(dateValue).trim();
+  const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    return endOfDay
+      ? new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999)
+      : new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0);
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    if (endOfDay && !raw.includes('T')) {
+      parsed.setHours(23, 59, 59, 999);
+    }
+    return parsed;
+  }
+
+  const fallbackDateOnly = raw.split('T')[0];
+  const fallbackMatch = fallbackDateOnly.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (fallbackMatch) {
+    const [, year, month, day] = fallbackMatch;
+    return endOfDay
+      ? new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999)
+      : new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0);
+  }
+
+  return null;
+}
+
 export function getActivePromotions(allPromos = []) {
   try {
     const now = new Date();
@@ -28,27 +61,16 @@ export function getActivePromotions(allPromos = []) {
 
       // Normalizar y comparar fechas robustamente (acepta YYYY-MM-DD o ISO datetimes)
       if (promo.fechaInicio) {
-        let start = new Date(promo.fechaInicio);
-        if (isNaN(start.getTime())) {
-          // Intentar tomar solo la parte YYYY-MM-DD si viene en otro formato
-          const s = String(promo.fechaInicio).split('T')[0];
-          start = new Date(s);
-        }
-        if (!isNaN(start.getTime())) {
+        const start = parsePromoDate(promo.fechaInicio);
+        if (start && !isNaN(start.getTime())) {
           // Si la fecha de inicio es en el futuro, no está activa
           if (start > now) return false;
         }
       }
 
       if (promo.fechaFin) {
-        let end = new Date(promo.fechaFin);
-        if (isNaN(end.getTime())) {
-          const e = String(promo.fechaFin).split('T')[0];
-          end = new Date(e);
-        }
-        if (!isNaN(end.getTime())) {
-          // Hacer la fecha de fin inclusiva (final del día)
-          end.setHours(23, 59, 59, 999);
+        const end = parsePromoDate(promo.fechaFin, { endOfDay: true });
+        if (end && !isNaN(end.getTime())) {
           if (end < now) return false;
         }
       }
