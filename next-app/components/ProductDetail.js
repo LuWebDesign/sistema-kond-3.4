@@ -752,9 +752,9 @@ export default function ProductDetail({ product, categories = [], products = [],
           gap: 16px;
           grid-template-areas:
             "breadcrumb"
-            "images"
             "info-name"
             "info-price"
+            "images"
             "actions"
             "specs"
             "description"
@@ -898,6 +898,10 @@ export default function ProductDetail({ product, categories = [], products = [],
           /* Precio principal más compacto en mobile */
           :global(.product-detail-price) {
             font-size: 1.45rem !important;
+          }
+          /* Título más compacto en mobile */
+          .pd-info-name h1 {
+            font-size: 1.25rem !important;
           }
           /* Imagen principal: sin aspect-ratio cuadrado en mobile, altura fija */
           .pd-main-img-wrap {
