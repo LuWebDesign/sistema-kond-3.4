@@ -130,6 +130,17 @@ export function useProveedores() {
 // PROMOCIONES
 // ============================================================
 
+async function getPromocionesActivasPublic() {
+  const response = await fetch('/api/promociones/activas')
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch active promotions: ${response.status}`)
+  }
+
+  const payload = await response.json()
+  return Array.isArray(payload?.data) ? payload.data : []
+}
+
 /**
  * Active promociones — catalog/public context.
  * staleTime: promociones (5 min)
@@ -137,8 +148,9 @@ export function useProveedores() {
 export function usePromocionesActivas() {
   return useQuery({
     queryKey: QUERY_KEYS.promociones.activas(),
-    queryFn: getPromocionesActivas,
+    queryFn: getPromocionesActivasPublic,
     staleTime: STALE_TIMES.promociones,
+    enabled: typeof window !== 'undefined',
   })
 }
 

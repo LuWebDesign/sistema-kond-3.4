@@ -151,8 +151,9 @@ export function useCart() {
       return
     }
 
-    const cachedProductos = productosRaw?.data || null
-    const cachedPromociones = promosRaw?.data ? promosRaw.data.map(mapPromo) : []
+    const cachedProductos = Array.isArray(productosRaw) ? productosRaw : (productosRaw?.data || null)
+    const cachedPromocionesRaw = Array.isArray(promosRaw) ? promosRaw : (promosRaw?.data || [])
+    const cachedPromociones = cachedPromocionesRaw.map(mapPromo)
 
     // If cached data not yet available, show cart as-is; will re-run when data arrives
     if (!cachedProductos) {
