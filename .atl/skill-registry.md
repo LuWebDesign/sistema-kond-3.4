@@ -115,7 +115,7 @@ Subagents still read their assigned executor/phase skill. During normal runtime,
 - Path: C:\Dev\sistema-kond-3.4\skills\product-detail-kond\SKILL.md
 - Trigger: ProductDetail.js, product detail page, página de producto, mobile layout, grid areas. Patterns and guards for next-app/components/ProductDetail.js.
 - Rules:
-  - Keep the 3-row price hierarchy: original price, main price, transfer-price row.
+  - Keep the 3-row price hierarchy: original price only for real promo price changes, then main price, then transfer-price row.
   - For long descriptions, use plain-text preview + measured overflow, then expand to full markdown.
   - Do not clamp the `ReactMarkdown` wrapper directly for `Ver más / Ver menos` behavior.
 

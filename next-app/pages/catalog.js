@@ -661,7 +661,6 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
     : null
   const transferDiscountAmount = activeTransferPromo ? applyTransferDiscount(promociones || [], displayPrice) : 0
   const transferPrice = transferDiscountAmount > 0 ? Math.max(0, displayPrice - transferDiscountAmount) : null
-  const hasAnyDiscount = hasPromo || transferPrice !== null
 
   // Pages catalog and home are ALWAYS light mode (admin uses dark mode)
   const isDarkTheme = false
@@ -983,7 +982,7 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
           marginBottom: '16px'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-            {hasAnyDiscount && (
+            {hasPromo && (
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
                 {formatCurrency(product.precioUnitario || 0)}
               </div>

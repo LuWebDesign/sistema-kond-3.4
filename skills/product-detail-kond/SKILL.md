@@ -50,7 +50,7 @@ Mobile overrides live in `@media (max-width: 640px)` inside that same block.
 ### Price display — keep the 3-row hierarchy
 
 Price renders in 3 rows in order:
-1. Original price (strikethrough, shown for any active discount, including transfer-only)
+1. Original price (strikethrough, shown only when the main promo price differs from base price)
 2. Promo / final price (large, highlighted)
 3. Transfer price on its own row, with the transfer badge when available
 

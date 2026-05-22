@@ -145,7 +145,6 @@ export default function ProductDetail({ product, categories = [], products = [],
     ? applyTransferDiscount(promociones || [], displayPrice)
     : 0
   const transferPrice = transferDiscountAmount > 0 ? displayPrice - transferDiscountAmount : null
-  const hasAnyDiscount = hasPromo || transferPrice !== null
 
   const specs = SPEC_FIELDS.filter(({ key }) => {
     const val = product[key]
@@ -323,7 +322,7 @@ export default function ProductDetail({ product, categories = [], products = [],
           <div className="pd-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
             {/* Fila 1: precio original tachado (solo si hay algún descuento activo) */}
-            {hasAnyDiscount && (
+            {hasPromo && (
               <div>
                 <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
                   {formatCurrency(product.precioUnitario)}
