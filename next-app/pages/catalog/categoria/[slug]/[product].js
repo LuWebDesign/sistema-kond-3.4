@@ -71,7 +71,7 @@ export default function ProductPage({ params }) {
                   </div>
                 )}
 
-                {/* Badges inline with price */}
+                {/* Badges inline with price (dynamic from promo engine) */}
                 {found.promotionBadges && found.promotionBadges.length > 0 && (
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {found.promotionBadges.map((badge, idx) => {
@@ -99,6 +99,20 @@ export default function ProductPage({ params }) {
                       )
                     })}
                   </div>
+                )}
+
+                {/* Static badge desde la columna promo_badge del producto (fallback) */}
+                {found.promoBadge && (!found.promotionBadges || found.promotionBadges.length === 0) && (
+                  <span style={{
+                    background: '#3b82f6',
+                    color: '#fff',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600
+                  }}>
+                    {found.promoBadge}
+                  </span>
                 )}
               </div>
             </div>
