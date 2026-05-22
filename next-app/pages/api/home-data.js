@@ -16,11 +16,11 @@ export default async function handler(req, res) {
   try {
     const admin = supabaseAdmin();
 
-    const [featuredResult, categoriesResult, allProductsResult, promosResult, activePromosResult] = await Promise.all([
+    const [featuredResult, categoriesResult, allProductsResult, activePromotionsResult] = await Promise.all([
       // Query 1: Featured products
       admin
         .from('productos')
-        .select('id, nombre, imagenes_urls, precio_unitario, featured, categoria_id, categoria')
+        .select('id, nombre, imagenes_urls, precio_unitario, featured, categoria_id, categoria, static_promo_price, promo_badge')
         .eq('tenant_id', TENANT_ID)
         .eq('featured', true)
         .eq('publicado', true)
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       // Query 3: All published products
       admin
         .from('productos')
-        .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, categoria')
+        .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, categoria, static_promo_price, promo_badge')
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
@@ -50,19 +50,7 @@ export default async function handler(req, res) {
         .limit(100)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
-      // Query 4: Promo products — products with an active promotion OR static_promo_price
-      admin
-        .from('productos')
-        .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, static_promo_price, promo_badge')
-        .eq('tenant_id', TENANT_ID)
-        .eq('publicado', true)
-        .eq('active', true)
-        .eq('hidden_in_productos', false)
-        .not('static_promo_price', 'is', null)
-        .limit(20)
-        .then((r) => (r.error ? { data: [], error: null } : r)),
-
-      // Query 5: Active promotions for enrichment
+      // Query 4: Active promotions for enrichment
       admin
         .from('promociones')
         .select('*')
@@ -73,15 +61,14 @@ export default async function handler(req, res) {
 
     const categories = categoriesResult.data || [];
     const allProducts = allProductsResult.data || [];
-    const promos = promosResult.data || [];
     const featured = featuredResult.data || [];
-    const activePromosRaw = activePromosResult.data || [];
+    const activePromosRaw = activePromotionsResult.data || [];
 
     // Map categoria_id → nombre for promo engine matching
     const catNameMap = Object.fromEntries(categories.map((c) => [c.id, c.nombre]));
 
     // Normalize raw DB promos (snake_case) to camelCase expected by promo engine
-    const activePromos = activePromosRaw.map((p) => ({
+    const activePromotions = activePromosRaw.map((p) => ({
       id: p.id,
       nombre: p.nombre,
       tipo: p.tipo,
@@ -112,12 +99,16 @@ export default async function handler(req, res) {
       };
 
       try {
-        const promo = applyPromotionsToProduct(productForPromo, activePromos);
+        const promo = applyPromotionsToProduct(productForPromo, activePromotions);
+        // resolvedPromotion: the primary promo used for price/badge (first by priority)
+        const resolvedPromotion = promo && promo.promotions && promo.promotions.length ? promo.promotions[0] : null;
         return {
           ...p,
           hasPromotion: !!(promo && promo.hasPromotion),
           precioPromocional: promo && promo.hasPromotion ? promo.discountedPrice : p.precio_unitario,
           promotionBadges: promo && promo.badges ? promo.badges : [],
+          appliedPromotions: promo && promo.promotions ? promo.promotions : [],
+          resolvedPromotion,
         };
       } catch {
         return p;
@@ -126,6 +117,10 @@ export default async function handler(req, res) {
 
     const featuredEnriched = featured.map(enrichProduct);
     const allProductsEnriched = allProducts.map(enrichProduct);
+    // Build promo products list from the full products set to avoid arbitrary DB limits
+    const promoProductsEnriched = allProductsEnriched
+      .filter((p) => p.hasPromotion || p.static_promo_price != null)
+      .slice(0, 20);
 
     // Group enriched products by categoria_id
     const byCategory = {};
@@ -137,7 +132,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ featured: featuredEnriched, categories, byCategory, promos });
+    return res.status(200).json({ featured: featuredEnriched, categories, byCategory, promos: promoProductsEnriched });
   } catch (error) {
     console.error('[home-data] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
