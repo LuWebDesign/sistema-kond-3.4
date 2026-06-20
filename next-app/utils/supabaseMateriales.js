@@ -4,6 +4,7 @@
 // ============================================
 
 import supabase from './supabaseClient';
+import { TENANT_ID } from '../lib/tenant';
 
 // ============================================
 // MATERIALES
@@ -16,7 +17,8 @@ export async function getAllMateriales() {
   try {
     const { data, error } = await supabase
       .from('materiales')
-      .select('*')
+      .select('id, nombre, tipo, tamano, espesor, unidad, costo_unitario, proveedor, stock, notas')
+      .eq('tenant_id', TENANT_ID)
       .order('nombre', { ascending: true });
 
     if (error) throw error;
@@ -34,7 +36,8 @@ export async function getMaterialById(id) {
   try {
     const { data, error } = await supabase
       .from('materiales')
-      .select('*')
+      .select('id, nombre, tipo, tamano, espesor, unidad, costo_unitario, proveedor, stock, notas')
+      .eq('tenant_id', TENANT_ID)
       .eq('id', id)
       .single();
 
@@ -64,7 +67,8 @@ export async function createMaterial(material) {
         costo_unitario: material.costoUnitario || 0,
         proveedor: material.proveedor || null,
         stock: material.stock || 0,
-        notas: material.notas || null
+        notas: material.notas || null,
+        tenant_id: TENANT_ID
       }])
       .select()
       .single();
@@ -102,6 +106,7 @@ export async function updateMaterial(id, materialUpdate) {
     const { data, error } = await supabase
       .from('materiales')
       .update(updateData)
+      .eq('tenant_id', TENANT_ID)
       .eq('id', id)
       .select()
       .single();
@@ -126,6 +131,7 @@ export async function deleteMaterial(id) {
     const { error } = await supabase
       .from('materiales')
       .delete()
+      .eq('tenant_id', TENANT_ID)
       .eq('id', id);
 
     if (error) throw error;
@@ -146,6 +152,7 @@ export async function updateStock(id, nuevoStock) {
     const { data, error } = await supabase
       .from('materiales')
       .update({ stock: nuevoStock })
+      .eq('tenant_id', TENANT_ID)
       .eq('id', id)
       .select()
       .single();
