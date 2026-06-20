@@ -121,13 +121,28 @@ export default async function handler(req, res) {
     const featuredEnriched = featured.map(enrichProduct);
     const allProductsEnriched = allProducts.map(enrichProduct);
 
-    // Group enriched products by categoria_id
+    // Group enriched products by categoria_id.
+    // Also roll up subcategory products into their parent so parent category sections
+    // show products even when all products are assigned to subcategories.
+    const catParentMap = Object.fromEntries(
+      categories.filter((c) => c.parent_id != null).map((c) => [c.id, c.parent_id])
+    );
+
     const byCategory = {};
     for (const product of allProductsEnriched) {
       const catId = product.categoria_id;
       if (catId == null) continue;
+
+      // Add to the product's direct category
       if (!byCategory[catId]) byCategory[catId] = [];
       byCategory[catId].push(product);
+
+      // Also add to parent category (if this is a subcategory)
+      const parentId = catParentMap[catId];
+      if (parentId != null) {
+        if (!byCategory[parentId]) byCategory[parentId] = [];
+        byCategory[parentId].push(product);
+      }
     }
 
     res.setHeader('Cache-Control', 'no-store');
