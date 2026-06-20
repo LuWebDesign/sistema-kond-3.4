@@ -1,5 +1,5 @@
 // next-app/pages/admin/website/categorias/index.js
-// Manage category order and visibility on the storefront home page.
+// Manage category order, visibility, and per-category product curation on the storefront home page.
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Layout from '../../../../components/Layout'
@@ -8,7 +8,13 @@ import ConfirmDialog from '../../../../components/ConfirmDialog'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const EMPTY_CONFIG = { bannerMessages: [], categoryOrder: [], hiddenCategories: [], sections: [] }
+const EMPTY_CONFIG = {
+  bannerMessages: [],
+  categoryOrder: [],
+  hiddenCategories: [],
+  sections: [],
+  categoryProducts: {},
+}
 
 async function fetchConfig() {
   try {
@@ -102,13 +108,174 @@ function DropLine() {
   )
 }
 
+// ─── Product Curation Panel ───────────────────────────────────────────────────
+
+function ProductCurationPanel({ catId, products, categoryProductsConfig, onSave, onCancel }) {
+  const savedConfig = categoryProductsConfig?.[String(catId)] || {}
+  const allProductIds = (products || []).map((p) => p.id)
+
+  const getInitialOrder = () => {
+    const savedOrder = savedConfig.productOrder || []
+    return [
+      ...savedOrder.filter((id) => allProductIds.includes(id)),
+      ...allProductIds.filter((id) => !savedOrder.includes(id)),
+    ]
+  }
+
+  const [order, setOrder] = useState(getInitialOrder)
+  const [hidden, setHidden] = useState(() => new Set(savedConfig.hiddenProducts || []))
+  const [dropTarget, setDropTarget] = useState(null)
+  const dragIndex = useRef(null)
+
+  const productById = Object.fromEntries((products || []).map((p) => [p.id, p]))
+
+  const handleDragStart = (i) => { dragIndex.current = i }
+  const handleDragOver = (e, i) => { e.preventDefault(); if (dropTarget !== i) setDropTarget(i) }
+  const handleDrop = (i) => {
+    setDropTarget(null)
+    if (dragIndex.current === null || dragIndex.current === i) { dragIndex.current = null; return }
+    const next = [...order]
+    const [removed] = next.splice(dragIndex.current, 1)
+    next.splice(i, 0, removed)
+    setOrder(next)
+    dragIndex.current = null
+  }
+  const handleDragEnd = () => { dragIndex.current = null; setDropTarget(null) }
+
+  const toggleHidden = (id) => {
+    setHidden((prev) => {
+      const s = new Set(prev)
+      if (s.has(id)) s.delete(id)
+      else s.add(id)
+      return s
+    })
+  }
+
+  const handleSave = () => {
+    onSave(catId, { hiddenProducts: [...hidden], productOrder: [...order] })
+  }
+
+  const handleCancel = () => {
+    setOrder(getInitialOrder())
+    setHidden(new Set(savedConfig.hiddenProducts || []))
+    onCancel()
+  }
+
+  const isDraggingId = dragIndex.current !== null ? order[dragIndex.current] : null
+
+  return (
+    <div style={{
+      background: 'var(--bg-card)',
+      border: '1px solid var(--accent-blue)33',
+      borderRadius: '8px',
+      padding: '16px',
+      marginBottom: '8px',
+      marginLeft: '24px',
+    }}>
+      {order.length === 0 && (
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 12px' }}>
+          No hay productos en esta categoría.
+        </p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '12px' }}>
+        {order.map((id, i) => {
+          const product = productById[id]
+          if (!product) return null
+          const isHidden = hidden.has(id)
+          const isDragging = isDraggingId === id
+          const isDropTarget = dropTarget === i && !isDragging
+          const thumbUrl = product.imagenes_urls?.[0] || null
+
+          return (
+            <div key={id}>
+              {isDropTarget && <DropLine />}
+              <div
+                draggable
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: isDragging ? 'var(--accent-blue)11' : 'var(--bg-secondary)',
+                  border: `1px solid ${isDragging ? 'var(--accent-blue)66' : 'var(--border-color)'}`,
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  marginBottom: '6px',
+                  opacity: isDragging ? 0.5 : isHidden ? 0.55 : 1,
+                  cursor: 'grab',
+                  transition: 'opacity 0.15s, border 0.15s, background 0.15s',
+                }}
+              >
+                <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none', flexShrink: 0 }}>⠿</span>
+                {thumbUrl ? (
+                  <img
+                    src={thumbUrl}
+                    alt={product.nombre}
+                    style={{ width: 40, height: 40, borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '6px',
+                    background: 'var(--bg-secondary)', flexShrink: 0,
+                    border: '1px solid var(--border-color)',
+                  }} />
+                )}
+                <span style={{
+                  flex: 1,
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  color: isHidden ? 'var(--text-secondary)' : 'var(--text-primary)',
+                }}>
+                  {product.nombre}
+                </span>
+                <button
+                  onClick={() => toggleHidden(id)}
+                  title={isHidden ? 'Mostrar en home' : 'Ocultar de home'}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    padding: '4px',
+                    color: isHidden ? 'var(--text-muted)' : 'var(--accent-green)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isHidden ? '👁‍🗨' : '👁'}
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button onClick={handleSave} style={{ ...btnPrimary, fontSize: '0.85rem', padding: '7px 14px' }}>
+          💾 Guardar productos
+        </button>
+        <button onClick={handleCancel} style={{ ...btnSecondary, fontSize: '0.85rem', padding: '7px 14px' }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Category Order Component ────────────────────────────────────────────────
 
-function CategoryOrderList({ config, categories, onSave, saving }) {
+function CategoryOrderList({ config, categories, onSave, saving, byCategoryData, categoryProductsConfig, onSaveCategoryProducts }) {
   const [order, setOrder] = useState([])
   const [hidden, setHidden] = useState(new Set())
   const [dropTarget, setDropTarget] = useState(null)
   const [pendingToggle, setPendingToggle] = useState(null)
+  const [expandedCategoryId, setExpandedCategoryId] = useState(null)
   const dragIndex = useRef(null)
 
   useEffect(() => {
@@ -183,6 +350,8 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
           const isHidden = hidden.has(id)
           const isDragging = isDraggingId === id
           const isDropTarget = dropTarget === i && !isDragging
+          const categoryProducts = byCategoryData?.[id] || []
+          const isExpanded = expandedCategoryId === id
 
           return (
             <div key={id}>
@@ -200,11 +369,13 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
                   padding: '12px 16px',
                   borderRadius: '8px',
                   background: isDragging ? 'var(--accent-blue)11' : 'var(--bg-secondary)',
-                  border: `1px solid ${isDragging ? 'var(--accent-blue)66' : 'var(--border-color)'}`,
+                  border: `1px solid ${isDragging ? 'var(--accent-blue)66' : (isExpanded ? 'var(--accent-blue)66' : 'var(--border-color)')}`,
                   opacity: isDragging ? 0.5 : isHidden ? 0.55 : 1,
                   transition: 'opacity 0.15s, border 0.15s, background 0.15s',
                   cursor: 'grab',
-                  marginBottom: '8px',
+                  marginBottom: isExpanded ? '0' : '8px',
+                  borderBottomLeftRadius: isExpanded ? '0' : '8px',
+                  borderBottomRightRadius: isExpanded ? '0' : '8px',
                 }}
               >
                 <span style={{ color: 'var(--text-muted)', fontSize: '1rem', userSelect: 'none' }}>⠿</span>
@@ -213,7 +384,25 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
                 </span>
                 <span style={{ flex: 1, fontWeight: 500 }}>{cat.nombre}</span>
                 <button
-                  onClick={() => requestToggleHidden(id)}
+                  onClick={(e) => { e.stopPropagation(); setExpandedCategoryId(isExpanded ? null : id) }}
+                  title={isExpanded ? 'Cerrar productos' : 'Ver y ordenar productos'}
+                  style={{
+                    ...btnSecondary,
+                    padding: '4px 10px',
+                    fontSize: '0.8rem',
+                    background: isExpanded ? 'var(--accent-blue)22' : 'var(--bg-secondary)',
+                    borderColor: isExpanded ? 'var(--accent-blue)66' : 'var(--border-color)',
+                    color: isExpanded ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {isExpanded ? '▲' : '▼'}
+                  <span>{categoryProducts.length} productos</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); requestToggleHidden(id) }}
                   title={isHidden ? 'Mostrar en home' : 'Ocultar de home'}
                   style={{
                     background: 'transparent',
@@ -226,9 +415,20 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
                 >
                   {isHidden ? '👁‍🗨' : '👁'}
                 </button>
-                <button onClick={() => move(i, -1)} disabled={i === 0} style={{ ...btnSecondary, padding: '4px 10px', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
-                <button onClick={() => move(i, 1)} disabled={i === order.length - 1} style={{ ...btnSecondary, padding: '4px 10px', opacity: i === order.length - 1 ? 0.3 : 1 }}>↓</button>
+                <button onClick={(e) => { e.stopPropagation(); move(i, -1) }} disabled={i === 0} style={{ ...btnSecondary, padding: '4px 10px', opacity: i === 0 ? 0.3 : 1 }}>↑</button>
+                <button onClick={(e) => { e.stopPropagation(); move(i, 1) }} disabled={i === order.length - 1} style={{ ...btnSecondary, padding: '4px 10px', opacity: i === order.length - 1 ? 0.3 : 1 }}>↓</button>
               </div>
+              {isExpanded && (
+                <div style={{ marginBottom: '8px' }}>
+                  <ProductCurationPanel
+                    catId={id}
+                    products={categoryProducts}
+                    categoryProductsConfig={categoryProductsConfig}
+                    onSave={onSaveCategoryProducts}
+                    onCancel={() => setExpandedCategoryId(null)}
+                  />
+                </div>
+              )}
             </div>
           )
         })}
@@ -260,6 +460,7 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
 function CategoriasPage() {
   const [config, setConfig] = useState(null)
   const [categories, setCategories] = useState([])
+  const [byCategoryData, setByCategoryData] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
@@ -271,10 +472,15 @@ function CategoriasPage() {
   }
 
   useEffect(() => {
-    Promise.all([fetchConfig(), fetchCategories()])
-      .then(([cfg, cats]) => {
+    Promise.all([
+      fetchConfig(),
+      fetchCategories(),
+      fetch('/api/home-data').then((r) => r.json()).catch(() => ({})),
+    ])
+      .then(([cfg, cats, homeData]) => {
         setConfig(cfg)
         setCategories(cats)
+        setByCategoryData(homeData.byCategory || {})
       })
       .catch((e) => showToast(e.message || 'Error al cargar datos', 'error'))
       .finally(() => setLoading(false))
@@ -300,6 +506,17 @@ function CategoriasPage() {
       onConfirm: () => { setConfirm(null); handleSaveConfig(next) },
     })
   }, [handleSaveConfig])
+
+  const handleSaveCategoryProducts = useCallback((catId, productConfig) => {
+    if (!config) return
+    handleSaveConfigWithConfirm({
+      ...config,
+      categoryProducts: {
+        ...(config.categoryProducts || {}),
+        [String(catId)]: productConfig,
+      },
+    })
+  }, [config, handleSaveConfigWithConfirm])
 
   return (
     <Layout title="Categorías — Website | Sistema KOND">
@@ -334,6 +551,9 @@ function CategoriasPage() {
               categories={categories}
               onSave={handleSaveConfigWithConfirm}
               saving={saving}
+              byCategoryData={byCategoryData}
+              categoryProductsConfig={config?.categoryProducts || {}}
+              onSaveCategoryProducts={handleSaveCategoryProducts}
             />
           </div>
         )}

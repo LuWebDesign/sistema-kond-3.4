@@ -72,6 +72,30 @@ export default function Home({ seoConfig }) {
       return ai - bi
     })
 
+  // Per-category product curation from home-config
+  const categoryProductsConfig = homeConfigData.categoryProducts || {}
+
+  // Apply per-category product visibility and order
+  function getCategoryProducts(catId) {
+    const raw = byCategory[catId] || []
+    const catConfig = categoryProductsConfig[String(catId)] || {}
+    const hiddenSet = new Set((catConfig.hiddenProducts || []).map(String))
+    const orderList = (catConfig.productOrder || []).map(String)
+
+    let products = raw.filter((p) => !hiddenSet.has(String(p.id)))
+
+    if (orderList.length > 0) {
+      const orderMap = Object.fromEntries(orderList.map((id, i) => [id, i]))
+      products = [...products].sort((a, b) => {
+        const ai = orderMap[String(a.id)] ?? 9999
+        const bi = orderMap[String(b.id)] ?? 9999
+        return ai - bi
+      })
+    }
+
+    return products
+  }
+
   return (
     <PublicLayout title="Megafibro - Productos en MDF">
       <SeoHead
@@ -134,11 +158,12 @@ export default function Home({ seoConfig }) {
           })}
 
           {/* Category sections: one independent row per visible category, ordered by admin/website/categorias */}
-          {sortedCategories.map((cat) =>
-            (byCategory[cat.id]?.length || 0) > 0
-              ? <CategoryCarousel key={`cat-row-${cat.id}`} category={cat} products={byCategory[cat.id]} />
+          {sortedCategories.map((cat) => {
+            const products = getCategoryProducts(cat.id)
+            return products.length > 0
+              ? <CategoryCarousel key={`cat-row-${cat.id}`} category={cat} products={products} />
               : null
-          )}
+          })}
         </main>
       )}
     </PublicLayout>

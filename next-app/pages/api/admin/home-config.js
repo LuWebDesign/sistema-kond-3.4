@@ -19,6 +19,10 @@ export const DEFAULT_HOME_CONFIG = {
   categoryOrder: [],
   // Category IDs to hide from the home page entirely.
   hiddenCategories: [],
+  // Per-category product curation: { [categoryId]: { hiddenProducts: [], productOrder: [] } }
+  // hiddenProducts: product IDs hidden from this category's home section.
+  // productOrder: ordered product IDs — products appear in this order; unlisted products follow after.
+  categoryProducts: {},
   // Home sections: defines which special sections are active and their order.
   // Category product rows are independent — controlled from admin/website/categorias.
   sections: [
