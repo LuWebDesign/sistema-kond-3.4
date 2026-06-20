@@ -38,14 +38,14 @@ export default async function handler(req, res) {
         .order('nombre', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
-      // Query 3: All published products
+      // Query 3: All published products (no hard limit — filtered by publicado+active, egress is bounded by catalog size)
       admin
         .from('productos')
         .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, categoria')
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
-        .limit(100)
+        .order('categoria_id', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
       // Query 4: Promo products — products with an active promotion OR static_promo_price
