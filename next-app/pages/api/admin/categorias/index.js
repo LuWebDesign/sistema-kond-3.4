@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('categorias')
-      .select('id, nombre, slug, parent_id, activa, orden, created_at')
+      .select('id, nombre, slug, parent_id, activa, orden, imagen_url, created_at')
       .eq('tenant_id', TENANT_ID)
       .order('parent_id', { ascending: true, nullsFirst: true })
       .order('nombre', { ascending: true })
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
   // ── POST: crear categoría ──
   if (req.method === 'POST') {
-    const { nombre, parent_id = null, orden = 0 } = req.body || {}
+    const { nombre, parent_id = null, orden = 0, imagen_url } = req.body || {}
 
     // Validación: nombre requerido
     if (!nombre || !nombre.trim()) {
@@ -81,8 +81,8 @@ export default async function handler(req, res) {
     // Insertar
     const { data, error } = await supabase
       .from('categorias')
-      .insert([{ nombre: nombre.trim(), slug, parent_id: parent_id ?? null, orden, tenant_id: TENANT_ID }])
-      .select('id, nombre, slug, parent_id, activa, orden, created_at')
+      .insert([{ nombre: nombre.trim(), slug, parent_id: parent_id ?? null, orden, imagen_url: imagen_url ?? null, tenant_id: TENANT_ID }])
+      .select('id, nombre, slug, parent_id, activa, orden, imagen_url, created_at')
       .single()
 
     if (error) {

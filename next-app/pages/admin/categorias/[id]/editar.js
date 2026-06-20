@@ -1,7 +1,7 @@
 import Layout from '../../../../components/Layout'
 import withAdminAuth from '../../../../components/withAdminAuth'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS, STALE_TIMES } from '../../../../lib/queryKeys'
@@ -43,6 +43,10 @@ function EditarCategoria() {
   const [slugPreview, setSlugPreview] = useState('')
   const [submitError, setSubmitError] = useState(null)
   const [initialized, setInitialized] = useState(false)
+  const [imagenUrl, setImagenUrl] = useState('')
+  const [imageUploadError, setImageUploadError] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const imageInputRef = useRef(null)
 
   const { data: categorias = [] } = useQuery({
     queryKey: QUERY_KEYS.categorias.list(),
@@ -64,6 +68,7 @@ function EditarCategoria() {
       setParentId(categoria.parent_id != null ? String(categoria.parent_id) : '')
       setOrden(categoria.orden ?? 0)
       setSlugPreview(categoria.slug || '')
+      setImagenUrl(categoria.imagen_url || '')
       setInitialized(true)
     }
   }, [categoria, initialized])
@@ -89,6 +94,69 @@ function EditarCategoria() {
     },
   })
 
+  // Upload category image to Supabase Storage (productos bucket, categorias/{id}/ path)
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const MAX_SIZE = 8 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      setImageUploadError('La imagen supera los 8 MB. Por favor usá una imagen más chica.')
+      e.target.value = ''
+      return
+    }
+
+    setImageUploadError(null)
+    setIsUploading(true)
+
+    try {
+      // Lazy-import to avoid SSR issues
+      const { supabase } = await import('../../../../utils/supabaseClient')
+      const { compressImage } = await import('../../../../utils/catalogUtils')
+
+      let fileToUpload = file
+      try {
+        const blob = await compressImage(file, 1200, 0.82)
+        if (blob && blob.size) {
+          fileToUpload = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+        }
+      } catch {
+        // Compression failed — upload original
+      }
+
+      const fileName = `${id}-${Date.now()}.jpg`
+      const filePath = `categorias/${id}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('productos')
+        .upload(filePath, fileToUpload, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'image/jpeg',
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from('productos')
+        .getPublicUrl(filePath)
+
+      setImagenUrl(urlData.publicUrl)
+    } catch (err) {
+      console.error('Error uploading category image:', err)
+      setImageUploadError('No se pudo subir la imagen. Intentá de nuevo.')
+    } finally {
+      setIsUploading(false)
+      if (e.target) e.target.value = ''
+    }
+  }
+
+  const handleClearImage = () => {
+    setImagenUrl('')
+    setImageUploadError(null)
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     setSubmitError(null)
@@ -102,6 +170,7 @@ function EditarCategoria() {
         nombre: nombre.trim(),
         parent_id: parentId ? Number(parentId) : null,
         orden: Number(orden) || 0,
+        imagen_url: imagenUrl || null,
       },
     })
   }
@@ -219,6 +288,72 @@ function EditarCategoria() {
                 boxSizing: 'border-box'
               }}
             />
+          </div>
+
+          {/* Imagen de categoría */}
+          <div>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px', fontSize: '0.9rem' }}>
+              Imagen de categoría <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(opcional)</span>
+            </label>
+
+            {imagenUrl && (
+              <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <img
+                  src={imagenUrl}
+                  alt="Imagen de categoría"
+                  style={{ maxWidth: '200px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'block' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleClearImage}
+                  style={{
+                    padding: '4px 10px', borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    background: 'transparent', cursor: 'pointer',
+                    fontSize: '0.8rem', color: 'var(--text-secondary)',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Quitar imagen
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <label
+                htmlFor="categoria-imagen-input"
+                style={{
+                  display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+                  cursor: isUploading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem', fontWeight: 600,
+                  opacity: isUploading ? 0.6 : 1,
+                }}
+              >
+                {isUploading ? 'Subiendo...' : imagenUrl ? 'Cambiar imagen' : 'Subir imagen'}
+              </label>
+              <input
+                id="categoria-imagen-input"
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                disabled={isUploading}
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              {imagenUrl && !isUploading && (
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Imagen cargada ✓
+                </span>
+              )}
+            </div>
+
+            {imageUploadError && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#dc2626' }}>
+                ⚠️ {imageUploadError}
+              </div>
+            )}
           </div>
 
           {/* Error */}

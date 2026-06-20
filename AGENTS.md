@@ -39,8 +39,9 @@ Keep analysis extremely short after that.
   - Redirects: `/products` → `/admin/products`, `/dashboard` → `/admin/dashboard`, `/pedidos` → `/admin/pedidos`, `/pedidos-catalogo` → `/admin/orders`, `/marketing` → `/admin/marketing`, `/finanzas` → `/admin/finanzas`, `/materiales` → `/admin/materiales`, `/mi-cuenta` → `/admin/mi-cuenta`, `/database` → `/admin/database`, `/admin/payment-config` → `/admin/website/metodos-pago`, `/admin/catalog-styles` → `/admin/website/estilos`.
   - Other redirects: `/catalogo` → `/catalog`, `/calendario` → `/calendar`, `/catalog-public.html` → `/catalog`, `/mis-pedidos` → `/catalog/mis-pedidos`.
   - Notable admin pages: `dashboard.js`, `orders.js`, `pedidos.js`, `products.js`, `marketing.js`, `finanzas.js`, `materiales.js`, `categorias/` (CRUD categorías), `metricas.js`, `cotizaciones.js`, `metricas-pedidos.js`, `metricas-productos.js`, `seo/index.js` (SEO config), `panel.js`.
+  - **Order detail**: `admin/orders/detalle-pedido/[id].js` — dynamic order detail page. Do NOT create a new file at `admin/orders/[id].js`; this path already exists under `detalle-pedido/`.
   - **Website management** (`/admin/website/`): reorganized under `website/` — `banner/`, `categorias/`, `destacados/`, `estilos/`, `metodos-pago/`, `secciones/`. Parent `website/index.js` is the hub.
-  - **Products subdirectory** (`/admin/productos/`): extended product management (separate from root `products.js`).
+  - **Products subdirectory** (`/admin/productos/`): `new.js` is the dedicated product creation form (separate from root `products.js` which is the list/edit view).
 
 - **Static HTML entry points**:
   - `index.html` — admin dashboard
@@ -105,13 +106,22 @@ Keep analysis extremely short after that.
 
 - **Cross-cutting changes** (STOP and coordinate): DB schema, storage keys, auth, or build/config changes affect BOTH frontends. List all artifacts in PR.
 
+- **Catalog route structure** (`next-app/pages/catalog/`):
+  - Dynamic category: `catalog/[category]/index.js` — top-level category pages.
+  - Subcategory: `catalog/categoria/[slug].js` and `catalog/categoria/[slug]/` — handles slug-based subcategory navigation.
+  - Auth: `catalog/auth/` — catalog-side login/register flow.
+  - User: `catalog/user/` and `catalog/user.js` — public user profile.
+  - `catalog/mis-pedidos.js` — customer order history.
+
 - **SEO rewrites** (`next.config.js`): `/robots.txt` → `/api/robots-txt`, `/sitemap.xml` → `/api/sitemap-xml`. Google verification file at `next-app/public/googlef0dbeb1a47fa8146.html`.
+
+- **SEO server helper** (`next-app/lib/getSeoConfigServer.js`): server-only util with 5-min module-level cache. Call `invalidateSeoConfigCache()` (exported from the same file) after any admin save to `seo_config` so the next request picks up fresh data. Never import this in client components.
 
 - **Edge middleware** (`next-app/middleware.js`): DB-driven redirections fetched from `redirections` table (Supabase). Module-level cache, 5-min TTL per Edge instance. Runs on all non-admin/non-api paths. Requires `SUPABASE_SERVICE_ROLE_KEY` and `NEXT_PUBLIC_TENANT_ID` at Edge runtime. If env vars are missing, middleware is a no-op (safe for local dev without `.env.local`).
 
 - **React Query v5** (`@tanstack/react-query`): installed in `next-app/`. Query keys defined in `next-app/lib/queryKeys.js`. See `react-query-kond` skill for staleTime policies.
 
-- **SDD/openspec completed changes**: `product-description-markdown`, `product-detail-blocks`, `unified-footer`. Archive reports in `openspec/changes/*/archive-report.md`.
+- **SDD/openspec completed changes**: `product-description-markdown`, `product-detail-blocks`, `unified-footer`. Archived in `openspec/changes/archive/`: `email-system` (2026-05-19), `admin-login-security` (2026-05-20). Archive reports in `openspec/changes/*/archive-report.md`.
 
 - **Skills**: Project-specific skills live in `skills/` at repo root and `.github/skills/`. Registry: `.atl/skill-registry.md`. Key ones:
   - `admin-sidebar-kond` — sidebar admin colapsable: NavIcon/NavLink/SectionDivider, CSS hover-expand, gotcha de clipping en Windows/Chrome

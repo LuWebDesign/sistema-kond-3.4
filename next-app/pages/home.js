@@ -24,7 +24,7 @@ export default function Home({ seoConfig }) {
     retry: false,
   })
 
-  const { data: homeConfig } = useQuery({
+  const { data: homeConfig, isPending: homeConfigPending } = useQuery({
     queryKey: QUERY_KEYS.home.config(),
     queryFn: () => fetch('/api/admin/home-config').then((r) => r.json()),
     staleTime: STALE_TIMES.HOME_CONFIG,
@@ -82,7 +82,8 @@ export default function Home({ seoConfig }) {
         ogImage={seoConfig?.homeOgImage || undefined}
       />
 
-      <AnnouncementBar messages={bannerMessages} />
+      {/* Announcement bar: only render once home config has loaded to avoid showing stale defaults */}
+      {!homeConfigPending && <AnnouncementBar messages={bannerMessages} />}
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>

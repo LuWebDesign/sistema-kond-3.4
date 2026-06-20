@@ -25,7 +25,6 @@ export default async function handler(req, res) {
         .eq('featured', true)
         .eq('publicado', true)
         .eq('active', true)
-        .eq('hidden_in_productos', false)
         .limit(8)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
@@ -33,7 +32,7 @@ export default async function handler(req, res) {
       // NOTE: column is 'activa' (not 'active') — must match supabaseCategorias.js
       admin
         .from('categorias')
-        .select('id, nombre, slug, parent_id')
+        .select('id, nombre, slug, parent_id, imagen_url')
         .eq('tenant_id', TENANT_ID)
         .eq('activa', true)
         .order('nombre', { ascending: true })
@@ -46,7 +45,6 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
-        .eq('hidden_in_productos', false)
         .limit(100)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
@@ -57,7 +55,6 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
         .eq('active', true)
-        .eq('hidden_in_productos', false)
         .not('static_promo_price', 'is', null)
         .limit(20)
         .then((r) => (r.error ? { data: [], error: null } : r)),

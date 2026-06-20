@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('categorias')
-      .select('id, nombre, slug, parent_id, activa, orden, created_at')
+      .select('id, nombre, slug, parent_id, activa, orden, imagen_url, created_at')
       .eq('id', categoriaId)
       .eq('tenant_id', TENANT_ID)
       .single()
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
   // ── PUT: actualizar ──
   if (req.method === 'PUT') {
-    const { nombre, parent_id, activa, orden } = req.body || {}
+    const { nombre, parent_id, activa, orden, imagen_url } = req.body || {}
     const updateData = {}
 
     // Leer fila actual para comparar
@@ -120,6 +120,7 @@ export default async function handler(req, res) {
 
     if (activa !== undefined) updateData.activa = activa
     if (orden !== undefined) updateData.orden = orden
+    if (imagen_url !== undefined) updateData.imagen_url = imagen_url ?? null
 
     updateData.updated_at = new Date().toISOString()
 
@@ -128,7 +129,7 @@ export default async function handler(req, res) {
       .update(updateData)
       .eq('id', categoriaId)
       .eq('tenant_id', TENANT_ID)
-      .select('id, nombre, slug, parent_id, activa, orden, created_at')
+      .select('id, nombre, slug, parent_id, activa, orden, imagen_url, created_at')
       .single()
 
     if (error) {

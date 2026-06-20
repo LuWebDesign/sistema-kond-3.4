@@ -2,13 +2,10 @@
 // Scrolling marquee announcement bar for the Megafibro home page.
 // CSS-only animation, no external libraries.
 
-const DEFAULT_MESSAGES = [
-  'Envíos a todo el país',
-  '10% OFF abonando por transferencia',
-  'Pedidos personalizados',
-]
+export default function AnnouncementBar({ messages }) {
+  // Don't render until messages are available from config (avoids showing stale defaults)
+  if (!messages || messages.length === 0) return null
 
-export default function AnnouncementBar({ messages = DEFAULT_MESSAGES }) {
   // Duplicate messages so the marquee loops seamlessly
   const items = [...messages, ...messages]
 

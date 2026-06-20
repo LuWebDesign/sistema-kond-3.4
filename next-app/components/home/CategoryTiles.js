@@ -185,7 +185,7 @@ export default function CategoryTiles({ categories = [], byCategory = {} }) {
         <div className="cat-carousel" ref={carouselRef}>
           {categories.map((cat) => {
             const products = byCategory[cat.id] || []
-            const bgImage = products[0]?.imagenes_urls?.[0] || null
+            const bgImage = cat.imagen_url || products[0]?.imagenes_urls?.[0] || null
 
             return (
               <div
