@@ -169,7 +169,7 @@ function CategoryOrderList({ config, categories, onSave, saving }) {
   return (
     <div>
       <p style={sectionSubtitle}>
-        Arrastrá (o usá las flechas) para cambiar el orden. Desactivá una categoría para ocultarla en la home.
+        Cada categoría activada aparece como una sección independiente en la home, una debajo de la otra. Arrastrá o usá las flechas para definir el orden.
       </p>
 
       {order.length === 0 && (

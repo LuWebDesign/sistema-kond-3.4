@@ -103,9 +103,9 @@ const badge = (active) => ({
 
 const SECTION_TYPES = [
   { value: 'featured',           label: 'Productos Destacados' },
-  { value: 'categories',         label: 'Categorías' },
+  { value: 'category_tiles',     label: 'Carrusel de Categorías' },
   { value: 'promos',             label: 'En Promoción' },
-  { value: 'categoria_carousel', label: 'Carrusel por Categoría' },
+  { value: 'categoria_carousel', label: 'Carrusel de categoría específica' },
 ]
 
 function DropLine() {
@@ -192,9 +192,9 @@ function SectionsList({ config, categories, onSave, saving }) {
       setSections(normalized)
     } else {
       setSections([
-        { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
-        { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
-        { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
+        { id: 'featured',       label: 'Productos Destacados',   type: 'featured',       enabled: true,  order: 1 },
+        { id: 'category_tiles', label: 'Carrusel de Categorías', type: 'category_tiles', enabled: true,  order: 2 },
+        { id: 'promo',          label: 'En Promoción',           type: 'promos',         enabled: false, order: 3 },
       ])
     }
   }, [config])

@@ -10,7 +10,7 @@ import { verifyAdminCookie } from '../../../utils/verifyAdminCookie'
 export const DEFAULT_HOME_CONFIG = {
   // Announcement bar messages (scrolling marquee)
   bannerMessages: [
-    '10% OFF abonando por transferencia',
+    '5% OFF abonando por transferencia',
     'Envíos a todo el país',
     'Pedidos personalizados',
   ],
@@ -19,11 +19,12 @@ export const DEFAULT_HOME_CONFIG = {
   categoryOrder: [],
   // Category IDs to hide from the home page entirely.
   hiddenCategories: [],
-  // Home sections: defines which dynamic sections are active and their order.
+  // Home sections: defines which special sections are active and their order.
+  // Category product rows are independent — controlled from admin/website/categorias.
   sections: [
-    { id: 'featured',   label: 'Productos Destacados', type: 'featured',   enabled: true,  order: 1 },
-    { id: 'categories', label: 'Categorías',           type: 'categories', enabled: true,  order: 2 },
-    { id: 'promo',      label: 'En Promoción',         type: 'promos',     enabled: false, order: 3 },
+    { id: 'featured',       label: 'Productos Destacados',   type: 'featured',       enabled: true,  order: 1 },
+    { id: 'category_tiles', label: 'Carrusel de Categorías', type: 'category_tiles', enabled: true,  order: 2 },
+    { id: 'promo',          label: 'En Promoción',           type: 'promos',         enabled: false, order: 3 },
   ],
 }
 

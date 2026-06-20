@@ -102,24 +102,19 @@ export default function Home({ seoConfig }) {
         </div>
       ) : (
         <main>
+          {/* Special sections: featured, category tiles carousel, promos, custom carousels */}
           {activeSections.map((s) => {
             switch (s.type) {
               case 'featured':
                 return featured.length > 0
                   ? <HeroGrid key={s.id} products={featured} categorySlugMap={categorySlugMap} />
                   : null
+              // category_tiles: the visual categories carousel at the top (navigation only)
+              // 'categories' kept for backward compat with existing home_config DB entries
+              case 'category_tiles':
               case 'categories':
                 return sortedCategories.length > 0
-                  ? (
-                    <React.Fragment key={s.id}>
-                      <CategoryTiles categories={sortedCategories} byCategory={byCategory} />
-                      {sortedCategories.map((cat) =>
-                        (byCategory[cat.id]?.length || 0) > 0
-                          ? <CategoryCarousel key={cat.id} category={cat} products={byCategory[cat.id]} />
-                          : null
-                      )}
-                    </React.Fragment>
-                  )
+                  ? <CategoryTiles key={s.id} categories={sortedCategories} byCategory={byCategory} />
                   : null
               case 'promos':
                 return promos.length > 0
@@ -137,6 +132,13 @@ export default function Home({ seoConfig }) {
                 return null
             }
           })}
+
+          {/* Category sections: one independent row per visible category, ordered by admin/website/categorias */}
+          {sortedCategories.map((cat) =>
+            (byCategory[cat.id]?.length || 0) > 0
+              ? <CategoryCarousel key={`cat-row-${cat.id}`} category={cat} products={byCategory[cat.id]} />
+              : null
+          )}
         </main>
       )}
     </PublicLayout>
