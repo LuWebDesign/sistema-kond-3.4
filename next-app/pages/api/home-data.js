@@ -24,7 +24,6 @@ export default async function handler(req, res) {
         .eq('tenant_id', TENANT_ID)
         .eq('featured', true)
         .eq('publicado', true)
-        .eq('active', true)
         .limit(8)
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
@@ -38,13 +37,12 @@ export default async function handler(req, res) {
         .order('nombre', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
-      // Query 3: All published products (no hard limit — filtered by publicado+active, egress is bounded by catalog size)
+      // Query 3: All published products — matches catalog filter (publicado only, no active check)
       admin
         .from('productos')
         .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, categoria')
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
-        .eq('active', true)
         .order('categoria_id', { ascending: true })
         .then((r) => (r.error ? { data: [], error: null } : r)),
 
@@ -54,7 +52,6 @@ export default async function handler(req, res) {
         .select('id, nombre, imagenes_urls, precio_unitario, categoria_id, static_promo_price, promo_badge')
         .eq('tenant_id', TENANT_ID)
         .eq('publicado', true)
-        .eq('active', true)
         .not('static_promo_price', 'is', null)
         .limit(20)
         .then((r) => (r.error ? { data: [], error: null } : r)),
