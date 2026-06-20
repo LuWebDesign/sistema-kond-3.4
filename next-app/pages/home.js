@@ -109,12 +109,12 @@ export default function Home({ seoConfig }) {
                 return featured.length > 0
                   ? <HeroGrid key={s.id} products={featured} categorySlugMap={categorySlugMap} />
                   : null
-              // category_tiles: the visual categories carousel at the top (navigation only)
+              // category_tiles: shows ALL active top-level categories (independent of section visibility control)
               // 'categories' kept for backward compat with existing home_config DB entries
               case 'category_tiles':
               case 'categories':
-                return sortedCategories.length > 0
-                  ? <CategoryTiles key={s.id} categories={sortedCategories} byCategory={byCategory} />
+                return categories.length > 0
+                  ? <CategoryTiles key={s.id} categories={categories} byCategory={byCategory} />
                   : null
               case 'promos':
                 return promos.length > 0
