@@ -153,6 +153,7 @@ function ProductCurationPanel({ catId, products, categoryProductsConfig, onSave,
 
   const handleSave = () => {
     onSave(catId, { hiddenProducts: [...hidden], productOrder: [...order] })
+    onCancel() // collapse panel when save is initiated
   }
 
   const handleCancel = () => {
