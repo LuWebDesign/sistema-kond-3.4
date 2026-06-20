@@ -128,7 +128,7 @@ function EditarCategoria() {
       const filePath = `categorias/${id}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
-        .from('productos')
+        .from('productos-imagenes')
         .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: true,
@@ -138,7 +138,7 @@ function EditarCategoria() {
       if (uploadError) throw uploadError
 
       const { data: urlData } = supabase.storage
-        .from('productos')
+        .from('productos-imagenes')
         .getPublicUrl(filePath)
 
       setImagenUrl(urlData.publicUrl)
