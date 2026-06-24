@@ -1236,7 +1236,7 @@ function NewProductComponent() {
           >
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '16px'
             }}>
               {/* Unidades por Placa */}
@@ -1475,7 +1475,7 @@ function NewProductComponent() {
           >
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: '16px'
             }}>
               {/* Costo Placa (total = costo unitario × placas usadas) */}
