@@ -23,12 +23,14 @@ Comportamiento y UX
 -------------------
 - La sección muestra un encabezado con `icon` + `title`.
 - Al estar colapsada muestra `summary` (si existe).
-- Hay un menú de acciones (⋯) con la acción `Modificar` que despliega la sección.
+- **Click en cualquier parte de la tarjeta colapsada la expande** — no es necesario usar el menú. El cursor cambia a `pointer` cuando está colapsada.
+- El menú de acciones (⋯) se mantiene como vía secundaria para expandir.
 - Cuando está expandida, aparece un botón `Guardar` visible; `onSave` se ejecuta al pulsarlo.
 - `onSave` debe validar campos mínimos y retornar `true` para permitir que la sección se colapse.
 - Evitar `alert()` nativo: usar notificaciones efímeras (toast) o `showCustomAlert()` definido en `utils.js`.
 - Tecla `Enter` activa `onSave` salvo cuando el foco está dentro de un `textarea`.
 - Click fuera del menú debe cerrarlo; la sección no debe perder datos sin confirmación.
+- Botones "Guardar" y "⋯" tienen `stopPropagation` para evitar que activen el `handleCardClick`.
 
 Accesibilidad (a11y)
 --------------------
@@ -66,7 +68,8 @@ Ejemplo mínimo
 
 Archivos relacionados
 ---------------------
-- Implementación actual: `next-app/pages/admin/productos/new.js`
+- Componente compartido: `next-app/components/CollapsibleSection.js`
+- Páginas que lo usan: `next-app/pages/admin/productos/new.js`, `next-app/pages/admin/products.js`
 
 Notas finales
 ------------
