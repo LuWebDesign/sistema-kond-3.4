@@ -421,8 +421,8 @@ function Marketing() {
             <div style={{
               position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
               zIndex: 9999, padding: '28px 32px', borderRadius: '14px',
-              background: toast.type === 'error' ? '#ef4444' : '#22c55e',
-              color: '#fff', fontSize: '1rem', fontWeight: 600,
+              background: 'rgba(0,0,0,0.85)',
+              color: '#fff', fontSize: '1rem', fontWeight: 500,
               boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
               textAlign: 'center', maxWidth: '440px', lineHeight: '1.5',
             }}>{toast.msg}</div>
