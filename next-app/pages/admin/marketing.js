@@ -152,7 +152,8 @@ function Marketing() {
       createdAt: p.created_at
     }))
     // Evitar setState si no hay cambios reales para prevenir loops
-    const same = promotions.length === mappedPromos.length && promotions.every((old, i) => old.id === mappedPromos[i]?.id)
+    // Incluir activo en la comparación para que el toggle se refleje sin refrescar la página
+    const same = promotions.length === mappedPromos.length && promotions.every((old, i) => old.id === mappedPromos[i]?.id && old.activo === mappedPromos[i]?.activo)
     if (!same) setPromotions(mappedPromos)
   }, [promosData])
 
