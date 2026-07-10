@@ -34,6 +34,11 @@ function Marketing() {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [editingPromo, setEditingPromo] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
   // Local state for UI-managed lists — React Query is the source of truth for network data.
 
   // Sincronizar modal con query params de la URL
@@ -196,6 +201,7 @@ function Marketing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.promociones.all })
+      showToast('✅ Promoción creada — los cambios se verán reflejados en el catálogo en aproximadamente 5 minutos.')
     }
   })
 
@@ -328,6 +334,12 @@ function Marketing() {
     
     try {
       await updatePromoMutation.mutateAsync({ id, payload: { activo: !promo.activo } })
+      const estado = !promo.activo ? 'activada' : 'desactivada'
+      if (estado === 'activada') {
+        showToast(`✅ Promoción "${promo.nombre}" activada — los cambios se verán reflejados en el catálogo en aproximadamente 5 minutos.`)
+      } else {
+        showToast(`⏸️ Promoción "${promo.nombre}" desactivada`)
+      }
     } catch (e) {
       console.error('Error toggling promocion:', e)
       alert('Error al cambiar el estado de la promoción')
@@ -398,6 +410,17 @@ function Marketing() {
           <h1 className={styles.title}>🎯 Marketing</h1>
           <p className={styles.subtitle}>Gestiona promociones y cupones de descuento</p>
         </header>
+
+        {toast && (
+          <div style={{
+            marginBottom: '16px', padding: '12px 16px', borderRadius: '8px',
+            background: toast.type === 'error' ? 'var(--accent-red)22' : 'var(--accent-green)22',
+            color: toast.type === 'error' ? 'var(--accent-red)' : 'var(--accent-green)',
+            border: `1px solid ${toast.type === 'error' ? 'var(--accent-red)44' : 'var(--accent-green)44'}`,
+            fontSize: '0.9rem', fontWeight: 500,
+            maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto',
+          }}>{toast.msg}</div>
+        )}
 
         <main className={styles.main}>
           {/* Tabs modernos */}
