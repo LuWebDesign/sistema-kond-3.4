@@ -152,7 +152,8 @@ function Marketing() {
       createdAt: p.created_at
     }))
     // Evitar setState si no hay cambios reales para prevenir loops
-    const same = promotions.length === mappedPromos.length && promotions.every((old, i) => old.id === mappedPromos[i]?.id)
+    // Incluir activo en la comparación para que el toggle se refleje sin refrescar la página
+    const same = promotions.length === mappedPromos.length && promotions.every((old, i) => old.id === mappedPromos[i]?.id && old.activo === mappedPromos[i]?.activo)
     if (!same) setPromotions(mappedPromos)
   }, [promosData])
 
@@ -412,14 +413,20 @@ function Marketing() {
         </header>
 
         {toast && (
-          <div style={{
-            marginBottom: '16px', padding: '12px 16px', borderRadius: '8px',
-            background: toast.type === 'error' ? 'var(--accent-red)22' : 'var(--accent-green)22',
-            color: toast.type === 'error' ? 'var(--accent-red)' : 'var(--accent-green)',
-            border: `1px solid ${toast.type === 'error' ? 'var(--accent-red)44' : 'var(--accent-green)44'}`,
-            fontSize: '0.9rem', fontWeight: 500,
-            maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto',
-          }}>{toast.msg}</div>
+          <>
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 9998,
+              background: 'rgba(0,0,0,0.4)',
+            }} />
+            <div style={{
+              position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              zIndex: 9999, padding: '28px 32px', borderRadius: '14px',
+              background: 'rgba(0,0,0,0.85)',
+              color: '#fff', fontSize: '1rem', fontWeight: 500,
+              boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
+              textAlign: 'center', maxWidth: '440px', lineHeight: '1.5',
+            }}>{toast.msg}</div>
+          </>
         )}
 
         <main className={styles.main}>

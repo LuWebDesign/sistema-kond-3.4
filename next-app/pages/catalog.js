@@ -389,6 +389,20 @@ export default function Catalog({ seoConfig }) {
           borderRadius: '12px',
           border: '1px solid var(--border-color)'
         }}>
+          <div style={{ position: 'relative' }}>
+              {/* SectionSelector: render here in the original catalog header area so it
+                  persists across category and product pages when Catalog is mounted. */}
+              <CategoryDropdown
+                categories={categoriesForDropdown}
+                categoriasAPI={categoriasAPI}
+                selectedCategory={selectedCategory}
+                selectedSubcategoryId={selectedSubcategoryId}
+                onSelectCategory={handleSelectCategory}
+                onSelectSubcategory={handleSelectSubcategory}
+                onClear={handleClearCategory}
+              />
+          </div>
+
           <input
             type="text"
             placeholder="Buscar productos..."
@@ -404,20 +418,6 @@ export default function Catalog({ seoConfig }) {
             }}
             className="search-input"
           />
-          
-          <div style={{ position: 'relative' }}>
-              {/* SectionSelector: render here in the original catalog header area so it
-                  persists across category and product pages when Catalog is mounted. */}
-              <CategoryDropdown
-                categories={categoriesForDropdown}
-                categoriasAPI={categoriasAPI}
-                selectedCategory={selectedCategory}
-                selectedSubcategoryId={selectedSubcategoryId}
-                onSelectCategory={handleSelectCategory}
-                onSelectSubcategory={handleSelectSubcategory}
-                onClear={handleClearCategory}
-              />
-          </div>
         </div>
 
         {/* Grid de productos */}
