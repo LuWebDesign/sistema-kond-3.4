@@ -27,6 +27,12 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
     return () => document.removeEventListener('mousedown', handleDocClick)
   }, [menuOpen])
 
+  const handleCardClick = () => {
+    if (collapsed) {
+      setCollapsed(false)
+    }
+  }
+
   const doSave = async () => {
     if (typeof onSave === 'function') {
       try {
@@ -49,7 +55,7 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
   }
 
   return (
-    <div ref={containerRef} style={cardStyle} onKeyDown={handleKeyDown}>
+    <div ref={containerRef} style={{...cardStyle, cursor: collapsed ? 'pointer' : 'default'}} onKeyDown={handleKeyDown} onClick={handleCardClick}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>{icon}</span>
@@ -60,7 +66,7 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
           {!collapsed && (
             <button
               type="button"
-              onClick={doSave}
+              onClick={(e) => { e.stopPropagation(); doSave() }}
               title="Guardar sección"
               style={{
                 padding: '8px 12px',
@@ -79,7 +85,7 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
           <button
             ref={buttonRef}
             type="button"
-            onClick={() => setMenuOpen(s => !s)}
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(s => !s) }}
             aria-label="Más opciones"
             style={{
               padding: '6px 8px',
@@ -112,7 +118,7 @@ export default function CollapsibleSection({ icon, title, defaultCollapsed = tru
 
       {collapsed ? (
         <div style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>
-          {summary || 'Sección cerrada. Haz clic en ⋯ → Modificar para editar.'}
+          {summary || 'Haz clic en la sección para expandirla.'}
         </div>
       ) : (
         <div style={{ marginTop: '16px' }}>
