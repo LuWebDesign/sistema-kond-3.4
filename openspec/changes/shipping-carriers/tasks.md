@@ -31,8 +31,8 @@
 
 ## Phase 5: Admin display and release verification
 
-- [ ] 5.1 Update `next-app/utils/pedidosCatalogoDetail.js` and `next-app/components/OrderCatalogDetailView.js` to show selected shipping, agency, import state, manual label workflow instructions, tracking/status fields.
-- [ ] 5.2 Fix suspicious `metodoPago === 'envio'` logic to use delivery-method metadata for shipping address/details display.
+- [x] 5.1 Update `next-app/utils/pedidosCatalogoDetail.js` and `next-app/components/OrderCatalogDetailView.js` to show selected shipping, agency, import state, manual label workflow instructions, tracking/status fields.
+- [x] 5.2 Fix suspicious `metodoPago === 'envio'` logic to use delivery-method metadata for shipping address/details display.
 - [ ] 5.3 Run `node verify-setup.js`, `npm run build` in `next-app/`, and manual QA for product fields, home/agency checkout, unavailable/free/paid shipping, approved import, and admin follow-up.
 
 ## Review Workload Forecast

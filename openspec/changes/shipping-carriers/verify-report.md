@@ -1,23 +1,23 @@
-# Verification Report: shipping-carriers PR 3
+# Verification Report: shipping-carriers PR 4
 
 **Change**: `shipping-carriers`  
 **Mode**: Standard verify, chained PR slice review  
-**Slice boundary**: PR 3 only — checkout shipping selection, order persistence metadata, MercadoPago single-charge integration, and approved-payment import.  
-**Fresh-context rerun**: after webhook tenant-safety fix.
+**Slice boundary**: PR 4 only — admin shipping visibility, delivery-method display fix, and final QA/release evidence.  
+**Fresh-context rerun**: after admin detail mapping/display implementation.
 
 ## Verdict
 
-**PASS WITH WARNINGS** — The webhook tenant-safety fix is present: service-role fallback by `external_reference` was removed, missing `preference_id` exits safely, normal processing resolves by `mp_preference_id`, and all update/import mutations remain scoped by resolved `tenant_id`. PR3 remains focused and build/syntax checks pass. Warning: no browser/manual scenario run or dedicated automated scenario tests were executed in this verification pass.
+**PASS WITH WARNINGS** — PR4 admin detail mapping/display is present and build/syntax checks pass. The suspicious `metodoPago === 'envio'` admin display logic was replaced with `metodoEntrega` metadata, and detail read/update paths touched by this slice are tenant-scoped. Warning: browser/manual scenario QA was not run in this apply environment, so Phase 5.3 remains unchecked for final release sign-off.
 
 ## Build and checks
 
 | Command | Result | Notes |
 |---|---:|---|
 | `node verify-setup.js` from repo root | PASS | Supabase structure check passed. |
-| `node --check next-app/pages/api/mp/webhook.js` | PASS | Syntax check passed. |
-| `node --check next-app/pages/api/mp/create-preference.js` | PASS | Syntax check passed. |
-| `node --check next-app/hooks/useCatalog.js` | PASS | Syntax check passed. |
+| `node --check next-app/components/OrderCatalogDetailView.js` | PASS | Syntax check passed. |
+| `node --check next-app/utils/pedidosCatalogoDetail.js` | PASS | Syntax check passed. |
 | `node --check next-app/utils/supabasePedidos.js` | PASS | Syntax check passed. |
+| `npx eslint components/OrderCatalogDetailView.js utils/pedidosCatalogoDetail.js utils/supabasePedidos.js` from `next-app/` | NOT RUNNABLE | ESLint 9 requires `eslint.config.*`; repo has no flat config. |
 | `npm run build` from `next-app/` | PASS | Next.js 16.1.6 production build completed successfully. |
 
 ## Completeness
@@ -25,11 +25,11 @@
 | Metric | Value |
 |---|---:|
 | Tasks total | 17 |
-| Tasks complete | 14 |
-| Tasks incomplete | 3 |
-| PR3-scoped tasks complete | 8/8 |
+| Tasks complete | 16 |
+| Tasks incomplete | 1 |
+| PR4-scoped implementation tasks complete | 2/3 |
 
-Incomplete tasks are Phase 5 admin display/release verification items and remain out of PR3 scope.
+Incomplete task is Phase 5.3 browser/manual QA for final release sign-off.
 
 ## Spec compliance matrix
 
@@ -44,6 +44,12 @@ Incomplete tasks are Phase 5 admin display/release verification items and remain
 | Import runs only after approved payment | PASS (static + build) | Webhook calls `importShipmentAfterApproval()` only under `status === 'approved'`. |
 | Import idempotency | PASS (static + build) | Webhook skips terminal/in-progress statuses and atomically claims only `shipping_import_status IN ('pending')` before import. |
 | Webhook tenant-safe resolution | PASS (static + build) | Missing `preference_id` logs and returns; normal lookup uses `mp_preference_id`; updates/import claim/results include `.eq('tenant_id', resolvedTenantId)`. |
+| Admin detail maps provider-neutral shipping metadata | PASS (static + build) | `mapSupabasePedidoToFrontend()` now maps `pedidos_catalogo.shipping_*` fields into `pedido.shipping`. |
+| Admin detail displays shipping provider/service/delivery/cost | PASS (static + build) | `OrderCatalogDetailView.js` renders the `Envío` card with provider, service, delivery type, cost/currency, and shipping status. |
+| Admin detail displays selected agency and destination snapshots | PASS (static + build) | The `Envío` card renders agency and destination snapshot fields when present. |
+| Admin detail exposes import/manual follow-up state | PASS (static + build) | The `Envío` card renders import status/result, tracking number, and MiCorreo manual label workflow instructions. |
+| Shipping address display uses delivery metadata | PASS (static + build) | No remaining `metodoPago === 'envio'` branch exists in `OrderCatalogDetailView.js`; address display uses `pedido.metodoEntrega === 'envio'`. |
+| Admin detail read/update tenant filters | PASS (static + build) | `getPedidoCatalogoById()`, `updatePedidoCatalogo()`, and `updateMontoRecibido()` now include `.eq('tenant_id', TENANT_ID)`. |
 
 ## Correctness findings
 
@@ -53,13 +59,13 @@ None.
 
 ### WARNING
 
-1. No browser/manual scenario run or dedicated automated scenario tests were executed; evidence is source inspection plus setup/syntax/build checks.
-2. PR3 diff is ~535 changed lines, above the nominal 400-line review budget, but it remains within the orchestrator-approved stacked-to-main PR3 boundary.
+1. Browser/manual scenario QA was not executed; evidence is source inspection plus setup/syntax/build checks.
+2. Phase 5.3 remains unchecked until browser/manual QA covers product fields, home/agency checkout, unavailable/free/paid shipping, approved import, and admin follow-up.
 
 ### SUGGESTION
 
-1. If time permits before opening PR, add a minimal webhook unit-style harness for missing `preference_id`, approved import claim, and duplicate webhook skip.
+1. Before release sign-off, run the browser/manual QA checklist against an environment with Correo env vars configured and the PR1 Supabase migration applied.
 
 ## Safe to commit
 
-Yes — no blocking findings remain for PR3 after the webhook tenant-safety fix. Commit should include only the seven focused PR3 files currently modified.
+Partially — PR4 implementation files are safe to review, but final release sign-off should wait for the remaining browser/manual QA in Phase 5.3.

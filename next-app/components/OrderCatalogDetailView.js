@@ -57,6 +57,27 @@ const METODO_ENTREGA_LABELS = {
   retiro: '🏪 Retiro en local',
 }
 
+const SHIPPING_DELIVERY_LABELS = {
+  home: 'Domicilio',
+  agency: 'Sucursal',
+  domicilio: 'Domicilio',
+  sucursal: 'Sucursal',
+}
+
+const SHIPPING_STATUS_LABELS = {
+  quoted: 'Cotizado',
+  free: 'Envío gratis',
+  to_quote: 'A cotizar',
+}
+
+const SHIPPING_IMPORT_STATUS_LABELS = {
+  pending: 'Pendiente',
+  in_progress: 'En progreso',
+  imported: 'Importado',
+  failed: 'Falló',
+  not_required: 'No requerido',
+}
+
 const HISTORIAL_DOT = {
   created: styles.dotCreated,
   estado: styles.dotEstado,
@@ -74,6 +95,27 @@ function formatHistorialTime(dateStr) {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   })
+}
+
+function formatShippingCost(shipping) {
+  if (!shipping) return '—'
+  if (shipping.status === 'to_quote') return 'A cotizar'
+  if (shipping.status === 'free') return 'Envío gratis'
+  if (shipping.cost === null || shipping.cost === undefined) return '—'
+  const amount = formatCurrency(Number(shipping.cost || 0))
+  return shipping.currency && shipping.currency !== 'ARS' ? `${amount} ${shipping.currency}` : amount
+}
+
+function formatShippingImportResult(result) {
+  if (!result) return '—'
+  if (typeof result === 'string') return result
+  if (result.error) return result.error
+  const parts = [
+    result.shipmentId ? `Envío: ${result.shipmentId}` : null,
+    result.status ? `Estado: ${result.status}` : null,
+    result.importedAt ? `Importado: ${formatPedidoDate(result.importedAt)}` : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : JSON.stringify(result)
 }
 
 export default function OrderCatalogDetailView({
@@ -109,6 +151,10 @@ export default function OrderCatalogDetailView({
 
   const historialEventos = historial.filter(h => h.tipo !== 'nota')
   const historialNotas = historial.filter(h => h.tipo === 'nota')
+  const isShippingDelivery = pedido.metodoEntrega === 'envio'
+  const shipping = pedido.shipping || null
+  const shippingAgency = shipping?.agencySnapshot || null
+  const shippingDestination = shipping?.destinationSnapshot || null
 
   const handleAddNotaClick = async () => {
     if (!notaText.trim()) return
@@ -263,7 +309,7 @@ export default function OrderCatalogDetailView({
                     <span className={styles.clienteContactVal}>{pedido.cliente.telefono}</span>
                   </div>
                 )}
-                {pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && pedido.metodoPago !== 'envio' && (
+                {pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && !isShippingDelivery && (
                   <div className={styles.clienteContactRow}>
                     <span className={styles.clienteContactLabel}>Dirección</span>
                     <span className={styles.clienteContactVal}>{pedido.cliente.direccion}</span>
@@ -280,8 +326,8 @@ export default function OrderCatalogDetailView({
               </div>
             </div>
 
-            {/* Dirección de envío — solo si método es envío */}
-            {pedido.metodoPago === 'envio' && pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && (
+            {/* Shipping address — only when delivery method is shipping */}
+            {isShippingDelivery && pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && (
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.cardIcon}>📍</span>
@@ -298,6 +344,70 @@ export default function OrderCatalogDetailView({
               </div>
             )}
           </div>
+
+          {shipping && (
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <span className={styles.cardIcon}>🚚</span>
+                <h3 className={styles.cardTitle}>Envío</h3>
+              </div>
+              <div className={styles.cardBody}>
+                <div className={styles.infoGrid}>
+                  <span className={styles.infoLabel}>Proveedor</span>
+                  <span className={styles.infoValue}>{shipping.provider || '—'}</span>
+
+                  <span className={styles.infoLabel}>Servicio</span>
+                  <span className={styles.infoValue}>{shipping.serviceName || shipping.serviceCode || '—'}</span>
+
+                  <span className={styles.infoLabel}>Tipo de entrega</span>
+                  <span className={styles.infoValue}>{SHIPPING_DELIVERY_LABELS[shipping.deliveryType] || shipping.deliveryType || '—'}</span>
+
+                  <span className={styles.infoLabel}>Costo</span>
+                  <span className={styles.infoValue}>{formatShippingCost(shipping)}</span>
+
+                  <span className={styles.infoLabel}>Estado</span>
+                  <span className={styles.infoValue}>{SHIPPING_STATUS_LABELS[shipping.status] || shipping.status || '—'}</span>
+
+                  <span className={styles.infoLabel}>Importación</span>
+                  <span className={styles.infoValue}>{SHIPPING_IMPORT_STATUS_LABELS[shipping.importStatus] || shipping.importStatus || '—'}</span>
+
+                  {shipping.trackingNumber && (
+                    <>
+                      <span className={styles.infoLabel}>Tracking</span>
+                      <span className={styles.infoValue}>{shipping.trackingNumber}</span>
+                    </>
+                  )}
+
+                  {shippingAgency && (
+                    <>
+                      <span className={styles.infoLabel}>Sucursal</span>
+                      <span className={styles.infoValue}>
+                        {[shippingAgency.name, shippingAgency.address, shippingAgency.city, shippingAgency.postalCode].filter(Boolean).join(' · ') || '—'}
+                      </span>
+                    </>
+                  )}
+
+                  {shippingDestination && (
+                    <>
+                      <span className={styles.infoLabel}>Destino</span>
+                      <span className={styles.infoValue}>
+                        {[shippingDestination.address, shippingDestination.city, shippingDestination.provinceCode, shippingDestination.postalCode].filter(Boolean).join(' · ') || '—'}
+                      </span>
+                    </>
+                  )}
+
+                  <span className={styles.infoLabel}>Resultado importación</span>
+                  <span className={styles.infoValue}>{formatShippingImportResult(shipping.importResult)}</span>
+                </div>
+
+                {(shipping.manualFollowupRequired || shipping.importStatus === 'imported') && (
+                  <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.5, color: 'var(--text-primary)' }}>
+                    <strong>Seguimiento manual:</strong> completar en MiCorreo el pago/generación de etiqueta, impresión, pegado en el paquete y despacho físico. La importación no confirma que esos pasos ya estén realizados.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Productos del pedido */}
           <div className={styles.card}>

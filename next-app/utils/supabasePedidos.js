@@ -230,6 +230,7 @@ export async function getPedidoCatalogoById(id) {
         items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .single();
 
     if (error) throw error;
@@ -365,6 +366,7 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
       .from('pedidos_catalogo')
       .update(updateData)
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .select()
       .single();
 
@@ -406,6 +408,7 @@ export async function updateMontoRecibido(id, montoRecibido, nuevoEstadoPago) {
       .from('pedidos_catalogo')
       .select('*')
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .single();
 
     if (errorGet) throw errorGet;
@@ -418,6 +421,7 @@ export async function updateMontoRecibido(id, montoRecibido, nuevoEstadoPago) {
         estado_pago: nuevoEstadoPago 
       })
       .eq('id', id)
+      .eq('tenant_id', TENANT_ID)
       .select()
       .single();
 
