@@ -1,44 +1,51 @@
-# Verification Report: shipping-carriers PR 1
+# Verification Report: shipping-carriers PR 3
 
 **Change**: `shipping-carriers`  
 **Mode**: Standard verify, chained PR slice review  
-**Slice boundary**: PR 1 only — schema + product package data fields, product create/edit UI and validation, task/application progress accuracy.
+**Slice boundary**: PR 3 only — checkout shipping selection, order persistence metadata, MercadoPago single-charge integration, and approved-payment import.  
+**Fresh-context rerun**: after webhook tenant-safety fix.
 
 ## Verdict
 
-**WARNING** — PR 1 implementation matches the functional slice, and build/setup verification passed. The unrelated working-tree changes were cleaned before PR preparation. Remaining warning: runtime browser validation was not run; evidence is source-level plus setup/build checks.
+**PASS WITH WARNINGS** — The webhook tenant-safety fix is present: service-role fallback by `external_reference` was removed, missing `preference_id` exits safely, normal processing resolves by `mp_preference_id`, and all update/import mutations remain scoped by resolved `tenant_id`. PR3 remains focused and build/syntax checks pass. Warning: no browser/manual scenario run or dedicated automated scenario tests were executed in this verification pass.
 
 ## Build and checks
 
 | Command | Result | Notes |
 |---|---:|---|
 | `node verify-setup.js` from repo root | PASS | Supabase structure check passed. |
+| `node --check next-app/pages/api/mp/webhook.js` | PASS | Syntax check passed. |
+| `node --check next-app/pages/api/mp/create-preference.js` | PASS | Syntax check passed. |
+| `node --check next-app/hooks/useCatalog.js` | PASS | Syntax check passed. |
+| `node --check next-app/utils/supabasePedidos.js` | PASS | Syntax check passed. |
 | `npm run build` from `next-app/` | PASS | Next.js 16.1.6 production build completed successfully. |
-| `npx eslint pages/admin/productos/new.js pages/admin/products.js utils/supabaseProducts.js utils/supabaseProductos.js` from `next-app/` | NOT RUNNABLE | ESLint 9 requires `eslint.config.*`; repo has no flat config. |
 
 ## Completeness
 
-| Task | Status | Evidence |
-|---|---:|---|
-| 1.1 Add migration for `productos.package_*` and provider-neutral `pedidos_catalogo.shipping_*` columns | Complete | `next-app/supabase-migrations/2026-07-27-shipping-package-fields.sql` lines 6-31. |
-| 1.2 Sync `supabase/schema.sql`; keep schema additive/nullable | Complete | `supabase/schema.sql` lines 53-56 and 164-191. |
-| 1.3 Update product mappings and create/edit UI with required package data separate from `medidas` | Complete | `next-app/utils/supabaseProducts.js` lines 159-162 and 231-238; `next-app/pages/admin/productos/new.js` lines 1075-1103; `next-app/pages/admin/products.js` lines 4797-4825. |
-| 1.4 Verify create/edit rejects missing package data and persists kg/cm separately | Partial | Source validation exists, build passes, but no covering runtime test/manual evidence artifact was found. |
+| Metric | Value |
+|---|---:|
+| Tasks total | 17 |
+| Tasks complete | 14 |
+| Tasks incomplete | 3 |
+| PR3-scoped tasks complete | 8/8 |
 
-## Static compliance matrix
+Incomplete tasks are Phase 5 admin display/release verification items and remain out of PR3 scope.
+
+## Spec compliance matrix
 
 | Requirement / scenario | Result | Evidence |
 |---|---:|---|
-| Product package data separate from customer-facing `medidas` | PASS | New columns are `package_weight_kg`, `package_length_cm`, `package_width_cm`, `package_height_cm`; `medidas` remains unchanged in schema and UI copy states package data does not replace visible measures. |
-| Admin weight is kilograms and dimensions are centimeters | PASS | Labels and summaries use `Peso (kg)` and length/width/height `cm` in create/edit forms. |
-| Correo grams conversion not prematurely implemented | PASS | No `lib/shipping` or `pages/api/shipping` files exist; no provider adapter or kg-to-grams boundary was implemented in PR 1. |
-| Additive database migration and aligned schema | PASS | Migration uses `ADD COLUMN IF NOT EXISTS`; schema contains matching nullable columns and indexes. |
-| Product create/edit persistence is consistent | PASS | Create and update paths map camelCase package fields to snake_case DB fields in both product utilities. |
-| Validations match required package data | PASS (static) | Create and edit flows require all four package fields to be numeric values greater than zero before save. |
-| Tasks/apply-progress reflect only PR 1 | PASS | Tasks 1.1-1.4 checked; phases 2-5 unchecked; apply-progress boundary excludes provider service, checkout, MP, webhook/import, and admin order detail. |
-| Unrelated files untouched | PASS | After cleanup, the working tree no longer includes `.atl/*`, `AGENTS.md`, or `openspec/andreani-shipping/*` changes. |
+| Customer can choose `domicilio` and request home rates | PASS (static + build) | `finalizar-compra.js` uses `shippingDeliveryType`, maps `domicilio` to `home`, posts to `/api/shipping/rates`, and persists `deliveryType`. |
+| Customer can choose `sucursal` and persist branch snapshot | PASS (static + build) | `finalizar-compra.js` loads `/api/shipping/agencies`, requires selected branch for branch shipping, and stores `agencySnapshot`. |
+| Quote unavailable continues as `A cotizar` | PASS (static + build) | Unavailable/missing quote sets `status: 'to_quote'`, cost `0`, manual follow-up, and UI displays `A cotizar`. |
+| Free shipping shows `Envío gratis` with struck-through quote | PASS (static + build) | Summary renders struck-through quoted price when present and `Envío gratis`; snapshot status becomes `free` with cost `0`. |
+| Paid shipping is added exactly once | PASS (static + build) | Checkout total adds `paidShippingCost` once; persisted order uses that total; MP route appends one shipping item only when `shipping.status === 'quoted'` and cost is positive. |
+| Fallback/free shipping adds no positive MP shipping amount | PASS (static + build) | `addShippingItemOnce()` returns original items unless status is `quoted` and cost > 0. |
+| Import runs only after approved payment | PASS (static + build) | Webhook calls `importShipmentAfterApproval()` only under `status === 'approved'`. |
+| Import idempotency | PASS (static + build) | Webhook skips terminal/in-progress statuses and atomically claims only `shipping_import_status IN ('pending')` before import. |
+| Webhook tenant-safe resolution | PASS (static + build) | Missing `preference_id` logs and returns; normal lookup uses `mp_preference_id`; updates/import claim/results include `.eq('tenant_id', resolvedTenantId)`. |
 
-## Findings
+## Correctness findings
 
 ### CRITICAL
 
@@ -46,16 +53,13 @@ None.
 
 ### WARNING
 
-1. **No runtime scenario coverage found for package-data validation/persistence** — source inspection confirms validation and mappings, and build passes, but no browser/manual verification artifact proves create/edit rejection and persistence behavior at runtime.
+1. No browser/manual scenario run or dedicated automated scenario tests were executed; evidence is source inspection plus setup/syntax/build checks.
+2. PR3 diff is ~535 changed lines, above the nominal 400-line review budget, but it remains within the orchestrator-approved stacked-to-main PR3 boundary.
 
 ### SUGGESTION
 
-1. Consider replacing newly added native `alert()` validation feedback with the project's modal/notification pattern when this UI is next touched. Existing files already use `alert()`, so this is not a PR 1 blocker.
+1. If time permits before opening PR, add a minimal webhook unit-style harness for missing `preference_id`, approved import claim, and duplicate webhook skip.
 
-## Fixes applied
+## Safe to commit
 
-None.
-
-## Next recommended
-
-- Add a focused runtime/manual verification artifact for package-field rejection and persistence, or implement a small targeted test if the project test harness is available.
+Yes — no blocking findings remain for PR3 after the webhook tenant-safety fix. Commit should include only the seven focused PR3 files currently modified.

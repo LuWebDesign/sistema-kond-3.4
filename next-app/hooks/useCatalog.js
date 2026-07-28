@@ -58,6 +58,10 @@ function mapProducto(p) {
     margenMaterial: p.margen_material || 0,
     precioUnitario: p.precio_unitario || 0,
     precioPromos: p.precio_promos || 0,
+    packageWeightKg: p.package_weight_kg,
+    packageLengthCm: p.package_length_cm,
+    packageWidthCm: p.package_width_cm,
+    packageHeightCm: p.package_height_cm,
     stock: p.stock || 0,
     unidades: p.unidades || 1,
     ensamble: p.ensamble || 'Sin ensamble',
@@ -171,7 +175,11 @@ export function useCart() {
           categoria: prod.categoria,
           tipo: prod.tipo,
           precioUnitario: prod.precio_unitario || 0,
-          medidas: prod.medidas
+          medidas: prod.medidas,
+          packageWeightKg: prod.package_weight_kg,
+          packageLengthCm: prod.package_length_cm,
+          packageWidthCm: prod.package_width_cm,
+          packageHeightCm: prod.package_height_cm
         }
         const promo = applyPromotionsToProduct(productoMapeado, cachedPromociones)
         const promoPrice = promo && promo.hasPromotion ? promo.discountedPrice : productoMapeado.precioUnitario
@@ -179,7 +187,11 @@ export function useCart() {
         return {
           ...item,
           price: unitPrice,
-          originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice)
+          originalPrice: item.originalPrice !== undefined && item.originalPrice !== null ? item.originalPrice : (productoMapeado.precioUnitario || unitPrice),
+          packageWeightKg: item.packageWeightKg ?? productoMapeado.packageWeightKg,
+          packageLengthCm: item.packageLengthCm ?? productoMapeado.packageLengthCm,
+          packageWidthCm: item.packageWidthCm ?? productoMapeado.packageWidthCm,
+          packageHeightCm: item.packageHeightCm ?? productoMapeado.packageHeightCm
         }
       } catch (e) {
         return item
@@ -244,6 +256,10 @@ export function useCart() {
         // originalPrice: precio base del producto (para mostrar ahorro si aplica)
         originalPrice: product.precioUnitario || unitPrice,
         measures: product.medidas || '',
+        packageWeightKg: product.packageWeightKg ?? product.package_weight_kg ?? null,
+        packageLengthCm: product.packageLengthCm ?? product.package_length_cm ?? null,
+        packageWidthCm: product.packageWidthCm ?? product.package_width_cm ?? null,
+        packageHeightCm: product.packageHeightCm ?? product.package_height_cm ?? null,
         image: (product.imagenes && product.imagenes[0]) || product.imagen || '',
         quantity,
         tiempoUnitario: product.tiempoUnitario || '00:00:00',
@@ -565,6 +581,10 @@ export function useOrders() {
           : Number(orderData.montoRecibido || 0)
       }
 
+      if (orderData.shipping) {
+        pedidoData.shipping = orderData.shipping
+      }
+
       // Determinar si aplica envío gratis a todo el carrito
       pedidoData.envioGratis = false
       try {
@@ -715,6 +735,7 @@ export function useOrders() {
           ...orderData,
           id: data.pedido.id,
           envioGratis: data.pedido.envio_gratis || pedidoData.envioGratis || false,
+          shipping: orderData.shipping || null,
           fechaCreacion: new Date().toISOString()
         }
         existingOrders.push(orderForStorage)
