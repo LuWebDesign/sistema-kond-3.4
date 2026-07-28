@@ -105,6 +105,12 @@ async function generateRandomId() {
   throw new Error('No se pudo generar un ID único después de múltiples intentos');
 }
 
+function parsePackageValueOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 /**
  * Crear un nuevo producto
  */
@@ -150,6 +156,10 @@ export async function createProducto(producto) {
       categoria: producto.categoria,
       tipo: producto.tipo || 'Stock',
       medidas: producto.medidas,
+      package_weight_kg: parsePackageValueOrNull(producto.packageWeightKg ?? producto.package_weight_kg),
+      package_length_cm: parsePackageValueOrNull(producto.packageLengthCm ?? producto.package_length_cm),
+      package_width_cm: parsePackageValueOrNull(producto.packageWidthCm ?? producto.package_width_cm),
+      package_height_cm: parsePackageValueOrNull(producto.packageHeightCm ?? producto.package_height_cm),
       tiempo_unitario: producto.tiempoUnitario || producto.tiempo_unitario || '00:00:30',
       publicado: producto.publicado || false,
       hidden_in_productos: producto.hiddenInProductos || producto.hidden_in_productos || false,
@@ -218,6 +228,14 @@ export async function updateProducto(id, producto) {
     if (producto.categoria !== undefined) updateData.categoria = producto.categoria;
     if (producto.tipo !== undefined) updateData.tipo = producto.tipo;
     if (producto.medidas !== undefined) updateData.medidas = producto.medidas;
+    if (producto.packageWeightKg !== undefined) updateData.package_weight_kg = parsePackageValueOrNull(producto.packageWeightKg);
+    if (producto.package_weight_kg !== undefined) updateData.package_weight_kg = parsePackageValueOrNull(producto.package_weight_kg);
+    if (producto.packageLengthCm !== undefined) updateData.package_length_cm = parsePackageValueOrNull(producto.packageLengthCm);
+    if (producto.package_length_cm !== undefined) updateData.package_length_cm = parsePackageValueOrNull(producto.package_length_cm);
+    if (producto.packageWidthCm !== undefined) updateData.package_width_cm = parsePackageValueOrNull(producto.packageWidthCm);
+    if (producto.package_width_cm !== undefined) updateData.package_width_cm = parsePackageValueOrNull(producto.package_width_cm);
+    if (producto.packageHeightCm !== undefined) updateData.package_height_cm = parsePackageValueOrNull(producto.packageHeightCm);
+    if (producto.package_height_cm !== undefined) updateData.package_height_cm = parsePackageValueOrNull(producto.package_height_cm);
     if (producto.tiempoUnitario !== undefined) updateData.tiempo_unitario = producto.tiempoUnitario;
     if (producto.tiempo_unitario !== undefined) updateData.tiempo_unitario = producto.tiempo_unitario;
     if (producto.publicado !== undefined) updateData.publicado = producto.publicado;

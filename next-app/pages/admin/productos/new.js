@@ -66,6 +66,10 @@ function NewProductComponent() {
     subcategoriaNombre: '',       // modo texto: nombre de la subcategoría a crear
     tipo: 'Corte Laser',
     medidas: '',
+    packageWeightKg: '',
+    packageLengthCm: '',
+    packageWidthCm: '',
+    packageHeightCm: '',
     tiempoUnitario: '00:00:30',
     unidades: 1,
     unidadesPorPlaca: 1,
@@ -374,7 +378,7 @@ function NewProductComponent() {
   const handleInputChange = (e) => {
     const { name, value } = e.target
 
-    const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos', 'stock'])
+    const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos', 'stock', 'packageWeightKg', 'packageLengthCm', 'packageWidthCm', 'packageHeightCm'])
 
     let newValue = value
     if (numericFields.has(name)) {
@@ -390,6 +394,23 @@ function NewProductComponent() {
       ...prev,
       [name]: newValue
     }))
+  }
+
+  const hasValidPackageData = (data = formData) => (
+    Number(data.packageWeightKg) > 0 &&
+    Number(data.packageLengthCm) > 0 &&
+    Number(data.packageWidthCm) > 0 &&
+    Number(data.packageHeightCm) > 0
+  )
+
+  const validatePackageData = (data = formData) => {
+    if (hasValidPackageData(data)) return true
+    alert('Completá Datos de envío: peso en kg y largo, ancho/profundidad y alto en cm.')
+    const firstMissing = ['packageWeightKg', 'packageLengthCm', 'packageWidthCm', 'packageHeightCm']
+      .find(field => !(Number(data[field]) > 0))
+    const el = firstMissing ? document.querySelector(`[name="${firstMissing}"]`) : null
+    if (el) el.focus()
+    return false
   }
 
   // Manejar Enter para pasar al siguiente campo
@@ -413,6 +434,8 @@ function NewProductComponent() {
   // Agregar nuevo producto
   const handleAddProduct = async () => {
     try {
+      if (!validatePackageData()) return
+
       // Si el usuario eligió crear una nueva subcategoría inline
       let finalCategoriaId = formData.categoriaId && formData.categoriaId !== '__nueva_sub__'
         ? Number(formData.categoriaId)
@@ -517,6 +540,10 @@ function NewProductComponent() {
         tipo: finalFormData.tipo,
         tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
+        packageWeightKg: finalFormData.packageWeightKg,
+        packageLengthCm: finalFormData.packageLengthCm,
+        packageWidthCm: finalFormData.packageWidthCm,
+        packageHeightCm: finalFormData.packageHeightCm,
         tiempoUnitario: finalFormData.tiempoUnitario,
         publicado: finalFormData.publicado || false,
         featured: finalFormData.featured || false,
@@ -630,6 +657,12 @@ function NewProductComponent() {
         setTimeout(() => note.remove(), 1400)
       }
     } catch (e) {}
+    return true
+  }
+
+  const saveShippingInfo = () => {
+    if (!validatePackageData()) return false
+    try { if (typeof window !== 'undefined') { const note = document.createElement('div'); note.textContent = 'Datos de envío guardados'; note.style.cssText = `position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 600;`; document.body.appendChild(note); setTimeout(() => note.remove(), 1400) } } catch (e) {}
     return true
   }
 
@@ -1035,6 +1068,36 @@ function NewProductComponent() {
                   onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                 />
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            icon="🚚"
+            title="Datos de envío"
+            defaultCollapsed={true}
+            summary={hasValidPackageData() ? `${formData.packageWeightKg} kg • ${formData.packageLengthCm}×${formData.packageWidthCm}×${formData.packageHeightCm} cm` : undefined}
+            onSave={saveShippingInfo}
+          >
+            <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              Datos del paquete para cotizar envíos. No reemplazan las medidas visibles del producto.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Peso (kg) <span style={{ color: '#ef4444' }}>*</span></label>
+                <input type="number" name="packageWeightKg" value={formData.packageWeightKg} onChange={handleInputChange} min="0.001" step="0.001" placeholder="0.250" style={inputBase} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Largo (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                <input type="number" name="packageLengthCm" value={formData.packageLengthCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="20" style={inputBase} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Ancho/profundidad (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                <input type="number" name="packageWidthCm" value={formData.packageWidthCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="15" style={inputBase} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Alto (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                <input type="number" name="packageHeightCm" value={formData.packageHeightCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="5" style={inputBase} />
               </div>
             </div>
           </CollapsibleSection>
@@ -1737,12 +1800,12 @@ function NewProductComponent() {
           }}>
             <button
               onClick={handleAddProduct}
-              disabled={!formData.nombre || !formData.medidas}
+              disabled={!formData.nombre || !formData.medidas || !hasValidPackageData()}
               style={{
                 ...btnPrimary,
                 flex: 1,
-                opacity: (!formData.nombre || !formData.medidas) ? 0.5 : 1,
-                cursor: (!formData.nombre || !formData.medidas) ? 'not-allowed' : 'pointer'
+                opacity: (!formData.nombre || !formData.medidas || !hasValidPackageData()) ? 0.5 : 1,
+                cursor: (!formData.nombre || !formData.medidas || !hasValidPackageData()) ? 'not-allowed' : 'pointer'
               }}
             >
               💾 Agregar Producto

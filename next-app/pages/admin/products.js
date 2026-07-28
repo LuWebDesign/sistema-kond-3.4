@@ -91,6 +91,10 @@ function ProductsComponent() {
     categoriaPersonalizada: '',
   tipo: 'Corte Laser',
     medidas: '',
+    packageWeightKg: '',
+    packageLengthCm: '',
+    packageWidthCm: '',
+    packageHeightCm: '',
     tiempoUnitario: '00:00:30',
     unidades: 1,
     unidadesPorPlaca: 1,
@@ -246,6 +250,10 @@ function ProductsComponent() {
           categoria: p.categoria,
           tipo: p.tipo,
           medidas: p.medidas,
+          packageWeightKg: p.package_weight_kg,
+          packageLengthCm: p.package_length_cm,
+          packageWidthCm: p.package_width_cm,
+          packageHeightCm: p.package_height_cm,
           tiempoUnitario: p.tiempo_unitario || '00:00:30',
           active: p.active !== undefined ? p.active : true,
           publicado: p.publicado !== undefined ? p.publicado : false,
@@ -445,6 +453,10 @@ function ProductsComponent() {
         categoria_id: p.categoria_id || null,
         tipo: p.tipo,
         medidas: p.medidas,
+        packageWeightKg: p.package_weight_kg,
+        packageLengthCm: p.package_length_cm,
+        packageWidthCm: p.package_width_cm,
+        packageHeightCm: p.package_height_cm,
         tiempoUnitario: p.tiempo_unitario || '00:00:30',
         active: p.active !== undefined ? p.active : true,
         publicado: p.publicado !== undefined ? p.publicado : false,
@@ -637,7 +649,7 @@ function ProductsComponent() {
     const { name, value } = e.target
 
     // Campos que deben ser tratados como números
-  const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos', 'stock'])
+  const numericFields = new Set(['unidades', 'unidadesPorPlaca', 'usoPlacas', 'costoPlaca', 'costoMaterial', 'margenMaterial', 'precioUnitario', 'precioPromos', 'stock', 'packageWeightKg', 'packageLengthCm', 'packageWidthCm', 'packageHeightCm'])
 
     let newValue = value
     if (numericFields.has(name)) {
@@ -655,6 +667,22 @@ function ProductsComponent() {
       ...prev,
       [name]: newValue
     }))
+  }
+
+  const hasValidPackageData = (data = formData) => (
+    Number(data.packageWeightKg) > 0 &&
+    Number(data.packageLengthCm) > 0 &&
+    Number(data.packageWidthCm) > 0 &&
+    Number(data.packageHeightCm) > 0
+  )
+
+  const validatePackageData = (data = formData) => {
+    if (hasValidPackageData(data)) return true
+    alert('Completá Datos de envío: peso en kg y largo, ancho/profundidad y alto en cm.')
+    const firstMissing = ['packageWeightKg', 'packageLengthCm', 'packageWidthCm', 'packageHeightCm'].find(field => !(Number(data[field]) > 0))
+    const el = firstMissing ? document.querySelector(`[name="${firstMissing}"]`) : null
+    if (el) el.focus()
+    return false
   }
 
   // Actualizar campos calculados cuando cambien inputs relevantes (una sola pasada, sin cascada)
@@ -741,6 +769,8 @@ function ProductsComponent() {
   // Agregar nuevo producto
   const handleAddProduct = async () => {
     try {
+      if (!validatePackageData()) return
+
       // Determinar la categoría final (personalizada o seleccionada)
       const categoriaFinal = formData.categoriaPersonalizada?.trim() || formData.categoria
       
@@ -765,6 +795,10 @@ function ProductsComponent() {
         tipo: finalFormData.tipo,
         tipo_trabajo: finalFormData.tipo || finalFormData.tipo_trabajo,
         medidas: finalFormData.medidas,
+        packageWeightKg: finalFormData.packageWeightKg,
+        packageLengthCm: finalFormData.packageLengthCm,
+        packageWidthCm: finalFormData.packageWidthCm,
+        packageHeightCm: finalFormData.packageHeightCm,
         tiempoUnitario: finalFormData.tiempoUnitario,
         publicado: finalFormData.publicado || false,
         hiddenInProductos: false,
@@ -833,6 +867,10 @@ function ProductsComponent() {
         categoriaPersonalizada: '',
           tipo: 'Corte Laser',
         medidas: '',
+        packageWeightKg: '',
+        packageLengthCm: '',
+        packageWidthCm: '',
+        packageHeightCm: '',
         tiempoUnitario: '00:00:30',
         unidades: 1,
         unidadesPorPlaca: 1,
@@ -1787,6 +1825,43 @@ function ProductsComponent() {
                 </div>
               </div>
 
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(96, 165, 250, 0.08) 100%)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '20px' }}>🚚</span>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Datos de envío
+                  </h4>
+                </div>
+                <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  Datos del paquete para cotizar envíos. No reemplazan las medidas visibles del producto.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Peso (kg) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="number" name="packageWeightKg" value={formData.packageWeightKg} onChange={handleInputChange} min="0.001" step="0.001" placeholder="0.250" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.95rem' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Largo (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="number" name="packageLengthCm" value={formData.packageLengthCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="20" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.95rem' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Ancho/profundidad (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="number" name="packageWidthCm" value={formData.packageWidthCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="15" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.95rem' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Alto (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input type="number" name="packageHeightCm" value={formData.packageHeightCm} onChange={handleInputChange} min="0.1" step="0.1" placeholder="5" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '2px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.95rem' }} />
+                  </div>
+                </div>
+              </div>
+
               {/* Descripción */}
               <div style={{
                 background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.08) 100%)',
@@ -2712,12 +2787,12 @@ function ProductsComponent() {
               }}>
                 <button
                   onClick={handleAddProduct}
-                  disabled={!formData.nombre || !formData.medidas}
+                  disabled={!formData.nombre || !formData.medidas || !hasValidPackageData()}
                   style={{
                     ...btnPrimary,
                     flex: 1,
-                    opacity: (!formData.nombre || !formData.medidas) ? 0.5 : 1,
-                    cursor: (!formData.nombre || !formData.medidas) ? 'not-allowed' : 'pointer'
+                    opacity: (!formData.nombre || !formData.medidas || !hasValidPackageData()) ? 0.5 : 1,
+                    cursor: (!formData.nombre || !formData.medidas || !hasValidPackageData()) ? 'not-allowed' : 'pointer'
                   }}
                 >
                   💾 Agregar Producto
@@ -2888,6 +2963,10 @@ function ProductCard({
     categoria: product.categoria || '',
     categoria_id: product.categoria_id || null,
     medidas: product.medidas || '',
+    packageWeightKg: product.packageWeightKg ?? '',
+    packageLengthCm: product.packageLengthCm ?? '',
+    packageWidthCm: product.packageWidthCm ?? '',
+    packageHeightCm: product.packageHeightCm ?? '',
     tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
     materialId: product.materialId || '',
     material: product.material || '',
@@ -2919,6 +2998,10 @@ function ProductCard({
       categoria: product.categoria || '',
       categoria_id: product.categoria_id || null,
       medidas: product.medidas || '',
+      packageWeightKg: product.packageWeightKg ?? '',
+      packageLengthCm: product.packageLengthCm ?? '',
+      packageWidthCm: product.packageWidthCm ?? '',
+      packageHeightCm: product.packageHeightCm ?? '',
       tipo: product.tipo_trabajo || product.tipo || 'Corte Laser',
       materialId: product.materialId || '',
       material: product.material || '',
@@ -3062,6 +3145,19 @@ function ProductCard({
       ...prev,
       [fieldName]: !prev[fieldName]
     }))
+  }
+
+  const hasValidPackageData = (data = editData) => (
+    Number(data.packageWeightKg) > 0 &&
+    Number(data.packageLengthCm) > 0 &&
+    Number(data.packageWidthCm) > 0 &&
+    Number(data.packageHeightCm) > 0
+  )
+
+  const validatePackageData = (data = editData) => {
+    if (hasValidPackageData(data)) return true
+    alert('Completá Datos de envío: peso en kg y largo, ancho/profundidad y alto en cm.')
+    return false
   }
 
   // Manejar cambio de imagen (agregar nuevas manteniendo las existentes)
@@ -3243,6 +3339,7 @@ function ProductCard({
         alert('El precio debe ser mayor a 0')
         return
       }
+      if (!validatePackageData(finalData)) return
 
       await onSaveChanges(product.id, finalData)
     } catch (error) {
@@ -3255,6 +3352,7 @@ function ProductCard({
   const handleSaveSilent = async () => {
     try {
       const finalData = await buildFinalData()
+      if (!validatePackageData(finalData)) return
       const { error } = await updateProducto(product.id, finalData)
       if (error) {
         console.error('Error al guardar sección:', error)
@@ -4553,6 +4651,21 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
     if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
 
+  const hasValidPackageData = () => (
+    Number(editData.packageWeightKg) > 0 &&
+    Number(editData.packageLengthCm) > 0 &&
+    Number(editData.packageWidthCm) > 0 &&
+    Number(editData.packageHeightCm) > 0
+  )
+
+  const saveShippingInfo = async () => {
+    if (!hasValidPackageData()) {
+      alert('Completá Datos de envío: peso en kg y largo, ancho/profundidad y alto en cm.')
+      return
+    }
+    if (typeof onSaveSilent === 'function') await onSaveSilent()
+  }
+
   const saveProductionInfo = async () => {
     if (typeof onSaveSilent === 'function') await onSaveSilent()
   }
@@ -4677,6 +4790,36 @@ function EditFormV2({ editData, setEditData, imagePreviews, onImageChange, onReo
               <option value="Grabado Laser">Grabado Laser</option>
               <option value="Corte CNC">Corte CNC</option>
             </select>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        icon="🚚"
+        title="Datos de envío"
+        defaultCollapsed={true}
+        summary={hasValidPackageData() ? `${editData.packageWeightKg} kg • ${editData.packageLengthCm}×${editData.packageWidthCm}×${editData.packageHeightCm} cm` : undefined}
+        onSave={saveShippingInfo}
+      >
+        <p style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          Datos del paquete para cotizar envíos. No reemplazan las medidas visibles del producto.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
+          <div>
+            <label style={labelStyle}>Peso (kg) <span style={{ color: '#ef4444' }}>*</span></label>
+            <input type="number" name="packageWeightKg" value={editData.packageWeightKg} onChange={e => handleInputChange('packageWeightKg', Number(e.target.value))} min="0.001" step="0.001" placeholder="0.250" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Largo (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+            <input type="number" name="packageLengthCm" value={editData.packageLengthCm} onChange={e => handleInputChange('packageLengthCm', Number(e.target.value))} min="0.1" step="0.1" placeholder="20" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Ancho/profundidad (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+            <input type="number" name="packageWidthCm" value={editData.packageWidthCm} onChange={e => handleInputChange('packageWidthCm', Number(e.target.value))} min="0.1" step="0.1" placeholder="15" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Alto (cm) <span style={{ color: '#ef4444' }}>*</span></label>
+            <input type="number" name="packageHeightCm" value={editData.packageHeightCm} onChange={e => handleInputChange('packageHeightCm', Number(e.target.value))} min="0.1" step="0.1" placeholder="5" style={inputStyle} />
           </div>
         </div>
       </CollapsibleSection>
