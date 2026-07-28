@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import PublicLayout from '../../components/PublicLayout'
 import AvailabilityCalendar from '../../components/AvailabilityCalendar'
@@ -17,6 +17,47 @@ import { getPromocionesActivas } from '../../utils/supabaseMarketing'
 import { applyPromotionsToCart, applyTransferDiscount } from '../../utils/promoEngine'
 import { useNotifications } from '../../components/NotificationsProvider'
 
+const PROVINCES = 'B:Buenos Aires|C:Ciudad Autónoma de Buenos Aires|K:Catamarca|H:Chaco|U:Chubut|X:Córdoba|W:Corrientes|E:Entre Ríos|P:Formosa|Y:Jujuy|L:La Pampa|F:La Rioja|M:Mendoza|N:Misiones|Q:Neuquén|R:Río Negro|A:Salta|J:San Juan|D:San Luis|Z:Santa Cruz|S:Santa Fe|G:Santiago del Estero|V:Tierra del Fuego|T:Tucumán'
+  .split('|').map(item => { const [code, name] = item.split(':'); return { code, name } })
+
+const toPositiveNumber = (value) => {
+  const number = Number(value)
+  return Number.isFinite(number) && number > 0 ? number : null
+}
+
+function normalizeDeliveryTypeForApi(type) {
+  return type === 'sucursal' ? 'agency' : 'home'
+}
+
+function formatShippingDeliveryType(type) {
+  return type === 'sucursal' ? 'Sucursal' : 'Domicilio'
+}
+
+function buildPackageFromCart(cart, products) {
+  let weightKg = 0
+  let lengthCm = 0
+  let widthCm = 0
+  let heightCm = 0
+
+  for (const item of cart || []) {
+    const product = (products || []).find(p => String(p.id) === String(item.productId || item.idProducto)) || {}
+    const itemWeight = toPositiveNumber(item.packageWeightKg ?? product.packageWeightKg)
+    const itemLength = toPositiveNumber(item.packageLengthCm ?? product.packageLengthCm)
+    const itemWidth = toPositiveNumber(item.packageWidthCm ?? product.packageWidthCm)
+    const itemHeight = toPositiveNumber(item.packageHeightCm ?? product.packageHeightCm)
+    if (!itemWeight || !itemLength || !itemWidth || !itemHeight) return null
+    const quantity = Math.max(1, Number(item.quantity) || 1)
+    weightKg += itemWeight * quantity
+    lengthCm = Math.max(lengthCm, itemLength)
+    widthCm = Math.max(widthCm, itemWidth)
+    heightCm = Math.max(heightCm, itemHeight)
+  }
+
+  return weightKg > 0 && lengthCm > 0 && widthCm > 0 && heightCm > 0
+    ? { weightKg, lengthCm, widthCm, heightCm }
+    : null
+}
+
 export default function FinalizarCompraPage() {
   const router = useRouter()
   const { cart, clearCart, subtotal } = useCart()
@@ -27,11 +68,20 @@ export default function FinalizarCompraPage() {
   const addNotification = notificationsContext?.addNotification
 
   const discount = calculateDiscount(subtotal)
-  const total = Math.max(0, subtotal - discount)
+  const productTotal = Math.max(0, subtotal - discount)
 
   const [paymentMethod, setPaymentMethod] = useState('')
   const [activePromos, setActivePromos] = useState([])
   const [deliveryMethod, setDeliveryMethod] = useState('retiro')
+  const [shippingDeliveryType, setShippingDeliveryType] = useState('domicilio')
+  const [shippingDestination, setShippingDestination] = useState({ postalCode: '', provinceCode: '' })
+  const [shippingRates, setShippingRates] = useState([])
+  const [selectedShippingRate, setSelectedShippingRate] = useState(null)
+  const [shippingAgencies, setShippingAgencies] = useState([])
+  const [selectedShippingAgencyCode, setSelectedShippingAgencyCode] = useState('')
+  const [shippingQuoteStatus, setShippingQuoteStatus] = useState('idle')
+  const [shippingQuoteError, setShippingQuoteError] = useState('')
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false)
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(null)
   const [paymentConfig, setPaymentConfig] = useState(null)
   const [freeShippingEligible, setFreeShippingEligible] = useState(false)
@@ -41,8 +91,6 @@ export default function FinalizarCompraPage() {
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
   const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
 
-  // Descuento de promo transferencia (se recalcula según paymentMethod activo)
-  const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, total) : 0
   const transferPromoPct = paymentMethod === 'transferencia'
     ? (() => {
         const tp = activePromos.find(p => (p.tipo || p.type) === 'transfer_discount' && p.activo !== false)
@@ -50,6 +98,13 @@ export default function FinalizarCompraPage() {
         return dtype === 'percentage' ? (tp?.descuentoPorcentaje || tp?.descuento_porcentaje || 0) : 0
       })()
     : 0
+  const selectedShippingAgency = shippingAgencies.find(agency => String(agency.code) === String(selectedShippingAgencyCode)) || null
+  const shippingPackage = useMemo(() => buildPackageFromCart(cart, products), [cart, products])
+  const quotedShippingCost = selectedShippingRate ? Number(selectedShippingRate.cost || 0) : null
+  const paidShippingCost = deliveryMethod === 'envio' && !freeShippingEligible && quotedShippingCost > 0 ? quotedShippingCost : 0
+  const total = productTotal + paidShippingCost
+  // Descuento de promo transferencia (se recalcula según paymentMethod activo)
+  const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, productTotal) : 0
   const finalTotal = paymentMethod === 'transferencia' ? Math.max(0, total - transferPromoDiscount) : total
 
   const paymentSectionRef = useRef(null)
@@ -67,6 +122,11 @@ export default function FinalizarCompraPage() {
         address: [u.direccion || u.address || '', u.localidad || u.city || '', u.cp || u.zip || '', u.provincia || u.state || ''].filter(Boolean).join(', ')
       }
       setCustomerData(data)
+      setShippingDestination(prev => ({
+        ...prev,
+        postalCode: prev.postalCode || u.cp || u.zip || u.codigoPostal || '',
+        provinceCode: prev.provinceCode || u.provinciaCodigo || u.provinceCode || ''
+      }))
       // Auto-colapsar perfil si ya está completo
       if (data.name && data.phone) setIsProfileCollapsed(true)
     } catch { /* optional prefill: ignore if user data unavailable */ }
@@ -127,6 +187,11 @@ export default function FinalizarCompraPage() {
         email: user.email || user.correo || prev.email,
         address: [user.direccion || user.address || '', user.localidad || user.city || '', user.cp || user.zip || '', user.provincia || user.state || ''].filter(Boolean).join(', ') || prev.address
       }))
+      setShippingDestination(prev => ({
+        ...prev,
+        postalCode: prev.postalCode || user.cp || user.zip || user.codigoPostal || '',
+        provinceCode: prev.provinceCode || user.provinciaCodigo || user.provinceCode || ''
+      }))
     }
     const onUserUpdated = (e) => {
       try { applyUser(e?.detail || getCurrentUser()) } catch { /* event handler: ignore if user data invalid */ }
@@ -143,6 +208,90 @@ export default function FinalizarCompraPage() {
       window.removeEventListener('storage', onStorage)
     }
   }, [])
+
+  useEffect(() => {
+    if (deliveryMethod !== 'envio') {
+      setShippingRates([])
+      setSelectedShippingRate(null)
+      setShippingQuoteStatus('idle')
+      setShippingQuoteError('')
+      return
+    }
+
+    const postalCode = shippingDestination.postalCode.replace(/\D/g, '')
+    if (!postalCode || !shippingPackage) {
+      setShippingRates([])
+      setSelectedShippingRate(null)
+      setShippingQuoteStatus('unavailable')
+      setShippingQuoteError(!shippingPackage ? 'Package shipping data is incomplete' : '')
+      return
+    }
+
+    let cancelled = false
+    const loadRates = async () => {
+      setIsLoadingShipping(true)
+      try {
+        const response = await fetch('/api/shipping/rates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postalCodeDestination: postalCode,
+            provinceCode: shippingDestination.provinceCode || undefined,
+            deliveryType: normalizeDeliveryTypeForApi(shippingDeliveryType),
+            package: shippingPackage,
+          })
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (cancelled) return
+        const rates = Array.isArray(payload?.rates) ? payload.rates : []
+        setShippingRates(rates)
+        setSelectedShippingRate(rates[0] || null)
+        setShippingQuoteStatus(payload?.available && rates.length > 0 ? 'available' : 'unavailable')
+        setShippingQuoteError(payload?.available ? '' : (payload?.error?.message || payload?.error || ''))
+      } catch {
+        if (!cancelled) {
+          setShippingRates([])
+          setSelectedShippingRate(null)
+          setShippingQuoteStatus('unavailable')
+          setShippingQuoteError('')
+        }
+      } finally {
+        if (!cancelled) setIsLoadingShipping(false)
+      }
+    }
+
+    loadRates()
+    return () => { cancelled = true }
+  }, [deliveryMethod, shippingDeliveryType, shippingDestination.postalCode, shippingDestination.provinceCode, shippingPackage])
+
+  useEffect(() => {
+    if (deliveryMethod !== 'envio' || shippingDeliveryType !== 'sucursal' || !shippingDestination.provinceCode) {
+      setShippingAgencies([])
+      setSelectedShippingAgencyCode('')
+      return
+    }
+
+    let cancelled = false
+    const loadAgencies = async () => {
+      try {
+        const params = new URLSearchParams({ provinceCode: shippingDestination.provinceCode })
+        const response = await fetch(`/api/shipping/agencies?${params.toString()}`)
+        const payload = await response.json().catch(() => ({}))
+        if (cancelled) return
+        const agencies = Array.isArray(payload?.agencies) ? payload.agencies : []
+        setShippingAgencies(agencies)
+        setSelectedShippingAgencyCode(current => current || agencies[0]?.code || '')
+      } catch {
+        if (!cancelled) {
+          setShippingAgencies([])
+          setSelectedShippingAgencyCode('')
+        }
+      }
+    }
+
+    loadAgencies()
+    return () => { cancelled = true }
+  }, [deliveryMethod, shippingDeliveryType, shippingDestination.provinceCode])
 
   // Calcular envío gratis
   useEffect(() => {
@@ -200,16 +349,55 @@ export default function FinalizarCompraPage() {
     router.push('/catalog')
   }, [clearCart, router])
 
+  const buildSelectedShippingSnapshot = useCallback(() => {
+    if (deliveryMethod !== 'envio') return null
+
+    const hasQuote = !!selectedShippingRate && Number(selectedShippingRate.cost) > 0
+    const status = freeShippingEligible
+      ? 'free'
+      : hasQuote
+        ? 'quoted'
+        : 'to_quote'
+
+    return {
+      provider: selectedShippingRate?.provider || 'correo_argentino',
+      deliveryType: shippingDeliveryType,
+      serviceCode: selectedShippingRate?.serviceCode || null,
+      serviceName: selectedShippingRate?.serviceName || (shippingDeliveryType === 'sucursal' ? 'Sucursal' : 'Domicilio'),
+      cost: status === 'quoted' ? Number(selectedShippingRate.cost) : 0,
+      currency: selectedShippingRate?.currency || 'ARS',
+      status,
+      importStatus: 'pending',
+      manualFollowupRequired: status === 'to_quote',
+      quoteSnapshot: selectedShippingRate ? { ...selectedShippingRate } : null,
+      destinationSnapshot: {
+        postalCode: shippingDestination.postalCode.replace(/\D/g, ''),
+        provinceCode: shippingDestination.provinceCode || null,
+        provinceName: PROVINCES.find(p => p.code === shippingDestination.provinceCode)?.name || null,
+        street: customerData.address || null,
+        package: shippingPackage,
+      },
+      agencySnapshot: shippingDeliveryType === 'sucursal' && selectedShippingAgency ? { ...selectedShippingAgency } : null,
+    }
+  }, [customerData.address, deliveryMethod, freeShippingEligible, selectedShippingAgency, selectedShippingRate, shippingDeliveryType, shippingDestination, shippingPackage])
+
   const handleMercadoPago = async () => {
     if (isSubmitting || isLoadingMP) return
     const validationErrors = validateCheckoutForm(customerData, 'mercadopago')
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
-    if (deliveryMethod === 'envio' && (!customerData.address || !customerData.address.trim())) {
+    if (deliveryMethod === 'envio' && !customerData.address.trim()) {
       return createToast('La dirección es requerida para envío', 'error')
+    }
+    if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
+      return createToast('El código postal es requerido para cotizar el envío', 'error')
+    }
+    if (deliveryMethod === 'envio' && shippingDeliveryType === 'sucursal' && !selectedShippingAgency) {
+      return createToast('Selecciona una sucursal para continuar', 'error')
     }
 
     setIsLoadingMP(true)
     try {
+      const shipping = buildSelectedShippingSnapshot()
       const orderData = {
         cliente: {
           nombre: customerData.name,
@@ -239,6 +427,7 @@ export default function FinalizarCompraPage() {
         cuponValor: activeCoupon?.valor || null,
         comprobante: null,
         montoRecibido: 0,
+        shipping,
         appliedPromotions: [
           ...(freeShippingEligible ? [{
             type: 'free_shipping',
@@ -272,7 +461,8 @@ export default function FinalizarCompraPage() {
             failure: `${origin}/mi-carrito/mp-failure`,
             pending: `${origin}/mi-carrito/mp-pending`
           },
-          external_reference: String(pedidoId || '')
+          external_reference: String(pedidoId || ''),
+          shipping
         })
       })
 
@@ -295,8 +485,14 @@ export default function FinalizarCompraPage() {
     if (isSubmitting) return
     const validationErrors = validateCheckoutForm(customerData, paymentMethod)
     if (validationErrors.length > 0) return createToast(validationErrors[0], 'error')
-    if (deliveryMethod === 'envio' && (!customerData.address || !customerData.address.trim())) {
+    if (deliveryMethod === 'envio' && !customerData.address.trim()) {
       return createToast('La dirección es requerida para envío', 'error')
+    }
+    if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
+      return createToast('El código postal es requerido para cotizar el envío', 'error')
+    }
+    if (deliveryMethod === 'envio' && shippingDeliveryType === 'sucursal' && !selectedShippingAgency) {
+      return createToast('Selecciona una sucursal para continuar', 'error')
     }
     if (paymentMethod === 'transferencia' && paymentConfig?.calendario?.enabled !== false && !selectedDeliveryDate) {
       return createToast('Selecciona una fecha de entrega para transferencia', 'error')
@@ -307,6 +503,7 @@ export default function FinalizarCompraPage() {
 
     setIsSubmitting(true)
     try {
+      const shipping = buildSelectedShippingSnapshot()
       let comprobanteUrl = null
       if (paymentMethod === 'transferencia' && comprobante) {
         createToast('Subiendo comprobante...', 'info')
@@ -348,6 +545,7 @@ export default function FinalizarCompraPage() {
         descuentoTransferenciaPct: transferPromoPct > 0 ? transferPromoPct : undefined,
         comprobante: paymentMethod === 'transferencia' ? (comprobanteUrl || comprobante) : null,
         montoRecibido: paymentMethod === 'transferencia' ? Number(finalTotal) : 0,
+        shipping,
         appliedPromotions: [
           ...(transferPromoDiscount > 0 ? [{
             type: 'transfer_discount',
@@ -526,9 +724,45 @@ export default function FinalizarCompraPage() {
               </div>
               {deliveryMethod === 'envio' && (
                 <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>Completa tus datos de envío</div>
-                  <div>Para facilitar la coordinación, completa tu dirección en <strong>Mi Cuenta → Información de perfil</strong>.</div>
-                  <button onClick={() => router.push('/catalog/user')} style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--accent-blue)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13 }}>Ir a Mi Cuenta</button>
+                  <div style={{ fontWeight: 700, marginBottom: 10, color: 'var(--text-primary)' }}>Datos de envío</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <button type="button" onClick={() => setShippingDeliveryType('domicilio')} style={{ padding: '8px 12px', borderRadius: 8, border: shippingDeliveryType === 'domicilio' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: shippingDeliveryType === 'domicilio' ? 'var(--bg-hover)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: shippingDeliveryType === 'domicilio' ? 700 : 400 }}>Domicilio</button>
+                    <button type="button" onClick={() => setShippingDeliveryType('sucursal')} style={{ padding: '8px 12px', borderRadius: 8, border: shippingDeliveryType === 'sucursal' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: shippingDeliveryType === 'sucursal' ? 'var(--bg-hover)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: shippingDeliveryType === 'sucursal' ? 700 : 400 }}>Sucursal</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Código postal *</label>
+                      <input value={shippingDestination.postalCode} onChange={(e) => setShippingDestination(p => ({ ...p, postalCode: e.target.value }))} placeholder="Ej. 1406" inputMode="numeric" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Provincia</label>
+                      <select value={shippingDestination.provinceCode} onChange={(e) => setShippingDestination(p => ({ ...p, provinceCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                        <option value="">Seleccionar</option>
+                        {PROVINCES.map(province => <option key={province.code} value={province.code}>{province.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  {shippingDeliveryType === 'sucursal' && (
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Sucursal</label>
+                      <select value={selectedShippingAgencyCode} onChange={(e) => setSelectedShippingAgencyCode(e.target.value)} disabled={!shippingAgencies.length} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                        <option value="">{shippingAgencies.length ? 'Seleccionar sucursal' : 'Sin sucursales disponibles'}</option>
+                        {shippingAgencies.map(agency => <option key={agency.code || agency.name} value={agency.code}>{agency.name} {agency.city ? `— ${agency.city}` : ''}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {shippingRates.length > 1 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Cotización</label>
+                      <select value={selectedShippingRate?.serviceCode || ''} onChange={(e) => setSelectedShippingRate(shippingRates.find(rate => rate.serviceCode === e.target.value) || shippingRates[0] || null)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                        {shippingRates.map((rate, index) => <option key={`${rate.serviceCode || 'rate'}-${index}`} value={rate.serviceCode || ''}>{rate.serviceName} — {formatCurrency(rate.cost)}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 13 }}>
+                    {isLoadingShipping ? 'Cotizando envío...' : shippingQuoteStatus === 'available' && selectedShippingRate ? `Cotización seleccionada: ${selectedShippingRate.serviceName} — ${formatCurrency(selectedShippingRate.cost)}` : 'Envío: A cotizar'}
+                    {shippingQuoteError && <span style={{ display: 'block', marginTop: 4 }}>No pudimos obtener una cotización automática. Podés continuar.</span>}
+                  </div>
                 </div>
               )}
             </div>
@@ -735,7 +969,15 @@ export default function FinalizarCompraPage() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
-                  <div style={{ fontWeight: 700 }}>{deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? 'Envío gratis' : 'A cotizar'}</div>
+                  <div style={{ fontWeight: 700, textAlign: 'right' }}>
+                    {deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? (
+                      <span>
+                        {quotedShippingCost > 0 && <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: 6 }}>{formatCurrency(quotedShippingCost)}</span>}
+                        Envío gratis
+                      </span>
+                    ) : quotedShippingCost > 0 ? formatCurrency(quotedShippingCost) : 'A cotizar'}
+                    {deliveryMethod === 'envio' && <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>{formatShippingDeliveryType(shippingDeliveryType)}</div>}
+                  </div>
                 </div>
 
                 {transferPromoDiscount > 0 && (

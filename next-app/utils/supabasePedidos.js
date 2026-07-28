@@ -11,6 +11,50 @@ const log = process.env.NODE_ENV !== 'production'
   ? { warn: console.warn.bind(console), error: console.error.bind(console) }
   : { warn: () => {}, error: () => {} };
 
+function mapShippingForInsert(shipping) {
+  if (!shipping) return {};
+
+  return {
+    shipping_provider: shipping.provider || null,
+    shipping_delivery_type: shipping.deliveryType || null,
+    shipping_service_code: shipping.serviceCode || null,
+    shipping_service_name: shipping.serviceName || null,
+    shipping_cost: shipping.cost !== undefined && shipping.cost !== null ? Number(shipping.cost) : null,
+    shipping_currency: shipping.currency || null,
+    shipping_quote_snapshot: shipping.quoteSnapshot || null,
+    shipping_destination_snapshot: shipping.destinationSnapshot || null,
+    shipping_agency_snapshot: shipping.agencySnapshot || null,
+    shipping_status: shipping.status || null,
+    shipping_import_status: shipping.importStatus || null,
+    shipping_import_result: shipping.importResult || null,
+    shipping_imported_at: shipping.importedAt || null,
+    shipping_manual_followup_required: shipping.manualFollowupRequired ?? null,
+    shipping_tracking_number: shipping.trackingNumber || null,
+  };
+}
+
+function mapShippingFromDb(pedido) {
+  if (!pedido?.shipping_provider && !pedido?.shipping_delivery_type && !pedido?.shipping_status) return null;
+
+  return {
+    provider: pedido.shipping_provider || null,
+    deliveryType: pedido.shipping_delivery_type || null,
+    serviceCode: pedido.shipping_service_code || null,
+    serviceName: pedido.shipping_service_name || null,
+    cost: pedido.shipping_cost !== undefined && pedido.shipping_cost !== null ? Number(pedido.shipping_cost) : null,
+    currency: pedido.shipping_currency || null,
+    quoteSnapshot: pedido.shipping_quote_snapshot || null,
+    destinationSnapshot: pedido.shipping_destination_snapshot || null,
+    agencySnapshot: pedido.shipping_agency_snapshot || null,
+    status: pedido.shipping_status || null,
+    importStatus: pedido.shipping_import_status || null,
+    importResult: pedido.shipping_import_result || null,
+    importedAt: pedido.shipping_imported_at || null,
+    manualFollowupRequired: pedido.shipping_manual_followup_required ?? null,
+    trackingNumber: pedido.shipping_tracking_number || null,
+  };
+}
+
 /**
  * Generar ID aleatorio de 4 dígitos único para pedidos catálogo
  */
@@ -73,6 +117,10 @@ export async function getAllPedidosCatalogo() {
         applied_promotions,
         asignado_al_calendario,
         mp_preference_id, mp_payment_id, mp_payment_status,
+        shipping_provider, shipping_delivery_type, shipping_service_code, shipping_service_name,
+        shipping_cost, shipping_currency, shipping_quote_snapshot, shipping_destination_snapshot,
+        shipping_agency_snapshot, shipping_status, shipping_import_status, shipping_import_result,
+        shipping_imported_at, shipping_manual_followup_required, shipping_tracking_number,
         created_at, updated_at,
         items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
@@ -144,6 +192,7 @@ export async function getPedidosCatalogoParaCalendario() {
       createdAt: pedido.created_at,
       updatedAt: pedido.updated_at,
       envioGratis: pedido.envio_gratis || false,
+      shipping: mapShippingFromDb(pedido),
       // Compatibilidad con código antiguo
       fecha: pedido.fecha_creacion,
     }));
@@ -172,6 +221,11 @@ export async function getPedidoCatalogoById(id) {
         cupon_codigo, cupon_descuento, cupon_tipo, cupon_valor,
         applied_promotions,
         asignado_al_calendario,
+        mp_preference_id, mp_payment_id, mp_payment_status,
+        shipping_provider, shipping_delivery_type, shipping_service_code, shipping_service_name,
+        shipping_cost, shipping_currency, shipping_quote_snapshot, shipping_destination_snapshot,
+        shipping_agency_snapshot, shipping_status, shipping_import_status, shipping_import_result,
+        shipping_imported_at, shipping_manual_followup_required, shipping_tracking_number,
         created_at, updated_at,
         items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
       `)
@@ -235,6 +289,7 @@ export async function createPedidoCatalogo(pedido, items) {
         monto_recibido: montoRecibidoToInsert,
         envio_gratis: pedido.envioGratis || pedido.envio_gratis || false,
         ...(pedido.appliedPromotions ? { applied_promotions: pedido.appliedPromotions } : {}),
+        ...mapShippingForInsert(pedido.shipping),
         tenant_id: TENANT_ID,
       }])
       .select()
@@ -304,6 +359,7 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (pedidoUpdate.total) updateData.total = pedidoUpdate.total;
     if (pedidoUpdate.envioGratis !== undefined) updateData.envio_gratis = pedidoUpdate.envioGratis;
     if (pedidoUpdate.metodoEntrega) updateData.metodo_entrega = pedidoUpdate.metodoEntrega;
+    Object.assign(updateData, mapShippingForInsert(pedidoUpdate.shipping));
 
     const { data, error } = await supabase
       .from('pedidos_catalogo')
@@ -496,8 +552,12 @@ const PEDIDO_SELECT = `
   cupon_codigo, cupon_descuento, cupon_tipo, cupon_valor,
   applied_promotions,
   asignado_al_calendario,
-  mp_preference_id, mp_payment_id, mp_payment_status,
-  created_at, updated_at,
+        mp_preference_id, mp_payment_id, mp_payment_status,
+  shipping_provider, shipping_delivery_type, shipping_service_code, shipping_service_name,
+  shipping_cost, shipping_currency, shipping_quote_snapshot, shipping_destination_snapshot,
+  shipping_agency_snapshot, shipping_status, shipping_import_status, shipping_import_result,
+  shipping_imported_at, shipping_manual_followup_required, shipping_tracking_number,
+        created_at, updated_at,
   items:pedidos_catalogo_items(id, pedido_catalogo_id, producto_id, producto_nombre, producto_precio, cantidad, medidas, producto_imagen)
 `
 

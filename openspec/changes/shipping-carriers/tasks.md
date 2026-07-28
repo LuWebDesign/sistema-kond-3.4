@@ -17,17 +17,17 @@
 ## Phase 3: APIs, persistence, and import state
 
 - [x] 3.1 Create `next-app/pages/api/shipping/rates.js` and `next-app/pages/api/shipping/agencies.js`; inject server config and return normalized rates/agencies only.
-- [ ] 3.2 Add webhook-side import helper, or `next-app/pages/api/shipping/import-order.js` only if needed; import MiCorreo shipment only after approved payment.
-- [ ] 3.3 Update `next-app/hooks/useCatalog.js` and `next-app/utils/supabasePedidos.js` to persist selected quote, destination, agency, import result/failure, manual follow-up, and tenant-scoped shipping metadata.
-- [ ] 3.4 Verify APIs mock successfully, quote failures return `available:false`, and fallback/free/paid snapshots persist.
+- [x] 3.2 Add webhook-side import helper, or `next-app/pages/api/shipping/import-order.js` only if needed; import MiCorreo shipment only after approved payment.
+- [x] 3.3 Update `next-app/hooks/useCatalog.js` and `next-app/utils/supabasePedidos.js` to persist selected quote, destination, agency, import result/failure, manual follow-up, and tenant-scoped shipping metadata.
+- [x] 3.4 Verify APIs mock successfully, quote failures return `available:false`, and fallback/free/paid snapshots persist.
 
 ## Phase 4: Checkout and MercadoPago totals
 
-- [ ] 4.1 Update `next-app/pages/mi-carrito/finalizar-compra.js` for `domicilio`/`sucursal`, structured destination/province data, agency selection, quote display, `A cotizar`, and `Envío gratis` with struck-through quote.
-- [ ] 4.2 Build one selected shipping snapshot; derive checkout display, saved order total, and payment payload from it so paid shipping is charged exactly once.
-- [ ] 4.3 Update `next-app/pages/api/mp/create-preference.js` to add one positive shipping line only for paid selected shipping; keep `MP_ACCESS_TOKEN` server-only.
-- [ ] 4.4 Update `next-app/pages/api/mp/webhook.js` to import once after `approved`, persist success/failure, and flag manual follow-up when import fails.
-- [ ] 4.5 Verify paid shipping appears once in checkout/order/MP; fallback or free shipping adds no positive MP shipping amount.
+- [x] 4.1 Update `next-app/pages/mi-carrito/finalizar-compra.js` for `domicilio`/`sucursal`, structured destination/province data, agency selection, quote display, `A cotizar`, and `Envío gratis` with struck-through quote.
+- [x] 4.2 Build one selected shipping snapshot; derive checkout display, saved order total, and payment payload from it so paid shipping is charged exactly once.
+- [x] 4.3 Update `next-app/pages/api/mp/create-preference.js` to add one positive shipping line only for paid selected shipping; keep `MP_ACCESS_TOKEN` server-only.
+- [x] 4.4 Update `next-app/pages/api/mp/webhook.js` to import once after `approved`, persist success/failure, and flag manual follow-up when import fails.
+- [x] 4.5 Verify paid shipping appears once in checkout/order/MP; fallback or free shipping adds no positive MP shipping amount.
 
 ## Phase 5: Admin display and release verification
 
