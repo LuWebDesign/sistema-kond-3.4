@@ -24,6 +24,26 @@ export const normalizeEstadoPago = (val) => {
 export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   if (!pedidoDB) return null
 
+  const shipping = (pedidoDB.shipping_provider || pedidoDB.shipping_delivery_type || pedidoDB.shipping_status)
+    ? {
+        provider: pedidoDB.shipping_provider || null,
+        deliveryType: pedidoDB.shipping_delivery_type || null,
+        serviceCode: pedidoDB.shipping_service_code || null,
+        serviceName: pedidoDB.shipping_service_name || null,
+        cost: pedidoDB.shipping_cost !== undefined && pedidoDB.shipping_cost !== null ? Number(pedidoDB.shipping_cost) : null,
+        currency: pedidoDB.shipping_currency || null,
+        quoteSnapshot: pedidoDB.shipping_quote_snapshot || null,
+        destinationSnapshot: pedidoDB.shipping_destination_snapshot || null,
+        agencySnapshot: pedidoDB.shipping_agency_snapshot || null,
+        status: pedidoDB.shipping_status || null,
+        importStatus: pedidoDB.shipping_import_status || null,
+        importResult: pedidoDB.shipping_import_result || null,
+        importedAt: pedidoDB.shipping_imported_at || null,
+        manualFollowupRequired: pedidoDB.shipping_manual_followup_required ?? null,
+        trackingNumber: pedidoDB.shipping_tracking_number || null,
+      }
+    : null
+
   return {
     id: pedidoDB.id,
     cliente: {
@@ -99,6 +119,7 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
     mpPreferenceId: pedidoDB.mp_preference_id || null,
     mpPaymentId: pedidoDB.mp_payment_id || null,
     mpPaymentStatus: pedidoDB.mp_payment_status || null,
+    shipping,
     comprobante: pedidoDB.comprobante_url,
     _comprobanteOmitted: pedidoDB.comprobante_omitido || false,
     fechaCreacion: pedidoDB.fecha_creacion,

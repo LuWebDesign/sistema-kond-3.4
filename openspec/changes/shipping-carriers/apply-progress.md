@@ -8,9 +8,9 @@ Standard apply mode. `openspec/config.yaml` is absent, so strict TDD is not enab
 
 - Mode: chained PR slice
 - Chain strategy: stacked-to-main, per orchestrator-provided decision
-- Current work unit: PR 3 — checkout shipping selection, order persistence metadata, MercadoPago single-charge integration, and approved-payment import
-- Boundary: checkout page, catalog order persistence, MercadoPago preference/webhook flow, and merged SDD progress/task artifacts
-- Out of scope: final admin order detail display, customer-facing tracking, Andreani, static HTML, commits, PR creation, push, or merge
+- Current work unit: PR 4 — admin shipping visibility, delivery-method display fix, and final QA/release evidence
+- Boundary: admin order detail mapping/display, focused tenant-safety guards for the detail read/update path, and merged SDD progress/task artifacts
+- Out of scope: customer-facing tracking, Andreani, static HTML, commits, PR creation, push, or merge
 
 ## Prior Dependency Already Complete
 
@@ -58,6 +58,18 @@ Standard apply mode. `openspec/config.yaml` is absent, so strict TDD is not enab
   - `node --check` for `pages/mi-carrito/finalizar-compra.js`, `pages/api/mp/create-preference.js`, `pages/api/mp/webhook.js`, `hooks/useCatalog.js`, and `utils/supabasePedidos.js`: passed.
   - `npx eslint pages/mi-carrito/finalizar-compra.js pages/api/mp/create-preference.js pages/api/mp/webhook.js hooks/useCatalog.js utils/supabasePedidos.js`: not runnable because ESLint 9 requires `eslint.config.*` and the repo has no ESLint flat config.
   - Focused source check from `next-app/`: passed for MP single shipping line guard (`shipping.status === 'quoted'` and positive cost), `mp_preference_id` persistence, approved-only webhook import, pending-status import claim, and imported/failed persistence branches.
+- PR 4 verification:
+  - `node verify-setup.js` from repo root: passed.
+  - `node --check components/OrderCatalogDetailView.js utils/pedidosCatalogoDetail.js utils/supabasePedidos.js` from `next-app/`: passed.
+  - `npm run build` from `next-app/`: passed.
+  - `npx eslint components/OrderCatalogDetailView.js utils/pedidosCatalogoDetail.js utils/supabasePedidos.js` from `next-app/`: not runnable because ESLint 9 requires `eslint.config.*` and the repo has no ESLint flat config.
+  - Focused source check: passed for `metodoEntrega`-based shipping-address display, no remaining `metodoPago === 'envio'` check in `OrderCatalogDetailView.js`, shipping field mapping from `pedidos_catalogo.shipping_*`, admin display of provider/service/delivery type/cost/agency/import/manual follow-up/tracking/import result, and tenant-scoped detail read/update/monto update filters.
+
+## Completed Tasks — Current PR 4 Slice
+
+- [x] 5.1 Updated `next-app/utils/pedidosCatalogoDetail.js` and `next-app/components/OrderCatalogDetailView.js` to map and display provider-neutral shipping metadata, selected agency/destination snapshots, import status/result, manual MiCorreo follow-up instructions, and tracking number when available.
+- [x] 5.2 Replaced the suspicious admin detail shipping-address condition based on `metodoPago === 'envio'` with delivery-method metadata (`pedido.metodoEntrega === 'envio'`).
+- [ ] 5.3 Automated verification was run, but browser/manual QA for product fields, home/agency checkout, unavailable/free/paid shipping, approved import, and admin follow-up was not run in this apply environment.
 
 ## Warnings / Follow-up
 
@@ -68,7 +80,10 @@ Standard apply mode. `openspec/config.yaml` is absent, so strict TDD is not enab
 - PR 3 changed-line impact is approximately 466 additions / 24 deletions at the end of implementation, above the nominal 400-line review budget. Scope stayed within the orchestrator-approved PR3 boundary, but this should be called out before PR creation.
 - Runtime browser QA was not run in this apply phase; checkout behavior evidence is source-level plus production build.
 - Existing coupon/discount MercadoPago behavior was not redesigned in this slice; this implementation only adds paid shipping exactly once on top of the existing item payload.
+- PR 4 browser/manual QA was not run; release evidence is setup/syntax/build plus focused source checks.
+- Correo server-side env vars still need deployment validation before live carrier use: `CORREO_ARGENTINO_BASE_URL`, `CORREO_ARGENTINO_USERNAME`, `CORREO_ARGENTINO_PASSWORD`, and `CORREO_ARGENTINO_CUSTOMER_ID`. Do not add `NEXT_PUBLIC_` prefixes to these secrets.
+- Supabase shipping migration was already applied in the PR 1 production path per orchestrator context; no new migration was added in PR 4.
 
 ## Remaining Tasks
 
-- Phase 5: admin display and release verification.
+- Phase 5.3: browser/manual QA scenarios remain before final release sign-off.
