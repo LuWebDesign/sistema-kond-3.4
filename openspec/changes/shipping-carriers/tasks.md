@@ -9,14 +9,14 @@
 
 ## Phase 2: Provider-neutral carrier service
 
-- [ ] 2.1 Create `next-app/lib/shipping/index.js` with provider-neutral facade, provider selection, normalized unavailable errors, and no Andreani-specific names.
-- [ ] 2.2 Create `next-app/lib/shipping/providers/correoArgentino.js` with server-only token cache, origin CP `1842`, kg-to-grams conversion, 1g-25000g/150cm validation, `/rates`, `/agencies`, and `/shipping/import` mapping.
-- [ ] 2.3 Update `.env.example` with safe server-only Correo credentials/base/customer config plus any public feature flag/config; never expose tokens or credentials.
-- [ ] 2.4 Verify conversion, validation, token retry, normalized quote failure, and secret-free responses with mocks or focused checks.
+- [x] 2.1 Create `next-app/lib/shipping/index.js` with provider-neutral facade, provider selection, normalized unavailable errors, and no Andreani-specific names.
+- [x] 2.2 Create `next-app/lib/shipping/providers/correoArgentino.js` with server-only token cache, origin CP `1842`, kg-to-grams conversion, 1g-25000g/150cm validation, `/rates`, `/agencies`, and `/shipping/import` mapping.
+- [x] 2.3 Update `.env.example` with safe server-only Correo credentials/base/customer config plus any public feature flag/config; never expose tokens or credentials.
+- [x] 2.4 Verify conversion, validation, token retry, normalized quote failure, and secret-free responses with mocks or focused checks.
 
 ## Phase 3: APIs, persistence, and import state
 
-- [ ] 3.1 Create `next-app/pages/api/shipping/rates.js` and `next-app/pages/api/shipping/agencies.js`; inject server config and return normalized rates/agencies only.
+- [x] 3.1 Create `next-app/pages/api/shipping/rates.js` and `next-app/pages/api/shipping/agencies.js`; inject server config and return normalized rates/agencies only.
 - [ ] 3.2 Add webhook-side import helper, or `next-app/pages/api/shipping/import-order.js` only if needed; import MiCorreo shipment only after approved payment.
 - [ ] 3.3 Update `next-app/hooks/useCatalog.js` and `next-app/utils/supabasePedidos.js` to persist selected quote, destination, agency, import result/failure, manual follow-up, and tenant-scoped shipping metadata.
 - [ ] 3.4 Verify APIs mock successfully, quote failures return `available:false`, and fallback/free/paid snapshots persist.
