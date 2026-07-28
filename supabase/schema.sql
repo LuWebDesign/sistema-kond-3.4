@@ -50,6 +50,10 @@ CREATE TABLE IF NOT EXISTS public.productos (
   categoria TEXT,
   tipo TEXT DEFAULT 'Venta',
   medidas TEXT,
+  package_weight_kg NUMERIC,
+  package_length_cm NUMERIC,
+  package_width_cm NUMERIC,
+  package_height_cm NUMERIC,
   tiempo_unitario TEXT DEFAULT '00:00:00',
   unidades NUMERIC DEFAULT 1,
   unidades_por_placa NUMERIC DEFAULT 0,
@@ -155,6 +159,23 @@ CREATE TABLE IF NOT EXISTS public.pedidos_catalogo (
   mp_preference_id TEXT,        -- ID de preferencia generada en /api/mp/create-preference
   mp_payment_id TEXT,           -- ID del pago recibido vía webhook IPN
   mp_payment_status TEXT DEFAULT 'none', -- 'none' | 'approved' | 'pending' | 'in_process' | 'rejected' | 'cancelled'
+
+  -- Provider-neutral shipping metadata
+  shipping_provider TEXT,
+  shipping_delivery_type TEXT,
+  shipping_service_code TEXT,
+  shipping_service_name TEXT,
+  shipping_cost NUMERIC,
+  shipping_currency TEXT,
+  shipping_quote_snapshot JSONB,
+  shipping_destination_snapshot JSONB,
+  shipping_agency_snapshot JSONB,
+  shipping_status TEXT,
+  shipping_import_status TEXT,
+  shipping_import_result JSONB,
+  shipping_imported_at TIMESTAMP WITH TIME ZONE,
+  shipping_manual_followup_required BOOLEAN,
+  shipping_tracking_number TEXT,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -166,6 +187,8 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_fecha_creacion ON public.pedidos
 CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_estado ON public.pedidos_catalogo(estado);
 CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_metodo_pago ON public.pedidos_catalogo(metodo_pago);
 CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_cliente_email ON public.pedidos_catalogo(cliente_email);
+CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_shipping_status ON public.pedidos_catalogo(shipping_status);
+CREATE INDEX IF NOT EXISTS idx_pedidos_catalogo_shipping_import_status ON public.pedidos_catalogo(shipping_import_status);
 
 -- ============================================
 -- TABLA: promociones (marketing)

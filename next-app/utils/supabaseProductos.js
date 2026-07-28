@@ -36,6 +36,10 @@ export function mapProductoToFrontend(p) {
     tipo: p.tipo,
     tipo_trabajo: p.tipo_trabajo || p.tipo || '',
     medidas: p.medidas,
+    packageWeightKg: p.package_weight_kg,
+    packageLengthCm: p.package_length_cm,
+    packageWidthCm: p.package_width_cm,
+    packageHeightCm: p.package_height_cm,
     tiempoUnitario: p.tiempo_unitario || '00:00:30',
     publicado: p.publicado,
     hiddenInProductos: p.hidden_in_productos,
@@ -131,6 +135,10 @@ export async function createProducto(producto) {
         tipo: producto.tipo,
         tipo_trabajo: producto.tipo_trabajo || producto.tipo,
         medidas: producto.medidas,
+        package_weight_kg: producto.packageWeightKg ?? producto.package_weight_kg ?? null,
+        package_length_cm: producto.packageLengthCm ?? producto.package_length_cm ?? null,
+        package_width_cm: producto.packageWidthCm ?? producto.package_width_cm ?? null,
+        package_height_cm: producto.packageHeightCm ?? producto.package_height_cm ?? null,
         tiempo_unitario: producto.tiempoUnitario,
         publicado: producto.publicado || false,
         hidden_in_productos: producto.hiddenInProductos || false,
@@ -176,6 +184,14 @@ export async function updateProducto(id, productoUpdate) {
     if (productoUpdate.tipo !== undefined) updateData.tipo = productoUpdate.tipo;
     if (productoUpdate.tipo_trabajo !== undefined) updateData.tipo_trabajo = productoUpdate.tipo_trabajo;
     if (productoUpdate.medidas !== undefined) updateData.medidas = productoUpdate.medidas;
+    if (productoUpdate.packageWeightKg !== undefined) updateData.package_weight_kg = productoUpdate.packageWeightKg;
+    if (productoUpdate.package_weight_kg !== undefined) updateData.package_weight_kg = productoUpdate.package_weight_kg;
+    if (productoUpdate.packageLengthCm !== undefined) updateData.package_length_cm = productoUpdate.packageLengthCm;
+    if (productoUpdate.package_length_cm !== undefined) updateData.package_length_cm = productoUpdate.package_length_cm;
+    if (productoUpdate.packageWidthCm !== undefined) updateData.package_width_cm = productoUpdate.packageWidthCm;
+    if (productoUpdate.package_width_cm !== undefined) updateData.package_width_cm = productoUpdate.package_width_cm;
+    if (productoUpdate.packageHeightCm !== undefined) updateData.package_height_cm = productoUpdate.packageHeightCm;
+    if (productoUpdate.package_height_cm !== undefined) updateData.package_height_cm = productoUpdate.package_height_cm;
     if (productoUpdate.tiempoUnitario !== undefined) updateData.tiempo_unitario = productoUpdate.tiempoUnitario;
     if (productoUpdate.publicado !== undefined) updateData.publicado = productoUpdate.publicado;
     if (productoUpdate.active !== undefined) updateData.active = productoUpdate.active;
