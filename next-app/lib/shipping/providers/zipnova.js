@@ -73,7 +73,8 @@ export function normalizeZipnovaRate(rate, requestedDeliveryType) {
   const deliveryType = inferDeliveryType(rate)
   if (!deliveryType || (requestedDeliveryType && deliveryType !== requestedDeliveryType)) return null
 
-  const cost = numberValue(rate?.cost ?? rate?.price ?? rate?.amount ?? rate?.total ?? rate?.value ?? rate?.tariff)
+  const amounts = rate?.amounts || {}
+  const cost = numberValue(rate?.cost ?? rate?.price ?? rate?.amount ?? rate?.total ?? rate?.value ?? rate?.tariff ?? amounts.price_incl_tax ?? amounts.price ?? amounts.seller_price_incl_tax ?? amounts.seller_price)
   if (cost == null) return null
 
   const pickupPoint = deliveryType === 'agency' ? normalizePickupPoint(extractPickupPoints(rate)[0]) : null
@@ -137,6 +138,7 @@ function buildQuotePayload(input, pkg, postalCodeDestination, config) {
   return {
     account_id: config.accountId,
     origin_id: config.originId,
+    source: 'sistema-kond',
     declared_value: Math.max(1, Math.round(numberValue(input?.declaredValue ?? input?.declared_value) ?? 1)),
     items: buildQuoteItems(input, pkg),
     destination: {
@@ -319,7 +321,8 @@ function curateRates(rates, requestedDeliveryType) {
 }
 
 function inferDeliveryType(rate) {
-  const explicit = normalizeDeliveryType(rate?.deliveryType || rate?.delivery_type || rate?.logistic_type || rate?.type)
+  const serviceType = rate?.service_type || rate?.serviceType || {}
+  const explicit = normalizeDeliveryType(rate?.deliveryType || rate?.delivery_type || serviceType?.code || serviceType?.name || rate?.logistic_type || rate?.type)
   if (explicit) return explicit
 
   if (extractPickupPoints(rate).length > 0) return 'agency'
@@ -362,17 +365,23 @@ function normalizePickupPoint(point) {
 }
 
 function extractList(response) {
+  const results = response?.results && typeof response.results === 'object' && !Array.isArray(response.results)
+    ? Object.values(response.results)
+    : response?.results
+
   return [
     response,
     response?.rates,
     response?.quotes,
     response?.data,
     response?.items,
-    response?.results,
+    results,
+    response?.all_results,
     response?.data?.rates,
     response?.data?.quotes,
     response?.data?.items,
     response?.data?.results,
+    response?.data?.all_results,
   ].find(Array.isArray) || []
 }
 
@@ -392,7 +401,7 @@ function labelFor(deliveryType) {
 
 function normalizeDeliveryType(value) {
   const key = String(value || '').trim().toLowerCase()
-  return { home: 'home', domicilio: 'home', address: 'home', door: 'home', agency: 'agency', pickup: 'agency', point: 'agency', branch: 'agency', sucursal: 'agency' }[key]
+  return { home: 'home', domicilio: 'home', address: 'home', door: 'home', standard_delivery: 'home', agency: 'agency', pickup: 'agency', pickup_point: 'agency', point: 'agency', branch: 'agency', sucursal: 'agency' }[key]
 }
 
 function normalizePostalCode(value) {
