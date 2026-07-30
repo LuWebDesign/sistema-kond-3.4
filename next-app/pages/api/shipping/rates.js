@@ -5,7 +5,17 @@ export default async function handler(req, res) {
   }
 
   res.setHeader('Cache-Control', 'no-store')
-  const { provider, postalCodeDestination, provinceCode, deliveryType, package: packageData } = req.body || {}
+  const {
+    provider,
+    postalCodeDestination,
+    provinceCode,
+    destinationCity,
+    destinationState,
+    declaredValue,
+    deliveryType,
+    package: packageData,
+    items,
+  } = req.body || {}
 
   if (!postalCodeDestination) {
     return res.status(400).json({ available: false, rates: [], error: 'postalCodeDestination is required' })
@@ -15,8 +25,12 @@ export default async function handler(req, res) {
     provider,
     postalCodeDestination,
     provinceCode,
+    destinationCity,
+    destinationState,
+    declaredValue,
     deliveryType,
     package: packageData,
+    items,
   })
 
   return res.status(200).json(result)

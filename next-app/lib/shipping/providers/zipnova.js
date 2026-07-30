@@ -3,6 +3,11 @@ import { CarrierConfigError, CarrierValidationError, normalizePackage } from './
 const PROVIDER = 'zipnova'
 const DEFAULT_BASE_URL = 'https://api.zipnova.com.ar/v2'
 const DEFAULT_TIMEOUT_MS = 12000
+const ORIGIN_VALIDATION_TTL_MS = 5 * 60 * 1000
+const ORIGIN_VALIDATION_TRANSIENT_TTL_MS = 60 * 1000
+const ORIGIN_VALIDATION_TIMEOUT_MS = 1500
+
+let originValidationCache = { key: null, expiresAt: 0, error: null }
 
 export async function getZipnovaRates(input, options = {}) {
   const config = getZipnovaConfig()
@@ -10,7 +15,9 @@ export async function getZipnovaRates(input, options = {}) {
   const postalCodeDestination = normalizePostalCode(input?.postalCodeDestination)
   if (!postalCodeDestination) throw new CarrierValidationError('postalCodeDestination is required', 'missing_destination_postal_code')
 
-  const response = await zipnovaFetch('/quotes', {
+  await validateZipnovaOrigin(config, options)
+
+  const response = await zipnovaFetch('/shipments/quote', {
     method: 'POST',
     body: JSON.stringify(buildQuotePayload(input, pkg, postalCodeDestination, config)),
   }, config, options)
@@ -124,20 +131,33 @@ export function getZipnovaConfig() {
 }
 
 function buildQuotePayload(input, pkg, postalCodeDestination, config) {
+  const destinationState = stringValue(input?.destinationState || input?.state || input?.provinceName || input?.provinceCode)
+  const destinationCity = stringValue(input?.destinationCity || input?.city || input?.locality || destinationState)
+
   return {
     account_id: config.accountId,
     origin_id: config.originId,
+    declared_value: Math.max(1, Math.round(numberValue(input?.declaredValue ?? input?.declared_value) ?? 1)),
+    items: buildQuoteItems(input, pkg),
     destination: {
-      postal_code: postalCodeDestination,
-      province_code: stringValue(input?.provinceCode).toUpperCase(),
-    },
-    package: {
-      weight: pkg.weightGrams,
-      height: pkg.heightCm,
-      width: pkg.widthCm,
-      length: pkg.lengthCm,
+      city: destinationCity,
+      state: destinationState,
+      zipcode: postalCodeDestination,
     },
   }
+}
+
+function buildQuoteItems(input, pkg) {
+  const sourceItems = Array.isArray(input?.items) && input.items.length > 0 ? input.items : [input?.item || {}]
+  return sourceItems.map((item, index) => ({
+    sku: stringValue(item?.sku || item?.id || item?.productId || item?.idProducto) || `kond-item-${index + 1}`,
+    weight: Math.max(1, Math.round(numberValue(item?.weight ?? item?.weightGrams) ?? pkg.weightGrams)),
+    height: Math.max(1, Math.round(numberValue(item?.height ?? item?.heightCm) ?? pkg.heightCm)),
+    width: Math.max(1, Math.round(numberValue(item?.width ?? item?.widthCm) ?? pkg.widthCm)),
+    length: Math.max(1, Math.round(numberValue(item?.length ?? item?.lengthCm) ?? pkg.lengthCm)),
+    description: stringValue(item?.description || item?.name) || 'KOND checkout item',
+    classification_id: integerValue(item?.classification_id ?? item?.classificationId) || 1,
+  }))
 }
 
 function buildShipmentPayload(order, config) {
@@ -159,6 +179,72 @@ function buildShipmentPayload(order, config) {
 function buildShipmentIdempotencyHeaders(order) {
   const externalReference = stringValue(order.id || order.external_reference)
   return externalReference ? { 'Idempotency-Key': `kond-zipnova-shipment-${externalReference}` } : {}
+}
+
+async function validateZipnovaOrigin(config, options = {}) {
+  const now = Date.now()
+  const cacheKey = `${config.baseUrl}|${config.accountId}|${config.originId}`
+  if (originValidationCache.key === cacheKey && originValidationCache.expiresAt > now) {
+    if (originValidationCache.error) throw originValidationCache.error
+    return
+  }
+
+  try {
+    const response = await zipnovaFetch(`/addresses/${encodeURIComponent(config.originId)}`, { method: 'GET' }, config, {
+      ...options,
+      timeoutMs: Number(options.originValidationTimeoutMs ?? process.env.ZIPNOVA_ORIGIN_VALIDATION_TIMEOUT_MS ?? ORIGIN_VALIDATION_TIMEOUT_MS),
+    })
+    const address = normalizeAddressResponse(response)
+    assertZipnovaOriginIsUsable(address, config)
+    originValidationCache = { key: cacheKey, expiresAt: now + ORIGIN_VALIDATION_TTL_MS, error: null }
+  } catch (error) {
+    const validationError = normalizeOriginValidationError(error)
+    if (validationError) {
+      originValidationCache = { key: cacheKey, expiresAt: now + ORIGIN_VALIDATION_TTL_MS, error: validationError }
+      throw validationError
+    }
+
+    if (!error?.status || error.status >= 500) {
+      originValidationCache = { key: cacheKey, expiresAt: now + ORIGIN_VALIDATION_TRANSIENT_TTL_MS, error: null }
+      return
+    }
+    throw error
+  }
+}
+
+function normalizeAddressResponse(response) {
+  return response?.address || response?.data?.address || response?.data || response
+}
+
+function assertZipnovaOriginIsUsable(address, config) {
+  if (!address || typeof address !== 'object' || Array.isArray(address)) {
+    throw new CarrierValidationError('Zipnova origin address is not available', 'origin_not_found')
+  }
+  if (address.use_for_shipping === false) {
+    throw new CarrierValidationError('Zipnova origin is not enabled for shipping', 'origin_not_enabled_for_shipping')
+  }
+
+  const accounts = Array.isArray(address.accounts) ? address.accounts : null
+  if (!accounts || accounts.length === 0) return
+
+  const account = accounts.find((item) => stringValue(item?.id) === config.accountId)
+  if (!account) {
+    throw new CarrierValidationError('Zipnova origin does not belong to the configured account', 'origin_account_mismatch')
+  }
+  if (account.options?.use_for_shipping === false) {
+    throw new CarrierValidationError('Zipnova origin is not enabled for shipping on the configured account', 'origin_not_enabled_for_shipping')
+  }
+}
+
+function normalizeOriginValidationError(error) {
+  if (error?.name === 'CarrierValidationError') return error
+  if (error?.status === 403) {
+    return new CarrierValidationError('Zipnova origin address is not accessible', 'origin_not_accessible')
+  }
+  if (error?.status === 404) {
+    return new CarrierValidationError('Zipnova origin address was not found', 'origin_not_found')
+  }
+  return null
 }
 
 async function zipnovaFetch(path, init, config, options = {}) {
@@ -276,7 +362,18 @@ function normalizePickupPoint(point) {
 }
 
 function extractList(response) {
-  return [response, response?.rates, response?.quotes, response?.data, response?.items, response?.results].find(Array.isArray) || []
+  return [
+    response,
+    response?.rates,
+    response?.quotes,
+    response?.data,
+    response?.items,
+    response?.results,
+    response?.data?.rates,
+    response?.data?.quotes,
+    response?.data?.items,
+    response?.data?.results,
+  ].find(Array.isArray) || []
 }
 
 function dedupeBy(items, keyFn) {

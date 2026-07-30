@@ -106,7 +106,7 @@ export default function FinalizarCompraPage() {
   const [activePromos, setActivePromos] = useState([])
   const [deliveryMethod, setDeliveryMethod] = useState('retiro')
   const [shippingDeliveryType, setShippingDeliveryType] = useState('domicilio')
-  const [shippingDestination, setShippingDestination] = useState({ postalCode: '', provinceCode: '' })
+  const [shippingDestination, setShippingDestination] = useState({ postalCode: '', provinceCode: '', city: '' })
   const [shippingRates, setShippingRates] = useState([])
   const [selectedShippingRate, setSelectedShippingRate] = useState(null)
   const [shippingAgencies, setShippingAgencies] = useState([])
@@ -175,7 +175,8 @@ export default function FinalizarCompraPage() {
       setShippingDestination(prev => ({
         ...prev,
         postalCode: prev.postalCode || u.cp || u.zip || u.codigoPostal || '',
-        provinceCode: prev.provinceCode || u.provinciaCodigo || u.provinceCode || ''
+        provinceCode: prev.provinceCode || u.provinciaCodigo || u.provinceCode || '',
+        city: prev.city || u.localidad || u.city || ''
       }))
       // Auto-colapsar perfil si ya está completo
       if (data.name && data.phone) setIsProfileCollapsed(true)
@@ -240,7 +241,8 @@ export default function FinalizarCompraPage() {
       setShippingDestination(prev => ({
         ...prev,
         postalCode: prev.postalCode || user.cp || user.zip || user.codigoPostal || '',
-        provinceCode: prev.provinceCode || user.provinciaCodigo || user.provinceCode || ''
+        provinceCode: prev.provinceCode || user.provinciaCodigo || user.provinceCode || '',
+        city: prev.city || user.localidad || user.city || ''
       }))
     }
     const onUserUpdated = (e) => {
@@ -269,6 +271,7 @@ export default function FinalizarCompraPage() {
     }
 
     const postalCode = shippingDestination.postalCode.replace(/\D/g, '')
+    const provinceName = PROVINCES.find(p => p.code === shippingDestination.provinceCode)?.name || shippingDestination.provinceCode || ''
     if (!postalCode || !shippingPackage) {
       setShippingRates([])
       setSelectedShippingRate(null)
@@ -287,6 +290,9 @@ export default function FinalizarCompraPage() {
           body: JSON.stringify({
             postalCodeDestination: postalCode,
             provinceCode: shippingDestination.provinceCode || undefined,
+            destinationCity: shippingDestination.city || provinceName || undefined,
+            destinationState: provinceName || undefined,
+            declaredValue: productTotal,
             deliveryType: normalizeDeliveryTypeForApi(shippingDeliveryType),
             package: shippingPackage,
           })
@@ -313,7 +319,7 @@ export default function FinalizarCompraPage() {
 
     loadRates()
     return () => { cancelled = true }
-  }, [deliveryMethod, shippingDeliveryType, shippingDestination.postalCode, shippingDestination.provinceCode, shippingPackage])
+  }, [deliveryMethod, productTotal, shippingDeliveryType, shippingDestination.city, shippingDestination.postalCode, shippingDestination.provinceCode, shippingPackage])
 
   useEffect(() => {
     if (deliveryMethod !== 'envio' || shippingDeliveryType !== 'sucursal') {
@@ -442,6 +448,7 @@ export default function FinalizarCompraPage() {
       quoteSnapshot,
       destinationSnapshot: {
         postalCode: shippingDestination.postalCode.replace(/\D/g, ''),
+        city: shippingDestination.city || null,
         provinceCode: shippingDestination.provinceCode || null,
         provinceName: PROVINCES.find(p => p.code === shippingDestination.provinceCode)?.name || null,
         street: customerData.address || null,
@@ -795,6 +802,12 @@ export default function FinalizarCompraPage() {
                       <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Código postal *</label>
                       <input value={shippingDestination.postalCode} onChange={(e) => setShippingDestination(p => ({ ...p, postalCode: e.target.value }))} placeholder="Ej. 1406" inputMode="numeric" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Ciudad</label>
+                      <input value={shippingDestination.city} onChange={(e) => setShippingDestination(p => ({ ...p, city: e.target.value }))} placeholder="Ej. Córdoba" autoComplete="address-level2" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Provincia</label>
                       <select value={shippingDestination.provinceCode} onChange={(e) => setShippingDestination(p => ({ ...p, provinceCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
