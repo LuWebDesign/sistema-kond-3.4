@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
 function hasQuoteDerivedPickupSource(value) {
   const items = Array.isArray(value) ? value : value ? [value] : []
-  return items.some((item) => item?.pickupPoint || item?.pickup_point || item?.quoteSnapshot?.pickupPoint || item?.quote_snapshot?.pickup_point)
+  return items.some((item) => item?.pickupPoint || item?.pickupPoints || item?.pickup_point || item?.pickup_points || item?.quoteSnapshot?.pickupPoint || item?.quoteSnapshot?.pickupPoints || item?.quote_snapshot?.pickup_point || item?.quote_snapshot?.pickup_points)
 }
 
 function parseJsonQueryValue(value) {

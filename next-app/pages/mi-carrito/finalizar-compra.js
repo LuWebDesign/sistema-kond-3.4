@@ -37,9 +37,27 @@ function getRatePickupPoint(rate) {
   return rate?.pickupPoint || rate?.quoteSnapshot?.pickupPoint || null
 }
 
-function buildSafeQuoteSnapshot(rate) {
+function getRatePickupPoints(rate) {
+  const points = [
+    rate?.pickupPoints,
+    rate?.quoteSnapshot?.pickupPoints,
+    getRatePickupPoint(rate),
+  ].flatMap(item => Array.isArray(item) ? item : item ? [item] : [])
+
+  const seen = new Set()
+  return points.filter(point => {
+    const key = point?.code || point?.name
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function buildSafeQuoteSnapshot(rate, selectedPickupPoint = null) {
   if (!rate) return null
   const quote = rate.quoteSnapshot || {}
+  const pickupPoints = getRatePickupPoints(rate)
+  const pickupPoint = selectedPickupPoint || getRatePickupPoint(rate)
   return {
     provider: rate.provider || quote.provider || 'zipnova',
     deliveryType: rate.deliveryType || quote.deliveryType || null,
@@ -53,8 +71,9 @@ function buildSafeQuoteSnapshot(rate) {
     serviceTypeCode: quote.serviceTypeCode || quote.service_type_code || rate.serviceCode || null,
     carrierId: quote.carrierId || quote.carrier_id || null,
     quoteId: quote.quoteId || quote.quote_id || null,
-    pointId: quote.pointId || quote.point_id || getRatePickupPoint(rate)?.code || null,
-    pickupPoint: getRatePickupPoint(rate),
+    pointId: pickupPoint?.code || quote.pointId || quote.point_id || null,
+    pickupPoint,
+    pickupPoints,
   }
 }
 
@@ -137,7 +156,7 @@ export default function FinalizarCompraPage() {
     ? (selectedShippingAgency ? { ...selectedShippingAgency } : getRatePickupPoint(selectedShippingRate))
     : null
   const selectedShippingHasRequiredPickup = !selectedShippingRequiresPickup || !!selectedShippingPickupSnapshot
-  const selectedShippingQuoteSnapshot = useMemo(() => buildSafeQuoteSnapshot(selectedShippingRate), [selectedShippingRate])
+  const selectedShippingQuoteSnapshot = useMemo(() => buildSafeQuoteSnapshot(selectedShippingRate, selectedShippingPickupSnapshot), [selectedShippingPickupSnapshot, selectedShippingRate])
   const selectedShippingDeliveryType = selectedShippingRate?.deliveryType || normalizeDeliveryTypeForApi(shippingDeliveryType)
   const selectedShippingHasUsableQuoteSnapshot = hasUsableShippingQuoteSnapshot(selectedShippingQuoteSnapshot, selectedShippingDeliveryType)
   const isSelectedShippingPayableQuote = deliveryMethod === 'envio'
@@ -328,10 +347,10 @@ export default function FinalizarCompraPage() {
       return
     }
 
-    const quotePickupPoint = getRatePickupPoint(selectedShippingRate)
-    if (quotePickupPoint) {
-      setShippingAgencies([quotePickupPoint])
-      setSelectedShippingAgencyCode(quotePickupPoint.code || '')
+    const quotePickupPoints = getRatePickupPoints(selectedShippingRate)
+    if (quotePickupPoints.length > 0) {
+      setShippingAgencies(quotePickupPoints)
+      setSelectedShippingAgencyCode(current => quotePickupPoints.some(point => String(point.code) === String(current)) ? current : quotePickupPoints[0]?.code || '')
       return
     }
 
@@ -354,7 +373,7 @@ export default function FinalizarCompraPage() {
         if (cancelled) return
         const agencies = Array.isArray(payload?.agencies) ? payload.agencies : []
         setShippingAgencies(agencies)
-        setSelectedShippingAgencyCode(current => current || agencies[0]?.code || '')
+        setSelectedShippingAgencyCode(current => agencies.some(agency => String(agency.code) === String(current)) ? current : agencies[0]?.code || '')
       } catch {
         if (!cancelled) {
           setShippingAgencies([])

@@ -77,7 +77,10 @@ export function normalizeZipnovaRate(rate, requestedDeliveryType) {
   const cost = numberValue(rate?.cost ?? rate?.price ?? rate?.amount ?? rate?.total ?? rate?.value ?? rate?.tariff ?? amounts.price_incl_tax ?? amounts.price ?? amounts.seller_price_incl_tax ?? amounts.seller_price)
   if (cost == null) return null
 
-  const pickupPoint = deliveryType === 'agency' ? normalizePickupPoint(extractPickupPoints(rate)[0]) : null
+  const pickupPoints = deliveryType === 'agency'
+    ? dedupeBy(extractPickupPoints(rate).map(normalizePickupPoint).filter(Boolean), (point) => point.code || point.name)
+    : []
+  const pickupPoint = pickupPoints[0] || null
   if (deliveryType === 'agency' && !pickupPoint) return null
   const serviceType = rate?.service_type || rate?.serviceType || rate?.service || {}
   const carrier = rate?.carrier || rate?.company || rate?.operator || {}
@@ -92,6 +95,7 @@ export function normalizeZipnovaRate(rate, requestedDeliveryType) {
     estimatedDaysMin: integerValue(rate?.estimatedDaysMin ?? rate?.estimated_days_min ?? rate?.minDays ?? rate?.delivery_min_days),
     estimatedDaysMax: integerValue(rate?.estimatedDaysMax ?? rate?.estimated_days_max ?? rate?.maxDays ?? rate?.delivery_max_days ?? rate?.deliveryDays),
     pickupPoint,
+    pickupPoints,
     quoteSnapshot: {
       provider: PROVIDER,
       logisticType: stringValue(rate?.logistic_type ?? rate?.logisticType),
@@ -100,6 +104,7 @@ export function normalizeZipnovaRate(rate, requestedDeliveryType) {
       quoteId: stringValue(rate?.quote_id ?? rate?.quoteId ?? rate?.id),
       pointId: stringValue(pickupPoint?.code ?? rate?.point_id ?? rate?.pointId),
       pickupPoint,
+      pickupPoints,
     },
   }
 }
@@ -341,9 +346,12 @@ function extractPickupPoints(value) {
     value?.agency,
     value?.branch,
     value?.points,
+    value?.pickupPoints,
     value?.pickup_points,
     value?.quoteSnapshot?.pickupPoint,
+    value?.quoteSnapshot?.pickupPoints,
     value?.quote_snapshot?.pickup_point,
+    value?.quote_snapshot?.pickup_points,
   ]
     .flatMap((item) => Array.isArray(item) ? item : item ? [item] : [])
 }
