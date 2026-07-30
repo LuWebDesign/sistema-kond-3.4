@@ -119,6 +119,21 @@ function formatShippingImportResult(result) {
   return parts.length ? parts.join(' · ') : JSON.stringify(result)
 }
 
+function getShippingLabelUrl(importResult) {
+  if (!importResult || typeof importResult !== 'object') return null
+  return importResult.labelUrl || null
+}
+
+function getQuoteSnapshotCarrierInfo(quoteSnapshot) {
+  if (!quoteSnapshot || typeof quoteSnapshot !== 'object') return null
+  return {
+    logisticType: quoteSnapshot.logisticType || null,
+    carrierId: quoteSnapshot.carrierId || null,
+    serviceTypeCode: quoteSnapshot.serviceTypeCode || null,
+    quoteId: quoteSnapshot.quoteId || null,
+  }
+}
+
 function isShipmentGenerationEligible(pedido) {
   const shipping = pedido?.shipping
   if (!shipping || pedido?.metodoEntrega !== 'envio') return false
@@ -405,7 +420,17 @@ export default function OrderCatalogDetailView({
                   <span className={styles.infoValue}>{SHIPPING_DELIVERY_LABELS[shipping.deliveryType] || shipping.deliveryType || '—'}</span>
 
                   <span className={styles.infoLabel}>Costo</span>
-                  <span className={styles.infoValue}>{formatShippingCost(shipping)}</span>
+                  <span className={styles.infoValue}>
+                    {formatShippingCost(shipping)}
+                    {pedido.envioGratis && (
+                      <span style={{ marginLeft: 8, fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>
+                        🎁 Envío gratis
+                      </span>
+                    )}
+                  </span>
+
+                  <span className={styles.infoLabel}>Moneda</span>
+                  <span className={styles.infoValue}>{shipping.currency || 'ARS'}</span>
 
                   <span className={styles.infoLabel}>Estado</span>
                   <span className={styles.infoValue}>{SHIPPING_STATUS_LABELS[shipping.status] || shipping.status || '—'}</span>
@@ -440,7 +465,63 @@ export default function OrderCatalogDetailView({
 
                   <span className={styles.infoLabel}>Resultado importación</span>
                   <span className={styles.infoValue}>{formatShippingImportResult(shipping.importResult)}</span>
+
+                  {(() => {
+                    const labelUrl = getShippingLabelUrl(shipping.importResult)
+                    return labelUrl ? (
+                      <>
+                        <span className={styles.infoLabel}>Etiqueta</span>
+                        <span className={styles.infoValue}>
+                          <a
+                            href={labelUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'var(--accent-color, #2563eb)', textDecoration: 'underline', fontWeight: 600 }}
+                          >
+                            📄 Descargar etiqueta
+                          </a>
+                        </span>
+                      </>
+                    ) : null
+                  })()}
+
+                  {(() => {
+                    const carrierInfo = getQuoteSnapshotCarrierInfo(shipping.quoteSnapshot)
+                    return carrierInfo && (carrierInfo.logisticType || carrierInfo.carrierId) ? (
+                      <>
+                        <span className={styles.infoLabel}>Tipo logístico</span>
+                        <span className={styles.infoValue}>{carrierInfo.logisticType || '—'}</span>
+                        {carrierInfo.carrierId && (
+                          <>
+                            <span className={styles.infoLabel}>Carrier ID</span>
+                            <span className={styles.infoValue} style={{ fontSize: 12, fontFamily: 'monospace' }}>{carrierInfo.carrierId}</span>
+                          </>
+                        )}
+                      </>
+                    ) : null
+                  })()}
                 </div>
+
+                {/* Items incluidos en el envío */}
+                {shipping.importStatus === 'imported' && pedido.productos?.length > 0 && (
+                  <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--bg-secondary, #f8fafc)', borderRadius: 6, border: '1px solid var(--border-color, #e2e8f0)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>
+                      📦 Productos incluidos en el envío
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      {pedido.productos.length} producto(s) — {pedido.productos.reduce((sum, p) => sum + Number(p.cantidad || 1), 0)} unidad(es)
+                    </div>
+                    <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                      {pedido.productos.map((prod, idx) => (
+                        <li key={idx}>
+                          {prod.nombre}
+                          {prod.medidas ? ` (${prod.medidas})` : ''}
+                          {' '}× {prod.cantidad || 1}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {shipmentGenerationEligible && (
                   <div style={{ marginTop: 14 }}>
@@ -665,6 +746,13 @@ export default function OrderCatalogDetailView({
                 <div className={`${styles.resumenRow} ${styles.resumenRowDiscount}`}>
                   <span>Descuento total</span>
                   <span>-{formatCurrency(pedido.descuento)}</span>
+                </div>
+              )}
+              {pedido.cuponCodigo && (
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, padding: '0 12px' }}>
+                  Cupón: <strong>{pedido.cuponCodigo}</strong>
+                  {pedido.cuponTipo === 'porcentaje' && pedido.cuponValor ? ` (${pedido.cuponValor}% off)` : ''}
+                  {pedido.cuponTipo === 'monto_fijo' && pedido.cuponValor ? ` ($${formatInputNumber(pedido.cuponValor)} off)` : ''}
                 </div>
               )}
               <div className={styles.resumenRowTotal}>
