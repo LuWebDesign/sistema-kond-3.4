@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import styles from '../styles/detalle-pedido.module.css'
-import { formatCurrency } from '../utils/catalogUtils'
+import { createToast, formatCurrency } from '../utils/catalogUtils'
 import {
   formatInputNumber,
   parseInputNumber,
@@ -75,6 +75,7 @@ const SHIPPING_IMPORT_STATUS_LABELS = {
   in_progress: 'En progreso',
   imported: 'Importado',
   failed: 'Falló',
+  manual_followup: 'Seguimiento manual requerido',
   not_required: 'No requerido',
 }
 
@@ -118,6 +119,18 @@ function formatShippingImportResult(result) {
   return parts.length ? parts.join(' · ') : JSON.stringify(result)
 }
 
+function isShipmentGenerationEligible(pedido) {
+  const shipping = pedido?.shipping
+  if (!shipping || pedido?.metodoEntrega !== 'envio') return false
+  const isPaid = pedido?.mpPaymentStatus === 'approved' || ['pagado', 'pagado_total'].includes(pedido?.estadoPago)
+  return Boolean(
+    isPaid &&
+    shipping.provider &&
+    (shipping.status === 'quoted' || shipping.status === 'free') &&
+    ['pending', 'failed'].includes(shipping.importStatus)
+  )
+}
+
 export default function OrderCatalogDetailView({
   pedido,
   setPedido,
@@ -141,6 +154,7 @@ export default function OrderCatalogDetailView({
 }) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [notaText, setNotaText] = useState('')
+  const [generatingShipment, setGeneratingShipment] = useState(false)
 
   if (!pedido) return null
 
@@ -155,11 +169,39 @@ export default function OrderCatalogDetailView({
   const shipping = pedido.shipping || null
   const shippingAgency = shipping?.agencySnapshot || null
   const shippingDestination = shipping?.destinationSnapshot || null
+  const shipmentGenerationEligible = isShipmentGenerationEligible(pedido)
 
   const handleAddNotaClick = async () => {
     if (!notaText.trim()) return
     if (onAddNota) await onAddNota(notaText.trim())
     setNotaText('')
+  }
+
+  const handleGenerateShipment = async () => {
+    if (!pedido?.id || generatingShipment) return
+    setGeneratingShipment(true)
+    try {
+      const response = await fetch('/api/admin/shipping/shipments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: pedido.id }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body.error || 'No se pudo generar el envío')
+
+      setPedido({
+        ...pedido,
+        shipping: {
+          ...pedido.shipping,
+          ...body.shipping,
+        },
+      })
+      createToast('Envío generado correctamente', 'success')
+    } catch (error) {
+      createToast(error.message || 'No se pudo generar el envío', 'error')
+    } finally {
+      setGeneratingShipment(false)
+    }
   }
 
   return (
@@ -400,9 +442,21 @@ export default function OrderCatalogDetailView({
                   <span className={styles.infoValue}>{formatShippingImportResult(shipping.importResult)}</span>
                 </div>
 
+                {shipmentGenerationEligible && (
+                  <div style={{ marginTop: 14 }}>
+                    <button
+                      className={styles.btnSavePrimary}
+                      onClick={handleGenerateShipment}
+                      disabled={generatingShipment}
+                    >
+                      {generatingShipment ? 'Generando envío...' : 'Generar envío en Zipnova'}
+                    </button>
+                  </div>
+                )}
+
                 {(shipping.manualFollowupRequired || shipping.importStatus === 'imported') && (
                   <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.5, color: 'var(--text-primary)' }}>
-                    <strong>Seguimiento manual:</strong> completar en MiCorreo el pago/generación de etiqueta, impresión, pegado en el paquete y despacho físico. La importación no confirma que esos pasos ya estén realizados.
+                    <strong>Seguimiento manual:</strong> revisar en el proveedor de envío la etiqueta, impresión, pegado en el paquete y despacho físico. La generación no confirma que esos pasos ya estén realizados.
                   </div>
                 )}
               </div>

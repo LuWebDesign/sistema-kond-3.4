@@ -5,12 +5,18 @@ import {
   isCarrierConfigError,
   isCarrierValidationError,
 } from './providers/correoArgentino'
+import { getZipnovaAgencies, getZipnovaRates, importZipnovaShipment } from './providers/zipnova'
 
-export const SHIPPING_PROVIDER = 'correo_argentino'
+export const SHIPPING_PROVIDER = 'zipnova'
 export const DELIVERY_TYPES = { HOME: 'home', AGENCY: 'agency' }
 
 const PROVIDERS = {
-  [SHIPPING_PROVIDER]: {
+  zipnova: {
+    getRates: getZipnovaRates,
+    getAgencies: getZipnovaAgencies,
+    importShipment: importZipnovaShipment,
+  },
+  correo_argentino: {
     getRates: getCorreoRates,
     getAgencies: getCorreoAgencies,
     importShipment: importCorreoShipment,

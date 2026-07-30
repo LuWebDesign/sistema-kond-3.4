@@ -33,6 +33,38 @@ function formatShippingDeliveryType(type) {
   return type === 'sucursal' ? 'Sucursal' : 'Domicilio'
 }
 
+function getRatePickupPoint(rate) {
+  return rate?.pickupPoint || rate?.quoteSnapshot?.pickupPoint || null
+}
+
+function buildSafeQuoteSnapshot(rate) {
+  if (!rate) return null
+  const quote = rate.quoteSnapshot || {}
+  return {
+    provider: rate.provider || quote.provider || 'zipnova',
+    deliveryType: rate.deliveryType || quote.deliveryType || null,
+    serviceCode: rate.serviceCode || null,
+    serviceName: rate.serviceName || null,
+    cost: rate.cost !== undefined && rate.cost !== null ? Number(rate.cost) : null,
+    currency: rate.currency || 'ARS',
+    estimatedDaysMin: rate.estimatedDaysMin ?? null,
+    estimatedDaysMax: rate.estimatedDaysMax ?? null,
+    logisticType: quote.logisticType || quote.logistic_type || null,
+    serviceTypeCode: quote.serviceTypeCode || quote.service_type_code || rate.serviceCode || null,
+    carrierId: quote.carrierId || quote.carrier_id || null,
+    quoteId: quote.quoteId || quote.quote_id || null,
+    pointId: quote.pointId || quote.point_id || getRatePickupPoint(rate)?.code || null,
+    pickupPoint: getRatePickupPoint(rate),
+  }
+}
+
+function hasUsableShippingQuoteSnapshot(snapshot, deliveryType) {
+  if (!snapshot) return false
+  const hasCarrierQuote = !!(snapshot.logisticType && snapshot.serviceTypeCode && snapshot.carrierId)
+  if (!hasCarrierQuote) return false
+  return deliveryType !== 'agency' || !!snapshot.pointId
+}
+
 function buildPackageFromCart(cart, products) {
   let weightKg = 0
   let lengthCm = 0
@@ -100,12 +132,30 @@ export default function FinalizarCompraPage() {
     : 0
   const selectedShippingAgency = shippingAgencies.find(agency => String(agency.code) === String(selectedShippingAgencyCode)) || null
   const shippingPackage = useMemo(() => buildPackageFromCart(cart, products), [cart, products])
+  const selectedShippingRequiresPickup = shippingDeliveryType === 'sucursal' || selectedShippingRate?.deliveryType === 'agency'
+  const selectedShippingPickupSnapshot = selectedShippingRequiresPickup
+    ? (selectedShippingAgency ? { ...selectedShippingAgency } : getRatePickupPoint(selectedShippingRate))
+    : null
+  const selectedShippingHasRequiredPickup = !selectedShippingRequiresPickup || !!selectedShippingPickupSnapshot
+  const selectedShippingQuoteSnapshot = useMemo(() => buildSafeQuoteSnapshot(selectedShippingRate), [selectedShippingRate])
+  const selectedShippingDeliveryType = selectedShippingRate?.deliveryType || normalizeDeliveryTypeForApi(shippingDeliveryType)
+  const selectedShippingHasUsableQuoteSnapshot = hasUsableShippingQuoteSnapshot(selectedShippingQuoteSnapshot, selectedShippingDeliveryType)
+  const isSelectedShippingPayableQuote = deliveryMethod === 'envio'
+    && shippingQuoteStatus === 'available'
+    && !!selectedShippingRate
+    && selectedShippingHasRequiredPickup
+    && selectedShippingHasUsableQuoteSnapshot
   const quotedShippingCost = selectedShippingRate ? Number(selectedShippingRate.cost || 0) : null
-  const paidShippingCost = deliveryMethod === 'envio' && !freeShippingEligible && quotedShippingCost > 0 ? quotedShippingCost : 0
+  const paidShippingCost = isSelectedShippingPayableQuote && !freeShippingEligible && quotedShippingCost > 0 ? quotedShippingCost : 0
   const total = productTotal + paidShippingCost
   // Descuento de promo transferencia (se recalcula según paymentMethod activo)
   const transferPromoDiscount = paymentMethod === 'transferencia' ? applyTransferDiscount(activePromos, productTotal) : 0
   const finalTotal = paymentMethod === 'transferencia' ? Math.max(0, total - transferPromoDiscount) : total
+  const mustSelectPickupAgency = deliveryMethod === 'envio'
+    && shippingDeliveryType === 'sucursal'
+    && shippingQuoteStatus === 'available'
+    && shippingAgencies.length > 0
+    && !selectedShippingAgency
 
   const paymentSectionRef = useRef(null)
 
@@ -246,6 +296,7 @@ export default function FinalizarCompraPage() {
         const rates = Array.isArray(payload?.rates) ? payload.rates : []
         setShippingRates(rates)
         setSelectedShippingRate(rates[0] || null)
+        setSelectedShippingAgencyCode('')
         setShippingQuoteStatus(payload?.available && rates.length > 0 ? 'available' : 'unavailable')
         setShippingQuoteError(payload?.available ? '' : (payload?.error?.message || payload?.error || ''))
       } catch {
@@ -265,7 +316,20 @@ export default function FinalizarCompraPage() {
   }, [deliveryMethod, shippingDeliveryType, shippingDestination.postalCode, shippingDestination.provinceCode, shippingPackage])
 
   useEffect(() => {
-    if (deliveryMethod !== 'envio' || shippingDeliveryType !== 'sucursal' || !shippingDestination.provinceCode) {
+    if (deliveryMethod !== 'envio' || shippingDeliveryType !== 'sucursal') {
+      setShippingAgencies([])
+      setSelectedShippingAgencyCode('')
+      return
+    }
+
+    const quotePickupPoint = getRatePickupPoint(selectedShippingRate)
+    if (quotePickupPoint) {
+      setShippingAgencies([quotePickupPoint])
+      setSelectedShippingAgencyCode(quotePickupPoint.code || '')
+      return
+    }
+
+    if (!shippingDestination.provinceCode) {
       setShippingAgencies([])
       setSelectedShippingAgencyCode('')
       return
@@ -274,7 +338,11 @@ export default function FinalizarCompraPage() {
     let cancelled = false
     const loadAgencies = async () => {
       try {
-        const params = new URLSearchParams({ provinceCode: shippingDestination.provinceCode })
+        const params = new URLSearchParams({
+          provider: selectedShippingRate?.provider || 'zipnova',
+          provinceCode: shippingDestination.provinceCode,
+        })
+        if (selectedShippingRate) params.set('quoteSnapshot', JSON.stringify(selectedShippingRate))
         const response = await fetch(`/api/shipping/agencies?${params.toString()}`)
         const payload = await response.json().catch(() => ({}))
         if (cancelled) return
@@ -291,7 +359,7 @@ export default function FinalizarCompraPage() {
 
     loadAgencies()
     return () => { cancelled = true }
-  }, [deliveryMethod, shippingDeliveryType, shippingDestination.provinceCode])
+  }, [deliveryMethod, selectedShippingRate, shippingDeliveryType, shippingDestination.provinceCode])
 
   // Calcular envío gratis
   useEffect(() => {
@@ -352,24 +420,26 @@ export default function FinalizarCompraPage() {
   const buildSelectedShippingSnapshot = useCallback(() => {
     if (deliveryMethod !== 'envio') return null
 
-    const hasQuote = !!selectedShippingRate && Number(selectedShippingRate.cost) > 0
+    const quoteSnapshot = selectedShippingQuoteSnapshot
+    const deliveryType = selectedShippingDeliveryType
+    const hasQuote = isSelectedShippingPayableQuote
     const status = freeShippingEligible
-      ? 'free'
+      ? (hasQuote ? 'free' : 'to_quote')
       : hasQuote
         ? 'quoted'
         : 'to_quote'
 
     return {
-      provider: selectedShippingRate?.provider || 'correo_argentino',
-      deliveryType: shippingDeliveryType,
+      provider: selectedShippingRate?.provider || 'zipnova',
+      deliveryType,
       serviceCode: selectedShippingRate?.serviceCode || null,
       serviceName: selectedShippingRate?.serviceName || (shippingDeliveryType === 'sucursal' ? 'Sucursal' : 'Domicilio'),
-      cost: status === 'quoted' ? Number(selectedShippingRate.cost) : 0,
+      cost: status === 'quoted' ? Number(selectedShippingRate.cost || 0) : 0,
       currency: selectedShippingRate?.currency || 'ARS',
       status,
-      importStatus: 'pending',
+      importStatus: status === 'to_quote' ? null : 'pending',
       manualFollowupRequired: status === 'to_quote',
-      quoteSnapshot: selectedShippingRate ? { ...selectedShippingRate } : null,
+      quoteSnapshot,
       destinationSnapshot: {
         postalCode: shippingDestination.postalCode.replace(/\D/g, ''),
         provinceCode: shippingDestination.provinceCode || null,
@@ -377,9 +447,9 @@ export default function FinalizarCompraPage() {
         street: customerData.address || null,
         package: shippingPackage,
       },
-      agencySnapshot: shippingDeliveryType === 'sucursal' && selectedShippingAgency ? { ...selectedShippingAgency } : null,
+      agencySnapshot: selectedShippingPickupSnapshot,
     }
-  }, [customerData.address, deliveryMethod, freeShippingEligible, selectedShippingAgency, selectedShippingRate, shippingDeliveryType, shippingDestination, shippingPackage])
+  }, [customerData.address, deliveryMethod, freeShippingEligible, isSelectedShippingPayableQuote, selectedShippingDeliveryType, selectedShippingPickupSnapshot, selectedShippingQuoteSnapshot, selectedShippingRate, shippingDeliveryType, shippingDestination, shippingPackage])
 
   const handleMercadoPago = async () => {
     if (isSubmitting || isLoadingMP) return
@@ -391,7 +461,7 @@ export default function FinalizarCompraPage() {
     if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
       return createToast('El código postal es requerido para cotizar el envío', 'error')
     }
-    if (deliveryMethod === 'envio' && shippingDeliveryType === 'sucursal' && !selectedShippingAgency) {
+    if (mustSelectPickupAgency) {
       return createToast('Selecciona una sucursal para continuar', 'error')
     }
 
@@ -442,27 +512,18 @@ export default function FinalizarCompraPage() {
 
       const pedidoId = result.orderId || result.data?.id || result.id
 
-      const mpItems = cart.map(item => ({
-        title: item.name,
-        quantity: Number(item.quantity),
-        unit_price: Math.round(Number(item.price)),
-        currency_id: 'ARS'
-      }))
-
       const origin = typeof window !== 'undefined' ? window.location.origin : ''
       const response = await fetch('/api/mp/create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: mpItems,
           payer: { email: customerData.email },
           back_urls: {
             success: `${origin}/mi-carrito/mp-success`,
             failure: `${origin}/mi-carrito/mp-failure`,
             pending: `${origin}/mi-carrito/mp-pending`
           },
-          external_reference: String(pedidoId || ''),
-          shipping
+          external_reference: String(pedidoId || '')
         })
       })
 
@@ -491,7 +552,7 @@ export default function FinalizarCompraPage() {
     if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
       return createToast('El código postal es requerido para cotizar el envío', 'error')
     }
-    if (deliveryMethod === 'envio' && shippingDeliveryType === 'sucursal' && !selectedShippingAgency) {
+    if (mustSelectPickupAgency) {
       return createToast('Selecciona una sucursal para continuar', 'error')
     }
     if (paymentMethod === 'transferencia' && paymentConfig?.calendario?.enabled !== false && !selectedDeliveryDate) {
@@ -970,12 +1031,12 @@ export default function FinalizarCompraPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ color: 'var(--text-secondary)' }}>Envío</div>
                   <div style={{ fontWeight: 700, textAlign: 'right' }}>
-                    {deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible ? (
+                    {deliveryMethod === 'retiro' ? 'Retiro — Sin costo' : freeShippingEligible && isSelectedShippingPayableQuote ? (
                       <span>
                         {quotedShippingCost > 0 && <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: 6 }}>{formatCurrency(quotedShippingCost)}</span>}
                         Envío gratis
                       </span>
-                    ) : quotedShippingCost > 0 ? formatCurrency(quotedShippingCost) : 'A cotizar'}
+                    ) : isSelectedShippingPayableQuote && quotedShippingCost > 0 ? formatCurrency(quotedShippingCost) : 'A cotizar'}
                     {deliveryMethod === 'envio' && <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>{formatShippingDeliveryType(shippingDeliveryType)}</div>}
                   </div>
                 </div>
