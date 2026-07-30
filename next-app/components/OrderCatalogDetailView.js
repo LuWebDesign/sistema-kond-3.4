@@ -748,9 +748,9 @@ export default function OrderCatalogDetailView({
                   <span>-{formatCurrency(pedido.descuento)}</span>
                 </div>
               )}
-              {pedido.cuponCodigo && (
+              {(pedido.cuponCodigo || (pedido.descuento > 0 && pedido.cuponTipo)) && (
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, padding: '0 12px' }}>
-                  Cupón: <strong>{pedido.cuponCodigo}</strong>
+                  {pedido.cuponCodigo ? <>Cupón: <strong>{pedido.cuponCodigo}</strong></> : 'Cupón aplicado'}
                   {pedido.cuponTipo === 'porcentaje' && pedido.cuponValor ? ` (${pedido.cuponValor}% off)` : ''}
                   {pedido.cuponTipo === 'monto_fijo' && pedido.cuponValor ? ` ($${formatInputNumber(pedido.cuponValor)} off)` : ''}
                 </div>
