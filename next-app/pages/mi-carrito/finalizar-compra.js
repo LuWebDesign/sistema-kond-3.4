@@ -16,6 +16,7 @@ import { getPaymentConfig } from '../../utils/supabasePaymentConfig'
 import { getPromocionesActivas } from '../../utils/supabaseMarketing'
 import { applyPromotionsToCart, applyTransferDiscount } from '../../utils/promoEngine'
 import { useNotifications } from '../../components/NotificationsProvider'
+import { updateUserProfile } from '../../utils/supabaseAuthV2'
 
 const PROVINCES = 'B:Buenos Aires|C:Ciudad Autónoma de Buenos Aires|K:Catamarca|H:Chaco|U:Chubut|X:Córdoba|W:Corrientes|E:Entre Ríos|P:Formosa|Y:Jujuy|L:La Pampa|F:La Rioja|M:Mendoza|N:Misiones|Q:Neuquén|R:Río Negro|A:Salta|J:San Juan|D:San Luis|Z:Santa Cruz|S:Santa Fe|G:Santiago del Estero|V:Tierra del Fuego|T:Tucumán'
   .split('|').map(item => { const [code, name] = item.split(':'); return { code, name } })
@@ -135,6 +136,42 @@ function formatQuoteContext(context) {
   return ''
 }
 
+function getProvinceByValue(value) {
+  const normalized = String(value || '').trim().toLowerCase()
+  if (!normalized) return null
+  return PROVINCES.find(province => province.code.toLowerCase() === normalized || province.name.toLowerCase() === normalized) || null
+}
+
+function buildCustomerDataFromUser(user) {
+  const province = getProvinceByValue(user?.provinciaCodigo || user?.provinceCode || user?.provincia || user?.state)
+  return {
+    name: user?.nombre || user?.name || user?.email || '',
+    apellido: user?.apellido || user?.lastName || '',
+    phone: user?.telefono || user?.phone || user?.telefonoMovil || '',
+    email: user?.email || user?.correo || '',
+    address: user?.direccion || user?.address || '',
+    city: user?.localidad || user?.city || '',
+    postalCode: user?.cp || user?.zip || user?.codigoPostal || '',
+    province: province?.name || user?.provincia || user?.state || '',
+    provinceCode: province?.code || user?.provinciaCodigo || user?.provinceCode || '',
+    notes: user?.observaciones || ''
+  }
+}
+
+function buildProfileDataFromCheckout(customerData) {
+  const province = getProvinceByValue(customerData.provinceCode || customerData.province)
+  return {
+    nombre: customerData.name || '',
+    apellido: customerData.apellido || '',
+    telefono: customerData.phone || '',
+    direccion: customerData.address || '',
+    localidad: customerData.city || '',
+    cp: customerData.postalCode || '',
+    provincia: province?.name || customerData.province || '',
+    observaciones: customerData.notes || ''
+  }
+}
+
 export default function FinalizarCompraPage() {
   const router = useRouter()
   const { cart, clearCart, subtotal } = useCart()
@@ -166,7 +203,9 @@ export default function FinalizarCompraPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingMP, setIsLoadingMP] = useState(false)
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false)
-  const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '' })
+  const [loggedInCustomer, setLoggedInCustomer] = useState(null)
+  const [saveProfileForNextOrders, setSaveProfileForNextOrders] = useState(false)
+  const [customerData, setCustomerData] = useState({ name: '', apellido: '', phone: '', email: '', address: '', city: '', postalCode: '', province: '', provinceCode: '', notes: '' })
 
   const transferPromoPct = paymentMethod === 'transferencia'
     ? (() => {
@@ -207,24 +246,31 @@ export default function FinalizarCompraPage() {
 
   const paymentSectionRef = useRef(null)
 
+  const updateCustomerData = useCallback((patch) => {
+    setCustomerData(prev => ({ ...prev, ...patch }))
+    if ('postalCode' in patch || 'provinceCode' in patch || 'city' in patch) {
+      setShippingDestination(current => ({
+        ...current,
+        ...(patch.postalCode !== undefined ? { postalCode: patch.postalCode } : {}),
+        ...(patch.provinceCode !== undefined ? { provinceCode: patch.provinceCode } : {}),
+        ...(patch.city !== undefined ? { city: patch.city } : {})
+      }))
+    }
+  }, [])
+
   // Cargar datos del usuario al montar (client-side only — evita hydration mismatch)
   useEffect(() => {
     try {
       const u = getCurrentUser()
       if (!u) return
-      const data = {
-        name: u.nombre || u.name || u.email || '',
-        apellido: u.apellido || u.lastName || '',
-        phone: u.telefono || u.phone || u.telefonoMovil || '',
-        email: u.email || u.correo || '',
-        address: [u.direccion || u.address || '', u.localidad || u.city || '', u.cp || u.zip || '', u.provincia || u.state || ''].filter(Boolean).join(', ')
-      }
+      const data = buildCustomerDataFromUser(u)
+      setLoggedInCustomer(u)
       setCustomerData(data)
       setShippingDestination(prev => ({
         ...prev,
-        postalCode: prev.postalCode || u.cp || u.zip || u.codigoPostal || '',
-        provinceCode: prev.provinceCode || u.provinciaCodigo || u.provinceCode || '',
-        city: prev.city || u.localidad || u.city || ''
+        postalCode: prev.postalCode || data.postalCode || '',
+        provinceCode: prev.provinceCode || data.provinceCode || '',
+        city: prev.city || data.city || ''
       }))
       // Auto-colapsar perfil si ya está completo
       if (data.name && data.phone) setIsProfileCollapsed(true)
@@ -278,19 +324,14 @@ export default function FinalizarCompraPage() {
   useEffect(() => {
     const applyUser = (user) => {
       if (!user) return
-      setCustomerData(prev => ({
-        ...prev,
-        name: user.nombre || user.name || user.email || prev.name,
-        apellido: user.apellido || user.lastName || prev.apellido,
-        phone: user.telefono || user.phone || prev.phone,
-        email: user.email || user.correo || prev.email,
-        address: [user.direccion || user.address || '', user.localidad || user.city || '', user.cp || user.zip || '', user.provincia || user.state || ''].filter(Boolean).join(', ') || prev.address
-      }))
+      const userData = buildCustomerDataFromUser(user)
+      setLoggedInCustomer(user)
+      setCustomerData(prev => ({ ...prev, ...userData }))
       setShippingDestination(prev => ({
         ...prev,
-        postalCode: prev.postalCode || user.cp || user.zip || user.codigoPostal || '',
-        provinceCode: prev.provinceCode || user.provinciaCodigo || user.provinceCode || '',
-        city: prev.city || user.localidad || user.city || ''
+        postalCode: prev.postalCode || userData.postalCode || '',
+        provinceCode: prev.provinceCode || userData.provinceCode || '',
+        city: prev.city || userData.city || ''
       }))
     }
     const onUserUpdated = (e) => {
@@ -496,16 +537,36 @@ export default function FinalizarCompraPage() {
       manualFollowupRequired: status === 'to_quote',
       quoteSnapshot,
       destinationSnapshot: {
-        postalCode: shippingDestination.postalCode.replace(/\D/g, ''),
-        city: shippingDestination.city || null,
-        provinceCode: shippingDestination.provinceCode || null,
-        provinceName: PROVINCES.find(p => p.code === shippingDestination.provinceCode)?.name || null,
+        postalCode: (customerData.postalCode || shippingDestination.postalCode).replace(/\D/g, ''),
+        city: customerData.city || shippingDestination.city || null,
+        provinceCode: customerData.provinceCode || shippingDestination.provinceCode || null,
+        provinceName: getProvinceByValue(customerData.provinceCode || shippingDestination.provinceCode)?.name || customerData.province || null,
         street: customerData.address || null,
+        notes: customerData.notes || null,
         package: shippingPackage,
       },
       agencySnapshot: selectedShippingPickupSnapshot,
     }
-  }, [customerData.address, deliveryMethod, freeShippingEligible, isSelectedShippingPayableQuote, selectedShippingDeliveryType, selectedShippingPickupSnapshot, selectedShippingQuoteSnapshot, selectedShippingRate, shippingDeliveryType, shippingDestination, shippingPackage])
+  }, [customerData, deliveryMethod, freeShippingEligible, isSelectedShippingPayableQuote, selectedShippingDeliveryType, selectedShippingPickupSnapshot, selectedShippingQuoteSnapshot, selectedShippingRate, shippingDeliveryType, shippingDestination, shippingPackage])
+
+  const syncCheckoutProfileIfRequested = useCallback(async () => {
+    if (!saveProfileForNextOrders || !loggedInCustomer?.id) return
+    const profileData = buildProfileDataFromCheckout(customerData)
+    const currentProfile = buildProfileDataFromCheckout(buildCustomerDataFromUser(loggedInCustomer))
+    const changed = Object.keys(profileData).some(key => (profileData[key] || '') !== (currentProfile[key] || ''))
+    if (!changed) return
+
+    try {
+      const { data, error } = await updateUserProfile(loggedInCustomer.id, profileData)
+      if (error) throw new Error(error)
+      const updatedUser = { ...loggedInCustomer, ...(data || profileData), ...profileData }
+      try { localStorage.setItem('currentUser', JSON.stringify(updatedUser)) } catch { /* best-effort profile cache */ }
+      setLoggedInCustomer(updatedUser)
+      try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch { /* best-effort event */ }
+    } catch {
+      createToast('El pedido continúa, pero no pudimos guardar estos datos en Mi cuenta.', 'warning')
+    }
+  }, [customerData, loggedInCustomer, saveProfileForNextOrders])
 
   const handleMercadoPago = async () => {
     if (isSubmitting || isLoadingMP) return
@@ -523,6 +584,7 @@ export default function FinalizarCompraPage() {
 
     setIsLoadingMP(true)
     try {
+      await syncCheckoutProfileIfRequested()
       const shipping = buildSelectedShippingSnapshot()
       const orderData = {
         cliente: {
@@ -530,7 +592,11 @@ export default function FinalizarCompraPage() {
           apellido: customerData.apellido,
           telefono: customerData.phone,
           email: customerData.email,
-          direccion: customerData.address
+          direccion: customerData.address,
+          localidad: customerData.city,
+          cp: customerData.postalCode,
+          provincia: getProvinceByValue(customerData.provinceCode || customerData.province)?.name || customerData.province,
+          observaciones: customerData.notes
         },
         items: cart.map(item => ({
           idProducto: item.productId,
@@ -620,6 +686,7 @@ export default function FinalizarCompraPage() {
 
     setIsSubmitting(true)
     try {
+      await syncCheckoutProfileIfRequested()
       const shipping = buildSelectedShippingSnapshot()
       let comprobanteUrl = null
       if (paymentMethod === 'transferencia' && comprobante) {
@@ -637,7 +704,11 @@ export default function FinalizarCompraPage() {
           apellido: customerData.apellido,
           telefono: customerData.phone,
           email: customerData.email,
-          direccion: customerData.address
+          direccion: customerData.address,
+          localidad: customerData.city,
+          cp: customerData.postalCode,
+          provincia: getProvinceByValue(customerData.provinceCode || customerData.province)?.name || customerData.province,
+          observaciones: customerData.notes
         },
         items: cart.map(item => ({
           idProducto: item.productId,
@@ -760,7 +831,8 @@ export default function FinalizarCompraPage() {
 
             {/* Datos del usuario (colapsable) */}
             {(() => {
-              const isDataIncomplete = !customerData.name?.trim() || !customerData.phone?.trim()
+              const isShippingDataIncomplete = deliveryMethod === 'envio' && !!missingShippingDestinationMessage
+              const isDataIncomplete = !customerData.name?.trim() || !customerData.phone?.trim() || isShippingDataIncomplete
               return (
             <div style={{ marginBottom: 18, border: '1px solid', borderColor: isDataIncomplete ? '#ef4444' : 'var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
               <button
@@ -780,7 +852,7 @@ export default function FinalizarCompraPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: '1.2rem' }}>👤</span>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Tus datos {isDataIncomplete && <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>}</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Datos para este pedido {isDataIncomplete && <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>}</div>
                     {isProfileCollapsed && customerData.name && (
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                         {customerData.name} {customerData.apellido} • {customerData.phone}
@@ -792,36 +864,72 @@ export default function FinalizarCompraPage() {
               </button>
               {isDataIncomplete && !isProfileCollapsed && (
                 <div style={{ padding: '10px 16px', background: '#fef2f2', borderTop: '1px solid #ef4444', color: '#dc2626', fontSize: '0.85rem', fontWeight: 500 }}>
-                  ⚠️ Completa tus datos para realizar la compra
+                  {isShippingDataIncomplete ? missingShippingDestinationMessage : 'Completa tus datos para realizar la compra'}
                 </div>
               )}
 
               {!isProfileCollapsed && (
                 <div style={{ padding: 16 }}>
+                  <div style={{ marginBottom: 12, color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.45 }}>
+                    {loggedInCustomer ? 'Cargamos estos datos desde Mi cuenta. Podés editarlos solo para este pedido.' : 'Podés comprar como invitado sin iniciar sesión. Si creás una cuenta después, estos datos te sirven para próximas compras.'}
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Nombre *</label>
-                      <input value={customerData.name} onChange={(e) => setCustomerData(p => ({ ...p, name: e.target.value }))} placeholder="Nombre" autoComplete="given-name" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                      <input value={customerData.name} onChange={(e) => updateCustomerData({ name: e.target.value })} placeholder="Nombre" autoComplete="given-name" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Apellido</label>
-                      <input value={customerData.apellido} onChange={(e) => setCustomerData(p => ({ ...p, apellido: e.target.value }))} placeholder="Apellido" autoComplete="family-name" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                      <input value={customerData.apellido} onChange={(e) => updateCustomerData({ apellido: e.target.value })} placeholder="Apellido" autoComplete="family-name" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Teléfono *</label>
-                      <input value={customerData.phone} onChange={(e) => setCustomerData(p => ({ ...p, phone: e.target.value }))} placeholder="Teléfono" autoComplete="tel" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                      <input value={customerData.phone} onChange={(e) => updateCustomerData({ phone: e.target.value })} placeholder="Teléfono" autoComplete="tel" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Email</label>
-                      <input value={customerData.email} onChange={(e) => setCustomerData(p => ({ ...p, email: e.target.value }))} placeholder="Email (opcional)" autoComplete="email" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                      <input value={customerData.email} onChange={(e) => updateCustomerData({ email: e.target.value })} placeholder="Email (opcional)" autoComplete="email" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                   </div>
-                  <div>
+                  <div style={{ marginBottom: 12 }}>
                     <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Dirección</label>
-                    <input value={customerData.address} onChange={(e) => setCustomerData(p => ({ ...p, address: e.target.value }))} placeholder="Dirección" autoComplete="street-address" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    <input value={customerData.address} onChange={(e) => updateCustomerData({ address: e.target.value })} placeholder="Dirección" autoComplete="street-address" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                   </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Localidad / ciudad {deliveryMethod === 'envio' ? '*' : ''}</label>
+                      <input value={customerData.city} onChange={(e) => updateCustomerData({ city: e.target.value })} placeholder="Ej. Córdoba" autoComplete="address-level2" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Código postal {deliveryMethod === 'envio' ? '*' : ''}</label>
+                      <input value={customerData.postalCode} onChange={(e) => updateCustomerData({ postalCode: e.target.value })} placeholder="Ej. 1406" inputMode="numeric" autoComplete="postal-code" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Provincia {deliveryMethod === 'envio' ? '*' : ''}</label>
+                      <select value={customerData.provinceCode} onChange={(e) => { const province = getProvinceByValue(e.target.value); updateCustomerData({ provinceCode: e.target.value, province: province?.name || '' }) }} autoComplete="address-level1" style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
+                        <option value="">Seleccionar</option>
+                        {PROVINCES.map(province => <option key={province.code} value={province.code}>{province.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Observaciones</label>
+                      <input value={customerData.notes} onChange={(e) => updateCustomerData({ notes: e.target.value })} placeholder="Piso, timbre, horario..." style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
+                    </div>
+                  </div>
+                  {loggedInCustomer ? (
+                    <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={saveProfileForNextOrders} onChange={(e) => setSaveProfileForNextOrders(e.target.checked)} style={{ marginTop: 2 }} />
+                      Guardar estos datos en mi cuenta para próximas compras
+                    </label>
+                  ) : (
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.4 }}>
+                      Si querés reutilizar estos datos en futuras compras, podés crear una cuenta desde Mi cuenta cuando termines.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -841,29 +949,13 @@ export default function FinalizarCompraPage() {
               </div>
               {deliveryMethod === 'envio' && (
                 <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 10, color: 'var(--text-primary)' }}>Datos de envío</div>
+                  <div style={{ fontWeight: 700, marginBottom: 10, color: 'var(--text-primary)' }}>Cotización de envío</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
                     <button type="button" onClick={() => setShippingDeliveryType('domicilio')} style={{ padding: '8px 12px', borderRadius: 8, border: shippingDeliveryType === 'domicilio' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: shippingDeliveryType === 'domicilio' ? 'var(--bg-hover)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: shippingDeliveryType === 'domicilio' ? 700 : 400 }}>Domicilio</button>
                     <button type="button" onClick={() => setShippingDeliveryType('sucursal')} style={{ padding: '8px 12px', borderRadius: 8, border: shippingDeliveryType === 'sucursal' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: shippingDeliveryType === 'sucursal' ? 'var(--bg-hover)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: shippingDeliveryType === 'sucursal' ? 700 : 400 }}>Sucursal</button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Código postal *</label>
-                      <input value={shippingDestination.postalCode} onChange={(e) => setShippingDestination(p => ({ ...p, postalCode: e.target.value }))} placeholder="Ej. 1406" inputMode="numeric" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Ciudad *</label>
-                      <input value={shippingDestination.city} onChange={(e) => setShippingDestination(p => ({ ...p, city: e.target.value }))} placeholder="Ej. Córdoba" autoComplete="address-level2" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Provincia *</label>
-                      <select value={shippingDestination.provinceCode} onChange={(e) => setShippingDestination(p => ({ ...p, provinceCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
-                        <option value="">Seleccionar</option>
-                        {PROVINCES.map(province => <option key={province.code} value={province.code}>{province.name}</option>)}
-                      </select>
-                    </div>
+                  <div style={{ marginBottom: 10, color: 'var(--text-secondary)', fontSize: 13 }}>
+                    Usamos el código postal, ciudad y provincia cargados en Datos para este pedido.
                   </div>
                   {shippingDeliveryType === 'sucursal' && (
                     <div style={{ marginBottom: 10 }}>

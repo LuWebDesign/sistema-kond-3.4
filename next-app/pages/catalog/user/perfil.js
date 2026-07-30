@@ -180,38 +180,46 @@ export default function Perfil() {
             </div>
           </div>
 
-          {/* Datos personales */}
+          {/* Identidad de la cuenta */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
             <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-              Datos personales
+              Identidad de la cuenta
+            </h3>
+            <Field label="Email" name="email" type="email" value={formData.email} readOnly />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.45, margin: '8px 0 0' }}>
+              Este email se usa para iniciar sesión y recibir comunicaciones de tus pedidos. El cambio de email o contraseña queda fuera de este perfil.
+            </p>
+          </div>
+
+          {/* Datos de contacto */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
+              Datos de compra y contacto
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
               <Field label="Nombre" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
               <Field label="Apellido" name="apellido" value={formData.apellido} onChange={handleInputChange} />
-              <div>
-                <Field label="Email" name="email" type="email" value={formData.email} readOnly />
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', lineHeight: 1.45, margin: '6px 0 0' }}>
-                  El email pertenece a tu cuenta de acceso. Por ahora no se cambia desde este perfil.
-                </p>
-              </div>
               <Field label="Teléfono" name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} />
             </div>
           </div>
 
-          {/* Dirección de envío */}
+          {/* Dirección de envío y compra */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
             <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 16px 0' }}>
-              Dirección de envío
+              Dirección para compras y envíos
             </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.45, margin: '0 0 16px' }}>
+              Usamos estos datos para precargar el checkout y cotizar envíos con código postal, ciudad y provincia.
+            </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <Field label="Dirección" name="direccion" value={formData.direccion} onChange={handleInputChange} />
               </div>
 
-              <Field label="Localidad" name="localidad" value={formData.localidad} onChange={handleInputChange} />
-              <Field label="Código Postal" name="cp" value={formData.cp} onChange={handleInputChange} />
+              <Field label="Localidad / ciudad" name="localidad" value={formData.localidad} onChange={handleInputChange} />
+              <Field label="Código postal" name="cp" value={formData.cp} onChange={handleInputChange} />
               <Field label="Provincia" name="provincia" value={formData.provincia} onChange={handleInputChange} />
 
               <div style={{ gridColumn: '1 / -1' }}>
