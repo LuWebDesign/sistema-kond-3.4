@@ -5,6 +5,7 @@ import { useOrders } from '../../hooks/useCatalog'
 import { getCurrentUser, createToast } from '../../utils/catalogUtils'
 import { getPedidosByEmail } from '../../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../../utils/supabaseProductos'
+import supabase from '../../utils/supabaseClient'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -176,7 +177,11 @@ export default function MisPedidos({ seoConfig }) {
         let pedidosDB = null
         let fetchError = null
         try {
-          const resp = await fetch(`/api/pedidos-catalogo/by-email?email=${encodeURIComponent(user.email)}`)
+          const { data: sessionData } = supabase ? await supabase.auth.getSession() : { data: null }
+          const accessToken = sessionData?.session?.access_token
+          const resp = await fetch(`/api/pedidos-catalogo/by-email?email=${encodeURIComponent(user.email)}`, {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+          })
           if (resp.ok) {
             const json = await resp.json()
             pedidosDB = json.data

@@ -66,7 +66,12 @@ const nextConfig = {
       },
       {
         source: '/mi-cuenta',
-        destination: '/admin/mi-cuenta',
+        destination: '/catalog/user',
+        permanent: false
+      },
+      {
+        source: '/user',
+        destination: '/catalog/user',
         permanent: false
       },
       // Redirecciones por reorganización de rutas (catálogo)

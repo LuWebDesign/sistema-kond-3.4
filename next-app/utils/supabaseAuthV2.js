@@ -328,13 +328,14 @@ export async function getCurrentSession() {
       // Si no hay datos en localStorage, intentar obtenerlos de la BD
       const isPublicPage = typeof window !== 'undefined' && 
         (window.location.pathname === '/catalog' || 
-         window.location.pathname === '/catalog/user' || 
+         window.location.pathname === '/catalog/user' ||
+         window.location.pathname.startsWith('/catalog/user/') ||
          window.location.pathname.startsWith('/tracking'));
       
       try {
         const { data: usuario, error: fetchError } = await supabase
           .from('usuarios')
-          .select('id, email, username, rol, nombre, apellido')
+          .select('id, email, username, rol, nombre, apellido, telefono, direccion, localidad, cp, provincia, observaciones')
           .eq('id', session.user.id)
           .single();
 

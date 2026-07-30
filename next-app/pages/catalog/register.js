@@ -135,7 +135,7 @@ export default function Register() {
               <p>💡 <strong>Consejo:</strong> Si no ves el email, revisa tu carpeta de spam.</p>
             </div>
             <div className="actions">
-              <Link href="/user">
+              <Link href="/catalog/user">
                 <a className="btn-primary">Ir a iniciar sesión</a>
               </Link>
               <Link href="/">
@@ -357,7 +357,7 @@ export default function Register() {
 
         <div className="register-footer">
           <p>¿Ya tienes cuenta?</p>
-          <Link href="/user">
+          <Link href="/catalog/user">
             <a className="login-link">Iniciar sesión</a>
           </Link>
         </div>

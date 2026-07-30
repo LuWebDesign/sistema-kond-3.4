@@ -8,13 +8,11 @@ export default function Perfil() {
   const [currentUser, setCurrentUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [avatar, setAvatar] = useState(null)
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
     email: '',
-    password: '',
     telefono: '',
     direccion: '',
     localidad: '',
@@ -37,7 +35,6 @@ export default function Perfil() {
           nombre: u.nombre || '',
           apellido: u.apellido || '',
           email: u.email || '',
-          password: '',
           telefono: u.telefono || '',
           direccion: u.direccion || '',
           localidad: u.localidad || '',
@@ -60,7 +57,6 @@ export default function Perfil() {
               nombre: localUser.nombre || '',
               apellido: localUser.apellido || '',
               email: localUser.email || '',
-              password: '',
               telefono: localUser.telefono || '',
               direccion: localUser.direccion || '',
               localidad: localUser.localidad || '',
@@ -103,10 +99,11 @@ export default function Perfil() {
     setIsSaving(true)
 
     try {
-      const { password, ...profileFields } = formData
+      const { email, ...editableFields } = formData
+      const profileFields = { ...editableFields, email: currentUser?.email || email }
 
       if (currentUser?.id) {
-        const { error: dbError } = await updateUserProfile(currentUser.id, profileFields)
+        const { error: dbError } = await updateUserProfile(currentUser.id, editableFields)
         if (dbError) {
           createToast('Error al guardar en el servidor: ' + dbError, 'error')
           setIsSaving(false)
@@ -116,7 +113,6 @@ export default function Perfil() {
 
       const updatedUser = { ...currentUser, ...profileFields, avatar }
       try { localStorage.setItem('currentUser', JSON.stringify(updatedUser)) } catch { /* noop */ }
-      try { localStorage.setItem('kond-user', JSON.stringify(updatedUser)) } catch { /* noop */ }
       setCurrentUser(updatedUser)
       try { window.dispatchEvent(new CustomEvent('user:updated', { detail: updatedUser })) } catch { /* noop */ }
 
@@ -193,30 +189,13 @@ export default function Perfil() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
               <Field label="Nombre" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
               <Field label="Apellido" name="apellido" value={formData.apellido} onChange={handleInputChange} />
-              <Field label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-              <Field label="Teléfono" name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} />
-
-              {/* Contraseña - full width */}
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
-                  Contraseña
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Dejar vacío para no cambiarla"
-                    autoComplete="new-password"
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <button type="button" onClick={() => setShowPassword(s => !s)}
-                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                    {showPassword ? 'Ocultar' : 'Mostrar'}
-                  </button>
-                </div>
+              <div>
+                <Field label="Email" name="email" type="email" value={formData.email} readOnly />
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', lineHeight: 1.45, margin: '6px 0 0' }}>
+                  El email pertenece a tu cuenta de acceso. Por ahora no se cambia desde este perfil.
+                </p>
               </div>
+              <Field label="Teléfono" name="telefono" type="tel" value={formData.telefono} onChange={handleInputChange} />
             </div>
           </div>
 
@@ -267,7 +246,7 @@ export default function Perfil() {
   )
 }
 
-function Field({ label, name, type = 'text', value, onChange, required }) {
+function Field({ label, name, type = 'text', value, onChange, required, readOnly }) {
   return (
     <div>
       <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '6px' }}>
@@ -279,7 +258,8 @@ function Field({ label, name, type = 'text', value, onChange, required }) {
         value={value}
         onChange={onChange}
         required={required}
-        style={inputStyle}
+        readOnly={readOnly}
+        style={readOnly ? readOnlyInputStyle : inputStyle}
       />
     </div>
   )
@@ -296,4 +276,11 @@ const inputStyle = {
   outline: 'none',
   transition: 'border-color 0.15s ease',
   boxSizing: 'border-box'
+}
+
+const readOnlyInputStyle = {
+  ...inputStyle,
+  background: 'var(--bg-tertiary)',
+  color: 'var(--text-secondary)',
+  cursor: 'not-allowed'
 }
