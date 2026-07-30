@@ -18,7 +18,15 @@ export default async function handler(req, res) {
   } = req.body || {}
 
   if (!postalCodeDestination) {
-    return res.status(400).json({ available: false, rates: [], error: 'postalCodeDestination is required' })
+    return res.status(400).json({ available: false, rates: [], error: 'Ingresá tu código postal para calcular el envío.', status: 'missing_destination' })
+  }
+  if (!destinationCity || !destinationState) {
+    return res.status(400).json({
+      available: false,
+      rates: [],
+      error: 'Ingresá ciudad y provincia para calcular el envío con más precisión.',
+      status: 'missing_destination',
+    })
   }
 
   const result = await getShippingRates({

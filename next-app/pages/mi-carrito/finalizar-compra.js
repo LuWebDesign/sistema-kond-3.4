@@ -74,6 +74,7 @@ function buildSafeQuoteSnapshot(rate, selectedPickupPoint = null) {
     pointId: pickupPoint?.code || quote.pointId || quote.point_id || null,
     pickupPoint,
     pickupPoints,
+    quoteContext: rate.quoteContext || quote.quoteContext || null,
   }
 }
 
@@ -107,6 +108,31 @@ function buildPackageFromCart(cart, products) {
   return weightKg > 0 && lengthCm > 0 && widthCm > 0 && heightCm > 0
     ? { weightKg, lengthCm, widthCm, heightCm }
     : null
+}
+
+function getMissingShippingDestination(destination) {
+  if (!destination.postalCode.replace(/\D/g, '')) return 'Ingresá tu código postal para calcular el envío.'
+  if (!destination.city.trim()) return 'Ingresá tu ciudad para calcular el envío con más precisión.'
+  if (!destination.provinceCode) return 'Seleccioná tu provincia para calcular el envío con más precisión.'
+  return ''
+}
+
+function formatShippingPackageSummary(pkg) {
+  if (!pkg) return ''
+  const weight = Number(pkg.weightKg).toLocaleString('es-AR', { maximumFractionDigits: 2 })
+  return `Paquete estimado: ${weight} kg · ${pkg.lengthCm} × ${pkg.widthCm} × ${pkg.heightCm} cm.`
+}
+
+function formatQuoteContext(context) {
+  if (!context) return ''
+  const destination = context.destination
+  const origin = context.origin
+  const destinationText = [destination?.city, destination?.state, destination?.zipcode && `CP ${destination.zipcode}`].filter(Boolean).join(', ')
+  const originText = [origin?.city, origin?.zipcode && `CP ${origin.zipcode}`].filter(Boolean).join(', ')
+  if (destinationText && originText) return `Cotizamos hacia ${destinationText} desde ${originText}.`
+  if (destinationText) return `Cotizamos hacia ${destinationText}.`
+  if (originText) return `Origen de envío: ${originText}.`
+  return ''
 }
 
 export default function FinalizarCompraPage() {
@@ -175,6 +201,9 @@ export default function FinalizarCompraPage() {
     && shippingQuoteStatus === 'available'
     && shippingAgencies.length > 0
     && !selectedShippingAgency
+  const missingShippingDestinationMessage = deliveryMethod === 'envio' ? getMissingShippingDestination(shippingDestination) : ''
+  const shippingPackageSummary = formatShippingPackageSummary(shippingPackage)
+  const quoteContextMessage = formatQuoteContext(selectedShippingRate?.quoteContext || selectedShippingQuoteSnapshot?.quoteContext)
 
   const paymentSectionRef = useRef(null)
 
@@ -291,11 +320,12 @@ export default function FinalizarCompraPage() {
 
     const postalCode = shippingDestination.postalCode.replace(/\D/g, '')
     const provinceName = PROVINCES.find(p => p.code === shippingDestination.provinceCode)?.name || shippingDestination.provinceCode || ''
-    if (!postalCode || !shippingPackage) {
+    const missingDestination = getMissingShippingDestination(shippingDestination)
+    if (missingDestination || !shippingPackage) {
       setShippingRates([])
       setSelectedShippingRate(null)
-      setShippingQuoteStatus('unavailable')
-      setShippingQuoteError(!shippingPackage ? 'Package shipping data is incomplete' : '')
+      setShippingQuoteStatus(missingDestination ? 'idle' : 'unavailable')
+      setShippingQuoteError(missingDestination || (!shippingPackage ? 'No tenemos las medidas del paquete para cotizar automáticamente.' : ''))
       return
     }
 
@@ -309,7 +339,7 @@ export default function FinalizarCompraPage() {
           body: JSON.stringify({
             postalCodeDestination: postalCode,
             provinceCode: shippingDestination.provinceCode || undefined,
-            destinationCity: shippingDestination.city || provinceName || undefined,
+            destinationCity: shippingDestination.city || undefined,
             destinationState: provinceName || undefined,
             declaredValue: productTotal,
             deliveryType: normalizeDeliveryTypeForApi(shippingDeliveryType),
@@ -484,8 +514,8 @@ export default function FinalizarCompraPage() {
     if (deliveryMethod === 'envio' && !customerData.address.trim()) {
       return createToast('La dirección es requerida para envío', 'error')
     }
-    if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
-      return createToast('El código postal es requerido para cotizar el envío', 'error')
+    if (deliveryMethod === 'envio' && missingShippingDestinationMessage) {
+      return createToast(missingShippingDestinationMessage, 'error')
     }
     if (mustSelectPickupAgency) {
       return createToast('Selecciona una sucursal para continuar', 'error')
@@ -575,8 +605,8 @@ export default function FinalizarCompraPage() {
     if (deliveryMethod === 'envio' && !customerData.address.trim()) {
       return createToast('La dirección es requerida para envío', 'error')
     }
-    if (deliveryMethod === 'envio' && !shippingDestination.postalCode.replace(/\D/g, '')) {
-      return createToast('El código postal es requerido para cotizar el envío', 'error')
+    if (deliveryMethod === 'envio' && missingShippingDestinationMessage) {
+      return createToast(missingShippingDestinationMessage, 'error')
     }
     if (mustSelectPickupAgency) {
       return createToast('Selecciona una sucursal para continuar', 'error')
@@ -822,13 +852,13 @@ export default function FinalizarCompraPage() {
                       <input value={shippingDestination.postalCode} onChange={(e) => setShippingDestination(p => ({ ...p, postalCode: e.target.value }))} placeholder="Ej. 1406" inputMode="numeric" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Ciudad</label>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Ciudad *</label>
                       <input value={shippingDestination.city} onChange={(e) => setShippingDestination(p => ({ ...p, city: e.target.value }))} placeholder="Ej. Córdoba" autoComplete="address-level2" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }} />
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Provincia</label>
+                      <label style={{ display: 'block', fontSize: 12, marginBottom: 5 }}>Provincia *</label>
                       <select value={shippingDestination.provinceCode} onChange={(e) => setShippingDestination(p => ({ ...p, provinceCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}>
                         <option value="">Seleccionar</option>
                         {PROVINCES.map(province => <option key={province.code} value={province.code}>{province.name}</option>)}
@@ -852,9 +882,15 @@ export default function FinalizarCompraPage() {
                       </select>
                     </div>
                   )}
+                  {shippingPackageSummary && (
+                    <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {shippingPackageSummary} El costo puede variar según peso, volumen y zona de entrega.
+                    </div>
+                  )}
                   <div style={{ fontSize: 13 }}>
-                    {isLoadingShipping ? 'Cotizando envío...' : shippingQuoteStatus === 'available' && selectedShippingRate ? `Cotización seleccionada: ${selectedShippingRate.serviceName} — ${formatCurrency(selectedShippingRate.cost)}` : 'Envío: A cotizar'}
-                    {shippingQuoteError && <span style={{ display: 'block', marginTop: 4 }}>No pudimos obtener una cotización automática. Podés continuar.</span>}
+                    {isLoadingShipping ? 'Cotizando envío...' : shippingQuoteStatus === 'available' && selectedShippingRate ? `Cotización seleccionada: ${selectedShippingRate.serviceName} — ${formatCurrency(selectedShippingRate.cost)}` : shippingQuoteError || 'Completá código postal, ciudad y provincia para calcular el envío.'}
+                    {quoteContextMessage && <span style={{ display: 'block', marginTop: 4, color: 'var(--text-secondary)' }}>{quoteContextMessage}</span>}
+                    {shippingQuoteError && shippingQuoteStatus === 'unavailable' && <span style={{ display: 'block', marginTop: 4 }}>No pudimos obtener una cotización automática. Podés continuar.</span>}
                   </div>
                 </div>
               )}

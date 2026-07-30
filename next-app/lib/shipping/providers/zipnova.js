@@ -22,8 +22,9 @@ export async function getZipnovaRates(input, options = {}) {
     body: JSON.stringify(buildQuotePayload(input, pkg, postalCodeDestination, config)),
   }, config, options)
 
-  const rates = curateRates(extractList(response), input?.deliveryType)
-  return { available: rates.length > 0, rates }
+  const quoteContext = normalizeQuoteContext(response)
+  const rates = curateRates(extractList(response), input?.deliveryType).map((rate) => ({ ...rate, quoteContext: rate.quoteContext || quoteContext }))
+  return { available: rates.length > 0, rates, quoteContext }
 }
 
 export async function getZipnovaAgencies(input) {
@@ -105,6 +106,7 @@ export function normalizeZipnovaRate(rate, requestedDeliveryType) {
       pointId: stringValue(pickupPoint?.code ?? rate?.point_id ?? rate?.pointId),
       pickupPoint,
       pickupPoints,
+      quoteContext: normalizeQuoteContext(rate),
     },
   }
 }
@@ -391,6 +393,28 @@ function extractList(response) {
     response?.data?.results,
     response?.data?.all_results,
   ].find(Array.isArray) || []
+}
+
+function normalizeQuoteContext(value) {
+  const sources = [value?.quoteContext, value?.quote_context, value?.shipment, value, value?.data]
+  for (const source of sources) {
+    const origin = normalizeQuoteAddress(source?.origin || source?.from || source?.sender || source?.origin_address)
+    const destination = normalizeQuoteAddress(source?.destination || source?.to || source?.recipient || source?.destination_address)
+    if (origin || destination) return { origin, destination }
+  }
+  return null
+}
+
+function normalizeQuoteAddress(address) {
+  if (!address || typeof address !== 'object' || Array.isArray(address)) return null
+  const normalized = {
+    id: stringValue(address?.id),
+    name: stringValue(address?.name),
+    city: stringValue(address?.city ?? address?.locality),
+    state: stringValue(address?.state ?? address?.province ?? address?.province_name),
+    zipcode: normalizePostalCode(address?.zipcode ?? address?.postalCode ?? address?.postal_code ?? address?.zipCode),
+  }
+  return Object.fromEntries(Object.entries(normalized).filter(([, value]) => value))
 }
 
 function dedupeBy(items, keyFn) {
