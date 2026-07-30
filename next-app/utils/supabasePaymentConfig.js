@@ -7,16 +7,22 @@ import { TENANT_ID } from '../lib/tenant'
  */
 export async function getPaymentConfig() {
   try {
-    // Preferir la API server-side que usa service_role para lectura/escritura segura
+    // Intentar endpoint público primero (sin auth) — usado por checkout y páginas públicas
     if (typeof window !== 'undefined') {
       try {
-        const resp = await fetch('/api/admin/payment-config')
+        const resp = await fetch('/api/payment-config')
         if (resp.ok) {
           const json = await resp.json()
           return json.config
         }
+        // Si respondió pero falló, intentar admin endpoint como fallback
+        const adminResp = await fetch('/api/admin/payment-config')
+        if (adminResp.ok) {
+          const json = await adminResp.json()
+          return json.config
+        }
       } catch (e) {
-        console.warn('Fallo al obtener config vía API admin, intentando fallback:', e)
+        console.warn('Fallo al obtener config vía API pública, intentando fallback:', e)
       }
     }
 
