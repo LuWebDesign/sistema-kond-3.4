@@ -375,11 +375,28 @@ export default function ProductDetail({ product, categories = [], products = [],
                   {/* Fila 3: precio por transferencia (más chico) + badge de transferencia */}
                   {transferPrice !== null && (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: transferPresentation.mode === 'compact_text' ? 'nowrap' : 'wrap' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
-                          {formatCurrency(transferPrice)}
-                        </span>
-                        {transferPresentation.mode === 'badge' && transferBadge && (() => {
+                      {transferPresentation.mode === 'compact_text' ? (
+                        <div style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.4 }}>
+                          <span style={{ display: 'inline-block', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {formatCurrency(transferPrice)}
+                          </span>
+                          {transferPresentation.text && (
+                            <span>
+                              {' '}{transferPresentation.text}
+                            </span>
+                          )}
+                          {transferPresentation.explanation && (
+                            <span>
+                              {' '}{transferPresentation.explanation}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
+                            {formatCurrency(transferPrice)}
+                          </span>
+                          {transferBadge && (() => {
                           const opacity = transferBadge.opacity ?? 100
                           const bgColor = transferBadge.color || '#10b981'
                           const hex = bgColor.replace('#', '')
@@ -398,16 +415,7 @@ export default function ProductDetail({ product, categories = [], products = [],
                               {transferBadge.text}
                             </span>
                           )
-                        })()}
-                        {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
-                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600, minWidth: 0, flex: '1 1 auto', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-                            {transferPresentation.text}
-                          </span>
-                        )}
-                      </div>
-                      {transferPresentation.mode === 'compact_text' && transferPresentation.explanation && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                          {transferPresentation.explanation}
+                          })()}
                         </div>
                       )}
                     </>

@@ -1054,42 +1054,50 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
             </div>
 
             {transferPrice !== null && (
-              <div className="catalog-transfer-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: transferPresentation.mode === 'compact_text' ? 'nowrap' : 'wrap' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
-                  {formatCurrency(transferPrice)}
-                </div>
-                {transferPresentation.mode === 'badge' && transferBadge && (() => {
-                  const opacity = transferBadge.opacity ?? 100
-                  const bgColor = transferBadge.color || '#9ca3af'
-                  const hex = bgColor.replace('#', '')
-                  const r = parseInt(hex.substring(0, 2), 16)
-                  const g = parseInt(hex.substring(2, 4), 16)
-                  const b = parseInt(hex.substring(4, 6), 16)
-                  return (
-                    <span className="catalog-transfer-badge" style={{
-                      background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
-                      color: transferBadge.textColor || '#111827',
-                      padding: '3px 8px',
-                      borderRadius: '999px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {transferBadge.text}
-                    </span>
-                  )
-                })()}
-                {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
-                  <span className="catalog-transfer-compact-text" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, minWidth: 0, flex: '1 1 auto', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-                    {transferPresentation.text}
+              transferPresentation.mode === 'compact_text' ? (
+                <div className="catalog-transfer-row" style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.35 }}>
+                  <span style={{ display: 'inline-block', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {formatCurrency(transferPrice)}
                   </span>
-                )}
-              </div>
-            )}
-            {transferPrice !== null && transferPresentation.mode === 'compact_text' && transferPresentation.explanation && (
-              <div className="catalog-transfer-explanation" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.35 }}>
-                {transferPresentation.explanation}
-              </div>
+                  {transferPresentation.text && (
+                    <span className="catalog-transfer-compact-text">
+                      {' '}{transferPresentation.text}
+                    </span>
+                  )}
+                  {transferPresentation.explanation && (
+                    <span className="catalog-transfer-explanation">
+                      {' '}{transferPresentation.explanation}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="catalog-transfer-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
+                    {formatCurrency(transferPrice)}
+                  </div>
+                  {transferBadge && (() => {
+                    const opacity = transferBadge.opacity ?? 100
+                    const bgColor = transferBadge.color || '#9ca3af'
+                    const hex = bgColor.replace('#', '')
+                    const r = parseInt(hex.substring(0, 2), 16)
+                    const g = parseInt(hex.substring(2, 4), 16)
+                    const b = parseInt(hex.substring(4, 6), 16)
+                    return (
+                      <span className="catalog-transfer-badge" style={{
+                        background: `rgba(${r}, ${g}, ${b}, ${opacity / 100})`,
+                        color: transferBadge.textColor || '#111827',
+                        padding: '3px 8px',
+                        borderRadius: '999px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {transferBadge.text}
+                      </span>
+                    )
+                  })()}
+                </div>
+              )
             )}
           </div>
         </div>
