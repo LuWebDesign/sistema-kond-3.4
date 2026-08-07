@@ -5,8 +5,8 @@
 // Rewrite in next.config.js maps /sitemap.xml → /api/sitemap-xml
 
 import { supabaseAdmin } from '../../utils/supabaseClient'
-import { TENANT_ID } from '../../lib/tenant'
 import { getSeoConfigServer } from '../../lib/getSeoConfigServer'
+import { getSitemapUrls } from '../../lib/sitemapUrls'
 
 function escapeXml(str) {
   return String(str || '')
@@ -42,62 +42,15 @@ export default async function handler(req, res) {
 
     const today = new Date().toISOString().split('T')[0]
 
-    const [categoriesResult, productsResult] = await Promise.all([
-      seoConfig.sitemapIncludeCategories
-        ? admin.from('categorias')
-            .select('slug, updated_at')
-            .eq('tenant_id', TENANT_ID)
-            .eq('activa', true)
-        : Promise.resolve({ data: [] }),
-
-      seoConfig.sitemapIncludeProducts
-        ? admin.from('productos')
-            .select('id, nombre, categoria_id, updated_at')
-            .eq('tenant_id', TENANT_ID)
-            .eq('publicado', true)
-            .eq('active', true)
-            .eq('hidden_in_productos', false)
-        : Promise.resolve({ data: [] }),
-    ])
-
-    const categories = categoriesResult.data || []
-    const products   = productsResult.data  || []
-
-    // Build slug map for products
-    const categorySlugMap = Object.fromEntries(categories.map(c => [c.id, c.slug]))
-
-    const entries = []
-
-    // Static pages
-    if (seoConfig.sitemapIncludePages) {
-      entries.push(urlEntry(`${baseUrl}/`,        { changefreq: 'daily',  priority: '1.0', lastmod: today }))
-      entries.push(urlEntry(`${baseUrl}/catalog`, { changefreq: 'daily',  priority: '0.9', lastmod: today }))
-    }
-
-    // Categories
-    for (const cat of categories) {
-      if (!cat.slug) continue
-      const lastmod = cat.updated_at ? cat.updated_at.split('T')[0] : today
-      entries.push(urlEntry(`${baseUrl}/catalog/${escapeXml(cat.slug)}`, { lastmod, changefreq: 'weekly', priority: '0.8' }))
-    }
-
-    // Products — link to their category page (catalog/{slug})
-    for (const product of products) {
-      const slug = categorySlugMap[product.categoria_id]
-      if (!slug) continue
-      const lastmod = product.updated_at ? product.updated_at.split('T')[0] : today
-      entries.push(urlEntry(`${baseUrl}/catalog/${escapeXml(slug)}`, { lastmod, changefreq: 'weekly', priority: '0.7' }))
-    }
-
-    // Deduplicate entries (products in same category → same URL)
-    const seen = new Set()
-    const uniqueEntries = entries.filter(e => {
-      const locMatch = e.match(/<loc>([^<]+)<\/loc>/)
-      if (!locMatch) return true
-      if (seen.has(locMatch[1])) return false
-      seen.add(locMatch[1])
-      return true
+    const sitemapUrls = await getSitemapUrls(admin, {
+      includeCategories: seoConfig.sitemapIncludeCategories,
+      includeProducts: seoConfig.sitemapIncludeProducts,
+      includePages: seoConfig.sitemapIncludePages,
     })
+    const uniqueEntries = sitemapUrls.map(({ path, updatedAt, metadata }) => urlEntry(
+      `${baseUrl}${path}`,
+      { ...metadata, lastmod: updatedAt ? updatedAt.split('T')[0] : today }
+    ))
 
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',

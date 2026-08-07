@@ -2,6 +2,8 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { TENANT_ID } from '../../../../lib/tenant'
 import { verifyAdminCookie } from '../../../../utils/verifyAdminCookie'
+import { getSeoConfigServer } from '../../../../lib/getSeoConfigServer'
+import { getSitemapUrls } from '../../../../lib/sitemapUrls'
 
 export default async function handler(req, res) {
   const userId = await verifyAdminCookie(req)
@@ -11,13 +13,13 @@ export default async function handler(req, res) {
     return res.status(405).end('Method Not Allowed')
   try {
     const supabase = supabaseAdmin()
-    const [{ count: productCount }, { count: categoryCount }] = await Promise.all([
-      supabase.from('productos').select('id', { count: 'exact', head: true })
-        .eq('tenant_id', TENANT_ID).eq('publicado', true).eq('active', true),
-      supabase.from('categorias').select('id', { count: 'exact', head: true })
-        .eq('tenant_id', TENANT_ID).eq('activa', true),
-    ])
-    const urlCount = (productCount || 0) + (categoryCount || 0) + 3 // +3 for static pages
+    const seoConfig = await getSeoConfigServer()
+    const sitemapUrls = await getSitemapUrls(supabase, {
+      includeCategories: seoConfig.sitemapIncludeCategories,
+      includeProducts: seoConfig.sitemapIncludeProducts,
+      includePages: seoConfig.sitemapIncludePages,
+    })
+    const urlCount = sitemapUrls.length
     const now = new Date().toISOString()
 
     // Read existing config then patch
