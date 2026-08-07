@@ -4,33 +4,37 @@
 // and static promos (static_promo_price / promo_badge from DB).
 //
 // Badge placement:
-//   - transfer_discount badges → top-left over the product image
-//   - price-reducing badges (%, fixed price) → next to the price block
+//   - transfer_discount badges → next to the transfer price
+//   - other badges → next to the effective price
 
 import { useRouter } from 'next/router'
 import { slugifyPreserveCase } from '../../utils/slugify'
+import { applyTransferDiscount, getActivePromotions, getTransferPresentation } from '../../utils/promoEngine'
 
 function formatPrice(n) {
   if (!n && n !== 0) return null
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-export default function ProductCard({ product, categorySlug, onClick }) {
+export default function ProductCard({ product, categorySlug, onClick, activePromotions = [] }) {
   const router = useRouter()
   const imageUrl = product.imagenes_urls?.[0] || null
-  const price = formatPrice(product.precio_unitario)
+  const basePrice = Number(product.precio_unitario) || 0
+  const price = formatPrice(basePrice)
 
   // Dynamic promos (enriched by API via promo engine)
   const dynamicBadges = product.promotionBadges || []
-  const hasDynamicPromo = product.hasPromotion && product.precioPromocional != null && product.precioPromocional < product.precio_unitario
+  const hasDynamicPromo = product.hasPromotion && product.precioPromocional != null && product.precioPromocional < basePrice
+  const dynamicPrice = hasDynamicPromo ? Number(product.precioPromocional) : null
   const dynamicPromoPrice = formatPrice(product.precioPromocional)
 
   // Static promos (from DB columns)
-  const hasStaticPromo = product.static_promo_price != null && product.static_promo_price < product.precio_unitario
+  const staticPrice = product.static_promo_price != null ? Number(product.static_promo_price) : null
+  const hasStaticPromo = staticPrice != null && staticPrice < basePrice
   const staticPromoPrice = formatPrice(product.static_promo_price)
   const staticBadge = product.promo_badge || null
 
-  // Separate badges by placement: transfer_discount goes over image, others go next to price
+  // Keep transfer badges separate so they only appear beside the transfer price.
   const transferBadges = dynamicBadges.filter(b => b.type === 'transfer_discount')
   const priceBadges = dynamicBadges.filter(b => b.type !== 'transfer_discount')
 
@@ -40,6 +44,11 @@ export default function ProductCard({ product, categorySlug, onClick }) {
   // Price reduction: dynamic or static
   const hasPromo = hasDynamicPromo || hasStaticPromo
   const promoPrice = hasDynamicPromo ? dynamicPromoPrice : staticPromoPrice
+  const effectivePrice = hasDynamicPromo ? dynamicPrice : hasStaticPromo ? staticPrice : basePrice
+  const activeTransferPromo = getActivePromotions(activePromotions).find(p => (p.tipo || p.type) === 'transfer_discount')
+  const transferPresentation = getTransferPresentation(activeTransferPromo)
+  const transferDiscount = activeTransferPromo ? applyTransferDiscount(activePromotions, effectivePrice) : 0
+  const transferPrice = transferDiscount > 0 ? effectivePrice - transferDiscount : null
 
   const handleClick = () => {
     if (onClick) { onClick(product); return }
@@ -74,44 +83,6 @@ export default function ProductCard({ product, categorySlug, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* Transfer discount badges — top-left over the image */}
-      {transferBadges.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          left: '8px',
-          zIndex: 10,
-          display: 'flex',
-          gap: '4px',
-          flexWrap: 'wrap',
-        }}>
-          {transferBadges.map((b, idx) => {
-            const opacity = b.opacity ?? 100
-            const bgColor = b.color || '#3b82f6'
-            const hex = bgColor.replace('#', '')
-            const r = parseInt(hex.substring(0, 2), 16)
-            const g = parseInt(hex.substring(2, 4), 16)
-            const bVal = parseInt(hex.substring(4, 6), 16)
-            return (
-              <span
-                key={idx}
-                style={{
-                  background: `rgba(${r}, ${g}, ${bVal}, ${opacity / 100})`,
-                  color: b.textColor || '#fff',
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {b.text}
-              </span>
-            )
-          })}
-        </div>
-      )}
-
       {/* Image */}
       <div style={{ position: 'relative', width: '100%', paddingTop: '75%', background: '#f8fafc' }}>
         {imageUrl ? (
@@ -196,6 +167,46 @@ export default function ProductCard({ product, categorySlug, onClick }) {
             </div>
           )}
         </div>
+        {transferPrice !== null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
+              {formatPrice(transferPrice)}
+            </span>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {transferPresentation.mode === 'badge' && transferBadges.map((b, idx) => {
+                const opacity = b.opacity ?? 100
+                const bgColor = b.color || '#10b981'
+                const hex = bgColor.replace('#', '')
+                const r = parseInt(hex.substring(0, 2), 16)
+                const g = parseInt(hex.substring(2, 4), 16)
+                const bVal = parseInt(hex.substring(4, 6), 16)
+                return (
+                  <span key={idx} style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background: hex.length === 6 ? `rgba(${r}, ${g}, ${bVal}, ${opacity / 100})` : bgColor,
+                    color: b.textColor || '#fff',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {b.text}
+                  </span>
+                )
+              })}
+              {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 600 }}>
+                  {transferPresentation.text}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        {transferPrice !== null && transferPresentation.mode === 'compact_text' && transferPresentation.explanation && (
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)', lineHeight: 1.35 }}>
+            {transferPresentation.explanation}
+          </div>
+        )}
       </div>
     </div>
   )

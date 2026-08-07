@@ -11,6 +11,15 @@
   cursor: pointer;
 }
 
+:global(.public-header-action-button) {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
 .mobileSelectorBackdrop {
   position: fixed;
   inset: 0;

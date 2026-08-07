@@ -33,6 +33,7 @@ export default function Home({ seoConfig }) {
 
   const featured = data?.featured || []
   const promos = data?.promos || []
+  const activePromotions = data?.activePromotions || []
   // All categories (top-level + subcategories) for slug resolution
   const allCategories = data?.categories || []
   // Top-level only for display sections
@@ -139,7 +140,7 @@ export default function Home({ seoConfig }) {
             switch (s.type) {
               case 'featured':
                 return featured.length > 0
-                  ? <HeroGrid key={s.id} products={featured} categorySlugMap={categorySlugMap} />
+                  ? <HeroGrid key={s.id} products={featured} categorySlugMap={categorySlugMap} activePromotions={activePromotions} />
                   : null
               // category_tiles: shows ALL active top-level categories (independent of section visibility control)
               // 'categories' kept for backward compat with existing home_config DB entries
@@ -150,14 +151,14 @@ export default function Home({ seoConfig }) {
                   : null
               case 'promos':
                 return promos.length > 0
-                  ? <PromoCarousel key={s.id} products={promos} label={s.label} categorySlugMap={categorySlugMap} />
+                  ? <PromoCarousel key={s.id} products={promos} label={s.label} categorySlugMap={categorySlugMap} activePromotions={activePromotions} />
                   : null
               case 'categoria_carousel': {
                 const catId = s.config?.categoryId
                 const cat = allCategories.find((c) => c.id === catId)
                 const prods = byCategory[catId] || []
                 return cat && prods.length > 0
-                  ? <CategoryCarousel key={s.id} category={cat} products={prods} />
+                  ? <CategoryCarousel key={s.id} category={cat} products={prods} activePromotions={activePromotions} />
                   : null
               }
               default:
@@ -169,7 +170,7 @@ export default function Home({ seoConfig }) {
           {sortedCategories.map((cat) => {
             const products = getCategoryProducts(cat.id)
             return products.length > 0
-              ? <CategoryCarousel key={`cat-row-${cat.id}`} category={cat} products={products} />
+              ? <CategoryCarousel key={`cat-row-${cat.id}`} category={cat} products={products} activePromotions={activePromotions} />
               : null
           })}
         </main>

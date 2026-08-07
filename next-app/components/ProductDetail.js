@@ -5,7 +5,7 @@ import PublicLayout from './PublicLayout'
 import { useCart } from '../hooks/useCatalog'
 import { formatCurrency, createToast } from '../utils/catalogUtils'
 import { getCatalogStyles } from '../utils/supabaseCatalogStyles'
-import { applyTransferDiscount, getActivePromotions } from '../utils/promoEngine'
+import { applyTransferDiscount, getActivePromotions, getTransferPresentation } from '../utils/promoEngine'
 import { slugifyPreserveCase } from '../utils/slugify'
 import ReactMarkdown from 'react-markdown'
 // SectionSelector is provided by PublicLayout for /catalog routes — avoid local duplication
@@ -145,6 +145,7 @@ export default function ProductDetail({ product, categories = [], products = [],
     ? applyTransferDiscount(promociones || [], displayPrice)
     : 0
   const transferPrice = transferDiscountAmount > 0 ? displayPrice - transferDiscountAmount : null
+  const transferPresentation = getTransferPresentation(activeTransferPromo)
 
   const specs = SPEC_FIELDS.filter(({ key }) => {
     const val = product[key]
@@ -373,31 +374,43 @@ export default function ProductDetail({ product, categories = [], products = [],
 
                   {/* Fila 3: precio por transferencia (más chico) + badge de transferencia */}
                   {transferPrice !== null && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {formatCurrency(transferPrice)}
-                      </span>
-                      {transferBadge && (() => {
-                        const opacity = transferBadge.opacity ?? 100
-                        const bgColor = transferBadge.color || '#10b981'
-                        const hex = bgColor.replace('#', '')
-                        const r = parseInt(hex.substring(0, 2), 16)
-                        const g = parseInt(hex.substring(2, 4), 16)
-                        const b = parseInt(hex.substring(4, 6), 16)
-                        return (
-                          <span style={{
-                            padding: '3px 10px',
-                            borderRadius: 12,
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
-                            color: transferBadge.textColor || '#fff'
-                          }}>
-                            {transferBadge.text}
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {formatCurrency(transferPrice)}
+                        </span>
+                        {transferPresentation.mode === 'badge' && transferBadge && (() => {
+                          const opacity = transferBadge.opacity ?? 100
+                          const bgColor = transferBadge.color || '#10b981'
+                          const hex = bgColor.replace('#', '')
+                          const r = parseInt(hex.substring(0, 2), 16)
+                          const g = parseInt(hex.substring(2, 4), 16)
+                          const b = parseInt(hex.substring(4, 6), 16)
+                          return (
+                            <span style={{
+                              padding: '3px 10px',
+                              borderRadius: 12,
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: hex.length === 6 ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : bgColor,
+                              color: transferBadge.textColor || '#fff'
+                            }}>
+                              {transferBadge.text}
+                            </span>
+                          )
+                        })()}
+                        {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            {transferPresentation.text}
                           </span>
-                        )
-                      })()}
-                    </div>
+                        )}
+                      </div>
+                      {transferPresentation.mode === 'compact_text' && transferPresentation.explanation && (
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                          {transferPresentation.explanation}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )

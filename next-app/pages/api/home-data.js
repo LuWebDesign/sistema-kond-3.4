@@ -6,7 +6,7 @@
 
 import { supabaseAdmin } from '../../utils/supabaseClient';
 import { TENANT_ID } from '../../lib/tenant';
-import { applyPromotionsToProduct } from '../../utils/promoEngine';
+import { applyPromotionsToProduct, getActivePromotions } from '../../utils/promoEngine';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     const catNameMap = Object.fromEntries(categories.map((c) => [c.id, c.nombre]));
 
     // Normalize raw DB promos (snake_case) to camelCase expected by promo engine
-    const activePromos = activePromosRaw.map((p) => ({
+    const normalizedPromos = activePromosRaw.map((p) => ({
       id: p.id,
       nombre: p.nombre,
       tipo: p.tipo,
@@ -96,6 +96,7 @@ export default async function handler(req, res) {
       precioEspecial: p.precio_especial,
       config: p.configuracion || p.config,
     }));
+    const activePromos = getActivePromotions(normalizedPromos);
 
     // Enrich products with promotion data (same logic as useProducts in useCatalog.js)
     function enrichProduct(p) {
@@ -146,7 +147,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ featured: featuredEnriched, categories, byCategory, promos });
+    return res.status(200).json({ featured: featuredEnriched, categories, byCategory, promos, activePromotions: activePromos });
   } catch (error) {
     console.error('[home-data] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });

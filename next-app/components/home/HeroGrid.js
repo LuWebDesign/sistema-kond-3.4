@@ -4,7 +4,7 @@
 
 import ProductCard from './ProductCard'
 
-export default function HeroGrid({ products = [], categorySlugMap = {} }) {
+export default function HeroGrid({ products = [], categorySlugMap = {}, activePromotions = [] }) {
   if (!products.length) return null
 
   return (
@@ -44,6 +44,7 @@ export default function HeroGrid({ products = [], categorySlugMap = {} }) {
             key={product.id}
             product={product}
             categorySlug={categorySlugMap[product.categoria_id] || null}
+            activePromotions={activePromotions}
           />
         ))}
       </div>

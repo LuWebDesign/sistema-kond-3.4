@@ -75,8 +75,8 @@ export default function PublicSearch() {
         {renderInput()}
       </form>
       <button
-        type="button"
-        className="public-search-trigger"
+         type="button"
+         className="public-search-trigger public-header-action-button"
         aria-label="Buscar productos"
         aria-expanded={mobileOpen}
         onClick={() => setMobileOpen((open) => !open)}

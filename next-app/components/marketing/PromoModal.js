@@ -65,7 +65,7 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
     descuentoMonto: promo?.descuentoMonto || promo?.descuento_monto || null,
     precioEspecial: promo?.precioEspecial || promo?.precio_especial || null,
     prioridad: promo?.prioridad || promo?.prioridad || 0,
-    config: promo?.config || promo?.config || { transferDiscountType: 'percentage' }
+    config: promo?.config || { transferDiscountType: 'percentage' }
   });
   const [errors, setErrors] = useState({})
 
@@ -161,7 +161,12 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
       config: formData.tipo === 'buy_x_get_y'
         ? { buyQuantity: parseInt(formData.config.buyQuantity || 0, 10), payQuantity: parseInt(formData.config.payQuantity || 0, 10) }
         : formData.tipo === 'transfer_discount'
-          ? { transferDiscountType: formData.config?.transferDiscountType || 'percentage' }
+          ? {
+              ...formData.config,
+              transferDiscountType: formData.config?.transferDiscountType || 'percentage',
+              transferDisplayMode: formData.config?.transferDisplayMode || 'badge',
+              transferExplanation: formData.config?.transferExplanation ?? formData.summary ?? '',
+            }
           : null,
       valor: null // Este campo lo mantenemos por compatibilidad pero no lo usamos
     };
@@ -576,6 +581,34 @@ export default function PromoModal({ promo, products, onSubmit, onClose }) {
                         {errors.descuentoMonto && <small className={styles.errorText}>{errors.descuentoMonto}</small>}
                       </div>
                     )}
+                    <div className={styles.formField}>
+                      <label className={styles.label}>Presentación del descuento</label>
+                      <select
+                        className={styles.select}
+                        value={formData.config?.transferDisplayMode || 'badge'}
+                        onChange={(e) => updateConfig('transferDisplayMode', e.target.value)}
+                      >
+                        <option value="badge">Badge de color</option>
+                        <option value="compact_text">Texto compacto</option>
+                      </select>
+                      <small className={styles.helpText}>
+                        El texto compacto aparece junto al precio por transferencia, sin badge de color.
+                      </small>
+                    </div>
+                    <div className={styles.formField}>
+                      <label className={styles.label}>Explicación del descuento</label>
+                      <textarea
+                        className={styles.textarea}
+                        value={formData.config?.transferExplanation ?? formData.summary ?? ''}
+                        onChange={(e) => {
+                          updateConfig('transferExplanation', e.target.value)
+                          updateField('summary', e.target.value)
+                        }}
+                        rows={3}
+                        placeholder="Ej: Precio válido abonando mediante transferencia bancaria."
+                      />
+                      <small className={styles.helpText}>Se muestra debajo del precio por transferencia.</small>
+                    </div>
                   </>
                 )}
               </div>
