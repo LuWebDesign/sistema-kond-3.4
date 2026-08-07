@@ -1054,8 +1054,8 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
             </div>
 
             {transferPrice !== null && (
-              <div className="catalog-transfer-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div className="catalog-transfer-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: transferPresentation.mode === 'compact_text' ? 'nowrap' : 'wrap' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
                   {formatCurrency(transferPrice)}
                 </div>
                 {transferPresentation.mode === 'badge' && transferBadge && (() => {
@@ -1080,7 +1080,7 @@ const ProductCard = memo(function ProductCard({ product, promociones = [], onAdd
                   )
                 })()}
                 {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
-                  <span className="catalog-transfer-compact-text" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  <span className="catalog-transfer-compact-text" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, minWidth: 0, flex: '1 1 auto', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                     {transferPresentation.text}
                   </span>
                 )}

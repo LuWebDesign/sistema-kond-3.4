@@ -168,12 +168,13 @@ export default function ProductCard({ product, categorySlug, onClick, activeProm
           )}
         </div>
         {transferPrice !== null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: transferPresentation.mode === 'compact_text' ? 'nowrap' : 'wrap' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary, #1e293b)', flexShrink: 0 }}>
               {formatPrice(transferPrice)}
             </span>
-            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-              {transferPresentation.mode === 'badge' && transferBadges.map((b, idx) => {
+            {transferPresentation.mode === 'badge' ? (
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {transferBadges.map((b, idx) => {
                 const opacity = b.opacity ?? 100
                 const bgColor = b.color || '#10b981'
                 const hex = bgColor.replace('#', '')
@@ -193,13 +194,13 @@ export default function ProductCard({ product, categorySlug, onClick, activeProm
                     {b.text}
                   </span>
                 )
-              })}
-              {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 600 }}>
-                  {transferPresentation.text}
-                </span>
-              )}
-            </div>
+                })}
+              </div>
+            ) : transferPresentation.text ? (
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 600, minWidth: 0, flex: '1 1 auto', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                {transferPresentation.text}
+              </span>
+            ) : null}
           </div>
         )}
         {transferPrice !== null && transferPresentation.mode === 'compact_text' && transferPresentation.explanation && (

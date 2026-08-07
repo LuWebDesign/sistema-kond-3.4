@@ -375,8 +375,8 @@ export default function ProductDetail({ product, categories = [], products = [],
                   {/* Fila 3: precio por transferencia (más chico) + badge de transferencia */}
                   {transferPrice !== null && (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: transferPresentation.mode === 'compact_text' ? 'nowrap' : 'wrap' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
                           {formatCurrency(transferPrice)}
                         </span>
                         {transferPresentation.mode === 'badge' && transferBadge && (() => {
@@ -400,7 +400,7 @@ export default function ProductDetail({ product, categories = [], products = [],
                           )
                         })()}
                         {transferPresentation.mode === 'compact_text' && transferPresentation.text && (
-                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600, minWidth: 0, flex: '1 1 auto', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                             {transferPresentation.text}
                           </span>
                         )}
