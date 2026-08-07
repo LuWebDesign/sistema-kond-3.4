@@ -43,12 +43,31 @@ Do not fix one surface and leave another with different promo evaluation rules.
 
 Do not assume `hasPromotion` means the visible product price must change.
 
+### Transfer-promotion presentation is stored in config JSONB
+
+`transfer_discount` keeps its calculation fields separate from its public presentation:
+
+- `config.transferDiscountType`: `percentage` or `fixed` — controls the discount calculation.
+- `config.transferDisplayMode`: `badge` or `compact_text` — controls the public presentation; missing values MUST default to `badge` for backward compatibility.
+- `config.transferExplanation`: optional long explanatory text rendered after the transfer-price flow.
+- `badge_texto`: the short text used by both the colored badge and the compact-text mode.
+
+Do not add database columns for these presentation settings. `PromoModal` MUST preserve the existing config object when serializing a transfer promotion, otherwise the display mode and explanation are silently lost on refresh.
+
+In `compact_text` mode, the transfer price, short text, and explanation form one inline text flow. The explanation may wrap to the next line from the card/container left edge; it MUST NOT be rendered as a separate flex block below the entire price group. In `badge` mode, preserve the colored badge presentation.
+
 ### Avoid partial promo hydration in catalog cards
 
 If product cards depend on products + promos + materials, do not mount the real card UI until all
 required inputs for promo enrichment are ready.
 
 Use a loading gate and skeletons so the card does not render price first and badges/details later.
+
+### Home promotion payload must include active normalized promotions
+
+`pages/api/home-data.js` enriches Home products and MUST also return the normalized, date-active `activePromotions` list. `pages/home.js` propagates that list through `HeroGrid`, `PromoCarousel`, and `CategoryCarousel` to `components/home/ProductCard.js`.
+
+Home cards need the active promotion definitions because `applyPromotionsToProduct()` supplies transfer badges but does not calculate the transfer price. Home must reuse `getActivePromotions()` and `applyTransferDiscount()` against the effective displayed price, matching Catalog and Product Detail.
 
 ## Decision Gates
 
@@ -67,6 +86,8 @@ Use a loading gate and skeletons so the card does not render price first and bad
 3. Compare the affected flow against `pages/api/home-data.js` as the known-good reference.
 4. If touching date logic, test both date-only and datetime promo values.
 5. Re-check catalog card, product detail, and cart behavior after the change.
+6. When changing transfer presentation, verify the Marketing save payload preserves `config.transferDiscountType`, `config.transferDisplayMode`, and `config.transferExplanation`.
+7. Verify Home receives `activePromotions` and that Home, Catalog, and Product Detail render the same effective transfer price.
 
 ## Output Contract
 
@@ -82,3 +103,5 @@ Return:
 - `next-app/pages/api/home-data.js`
 - `next-app/hooks/useCatalog.js`
 - `next-app/components/ProductDetail.js`
+- `next-app/components/home/ProductCard.js`
+- `next-app/components/marketing/PromoModal.js`
