@@ -825,9 +825,52 @@ export default function FinalizarCompraPage() {
           Finalizar compra
         </h2>
 
-        <div className={stylesResp.checkoutPageLayout}>
-          {/* Columna izquierda: formulario */}
-          <div className={stylesResp.pageColumn}>
+         <div className={stylesResp.checkoutPageLayout}>
+           {/* Keep the product summary secondary to the checkout steps on mobile. */}
+           <aside className={`${stylesResp.orderSummaryCard} ${stylesResp.checkoutOrderSummary}`}>
+             <div className={stylesResp.checkoutSectionHeading}>
+               <div>
+                 <div className={stylesResp.checkoutEyebrow}>Resumen del pedido</div>
+                 <h3>Tu compra</h3>
+                 <p>Revisá productos, cantidades y precios antes de continuar.</p>
+               </div>
+               <div className={stylesResp.checkoutItemCount}>{cart.length} items</div>
+             </div>
+             <div className={stylesResp.summaryItemsList}>
+               {cart.map((item, idx) => {
+                 const keyId = item.productId || item.idProducto || item.id || idx
+                 const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
+                 const original = (item.originalPrice !== undefined && item.originalPrice !== null)
+                   ? item.originalPrice
+                   : (prod ? (prod.precioUnitario || prod.precio) : item.price)
+                 const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
+                 const lineTotal = unitPrice * item.quantity
+                 const unitSavings = Math.max(0, (original || 0) - unitPrice)
+                 const savings = Math.max(0, unitSavings * item.quantity)
+                 return (
+                   <div key={keyId}>
+                     <div className={stylesResp.summaryItem}>
+                       <div style={{ minWidth: 0 }}>
+                         <div className={stylesResp.summaryItemName}>{item.name}</div>
+                         <div className={stylesResp.summaryItemUnitPrice}>
+                           {formatCurrency(unitPrice)} × {item.quantity}
+                           {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
+                         </div>
+                         {savings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Total ahorro: {formatCurrency(savings)}</div>}
+                       </div>
+                       <div className={stylesResp.summaryItemPrice}>
+                         <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
+                       </div>
+                     </div>
+                     {cart.length > 1 && idx !== cart.length - 1 && <div className={stylesResp.summaryDivider} aria-hidden="true" />}
+                   </div>
+                 )
+               })}
+             </div>
+           </aside>
+
+           {/* Columna izquierda: formulario */}
+           <div className={`${stylesResp.pageColumn} ${stylesResp.checkoutFormColumn}`}>
 
             {/* Datos del usuario (colapsable) */}
             {(() => {
@@ -852,7 +895,7 @@ export default function FinalizarCompraPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: '1.2rem' }}>👤</span>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Datos para este pedido {isDataIncomplete && <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>}</div>
+                     <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Datos para este pedido {isDataIncomplete && <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>}</div>
                     {isProfileCollapsed && customerData.name && (
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                         {customerData.name} {customerData.apellido} • {customerData.phone}
@@ -937,8 +980,10 @@ export default function FinalizarCompraPage() {
             })()}
 
             {/* Método de entrega */}
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Método de entrega</div>
+             <div className={stylesResp.checkoutFormCard}>
+               <div className={stylesResp.checkoutSectionHeading}>
+                 <div><h3>Cómo recibir tu pedido</h3><p>Elegí retiro o envío y completá el destino.</p></div>
+               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button onClick={() => setDeliveryMethod('envio')} style={{ padding: '8px 14px', borderRadius: 8, border: deliveryMethod === 'envio' ? '2px solid var(--accent-blue)' : '1px solid var(--border-color)', background: deliveryMethod === 'envio' ? 'var(--bg-hover)' : 'transparent', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: deliveryMethod === 'envio' ? 700 : 400 }}>
                   Con envío
@@ -989,7 +1034,10 @@ export default function FinalizarCompraPage() {
             </div>
 
             {/* Método de pago/pedido */}
-            <section ref={paymentSectionRef} style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+             <section ref={paymentSectionRef} className={stylesResp.checkoutFormCard} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+               <div className={stylesResp.checkoutSectionHeading}>
+                 <div><h3>Cómo pagar</h3><p>Seleccioná una opción para continuar con tu pedido.</p></div>
+               </div>
               {paymentConfig?.whatsapp?.enabled && (
                 <div>
                   <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '0.95rem' }}>Realizar pedido mediante</div>
@@ -1048,11 +1096,9 @@ export default function FinalizarCompraPage() {
 
                 </div>
               )}
-            </section>
-
             {/* Sección transferencia: calendario + datos bancarios + comprobante */}
-            {paymentMethod === 'transferencia' && (
-              <section style={{ marginBottom: 18 }}>
+             {paymentMethod === 'transferencia' && (
+               <div className={stylesResp.checkoutTransferDetails}>
                 {paymentConfig !== null && paymentConfig?.calendario?.enabled !== false && (
                   <div style={{ marginBottom: 16 }}>
                     <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Fecha de entrega solicitada</label>
@@ -1133,56 +1179,20 @@ export default function FinalizarCompraPage() {
                     </div>
                   </div>
                 )}
-              </section>
-            )}
-          </div>
+               </div>
+             )}
+             </section>
+           </div>
 
           {/* Columna derecha: resumen del pedido (restructurado visualmente) */}
-          <aside className={stylesResp.pageColumnRight}>
-            <div className={stylesResp.orderSummaryCard}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Resumen</div>
-              <div style={{ fontWeight: 700 }}>{cart.length} items</div>
-            </div>
+           <aside className={`${stylesResp.pageColumnRight} ${stylesResp.checkoutReview}`}>
+             <div className={stylesResp.orderSummaryCard}>
+             <div className={stylesResp.checkoutSectionHeading}>
+               <div><div className={stylesResp.checkoutEyebrow}>Paso final</div><h3>Revisar y confirmar</h3><p>Verificá el total y confirmá la forma de pago elegida.</p></div>
+             </div>
 
-              {/* Compacto: mostrar sólo nombre y precio (y descuentos por unidad y total, si aplica) */}
-              <div className={stylesResp.summaryItemsList}>
-              {cart.map((item, idx) => {
-                const keyId = item.productId || item.idProducto || item.id || idx
-                const prod = products.find(p => String(p.id) === String(item.productId || item.idProducto))
-                const original = (item.originalPrice !== undefined && item.originalPrice !== null)
-                  ? item.originalPrice
-                  : (prod ? (prod.precioUnitario || prod.precio) : item.price)
-                const unitPrice = item.price !== undefined ? item.price : (prod ? (prod.precioPromocional || prod.precioUnitario || prod.precio) : 0)
-                const lineTotal = unitPrice * item.quantity
-                const unitSavings = Math.max(0, (original || 0) - unitPrice)
-                const savings = Math.max(0, unitSavings * item.quantity)
-                return (
-                  <div key={keyId}>
-                    <div className={stylesResp.summaryItem}>
-                      <div style={{ minWidth: 0 }}>
-                        <div className={stylesResp.summaryItemName}>{item.name}</div>
-                        <div className={stylesResp.summaryItemUnitPrice}>
-                          {formatCurrency(unitPrice)} × {item.quantity}
-                          {unitSavings > 0 && <span className={stylesResp.summaryItemSavings}> Ahorras {formatCurrency(unitSavings)} c/u</span>}
-                        </div>
-                        {savings > 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Total ahorro: {formatCurrency(savings)}</div>}
-                      </div>
-
-                      <div className={stylesResp.summaryItemPrice}>
-                        <div className={stylesResp.summaryItemTotalPrice}>{formatCurrency(lineTotal)}</div>
-                      </div>
-                    </div>
-                    {/* show thin divider between products when there is more than one item */}
-                    {cart.length > 1 && idx !== cart.length - 1 && (
-                      <div className={stylesResp.summaryDivider} aria-hidden="true"></div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
               <div className={stylesResp.summaryTotals}>
-                {/* Simplified aside per spec: Resumen + Productos(N) + Subtotal + Envío + Total */}
+                {/* Keep the final review focused on pricing and confirmation. */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ color: 'var(--text-secondary)' }}>Subtotal</div>
                   <div style={{ fontWeight: 700 }}>{formatCurrency(subtotal)}</div>
