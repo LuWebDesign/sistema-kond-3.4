@@ -8,6 +8,21 @@ import { jwtVerify, createRemoteJWKSet } from 'jose'
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
+const VERIFIED_SEO_REDIRECTS = {
+  '/productos': '/catalog',
+  '/productos/': '/catalog',
+  '/productos-navidenos': '/catalog/productos-navidenos',
+  '/productos-navidenos/': '/catalog/productos-navidenos',
+  '/juegos-y-juguetes': '/catalog/juegos-y-juguetes',
+  '/juegos-y-juguetes/': '/catalog/juegos-y-juguetes',
+  '/productos/exhibidor-repisa-autos-coleccion-para-28-autos-escala-143-vertical': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-28-autos-escala-143-vertical',
+  '/productos/exhibidor-repisa-autos-coleccion-para-28-autos-escala-143-vertical/': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-28-autos-escala-143-vertical',
+  '/productos/exhibidor-repisa-autos-coleccion-para-35-autos-escala-143': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-35-autos-escala-143',
+  '/productos/exhibidor-repisa-autos-coleccion-para-35-autos-escala-143/': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-35-autos-escala-143',
+  '/productos/exhibidor-repisa-autos-coleccion-para-70-autos-escala-143': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-70-autos-escala-143',
+  '/productos/exhibidor-repisa-autos-coleccion-para-70-autos-escala-143/': '/catalog/escala-143/exhibidor-repisa-autos-coleccion-para-70-autos-escala-143',
+}
+
 // Module-level cache — persists across requests within the same Edge instance
 let _redirectionsCache = []
 let _cacheExpiresAt    = 0
@@ -77,6 +92,14 @@ async function isValidAdminJWT(request) {
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
+
+  const seoDestination = VERIFIED_SEO_REDIRECTS[pathname]
+  if (seoDestination) {
+    const url = request.nextUrl.clone()
+    url.pathname = seoDestination
+    url.search = ''
+    return NextResponse.redirect(url, { status: 301 })
+  }
 
   // Admin JWT gate — all /admin routes except /admin/login
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
