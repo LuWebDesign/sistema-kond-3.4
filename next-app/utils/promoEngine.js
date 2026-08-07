@@ -379,3 +379,20 @@ export function applyTransferDiscount(promos = [], subtotal = 0) {
   const amt = promo.descuentoMonto || promo.descuento_monto || 0;
   return Math.min(Number(amt), subtotal);
 }
+
+/**
+ * Obtiene la configuración visual de la promoción de transferencia activa.
+ * Las promociones existentes conservan el badge como comportamiento por defecto.
+ */
+export function getTransferPresentation(promo) {
+  const config = promo?.config || promo?.configuracion || {};
+  const mode = config.transferDisplayMode === 'compact_text' ? 'compact_text' : 'badge';
+  return {
+    mode,
+    text: promo?.badgeTexto || promo?.badge_texto || '',
+    explanation: config.transferExplanation || '',
+    badgeColor: promo?.badgeColor || promo?.badge_color || '#10b981',
+    badgeOpacity: promo?.badgeOpacity ?? promo?.badge_opacity ?? 100,
+    badgeTextColor: promo?.badgeTextColor || promo?.badge_text_color || '#fff',
+  };
+}

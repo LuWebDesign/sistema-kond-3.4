@@ -5,7 +5,7 @@
 import { useRouter } from 'next/router'
 import ProductCard from './ProductCard'
 
-export default function PromoCarousel({ products = [], label = 'En Promoción', categorySlugMap = {} }) {
+export default function PromoCarousel({ products = [], label = 'En Promoción', categorySlugMap = {}, activePromotions = [] }) {
   const router = useRouter()
 
   if (!products.length) return null
@@ -76,6 +76,7 @@ export default function PromoCarousel({ products = [], label = 'En Promoción', 
               <ProductCard
                 product={product}
                 onClick={() => router.push(`/catalog${slug ? `/${slug}` : ''}`)}
+                activePromotions={activePromotions}
               />
             </div>
           )

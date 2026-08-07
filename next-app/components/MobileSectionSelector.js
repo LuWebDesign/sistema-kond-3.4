@@ -43,8 +43,8 @@ export default function MobileSectionSelector() {
     <>
       <button
         aria-expanded={open}
-        aria-controls="mobile-selector-drawer"
-        className={styles.mobileSelectorButton}
+         aria-controls="mobile-selector-drawer"
+         className={`${styles.mobileSelectorButton} public-header-action-button`}
         onClick={() => setOpen(true)}
         title="Abrir menú"
       >

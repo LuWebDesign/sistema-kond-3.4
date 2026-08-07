@@ -242,8 +242,9 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
           }}>
 
             {/* Cart icon - ALWAYS visible, even before notifications */}
-            <button
-              onClick={() => router.push('/mi-carrito')}
+             <button
+               onClick={() => router.push('/mi-carrito')}
+               className="public-header-action-button"
               style={{
                 padding: '8px',
                 borderRadius: '8px',
@@ -283,7 +284,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
 
             {/* Notifications - only if user is logged in */}
             <span className="notification-slot">
-              {currentUser && <NotificationsButton />}
+               {currentUser && <NotificationsButton className="public-header-action-button" />}
             </span>
 
              {/* Mobile selector (renders its own trigger) */}
