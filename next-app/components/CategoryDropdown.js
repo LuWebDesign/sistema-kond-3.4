@@ -3,6 +3,7 @@
 // No emojis. Purely inline-styled to match the catalog's design system.
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * @param {string[]} categories          - Root category names (from useProducts)
@@ -26,7 +27,9 @@ export default function CategoryDropdown({
   const [hoveredRoot, setHoveredRoot] = useState(null)   // index — desktop flyout
   const [expandedRoot, setExpandedRoot] = useState(null) // index — mobile accordion
   const [isMobile, setIsMobile] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const containerRef = useRef(null)
+  const panelRef = useRef(null)
   // Grace period for desktop flyout: prevents flyout closing while cursor
   // moves from the row to the subpanel (brief gap between both elements).
   const flyoutCloseTimerRef = useRef(null)
@@ -40,11 +43,33 @@ export default function CategoryDropdown({
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Keep the catalog behind the full-screen mobile selector from scrolling.
+  useEffect(() => {
+    if (!isOpen || !isMobile) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [isOpen, isMobile])
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeAll()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isOpen])
+
   // Close on outside click
   useEffect(() => {
     if (!isOpen) return
     const handler = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (containerRef.current && !containerRef.current.contains(e.target) &&
+          (!panelRef.current || !panelRef.current.contains(e.target))) {
         closeAll()
       }
     }
@@ -143,6 +168,18 @@ export default function CategoryDropdown({
     color: isActive ? 'white' : 'var(--text-primary)',
   })
 
+  const selectableProps = (onClick) => ({
+    role: 'button',
+    tabIndex: 0,
+    onClick,
+    onKeyDown: (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        onClick()
+      }
+    },
+  })
+
   // NOTE: overflow must be 'visible' (not 'hidden') so the absolutely-positioned
   // flyout subpanel is not clipped when it extends beyond the panel bounds.
   const panelStyle = {
@@ -173,6 +210,171 @@ export default function CategoryDropdown({
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  const panel = (
+    <div
+      ref={panelRef}
+      role={isMobile ? 'dialog' : undefined}
+      aria-modal={isMobile ? 'true' : undefined}
+      aria-labelledby={isMobile ? 'category-dropdown-title' : undefined}
+      style={isMobile ? {
+        position: 'fixed',
+        inset: 0,
+        zIndex: 2000,
+        background: 'var(--bg-card)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100dvh',
+        maxHeight: '100svh',
+        padding: 'calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))',
+        overflow: 'hidden',
+      } : panelStyle}
+    >
+      {isMobile && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          paddingBottom: '16px',
+          borderBottom: '1px solid var(--border-color)',
+          flexShrink: 0,
+        }}>
+          <h2 id="category-dropdown-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.15rem' }}>
+            Todas las categorías
+          </h2>
+          <button
+            type="button"
+            onClick={closeAll}
+            aria-label="Cerrar categorías"
+            style={{
+              width: 40,
+              height: 40,
+              border: '1px solid var(--border-color)',
+              borderRadius: 8,
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      <div style={isMobile ? { overflowY: 'auto', minHeight: 0, paddingTop: 8 } : undefined}>
+        {/* "Todas las categorías" — clear option */}
+        <div
+          {...selectableProps(handleClear)}
+          style={{
+            ...getItemStyle(!selectedCategory && !selectedSubcategoryId),
+            borderBottom: '1px solid var(--border-color)',
+            borderRadius: isMobile ? 8 : '12px 12px 0 0',
+          }}
+          onMouseEnter={(e) => {
+            if (selectedCategory || selectedSubcategoryId) e.currentTarget.style.background = hoveredBg
+          }}
+          onMouseLeave={(e) => {
+            if (selectedCategory || selectedSubcategoryId) e.currentTarget.style.background = 'transparent'
+          }}
+        >
+          Todas las categorías
+        </div>
+
+        {tree.map((node, idx) => {
+          const isRootActive = selectedCategory === node.name && !selectedSubcategoryId
+          const hasChildren = node.children.length > 0
+          const isLast = idx === tree.length - 1
+
+          if (!hasChildren) {
+            return (
+              <div
+                key={node.name}
+                {...selectableProps(() => handleSelectRoot(node.name))}
+                style={{ ...getItemStyle(isRootActive), borderRadius: isLast ? '0 0 12px 12px' : 0 }}
+                onMouseEnter={(e) => { if (!isRootActive) e.currentTarget.style.background = hoveredBg }}
+                onMouseLeave={(e) => { if (!isRootActive) e.currentTarget.style.background = 'transparent' }}
+              >
+                {node.name}
+              </div>
+            )
+          }
+
+          if (!isMobile) {
+            return (
+              <div
+                key={node.name}
+                style={{ position: 'relative', borderRadius: isLast ? '0 0 12px 12px' : 0 }}
+                onMouseEnter={() => openFlyout(idx)}
+                onMouseLeave={scheduleFlyoutClose}
+              >
+                <div
+                  {...selectableProps(() => handleSelectRoot(node.name))}
+                  style={{
+                    ...getItemStyle(isRootActive),
+                    background: hoveredRoot === idx && !isRootActive ? hoveredBg : isRootActive ? activeBg : 'transparent',
+                    color: isRootActive ? 'white' : 'var(--text-primary)',
+                    borderRadius: isLast && hoveredRoot !== idx ? '0 0 12px 12px' : 0,
+                  }}
+                >
+                  <span>{node.name}</span><span style={{ fontSize: '0.65rem', opacity: 0.6 }}>▶</span>
+                </div>
+                {hoveredRoot === idx && (
+                  <div style={subPanelStyle} onMouseEnter={() => openFlyout(idx)} onMouseLeave={scheduleFlyoutClose}>
+                    <div
+                      {...selectableProps(() => handleSelectRoot(node.name))}
+                      style={{ ...getItemStyle(isRootActive), borderBottom: '1px solid var(--border-color)', fontStyle: 'italic', borderRadius: '12px 12px 0 0' }}
+                    >Todos en {node.name}</div>
+                    {node.children.map((child, childIdx) => {
+                      const isSubActive = selectedSubcategoryId === child.id
+                      return (
+                        <div
+                          key={child.id}
+                          {...selectableProps(() => handleSelectSub(child.id, node.name))}
+                          style={{ ...getItemStyle(isSubActive), borderRadius: childIdx === node.children.length - 1 ? '0 0 12px 12px' : 0 }}
+                        >{child.nombre}</div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          const isExpanded = expandedRoot === idx
+          return (
+            <div key={node.name}>
+              <div
+                {...selectableProps(() => setExpandedRoot(isExpanded ? null : idx))}
+                style={{ ...getItemStyle(isRootActive), borderRadius: isLast && !isExpanded ? '0 0 12px 12px' : 0 }}
+              >
+                <span>{node.name}</span>
+                <span style={{ fontSize: '0.65rem', opacity: 0.6, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>▶</span>
+              </div>
+              {isExpanded && (
+                <div style={{ background: 'var(--bg-input, rgba(0,0,0,0.03))' }}>
+                  <div
+                    {...selectableProps(() => handleSelectRoot(node.name))}
+                    style={{ ...getItemStyle(isRootActive), paddingLeft: '28px', fontSize: '0.9rem', fontStyle: 'italic', borderBottom: '1px solid var(--border-color)' }}
+                  >Todos en {node.name}</div>
+                  {node.children.map((child, childIdx) => {
+                    const isSubActive = selectedSubcategoryId === child.id
+                    return (
+                      <div
+                        key={child.id}
+                        {...selectableProps(() => handleSelectSub(child.id, node.name))}
+                        style={{ ...getItemStyle(isSubActive), paddingLeft: '28px', fontSize: '0.9rem', borderRadius: isLast && childIdx === node.children.length - 1 ? '0 0 12px 12px' : 0 }}
+                      >{child.nombre}</div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 
   return (
     <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
@@ -206,6 +408,9 @@ export default function CategoryDropdown({
           e.currentTarget.style.borderColor = 'var(--border-color)'
           e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
         }}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-label="Seleccionar categoría"
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {displayLabel}
@@ -216,224 +421,7 @@ export default function CategoryDropdown({
       </button>
 
       {/* Dropdown panel */}
-      {isOpen && (
-        <div style={panelStyle}>
-
-          {/* "Todas las categorías" — clear option */}
-          <div
-            style={{
-              ...getItemStyle(!selectedCategory && !selectedSubcategoryId),
-              borderBottom: '1px solid var(--border-color)',
-              borderRadius: '12px 12px 0 0',
-            }}
-            onClick={handleClear}
-            onMouseEnter={(e) => {
-              if (selectedCategory || selectedSubcategoryId)
-                e.currentTarget.style.background = hoveredBg
-            }}
-            onMouseLeave={(e) => {
-              if (selectedCategory || selectedSubcategoryId)
-                e.currentTarget.style.background = 'transparent'
-            }}
-          >
-            Todas las categorías
-          </div>
-
-          {/* Root category items */}
-          {tree.map((node, idx) => {
-            const isRootActive = selectedCategory === node.name && !selectedSubcategoryId
-            const hasChildren = node.children.length > 0
-            const isLast = idx === tree.length - 1
-
-            // ── No children: simple selectable row ────────────────────────
-            if (!hasChildren) {
-              return (
-                <div
-                  key={node.name}
-                  style={{
-                    ...getItemStyle(isRootActive),
-                    borderRadius: isLast ? '0 0 12px 12px' : 0,
-                  }}
-                  onClick={() => handleSelectRoot(node.name)}
-                  onMouseEnter={(e) => {
-                    if (!isRootActive) e.currentTarget.style.background = hoveredBg
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isRootActive) e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  {node.name}
-                </div>
-              )
-            }
-
-            // ── Desktop: flyout submenu on hover ───────────────────────────
-            if (!isMobile) {
-              return (
-                <div
-                  key={node.name}
-                  style={{
-                    position: 'relative',
-                    borderRadius: isLast ? '0 0 12px 12px' : 0,
-                  }}
-                  onMouseEnter={() => openFlyout(idx)}
-                  onMouseLeave={scheduleFlyoutClose}
-                >
-                  {/* Root row */}
-                  <div
-                    style={{
-                      ...getItemStyle(isRootActive),
-                      background: hoveredRoot === idx && !isRootActive
-                        ? hoveredBg
-                        : isRootActive ? activeBg : 'transparent',
-                      color: isRootActive ? 'white' : 'var(--text-primary)',
-                      borderRadius: isLast && hoveredRoot !== idx ? '0 0 12px 12px' : 0,
-                    }}
-                    onClick={() => handleSelectRoot(node.name)}
-                  >
-                    <span>{node.name}</span>
-                    <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>▶</span>
-                  </div>
-
-                  {/* Flyout submenu — only visible when this row is hovered */}
-                  {hoveredRoot === idx && (
-                    <div
-                      style={subPanelStyle}
-                      onMouseEnter={() => openFlyout(idx)}
-                      onMouseLeave={scheduleFlyoutClose}
-                    >
-                      {/* "Todos en X" */}
-                      <div
-                        style={{
-                          ...getItemStyle(isRootActive),
-                          borderBottom: '1px solid var(--border-color)',
-                          fontStyle: 'italic',
-                          borderRadius: '12px 12px 0 0',
-                        }}
-                        onClick={() => handleSelectRoot(node.name)}
-                        onMouseEnter={(e) => {
-                          if (!isRootActive) e.currentTarget.style.background = hoveredBg
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isRootActive) e.currentTarget.style.background = 'transparent'
-                        }}
-                      >
-                        Todos en {node.name}
-                      </div>
-
-                      {node.children.map((child, childIdx) => {
-                        const isSubActive = selectedSubcategoryId === child.id
-                        const isLastChild = childIdx === node.children.length - 1
-                        return (
-                          <div
-                            key={child.id}
-                            style={{
-                              ...getItemStyle(isSubActive),
-                              borderRadius: isLastChild ? '0 0 12px 12px' : 0,
-                            }}
-                            onClick={() => handleSelectSub(child.id, node.name)}
-                            onMouseEnter={(e) => {
-                              if (!isSubActive) e.currentTarget.style.background = hoveredBg
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isSubActive) e.currentTarget.style.background = 'transparent'
-                            }}
-                          >
-                            {child.nombre}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            }
-
-            // ── Mobile: accordion ──────────────────────────────────────────
-            const isExpanded = expandedRoot === idx
-            return (
-              <div key={node.name}>
-                <div
-                  style={{
-                    ...getItemStyle(isRootActive),
-                    borderRadius: isLast && !isExpanded ? '0 0 12px 12px' : 0,
-                  }}
-                  onClick={() => setExpandedRoot(isExpanded ? null : idx)}
-                  onMouseEnter={(e) => {
-                    if (!isRootActive) e.currentTarget.style.background = hoveredBg
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isRootActive) e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  <span>{node.name}</span>
-                  <span
-                    style={{
-                      fontSize: '0.65rem',
-                      opacity: 0.6,
-                      display: 'inline-block',
-                      transform: isExpanded ? 'rotate(90deg)' : 'none',
-                      transition: 'transform 0.2s',
-                    }}
-                  >
-                    ▶
-                  </span>
-                </div>
-
-                {/* Accordion children */}
-                {isExpanded && (
-                  <div style={{ background: 'var(--bg-input, rgba(0,0,0,0.03))' }}>
-                    {/* "Todos en X" */}
-                    <div
-                      style={{
-                        ...getItemStyle(isRootActive),
-                        paddingLeft: '28px',
-                        fontSize: '0.9rem',
-                        fontStyle: 'italic',
-                        borderBottom: '1px solid var(--border-color)',
-                      }}
-                      onClick={() => handleSelectRoot(node.name)}
-                      onMouseEnter={(e) => {
-                        if (!isRootActive) e.currentTarget.style.background = hoveredBg
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isRootActive) e.currentTarget.style.background = 'transparent'
-                      }}
-                    >
-                      Todos en {node.name}
-                    </div>
-
-                    {node.children.map((child, childIdx) => {
-                      const isSubActive = selectedSubcategoryId === child.id
-                      const isLastChild = isLast && childIdx === node.children.length - 1
-                      return (
-                        <div
-                          key={child.id}
-                          style={{
-                            ...getItemStyle(isSubActive),
-                            paddingLeft: '28px',
-                            fontSize: '0.9rem',
-                            borderRadius: isLastChild ? '0 0 12px 12px' : 0,
-                          }}
-                          onClick={() => handleSelectSub(child.id, node.name)}
-                          onMouseEnter={(e) => {
-                            if (!isSubActive) e.currentTarget.style.background = hoveredBg
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSubActive) e.currentTarget.style.background = 'transparent'
-                          }}
-                        >
-                          {child.nombre}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {isOpen && (isMobile && mounted ? createPortal(panel, document.body) : panel)}
     </div>
   )
 }

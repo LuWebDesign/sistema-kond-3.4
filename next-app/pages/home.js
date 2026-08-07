@@ -75,6 +75,29 @@ export default function Home({ seoConfig }) {
   // Per-category product curation from home-config
   const categoryProductsConfig = homeConfigData.categoryProducts || {}
 
+  const loadingShell = (
+    <div className="home-loading-shell" aria-label="Loading home content" aria-busy="true">
+      <div className="home-loading-hero" />
+      <div className="home-loading-row">
+        {[0, 1, 2, 3].map((index) => <div key={index} className="home-loading-card" />)}
+      </div>
+      <div className="home-loading-row home-loading-row-short">
+        {[0, 1, 2].map((index) => <div key={index} className="home-loading-card" />)}
+      </div>
+      <style jsx>{`
+        .home-loading-shell { padding: 24px clamp(16px, 4vw, 48px) 48px; }
+        .home-loading-hero, .home-loading-card { background: linear-gradient(90deg, #eef0f2 25%, #f8f9fa 37%, #eef0f2 63%); background-size: 400% 100%; animation: home-loading-shimmer 1.4s ease infinite; }
+        .home-loading-hero { height: min(32vw, 280px); min-height: 180px; border-radius: 3px; margin-bottom: 24px; }
+        .home-loading-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .home-loading-row-short { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .home-loading-card { height: 180px; border-radius: 3px; }
+        @keyframes home-loading-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+        @media (max-width: 600px) { .home-loading-row, .home-loading-row-short { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .home-loading-card { height: 140px; } }
+        @media (prefers-reduced-motion: reduce) { .home-loading-hero, .home-loading-card { animation: none; } }
+      `}</style>
+    </div>
+  )
+
   // Apply per-category product visibility and order
   function getCategoryProducts(catId) {
     const raw = byCategory[catId] || []
@@ -109,22 +132,7 @@ export default function Home({ seoConfig }) {
       {/* Announcement bar: only render once home config has loaded to avoid showing stale defaults */}
       {!homeConfigPending && <AnnouncementBar messages={bannerMessages} />}
 
-      {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '36px', height: '36px',
-              border: '3px solid #000',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px',
-            }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <p style={{ fontSize: '0.9rem', opacity: 0.6 }}>Cargando...</p>
-          </div>
-        </div>
-      ) : (
+      {isLoading && !data ? loadingShell : (
         <main>
           {/* Special sections: featured, category tiles carousel, promos, custom carousels */}
           {activeSections.map((s) => {

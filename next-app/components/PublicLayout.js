@@ -6,14 +6,17 @@ import { NotificationsButton, NotificationsPanel } from './NotificationsSystem'
 import { createToast } from '../utils/catalogUtils'
 import { getCatalogStyles, DEFAULT_STYLES } from '../utils/supabaseCatalogStyles'
 import dynamic from 'next/dynamic'
+import PublicSearch from './PublicSearch'
 
 // Sanitize admin-provided CSS values to prevent CSS injection via dangerouslySetInnerHTML.
 // Strips characters that could break out of CSS context (<, >, ", \) and blocks JS injection.
 const sanitizeCSSValue = (val) => String(val).replace(/[<>"'\\]/g, '').replace(/javascript:/gi, '')
 
-// Render the SectionSelector client-side only for /catalog and /mi-carrito routes.
-const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: () => null })
-const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), { ssr: false, loading: () => null })
+// Render selectors client-side while reserving their final dimensions during hydration.
+const SectionSelectorLoading = () => <div className="header-section-placeholder" aria-hidden="true" />
+const MobileSectionSelectorLoading = () => <span className="mobile-selector-placeholder" aria-hidden="true" />
+const SectionSelector = dynamic(() => import('./SectionSelector'), { ssr: false, loading: SectionSelectorLoading })
+const MobileSectionSelector = dynamic(() => import('./MobileSectionSelector'), { ssr: false, loading: MobileSectionSelectorLoading })
 
 export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [currentUser, setCurrentUser] = useState(null)
@@ -23,6 +26,10 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
   const [cartCount, setCartCount] = useState(0)
   const [stylesLoaded, setStylesLoaded] = useState(false)
   const router = useRouter()
+  const publicSearchRoute = router.asPath && (
+    router.asPath === '/home' || router.asPath.startsWith('/home?') || router.asPath.startsWith('/home#') ||
+    router.asPath === '/catalog' || router.asPath.startsWith('/catalog/')
+  )
 
   // Cargar cantidad del carrito desde localStorage
   useEffect(() => {
@@ -177,24 +184,26 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
         {/* Header público */}
-        <header style={{
+        <header className="public-header" style={{
           background: catalogStyles.headerBg || 'var(--bg-card)',
           borderBottom: '1px solid var(--border-color)',
           padding: '12px 20px',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(160px, 1fr) auto auto',
           alignItems: 'center',
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          minHeight: '64px',
+          minHeight: '72px',
         }}>
           {/* Left: logo */}
-          <div style={{
+          <div className="public-header-logo" style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px'
+            gap: '12px',
+            minWidth: 0,
           }}>
-            <Link href="/catalog" style={{
+            <Link href="/catalog" className="public-header-logo-link" style={{
               fontSize: '1.25rem',
               fontWeight: 700,
               color: catalogStyles.headerTextColor || 'var(--accent-blue)',
@@ -204,7 +213,7 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
               gap: '8px'
             }}>
               {!isClient || !stylesLoaded
-                ? <span style={{ display: 'inline-block', width: 120, height: 24, borderRadius: 4, background: 'var(--border-color, #e2e8f0)' }} />
+                ? <span style={{ display: 'inline-block', width: 160, height: 40, borderRadius: 6, background: 'var(--border-color, #e2e8f0)' }} />
                 : catalogStyles.logoUrl
                   ? <img src={catalogStyles.logoUrl} alt="Logo" style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
                   : (catalogStyles.logoText || '')
@@ -212,20 +221,24 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </Link>
           </div>
 
-          {/* Center: SectionSelector (shown on /home, /catalog and /mi-carrito routes). */}
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {isClient && router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito') || router.asPath === '/home' || router.asPath.startsWith('/home?') || router.asPath.startsWith('/home#')) && (
-              <div className="header-section-selector" style={{ width: '100%', maxWidth: '960px', display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-                <SectionSelector />
-              </div>
-            )}
+          {/* Right-aligned navigation, with the logo retaining the flexible slot. */}
+             <div className="public-header-navigation" style={{ minWidth: 0, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+             {publicSearchRoute && <PublicSearch />}
+             {router && router.asPath && (router.asPath.startsWith('/catalog') || router.asPath.startsWith('/mi-carrito') || router.asPath === '/home' || router.asPath.startsWith('/home?') || router.asPath.startsWith('/home#')) && (
+               <div className="header-section-selector" style={{ width: 384, maxWidth: 'min(384px, 100%)', display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>
+                 <SectionSelector />
+               </div>
+             )}
            </div>
 
 {/* Right: cart (always visible), notifications (if logged in), and mobile selector */}
-          <div style={{
+          <div className="public-header-actions" style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px'
+            justifyContent: 'flex-end',
+            gap: '12px',
+            marginLeft: 'auto',
+            minWidth: 0,
           }}>
 
             {/* Cart icon - ALWAYS visible, even before notifications */}
@@ -269,13 +282,16 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
             </button>
 
             {/* Notifications - only if user is logged in */}
-            {currentUser && <NotificationsButton />}
+            <span className="notification-slot">
+              {currentUser && <NotificationsButton />}
+            </span>
 
-            {/* Mobile selector (renders its own trigger) */}
-            <div>
-              {/* Only mount mobile selector on small widths to avoid header wrapping on desktop */}
-              {isClient && isMobileWidth && <MobileSectionSelector />}
-            </div>
+             {/* Mobile selector (renders its own trigger) */}
+             <div className="mobile-selector-slot">
+               {isClient && isMobileWidth && publicSearchRoute && <PublicSearch />}
+               {/* Only mount mobile selector on small widths to avoid header wrapping on desktop */}
+               {isClient && isMobileWidth && <MobileSectionSelector />}
+             </div>
           </div>
         </header>
 
@@ -486,8 +502,60 @@ export default function PublicLayout({ children, title = 'Catálogo - KOND' }) {
         }
         
         /* Responsive */
-          @media (max-width: 768px) {
-            /* Hide legacy nav inside header on small screens (we use integrated selector) */
+         .header-section-placeholder {
+           width: 384px;
+           min-width: 384px;
+           max-width: 960px;
+           min-height: 44px;
+           border-radius: 8px;
+           background: var(--bg-section);
+         }
+
+         .notification-slot {
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           width: 40px;
+           min-width: 40px;
+           height: 40px;
+         }
+
+          .mobile-selector-slot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto;
+            min-width: 0;
+            height: 38px;
+            gap: 6px;
+          }
+
+         .mobile-selector-placeholder {
+           display: block;
+           width: 38px;
+           height: 38px;
+         }
+
+           @media (max-width: 768px) {
+             .public-header {
+               grid-template-columns: minmax(0, 1fr) auto !important;
+               min-height: 64px !important;
+             }
+
+              .public-header-navigation {
+                display: none !important;
+              }
+
+              .public-header-actions {
+                gap: 6px !important;
+              }
+
+             .public-header-logo-link {
+               max-width: 160px;
+               overflow: hidden;
+             }
+
+             /* Hide legacy nav inside header on small screens (we use integrated selector) */
             header nav {
               display: none !important;
             }

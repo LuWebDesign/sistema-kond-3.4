@@ -55,6 +55,12 @@ export default function Catalog({ seoConfig }) {
 
   // Cargar columnas del catálogo desde estilos personalizados
   useEffect(() => {
+    if (!router.isReady) return
+    const querySearch = typeof router.query.q === 'string' ? router.query.q : ''
+    setSearchTerm(querySearch)
+  }, [router.isReady, router.query.q])
+
+  useEffect(() => {
     // 1. Leer localStorage de forma sincrónica para evitar el flash visual
     try {
       const raw = localStorage.getItem('catalogStyles')
@@ -336,19 +342,25 @@ export default function Catalog({ seoConfig }) {
   const handleSelectCategory = useCallback((catName) => {
     setSelectedCategory(catName)
     setSelectedSubcategoryId(null)
-    router.push(`/catalog/${slugifyPreserveCase(catName)}`)
+    const query = typeof router.query.q === 'string' && router.query.q.trim() ? `?q=${encodeURIComponent(router.query.q.trim())}` : ''
+    router.push(`/catalog/${slugifyPreserveCase(catName)}${query}`)
   }, [router])
 
   const handleSelectSubcategory = useCallback((subcatId, catName) => {
     const sub = categoriasAPI.find(c => c.id === subcatId)
     const subcatSlug = sub ? slugifyPreserveCase(sub.slug || sub.nombre) : String(subcatId)
-    router.push(`/catalog/${slugifyPreserveCase(catName)}?subcat=${subcatSlug}`)
+    const query = new URLSearchParams({ subcat: subcatSlug })
+    if (typeof router.query.q === 'string' && router.query.q.trim()) query.set('q', router.query.q.trim())
+    router.push(`/catalog/${slugifyPreserveCase(catName)}?${query.toString()}`)
   }, [router, categoriasAPI])
 
   const handleClearCategory = useCallback(() => {
     setSelectedCategory('')
     setSelectedSubcategoryId(null)
-    router.push('/catalog')
+    const query = typeof router.query.q === 'string' && router.query.q.trim()
+      ? `?q=${encodeURIComponent(router.query.q.trim())}`
+      : ''
+    router.push(`/catalog${query}`)
   }, [router])
 
   // ahora abrimos el modal indicando producto + índice de imagen
@@ -380,11 +392,11 @@ export default function Catalog({ seoConfig }) {
       }}>
         {/* Section selector is rendered centered in the PublicLayout header for /catalog routes */}
 
-        {/* Filtros */}
+        {/* Category filter */}
         <div className="filters-row" style={{
           gap: '16px',
           marginBottom: '24px',
-          padding: '20px',
+           padding: '10px 20px',
           background: 'var(--bg-card)',
           borderRadius: '12px',
           border: '1px solid var(--border-color)'
@@ -403,21 +415,6 @@ export default function Catalog({ seoConfig }) {
               />
           </div>
 
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '12px',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              background: 'var(--bg-input)',
-              color: 'var(--text-primary)',
-              fontSize: '1rem'
-            }}
-            className="search-input"
-          />
         </div>
 
         {/* Grid de productos */}

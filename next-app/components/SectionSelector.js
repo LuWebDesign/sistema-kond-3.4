@@ -28,14 +28,18 @@ export default function SectionSelector({ className, style }) {
   const isUser = path === '/catalog/user' || path.startsWith('/catalog/user/')
   const isCatalog = (path === '/catalog' || (path.startsWith('/catalog/') && !isMisPedidos && !isUser))
 
-  const baseBtn = { border: 'none', borderRadius: 'var(--kond-btn-radius, 6px)', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-  const activeStyle = { background: 'var(--kond-btn-bg, var(--accent-blue))', color: 'var(--kond-btn-color, white)' }
+  const baseBtn = { border: '1px solid transparent', borderRadius: '3px', padding: '8px 12px', minHeight: 36, minWidth: 82, whiteSpace: 'nowrap', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease' }
+  const activeStyle = { background: 'transparent', color: 'var(--text-primary)', borderColor: 'var(--text-secondary)' }
   const inactiveStyle = { background: 'transparent', color: 'var(--text-secondary)' }
 
+  const navigateTo = (path) => router.push(path)
+  const prefetch = (path) => { if (router.prefetch) router.prefetch(path) }
+
   return (
-    <div className={className} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'var(--bg-section)', padding: '4px', borderRadius: 8, ...style }}>
+    <div className={className} style={{ display: 'flex', width: 384, maxWidth: '100%', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'var(--bg-section)', padding: '4px', minHeight: 44, borderRadius: 8, ...style }}>
       <button
-        onClick={() => router.push('/home')}
+        onClick={() => navigateTo('/home')}
+        onMouseEnter={() => prefetch('/home')}
         aria-current={isHome ? 'page' : undefined}
         style={{ ...baseBtn, ...(isHome ? activeStyle : inactiveStyle) }}
       >
@@ -43,21 +47,24 @@ export default function SectionSelector({ className, style }) {
       </button>
 
       <button
-        onClick={() => router.push('/catalog')}
+        onClick={() => navigateTo('/catalog')}
+        onMouseEnter={() => prefetch('/catalog')}
         aria-current={isCatalog ? 'page' : undefined}
         style={{ ...baseBtn, ...(isCatalog ? activeStyle : inactiveStyle) }}
       >
         Catálogo
       </button>
 
-      {mounted && currentUser && (
+      {mounted && currentUser ? (
         <button
           onClick={() => router.push('/catalog/mis-pedidos')}
           aria-current={isMisPedidos ? 'page' : undefined}
-          style={{ ...baseBtn, ...(isMisPedidos ? activeStyle : inactiveStyle) }}
+          style={{ ...baseBtn, minWidth: 100, ...(isMisPedidos ? activeStyle : inactiveStyle) }}
         >
           Mis Pedidos
         </button>
+      ) : (
+        <span aria-hidden="true" style={{ display: 'inline-block', width: 100, height: 36 }} />
       )}
 
       <button

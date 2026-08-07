@@ -232,6 +232,11 @@ html, body {
   height: 100%;
 }
 
+/* Keep centered public layouts from moving when a page gains a vertical scrollbar. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
