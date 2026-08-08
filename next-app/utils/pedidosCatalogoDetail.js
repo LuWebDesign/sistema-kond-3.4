@@ -23,6 +23,7 @@ export const normalizeEstadoPago = (val) => {
 
 export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
   if (!pedidoDB) return null
+  const destination = pedidoDB.shipping_destination_snapshot || {}
 
   const shipping = (pedidoDB.shipping_provider || pedidoDB.shipping_delivery_type || pedidoDB.shipping_status)
     ? {
@@ -51,7 +52,11 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
       apellido: pedidoDB.cliente_apellido || '',
       telefono: pedidoDB.cliente_telefono || '',
       email: pedidoDB.cliente_email || '',
-      direccion: pedidoDB.cliente_direccion || ''
+      direccion: pedidoDB.cliente_direccion || '',
+      localidad: pedidoDB.cliente_localidad || destination.city || '',
+      codigoPostal: pedidoDB.cliente_codigo_postal || destination.postalCode || '',
+      provincia: pedidoDB.cliente_provincia || destination.provinceName || destination.provinceCode || '',
+      notas: pedidoDB.cliente_notas || destination.notes || ''
     },
     items: (pedidoDB.items || []).map(item => {
       const producto = productosBase.find(p => p.id === item.producto_id)
@@ -119,6 +124,8 @@ export const mapSupabasePedidoToFrontend = (pedidoDB, productosBase = []) => {
     mpPreferenceId: pedidoDB.mp_preference_id || null,
     mpPaymentId: pedidoDB.mp_payment_id || null,
     mpPaymentStatus: pedidoDB.mp_payment_status || null,
+    pagoConfirmadoOrigen: pedidoDB.pago_confirmado_origen || null,
+    pagoConfirmadoAt: pedidoDB.pago_confirmado_at || null,
     shipping,
     comprobante: pedidoDB.comprobante_url,
     _comprobanteOmitted: pedidoDB.comprobante_omitido || false,

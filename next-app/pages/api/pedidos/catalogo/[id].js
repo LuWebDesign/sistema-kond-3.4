@@ -1,9 +1,31 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { createNotification } from '../../../../utils/supabaseNotifications'
 import { TENANT_ID } from '../../../../lib/tenant'
+import { verifyAdminCookie } from '../../../../utils/verifyAdminCookie'
+
+const ORDER_SELECT = `
+  id, cliente_email, estado, estado_pago, monto_recibido,
+  mp_preference_id, mp_payment_id, mp_payment_status,
+  pago_confirmado_origen, pago_confirmado_at,
+  cliente_nombre, cliente_apellido, cliente_telefono, cliente_direccion,
+  cliente_localidad, cliente_codigo_postal, cliente_provincia, cliente_notas,
+  metodo_pago, metodo_entrega, comprobante_url, comprobante_omitido,
+  fecha_solicitud_entrega, fecha_produccion, fecha_produccion_calendario,
+  fecha_entrega_calendario, fecha_confirmada_entrega,
+  total, envio_gratis, asignado_al_calendario,
+  shipping_provider, shipping_delivery_type, shipping_service_code,
+  shipping_service_name, shipping_cost, shipping_currency,
+  shipping_quote_snapshot, shipping_destination_snapshot, shipping_agency_snapshot,
+  shipping_status, shipping_import_status, shipping_import_result,
+  shipping_imported_at, shipping_manual_followup_required, shipping_tracking_number,
+  created_at, updated_at
+`
 
 export default async function handler(req, res) {
   const { id } = req.query
+
+  const userId = await verifyAdminCookie(req)
+  if (!userId) return res.status(401).json({ error: 'No autorizado' })
 
   if (req.method === 'DELETE') {
     try {
@@ -40,6 +62,11 @@ export default async function handler(req, res) {
       const supabase = supabaseAdmin()
       const payload = req.body || {}
 
+      const paymentAction = payload.paymentAction
+      if (paymentAction !== undefined && paymentAction !== 'manual_confirm') {
+        return res.status(400).json({ error: 'Acción de pago no válida' })
+      }
+
       console.log('📝 PUT/PATCH request para pedido', id, '- payload recibido:', JSON.stringify(payload).substring(0, 200))
 
       // Mapear campos del frontend (camelCase) a snake_case de la DB
@@ -52,7 +79,6 @@ export default async function handler(req, res) {
         if (payload.cliente.direccion !== undefined) updateData.cliente_direccion = payload.cliente.direccion
       }
       if (payload.metodoPago !== undefined) updateData.metodo_pago = payload.metodoPago
-      if (payload.estadoPago !== undefined) updateData.estado_pago = payload.estadoPago
       if (payload.comprobante !== undefined) updateData.comprobante_url = payload.comprobante
       if (payload._comprobanteOmitted !== undefined) updateData.comprobante_omitido = payload._comprobanteOmitted
       if (payload.fechaSolicitudEntrega !== undefined) updateData.fecha_solicitud_entrega = payload.fechaSolicitudEntrega
@@ -63,10 +89,59 @@ export default async function handler(req, res) {
       if (payload.fechaEntregaCalendario !== undefined) updateData.fecha_entrega_calendario = payload.fechaEntregaCalendario
       if (payload.estado !== undefined) updateData.estado = payload.estado
       if (payload.total !== undefined) updateData.total = payload.total
-      if (payload.montoRecibido !== undefined) updateData.monto_recibido = payload.montoRecibido
       if (payload.asignadoAlCalendario !== undefined) updateData.asignado_al_calendario = payload.asignadoAlCalendario
       if (payload.notas !== undefined) updateData.notas = payload.notas
       if (payload.notasAdmin !== undefined) updateData.notas_admin = payload.notasAdmin
+
+      const shipping = payload.shipping || {}
+      const shippingFields = {
+        shipping_provider: shipping.provider,
+        shipping_delivery_type: shipping.deliveryType,
+        shipping_service_code: shipping.serviceCode,
+        shipping_service_name: shipping.serviceName,
+        shipping_cost: shipping.cost,
+        shipping_currency: shipping.currency,
+        shipping_quote_snapshot: shipping.quoteSnapshot,
+        shipping_destination_snapshot: shipping.destinationSnapshot,
+        shipping_agency_snapshot: shipping.agencySnapshot,
+        shipping_status: shipping.status,
+        shipping_import_status: shipping.importStatus,
+        shipping_import_result: shipping.importResult,
+        shipping_imported_at: shipping.importedAt,
+        shipping_manual_followup_required: shipping.manualFollowupRequired,
+        shipping_tracking_number: shipping.trackingNumber,
+      }
+      for (const [field, value] of Object.entries(shippingFields)) {
+        if (value !== undefined) updateData[field] = value
+      }
+
+      if (paymentAction === 'manual_confirm') {
+        const { data: currentOrder, error: currentOrderError } = await supabase
+          .from('pedidos_catalogo')
+          .select('metodo_pago, mp_payment_status, estado_pago, pago_confirmado_origen')
+          .eq('id', id)
+          .eq('tenant_id', TENANT_ID)
+          .single()
+
+        if (currentOrderError) throw currentOrderError
+
+        const isMercadoPagoApproved = currentOrder.mp_payment_status === 'approved'
+          || currentOrder.pago_confirmado_origen === 'mercado_pago'
+
+        if (currentOrder.metodo_pago === 'mercadopago' || isMercadoPagoApproved) {
+          return res.status(409).json({ error: 'No se puede confirmar manualmente un pago de Mercado Pago aprobado' })
+        }
+
+        const montoRecibido = Number(payload.montoRecibido)
+        if (!Number.isFinite(montoRecibido) || montoRecibido < 0 || payload.estadoPago === undefined) {
+          return res.status(400).json({ error: 'La confirmación manual requiere estado y monto válidos' })
+        }
+
+        updateData.estado_pago = payload.estadoPago
+        updateData.monto_recibido = montoRecibido
+        updateData.pago_confirmado_origen = montoRecibido > 0 ? 'manual_admin' : null
+        updateData.pago_confirmado_at = montoRecibido > 0 ? new Date().toISOString() : null
+      }
 
       if (Object.keys(updateData).length === 0) {
         console.warn('⚠️ No hay campos para actualizar en el payload')
@@ -80,7 +155,7 @@ export default async function handler(req, res) {
         .update(updateData)
         .eq('id', id)
         .eq('tenant_id', TENANT_ID)
-        .select()
+        .select(ORDER_SELECT)
         .single()
 
       if (error) throw error

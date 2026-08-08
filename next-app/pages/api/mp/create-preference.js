@@ -37,6 +37,7 @@ export default async function handler(req, res) {
         back_urls,
         external_reference,
         auto_return: 'approved',
+        ...getMercadoPagoWebhookConfig(),
       },
     })
     if (!result.id) throw new Error('MercadoPago did not return a preference id')
@@ -53,6 +54,29 @@ export default async function handler(req, res) {
     console.error('[mp/create-preference] Error:', err)
     return res.status(err.statusCode || 500).json({ error: err.message || 'Error creating preference' })
   }
+}
+
+function getMercadoPagoWebhookConfig() {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+
+  if (!configuredBaseUrl) {
+    console.warn('[mp/create-preference] No public base URL configured; relying on MercadoPago dashboard webhook settings')
+    return {}
+  }
+
+  let baseUrl
+  try {
+    baseUrl = new URL(configuredBaseUrl)
+  } catch {
+    throw new Error('NEXT_PUBLIC_BASE_URL must be a valid public HTTP(S) URL')
+  }
+
+  if (!['http:', 'https:'].includes(baseUrl.protocol)) {
+    throw new Error('NEXT_PUBLIC_BASE_URL must use HTTP or HTTPS')
+  }
+
+  return { notification_url: `${baseUrl.origin}/api/mp/webhook` }
 }
 
 function addShippingItemOnce(items, shipping) {

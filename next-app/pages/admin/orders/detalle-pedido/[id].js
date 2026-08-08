@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Layout from '../../../../components/Layout'
 import withAdminAuth from '../../../../components/withAdminAuth'
 import OrderCatalogDetailView from '../../../../components/OrderCatalogDetailView'
-import { getPedidoCatalogoById, updatePedidoCatalogo, updateMontoRecibido } from '../../../../utils/supabasePedidos'
+import { getPedidoCatalogoById } from '../../../../utils/supabasePedidos'
 import { getAllProductos, mapProductoToFrontend } from '../../../../utils/supabaseProductos'
 import { getAllMateriales } from '../../../../utils/supabaseMateriales'
 import { createToast } from '../../../../utils/catalogUtils'
@@ -42,6 +42,7 @@ function DetallePedidoPage() {
 
   // Ref para evitar registrar historial de creación más de una vez
   const historialInitDone = useRef(false)
+  const pendingPaymentAction = useRef(null)
 
   // ── Admin user ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -236,10 +237,16 @@ function DetallePedidoPage() {
   }, [upsertPedidoLocal, logEvent])
 
   const handleChangeEstadoPago = useCallback((newEstadoPago) => {
+    if (pedido?.metodoPago !== 'mercadopago') pendingPaymentAction.current = 'manual_confirm'
     setPedido(prev => {
       if (!prev) return prev
       const totalPedido = Number(prev.total || 0)
-      const updated = normalizePedido({ ...prev, estadoPago: newEstadoPago })
+      const updated = normalizePedido({
+        ...prev,
+        estadoPago: newEstadoPago,
+        pagoConfirmadoOrigen: newEstadoPago === 'pagado_total' ? 'manual_admin' : null,
+        pagoConfirmadoAt: newEstadoPago === 'pagado_total' ? new Date().toISOString() : null,
+      })
       if (newEstadoPago === 'sin_seña') updated.montoRecibido = 0
       else if (newEstadoPago === 'pagado_total') updated.montoRecibido = totalPedido
       const cache = upsertPedidoLocal(updated)
@@ -252,18 +259,38 @@ function DetallePedidoPage() {
   }, [upsertPedidoLocal, logEvent])
 
   const handleChangeMontoRecibido = useCallback((monto) => {
+    if (pedido?.metodoPago !== 'mercadopago') pendingPaymentAction.current = 'manual_confirm'
     setPedido(prev => prev ? normalizePedido({ ...prev, montoRecibido: monto }) : prev)
-  }, [])
+  }, [pedido?.metodoPago])
 
   const savePedido = useCallback(async (pedidoActual) => {
     if (!pedidoActual) return
     try {
       const updated = normalizePedido(pedidoActual)
-      const resp = await updatePedidoCatalogo(updated.id, updated)
-      if (resp.error) throw new Error(resp.error)
-      if (updated.metodoPago !== 'mercadopago') {
-        await updateMontoRecibido(updated.id, Number(updated.montoRecibido || 0), updated.estadoPago)
+      const paymentAction = pendingPaymentAction.current
+      const response = await fetch(`/api/pedidos/catalogo/${updated.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          ...updated,
+          ...(paymentAction === 'manual_confirm' && updated.metodoPago !== 'mercadopago'
+            ? { paymentAction: 'manual_confirm' }
+            : {}),
+        }),
+      })
+      const resp = await response.json()
+      if (!response.ok || resp.error) throw new Error(resp.error || 'Error al actualizar pedido')
+      if (resp.pedido) {
+        updated.mpPreferenceId = resp.pedido.mp_preference_id || null
+        updated.mpPaymentId = resp.pedido.mp_payment_id || null
+        updated.mpPaymentStatus = resp.pedido.mp_payment_status || null
+        updated.pagoConfirmadoOrigen = resp.pedido.pago_confirmado_origen || null
+        updated.pagoConfirmadoAt = resp.pedido.pago_confirmado_at || null
+        updated.estadoPago = resp.pedido.estado_pago || updated.estadoPago
+        updated.montoRecibido = resp.pedido.monto_recibido ?? updated.montoRecibido
       }
+      pendingPaymentAction.current = null
       const cache = upsertPedidoLocal(updated)
       persistAndEmit(cache, updated.id, 'save-changes')
       await actualizarMovimientosPedido(updated, pedido, createToast)
@@ -273,7 +300,7 @@ function DetallePedidoPage() {
     } catch (e) {
       createToast(`No se pudo guardar el pedido: ${e.message}`, 'error')
     }
-  }, [pedido, upsertPedidoLocal, logEvent])
+  }, [pedido?.metodoPago, upsertPedidoLocal, logEvent])
 
   const onAssignCalendar = useCallback((currentPedido) => {
     if (!currentPedido) return
@@ -292,7 +319,7 @@ function DetallePedidoPage() {
     } catch (e) {
       createToast('Ocurrió un error al asignar el pedido', 'error')
     }
-  }, [upsertPedidoLocal, logEvent])
+  }, [pedido, upsertPedidoLocal, logEvent])
 
   const handleDelete = useCallback(async (currentPedido) => {
     if (!currentPedido) return
