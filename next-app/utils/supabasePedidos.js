@@ -109,6 +109,7 @@ export async function getAllPedidosCatalogo() {
       .from('pedidos_catalogo')
       .select(`
         id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+        cliente_localidad, cliente_codigo_postal, cliente_provincia, cliente_notas,
         metodo_pago, metodo_entrega, estado_pago, estado,
         comprobante_url, comprobante_omitido,
         fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
@@ -214,6 +215,7 @@ export async function getPedidoCatalogoById(id) {
       .from('pedidos_catalogo')
       .select(`
         id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+        cliente_localidad, cliente_codigo_postal, cliente_provincia, cliente_notas,
         metodo_pago, metodo_entrega, estado_pago, estado,
         comprobante_url, comprobante_omitido,
         fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
@@ -277,6 +279,10 @@ export async function createPedidoCatalogo(pedido, items) {
         cliente_telefono: pedido.cliente.telefono || '',
         cliente_email: pedido.cliente.email || '',
         cliente_direccion: pedido.cliente.direccion || '',
+        cliente_localidad: pedido.cliente.localidad || '',
+        cliente_codigo_postal: pedido.cliente.cp || '',
+        cliente_provincia: pedido.cliente.provincia || '',
+        cliente_notas: pedido.cliente.observaciones || '',
         metodo_pago: pedido.metodoPago,
         ...(pedido.metodoEntrega != null ? { metodo_entrega: pedido.metodoEntrega } : {}),
         estado_pago: pedido.estadoPago || 'pagado_total',
@@ -346,7 +352,11 @@ export async function updatePedidoCatalogo(id, pedidoUpdate) {
     if (pedidoUpdate.cliente?.apellido) updateData.cliente_apellido = pedidoUpdate.cliente.apellido;
     if (pedidoUpdate.cliente?.telefono) updateData.cliente_telefono = pedidoUpdate.cliente.telefono;
     if (pedidoUpdate.cliente?.email) updateData.cliente_email = pedidoUpdate.cliente.email;
-    if (pedidoUpdate.cliente?.direccion) updateData.cliente_direccion = pedidoUpdate.cliente.direccion;
+    if (pedidoUpdate.cliente?.direccion !== undefined) updateData.cliente_direccion = pedidoUpdate.cliente.direccion;
+    if (pedidoUpdate.cliente?.localidad !== undefined) updateData.cliente_localidad = pedidoUpdate.cliente.localidad;
+    if (pedidoUpdate.cliente?.cp !== undefined) updateData.cliente_codigo_postal = pedidoUpdate.cliente.cp;
+    if (pedidoUpdate.cliente?.provincia !== undefined) updateData.cliente_provincia = pedidoUpdate.cliente.provincia;
+    if (pedidoUpdate.cliente?.observaciones !== undefined) updateData.cliente_notas = pedidoUpdate.cliente.observaciones;
     if (pedidoUpdate.metodoPago) updateData.metodo_pago = pedidoUpdate.metodoPago;
     if (pedidoUpdate.estadoPago) updateData.estado_pago = pedidoUpdate.estadoPago;
     if (pedidoUpdate.estado) updateData.estado = pedidoUpdate.estado;
@@ -549,6 +559,7 @@ export async function getComprobanteSignedUrl(filePath) {
 // Shared column projection for pedidos_catalogo reads
 const PEDIDO_SELECT = `
   id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
+  cliente_localidad, cliente_codigo_postal, cliente_provincia, cliente_notas,
   metodo_pago, metodo_entrega, estado_pago, estado,
   comprobante_url, comprobante_omitido,
   fecha_creacion, fecha_solicitud_entrega, fecha_produccion_calendario, fecha_entrega_calendario, fecha_confirmada_entrega,
@@ -632,6 +643,7 @@ export async function getPedidosByEmail(email) {
       .from('pedidos_catalogo')
       .select(PEDIDO_SELECT)
       .eq('cliente_email', email)
+      .eq('tenant_id', TENANT_ID)
       .order('fecha_creacion', { ascending: false });
 
     if (error) throw error;

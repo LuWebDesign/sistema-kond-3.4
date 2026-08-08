@@ -5,10 +5,12 @@ import { importShippingShipment } from '../../../../lib/shipping'
 
 const ORDER_COLUMNS = `
   id, tenant_id, cliente_nombre, cliente_apellido, cliente_telefono, cliente_email, cliente_direccion,
-  metodo_entrega, estado_pago, metodo_pago, mp_payment_status, total, shipping_cost,
+  cliente_localidad, cliente_codigo_postal, cliente_provincia, cliente_notas,
+  metodo_entrega, estado_pago, metodo_pago, mp_payment_status, total, shipping_cost, shipping_currency,
   shipping_provider, shipping_delivery_type, shipping_service_code, shipping_service_name,
   shipping_quote_snapshot, shipping_destination_snapshot, shipping_agency_snapshot,
-  shipping_status, shipping_import_status
+  shipping_status, shipping_import_status, shipping_import_result, shipping_imported_at,
+  shipping_manual_followup_required, shipping_tracking_number
 `
 
 export default async function handler(req, res) {
@@ -60,6 +62,10 @@ export default async function handler(req, res) {
         phone: pedido.cliente_telefono || '',
         email: pedido.cliente_email || '',
         address: pedido.cliente_direccion || '',
+        city: pedido.cliente_localidad || '',
+        postalCode: pedido.cliente_codigo_postal || '',
+        province: pedido.cliente_provincia || '',
+        notes: pedido.cliente_notas || '',
       },
     })
   } catch (error) {

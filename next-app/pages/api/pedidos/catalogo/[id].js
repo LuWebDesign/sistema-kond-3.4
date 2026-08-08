@@ -1,9 +1,15 @@
 import { supabaseAdmin } from '../../../../utils/supabaseClient'
 import { createNotification } from '../../../../utils/supabaseNotifications'
 import { TENANT_ID } from '../../../../lib/tenant'
+import { verifyAdminCookie } from '../../../../utils/verifyAdminCookie'
 
 export default async function handler(req, res) {
   const { id } = req.query
+
+  if (req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') {
+    const userId = await verifyAdminCookie(req)
+    if (!userId) return res.status(401).json({ error: 'No autorizado' })
+  }
 
   if (req.method === 'DELETE') {
     try {
@@ -50,6 +56,10 @@ export default async function handler(req, res) {
         if (payload.cliente.telefono !== undefined) updateData.cliente_telefono = payload.cliente.telefono
         if (payload.cliente.email !== undefined) updateData.cliente_email = payload.cliente.email
         if (payload.cliente.direccion !== undefined) updateData.cliente_direccion = payload.cliente.direccion
+        if (payload.cliente.localidad !== undefined) updateData.cliente_localidad = payload.cliente.localidad
+        if (payload.cliente.cp !== undefined) updateData.cliente_codigo_postal = payload.cliente.cp
+        if (payload.cliente.provincia !== undefined) updateData.cliente_provincia = payload.cliente.provincia
+        if (payload.cliente.observaciones !== undefined) updateData.cliente_notas = payload.cliente.observaciones
       }
       if (payload.metodoPago !== undefined) updateData.metodo_pago = payload.metodoPago
       if (payload.estadoPago !== undefined) updateData.estado_pago = payload.estadoPago
@@ -67,6 +77,29 @@ export default async function handler(req, res) {
       if (payload.asignadoAlCalendario !== undefined) updateData.asignado_al_calendario = payload.asignadoAlCalendario
       if (payload.notas !== undefined) updateData.notas = payload.notas
       if (payload.notasAdmin !== undefined) updateData.notas_admin = payload.notasAdmin
+
+      if (payload.shipping) {
+        const shippingFields = {
+          shipping_provider: payload.shipping.provider,
+          shipping_delivery_type: payload.shipping.deliveryType,
+          shipping_service_code: payload.shipping.serviceCode,
+          shipping_service_name: payload.shipping.serviceName,
+          shipping_cost: payload.shipping.cost,
+          shipping_currency: payload.shipping.currency,
+          shipping_quote_snapshot: payload.shipping.quoteSnapshot,
+          shipping_destination_snapshot: payload.shipping.destinationSnapshot,
+          shipping_agency_snapshot: payload.shipping.agencySnapshot,
+          shipping_status: payload.shipping.status,
+          shipping_import_status: payload.shipping.importStatus,
+          shipping_import_result: payload.shipping.importResult,
+          shipping_imported_at: payload.shipping.importedAt,
+          shipping_manual_followup_required: payload.shipping.manualFollowupRequired,
+          shipping_tracking_number: payload.shipping.trackingNumber,
+        }
+        for (const [field, value] of Object.entries(shippingFields)) {
+          if (value !== undefined) updateData[field] = value
+        }
+      }
 
       if (Object.keys(updateData).length === 0) {
         console.warn('⚠️ No hay campos para actualizar en el payload')

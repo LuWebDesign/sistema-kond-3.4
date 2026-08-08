@@ -128,6 +128,10 @@ CREATE TABLE IF NOT EXISTS public.pedidos_catalogo (
   cliente_telefono TEXT,
   cliente_email TEXT,
   cliente_direccion TEXT,
+  cliente_localidad TEXT,
+  cliente_codigo_postal TEXT,
+  cliente_provincia TEXT,
+  cliente_notas TEXT,
   
   -- Productos del pedido (JSONB para flexibilidad)
   productos JSONB NOT NULL, -- Array de {productId, name, price, quantity, measures, subtotal}

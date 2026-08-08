@@ -182,6 +182,8 @@ export default function OrderCatalogDetailView({
   const historialNotas = historial.filter(h => h.tipo === 'nota')
   const isShippingDelivery = pedido.metodoEntrega === 'envio'
   const shipping = pedido.shipping || null
+  const customer = pedido.cliente || {}
+  const shippingAddress = { ...customer, ...(shipping?.destinationSnapshot || {}) }
   const shippingAgency = shipping?.agencySnapshot || null
   const shippingDestination = shipping?.destinationSnapshot || null
   const shipmentGenerationEligible = isShipmentGenerationEligible(pedido)
@@ -355,21 +357,35 @@ export default function OrderCatalogDetailView({
               </div>
               <div className={styles.cardBody}>
                 <div className={styles.clienteNombreMain}>
-                  {pedido.cliente?.nombre} {pedido.cliente?.apellido || ''}
+                  {customer.nombre} {customer.apellido || ''}
                 </div>
-                {pedido.cliente?.email && (
-                  <div className={styles.clienteEmail}>{pedido.cliente.email}</div>
+                {customer.email && (
+                  <div className={styles.clienteEmail}>{customer.email}</div>
                 )}
-                {pedido.cliente?.telefono && (
+                {customer.telefono && (
                   <div className={styles.clienteContactRow}>
                     <span className={styles.clienteContactLabel}>Teléfono</span>
-                    <span className={styles.clienteContactVal}>{pedido.cliente.telefono}</span>
+                    <span className={styles.clienteContactVal}>{customer.telefono}</span>
                   </div>
                 )}
-                {pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && !isShippingDelivery && (
+                {(customer.localidad || customer.codigoPostal || customer.provincia) && (
+                  <div className={styles.clienteContactRow}>
+                    <span className={styles.clienteContactLabel}>Ubicación</span>
+                    <span className={styles.clienteContactVal}>
+                      {[customer.localidad, customer.codigoPostal && `CP ${customer.codigoPostal}`, customer.provincia].filter(Boolean).join(' · ')}
+                    </span>
+                  </div>
+                )}
+                {customer.direccion && customer.direccion !== 'No proporcionada' && !isShippingDelivery && (
                   <div className={styles.clienteContactRow}>
                     <span className={styles.clienteContactLabel}>Dirección</span>
-                    <span className={styles.clienteContactVal}>{pedido.cliente.direccion}</span>
+                    <span className={styles.clienteContactVal}>{customer.direccion}</span>
+                  </div>
+                )}
+                {customer.notas && (
+                  <div className={styles.clienteContactRow}>
+                    <span className={styles.clienteContactLabel}>Notas</span>
+                    <span className={styles.clienteContactVal}>{customer.notas}</span>
                   </div>
                 )}
                 <div className={styles.clienteActions}>
@@ -384,7 +400,7 @@ export default function OrderCatalogDetailView({
             </div>
 
             {/* Shipping address — only when delivery method is shipping */}
-            {isShippingDelivery && pedido.cliente?.direccion && pedido.cliente.direccion !== 'No proporcionada' && (
+            {isShippingDelivery && (shippingAddress.direccion || shippingAddress.address || shippingAddress.street) && (
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.cardIcon}>📍</span>
@@ -392,11 +408,21 @@ export default function OrderCatalogDetailView({
                 </div>
                 <div className={styles.cardBody}>
                   <div className={styles.clienteNombreMain}>
-                    {pedido.cliente.nombre} {pedido.cliente.apellido || ''}
+                    {customer.nombre} {customer.apellido || ''}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', marginTop: 6, lineHeight: 1.5 }}>
-                    {pedido.cliente.direccion}
+                    {[shippingAddress.direccion || shippingAddress.address || shippingAddress.street,
+                      shippingAddress.localidad || shippingAddress.city,
+                      shippingAddress.codigoPostal && `CP ${shippingAddress.codigoPostal}`,
+                      shippingAddress.postalCode && `CP ${shippingAddress.postalCode}`,
+                      shippingAddress.provincia || shippingAddress.provinceName || shippingAddress.provinceCode]
+                      .filter(Boolean).join(' · ')}
                   </div>
+                  {(shippingAddress.notas || shippingAddress.notes) && (
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>
+                      Notas: {shippingAddress.notas || shippingAddress.notes}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
